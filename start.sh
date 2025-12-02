@@ -2,13 +2,20 @@
 # Minecraft Server Start Script
 # This script downloads the latest server version and starts the Minecraft server
 
-# Configuration
-SERVER_DIR="/home/deploy/minecraft-server"
-MINECRAFT_VERSION="1.20.4"  # Update this to the desired version
+# Load configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/config.sh" ]; then
+    source "$SCRIPT_DIR/config.sh"
+else
+    # Default configuration if config.sh is missing
+    SERVER_DIR="/home/deploy/minecraft-server"
+    MINECRAFT_VERSION="1.20.4"
+    MIN_RAM="2G"
+    MAX_RAM="4G"
+    MINECRAFT_JAR_URL="https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
+fi
+
 SERVER_JAR="server.jar"
-MIN_RAM="2G"
-MAX_RAM="4G"
-JAR_URL="https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
 
 # Create server directory if it doesn't exist
 mkdir -p "$SERVER_DIR"
@@ -17,7 +24,12 @@ cd "$SERVER_DIR"
 # Download server jar if it doesn't exist
 if [ ! -f "$SERVER_JAR" ]; then
     echo "Downloading Minecraft server version $MINECRAFT_VERSION..."
-    curl -o "$SERVER_JAR" "$JAR_URL"
+    if ! curl -f -o "$SERVER_JAR" "$MINECRAFT_JAR_URL"; then
+        echo "Error: Failed to download Minecraft server JAR"
+        echo "Please check the MINECRAFT_JAR_URL in config.sh or download manually"
+        exit 1
+    fi
+    echo "Download completed successfully"
 fi
 
 # Copy configuration files if they don't exist

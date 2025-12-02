@@ -17,10 +17,23 @@ sudo systemctl stop minecraft.service
 
 # Create the backup
 echo "Creating backup archive..."
+# Build list of files/directories that exist
+BACKUP_ITEMS=""
+for item in world world_nether world_the_end server.properties ops.json whitelist.json banned-players.json banned-ips.json; do
+    if [ -e "$SERVER_DIR/$item" ]; then
+        BACKUP_ITEMS="$BACKUP_ITEMS $item"
+    fi
+done
+
+if [ -z "$BACKUP_ITEMS" ]; then
+    echo "Warning: No files found to backup!"
+    sudo systemctl start minecraft.service
+    exit 1
+fi
+
 tar -czf "$BACKUP_DIR/minecraft-backup-$DATE.tar.gz" \
     -C "$SERVER_DIR" \
-    world world_nether world_the_end \
-    server.properties ops.json whitelist.json banned-players.json banned-ips.json
+    $BACKUP_ITEMS
 
 # Start the server again
 echo "Starting Minecraft server..."

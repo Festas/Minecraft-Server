@@ -27,9 +27,22 @@ fi
 # Create backup
 echo "Creating backup..."
 mkdir -p "$BACKUP_DIR"
-tar -czf "$BACKUP_DIR/pre-update-backup-$DATE.tar.gz" \
-    -C "$SERVER_DIR" \
-    world world_nether world_the_end server.jar server.properties
+# Build list of files/directories that exist
+BACKUP_ITEMS=""
+for item in world world_nether world_the_end server.jar server.properties; do
+    if [ -e "$SERVER_DIR/$item" ]; then
+        BACKUP_ITEMS="$BACKUP_ITEMS $item"
+    fi
+done
+
+if [ -n "$BACKUP_ITEMS" ]; then
+    tar -czf "$BACKUP_DIR/pre-update-backup-$DATE.tar.gz" \
+        -C "$SERVER_DIR" \
+        $BACKUP_ITEMS
+    echo "Backup created successfully"
+else
+    echo "Warning: No files found to backup (this may be a fresh installation)"
+fi
 
 # Stop server
 echo "Stopping Minecraft server..."
@@ -43,7 +56,12 @@ fi
 
 # Download new JAR
 echo "Downloading new server JAR..."
-curl -o server.jar "$JAR_URL"
+if ! curl -f -o server.jar "$JAR_URL"; then
+    echo "Error: Failed to download server JAR from $JAR_URL"
+    echo "Please verify the URL is correct"
+    exit 1
+fi
+echo "Download completed successfully"
 
 # Start server
 echo "Starting Minecraft server..."

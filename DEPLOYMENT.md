@@ -398,13 +398,31 @@ nano /home/deploy/minecraft-server/ops.json
 
 ### Updating Minecraft Version
 
-1. Find the download URL for the new version from [Minecraft Version Manifest](https://launchermeta.mojang.com/mc/game/version_manifest.json)
-2. Update `start.sh` with the new JAR URL and version
-3. SSH into server and remove old JAR:
+1. Find the download URL for the new version from [Minecraft Version Manifest](https://launchermeta.mojang.com/mc/game/version_manifest.json) or the [official download page](https://www.minecraft.net/en-us/download/server)
+2. Update `config.sh` with the new version and JAR URL:
    ```bash
-   rm /home/deploy/minecraft-server/server.jar
+   MINECRAFT_VERSION="1.21.0"
+   MINECRAFT_JAR_URL="https://piston-data.mojang.com/v1/objects/NEW_HASH_HERE/server.jar"
    ```
-4. Deploy via GitHub Actions or run `./start.sh`
+3. Commit and push the changes:
+   ```bash
+   git add config.sh
+   git commit -m "Update Minecraft to version 1.21.0"
+   git push
+   ```
+4. The GitHub Actions workflow will automatically deploy the new configuration
+5. SSH into server and remove old JAR to trigger download:
+   ```bash
+   ssh deploy@your-server-ip
+   rm /home/deploy/minecraft-server/server.jar
+   sudo systemctl restart minecraft.service
+   ```
+
+Alternatively, use the update script for interactive updates:
+```bash
+ssh deploy@your-server-ip
+/home/deploy/minecraft-server/update.sh
+```
 
 ### Backups
 

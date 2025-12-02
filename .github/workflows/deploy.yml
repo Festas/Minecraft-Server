@@ -30,12 +30,15 @@ jobs:
         ssh ${SERVER_USER}@${SERVER_HOST} "mkdir -p /home/deploy/minecraft-server"
         
         # Copy configuration files
+        scp config.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         scp server.properties ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         scp eula.txt ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         scp start.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        scp backup.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        scp update.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         
-        # Make start script executable
-        ssh ${SERVER_USER}@${SERVER_HOST} "chmod +x /home/deploy/minecraft-server/start.sh"
+        # Make scripts executable
+        ssh ${SERVER_USER}@${SERVER_HOST} "chmod +x /home/deploy/minecraft-server/*.sh"
         
         # Copy and setup systemd service
         scp minecraft.service ${SERVER_USER}@${SERVER_HOST}:/tmp/
@@ -48,9 +51,19 @@ jobs:
       run: |
         ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
           cd /home/deploy/minecraft-server
+          # Load configuration
+          if [ -f "config.sh" ]; then
+            source config.sh
+          else
+            MINECRAFT_JAR_URL="https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
+          fi
+          
           if [ ! -f "server.jar" ]; then
             echo "Downloading Minecraft server JAR..."
-            curl -o server.jar https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar
+            curl -f -o server.jar "$MINECRAFT_JAR_URL" || {
+              echo "Failed to download server JAR"
+              exit 1
+            }
           fi
         EOF
         
