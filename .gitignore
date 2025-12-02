@@ -1,0 +1,34 @@
+# Minecraft Server Files
+*.jar
+server.jar
+logs/
+world/
+world_nether/
+world_the_end/
+crash-reports/
+libraries/
+versions/
+usercache.json
+usernamecache.json
+banned-ips.json
+banned-players.json
+ops.json
+whitelist.json
+
+# Backups
+backups/
+*.zip
+*.tar.gz
+
+# Temporary files
+*.tmp
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# SSH keys (if accidentally placed here)
+*.pem
+*.key
+id_rsa*

@@ -1,0 +1,91 @@
+name: Deploy Minecraft Server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Deploy to Hetzner Server
+      env:
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+      run: |
+        # Create server directory on remote server
+        ssh ${SERVER_USER}@${SERVER_HOST} "mkdir -p /home/deploy/minecraft-server"
+        
+        # Copy configuration files
+        scp config.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        scp server.properties ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        scp eula.txt ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        scp start.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        scp backup.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        scp update.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        
+        # Make scripts executable
+        ssh ${SERVER_USER}@${SERVER_HOST} "chmod +x /home/deploy/minecraft-server/*.sh"
+        
+        # Copy and setup systemd service
+        scp minecraft.service ${SERVER_USER}@${SERVER_HOST}:/tmp/
+        ssh ${SERVER_USER}@${SERVER_HOST} "sudo mv /tmp/minecraft.service /etc/systemd/system/ && sudo systemctl daemon-reload"
+        
+    - name: Download Minecraft Server JAR
+      env:
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+      run: |
+        ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+          cd /home/deploy/minecraft-server
+          # Load configuration
+          if [ -f "config.sh" ]; then
+            source config.sh
+          else
+            MINECRAFT_JAR_URL="https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
+          fi
+          
+          if [ ! -f "server.jar" ]; then
+            echo "Downloading Minecraft server JAR..."
+            curl -f -o server.jar "$MINECRAFT_JAR_URL" || {
+              echo "Failed to download server JAR"
+              exit 1
+            }
+          fi
+        EOF
+        
+    - name: Restart Minecraft Service
+      env:
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+      run: |
+        ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+          # Check if service exists and is enabled
+          if systemctl is-enabled minecraft.service >/dev/null 2>&1; then
+            sudo systemctl restart minecraft.service
+          else
+            echo "Service not enabled. Enable it manually with: sudo systemctl enable --now minecraft.service"
+          fi
+        EOF
+        
+    - name: Check Server Status
+      env:
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+      run: |
+        ssh ${SERVER_USER}@${SERVER_HOST} "systemctl status minecraft.service --no-pager" || true
