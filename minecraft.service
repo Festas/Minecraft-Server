@@ -7,7 +7,8 @@ Type=simple
 User=deploy
 Group=deploy
 WorkingDirectory=/home/deploy/minecraft-server
-ExecStart=/usr/bin/java -Xms2G -Xmx4G -jar server.jar nogui
+# Load configuration and start server
+ExecStart=/bin/bash -c 'source /home/deploy/minecraft-server/config.sh 2>/dev/null || { MIN_RAM=2G; MAX_RAM=4G; }; exec /usr/bin/java -Xms${MIN_RAM} -Xmx${MAX_RAM} -jar server.jar nogui'
 ExecStop=/bin/kill -SIGINT $MAINPID
 Restart=on-failure
 RestartSec=10
