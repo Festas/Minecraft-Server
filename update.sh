@@ -2,7 +2,15 @@
 # Update Minecraft Server to Latest Version
 # This script helps update the Minecraft server JAR to a new version
 
-SERVER_DIR="/home/deploy/minecraft-server"
+# Load configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/config.sh" ]; then
+    source "$SCRIPT_DIR/config.sh"
+else
+    # Default configuration if config.sh is missing
+    SERVER_DIR="/home/deploy/minecraft-server"
+fi
+
 BACKUP_DIR="/home/deploy/minecraft-backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 

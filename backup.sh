@@ -2,8 +2,16 @@
 # Minecraft Server Backup Script
 # Run this script to create backups of your world data
 
+# Load configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/config.sh" ]; then
+    source "$SCRIPT_DIR/config.sh"
+else
+    # Default configuration if config.sh is missing
+    SERVER_DIR="/home/deploy/minecraft-server"
+fi
+
 BACKUP_DIR="/home/deploy/minecraft-backups"
-SERVER_DIR="/home/deploy/minecraft-server"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 echo "Creating Minecraft server backup..."

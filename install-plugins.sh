@@ -511,7 +511,7 @@ main() {
         local category
         category=$(echo "$plugin_json" | jq -r '.category')
         
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "============================================================"
         log "Processing: ${name} [${category}]"
         
         if install_plugin "$plugin_json"; then
@@ -524,7 +524,7 @@ main() {
     done
     
     # Summary
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "============================================================"
     echo ""
     log "=== Installation Summary ==="
     success "Successful: ${success_count}"
