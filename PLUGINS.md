@@ -17,6 +17,9 @@ We provide an automated plugin installation system that downloads and installs a
 
 # Update plugins to latest versions
 ./update-plugins.sh
+
+# Enable debug mode for troubleshooting
+./install-plugins.sh --debug
 ```
 
 ### How It Works
@@ -637,6 +640,23 @@ Useful when:
 - A download was corrupted
 - You want to ensure you have fresh copies
 - Troubleshooting plugin issues
+
+#### 4. Debug Mode
+
+```bash
+./install-plugins.sh --debug
+```
+
+Enables verbose output showing:
+- API responses and errors
+- Available assets in releases
+- Pattern matching details
+- Detailed progress information
+
+Use debug mode when troubleshooting:
+- "No matching asset found" errors
+- GitHub API issues
+- Plugin download failures
 
 ### Configuration: plugins.json
 
