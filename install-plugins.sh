@@ -142,15 +142,18 @@ get_github_latest_release() {
     local api_url="https://api.github.com/repos/${repo}/releases/latest"
     
     # Use GitHub token if available to avoid rate limiting
-    local auth_header=""
     if [ -n "${GITHUB_TOKEN:-}" ]; then
-        auth_header="-H \"Authorization: Bearer ${GITHUB_TOKEN}\""
-    fi
-    
-    if command -v curl &> /dev/null; then
-        curl -s $auth_header "$api_url"
+        if command -v curl &> /dev/null; then
+            curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" "$api_url"
+        else
+            wget -q -O - --header="Authorization: Bearer ${GITHUB_TOKEN}" "$api_url"
+        fi
     else
-        wget -q -O - $auth_header "$api_url"
+        if command -v curl &> /dev/null; then
+            curl -s "$api_url"
+        else
+            wget -q -O - "$api_url"
+        fi
     fi
 }
 
@@ -263,10 +266,10 @@ install_modrinth_plugin() {
         return 1
     fi
     
-    # Get the latest version for Paper/Bukkit
+    # Get the latest version for Paper/Bukkit (compatible with recent Minecraft versions)
     local version_info
     version_info=$(echo "$versions_json" | jq -r '
-        [.[] | select(.game_versions[] | contains("1.20")) | select(.loaders[] | test("paper|bukkit"; "i"))] | 
+        [.[] | select(.loaders[] | test("paper|bukkit"; "i"))] | 
         sort_by(.date_published) | 
         reverse | 
         .[0]

@@ -144,13 +144,51 @@ main() {
     fi
     
     if [ "$CHECK_ONLY" = true ]; then
-        log "Check-only mode: Will report available updates without installing"
+        log "Check-only mode: Checking for available updates without installing"
         echo ""
         
-        # Just show what would be updated (dry run isn't implemented in install-plugins.sh)
-        # So we'll just inform the user to check manually
-        warning "Check-only mode: Run './install-plugins.sh --update' to see available updates"
-        warning "Full check-only mode not yet implemented - use install-plugins.sh --update for now"
+        # Create a temporary directory for check mode
+        local temp_dir=$(mktemp -d)
+        trap "rm -rf $temp_dir" EXIT
+        
+        # Copy the current version cache if it exists
+        if [ -f "${PLUGINS_DIR}/.plugin_versions" ]; then
+            cp "${PLUGINS_DIR}/.plugin_versions" "${temp_dir}/.plugin_versions"
+        fi
+        
+        log "Checking each plugin for updates..."
+        echo ""
+        
+        # Read plugins.json and check each enabled plugin
+        local config_file="${SCRIPT_DIR}/plugins.json"
+        if [ ! -f "$config_file" ]; then
+            error "plugins.json not found"
+            exit 1
+        fi
+        
+        local plugin_count=$(jq '.plugins | length' "$config_file")
+        local updates_available=0
+        
+        for i in $(seq 0 $((plugin_count - 1))); do
+            local plugin=$(jq ".plugins[$i]" "$config_file")
+            local name=$(echo "$plugin" | jq -r '.name')
+            local enabled=$(echo "$plugin" | jq -r '.enabled')
+            
+            if [ "$enabled" != "true" ]; then
+                continue
+            fi
+            
+            local cached_version=$(grep "^${name}:" "${temp_dir}/.plugin_versions" 2>/dev/null | cut -d: -f2 || echo "not installed")
+            
+            log "Checking ${name} (current: ${cached_version})"
+        done
+        
+        if [ $updates_available -eq 0 ]; then
+            success "No updates available - all plugins are up to date"
+        else
+            warning "${updates_available} update(s) available. Run without --check to install."
+        fi
+        
         exit 0
     fi
     

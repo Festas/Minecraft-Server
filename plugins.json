@@ -77,7 +77,7 @@
       "category": "community",
       "source": "github",
       "repo": "milkbowl/Vault",
-      "asset_pattern": "Vault\\.jar",
+      "asset_pattern": "Vault\\.jar$",
       "description": "Economy API for plugins"
     },
     {
