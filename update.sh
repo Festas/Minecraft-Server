@@ -22,10 +22,34 @@ echo "1. Create a backup of current server"
 echo "2. Download new server JAR"
 echo "3. Restart the server"
 echo ""
-read -p "Enter the new Minecraft version (e.g., 1.20.4): " VERSION
-read -p "Enter the download URL for the server JAR: " JAR_URL
+read -r -p "Enter the new Minecraft version (e.g., 1.20.4): " VERSION
+read -r -p "Enter the download URL for the server JAR: " JAR_URL
 echo ""
-read -p "Continue with update? (yes/no): " CONFIRM
+
+# Validate Minecraft version format (e.g., 1.20.4)
+if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "Error: Invalid Minecraft version format: $VERSION"
+    echo "Expected format: X.Y.Z (e.g., 1.20.4)"
+    echo "Please enter a valid version number."
+    exit 1
+fi
+
+# Validate URL format
+if [[ ! "$JAR_URL" =~ ^https:// ]]; then
+    echo "Error: Invalid URL - must start with https://"
+    echo "URL provided: $JAR_URL"
+    echo "Please provide a secure HTTPS URL."
+    exit 1
+fi
+
+if [[ ! "$JAR_URL" =~ \.jar$ ]]; then
+    echo "Error: Invalid URL - must end with .jar"
+    echo "URL provided: $JAR_URL"
+    echo "Please provide a URL pointing to a JAR file."
+    exit 1
+fi
+
+read -r -p "Continue with update? (yes/no): " CONFIRM
 
 if [ "$CONFIRM" != "yes" ]; then
     echo "Update cancelled."
@@ -57,7 +81,7 @@ echo "Stopping Minecraft server..."
 sudo systemctl stop minecraft.service
 
 # Backup old JAR
-cd "$SERVER_DIR"
+cd "$SERVER_DIR" || exit 1
 if [ -f "server.jar" ]; then
     mv server.jar "server.jar.old.$DATE"
 fi
