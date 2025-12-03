@@ -13,7 +13,8 @@
 #   ./install-plugins.sh --help       # Show help message
 ################################################################################
 
-set -e
+# Note: We use explicit error handling instead of 'set -e' to allow 
+# graceful handling of errors in loops and provide better user feedback
 
 # Color codes for output
 RED='\033[0;31m'
@@ -28,6 +29,7 @@ PLUGINS_DIR="${SCRIPT_DIR}/plugins"
 CONFIG_FILE="${SCRIPT_DIR}/plugins.json"
 LOG_FILE="${SCRIPT_DIR}/plugin-install.log"
 VERSION_CACHE="${PLUGINS_DIR}/.plugin_versions"
+LOCK_FILE="/tmp/minecraft-plugin-installer.lock"
 
 # Command line flags
 FORCE_DOWNLOAD=false
@@ -35,9 +37,44 @@ UPDATE_MODE=false
 DEBUG_MODE=false
 DRY_RUN_MODE=false
 
+# Timeout configuration (in seconds)
+# Can be overridden with environment variables
+CONNECTION_TIMEOUT="${CONNECTION_TIMEOUT:-10}"
+DOWNLOAD_TIMEOUT="${DOWNLOAD_TIMEOUT:-300}"
+
 ################################################################################
 # Helper Functions
 ################################################################################
+
+# Cleanup function to be called on exit
+cleanup() {
+    local exit_code=$?
+    
+    # Remove lock file if it exists
+    if [ -f "$LOCK_FILE" ]; then
+        debug "Removing lock file: $LOCK_FILE"
+        rm -f "$LOCK_FILE"
+    fi
+    
+    # Clean up temporary version cache files
+    rm -f "${VERSION_CACHE}.tmp" 2>/dev/null || true
+    
+    # If we're exiting due to a signal, show cleanup message
+    if [ $exit_code -ne 0 ] && [ "${SIGNAL_RECEIVED:-false}" = "true" ]; then
+        echo ""
+        warning "Script interrupted. Cleaned up partial downloads and temporary files."
+    fi
+}
+
+# Signal handler for interrupts
+handle_signal() {
+    SIGNAL_RECEIVED=true
+    exit 130  # Standard exit code for SIGINT
+}
+
+# Set trap to cleanup on exit, and handle interrupt signals
+trap cleanup EXIT
+trap handle_signal INT TERM
 
 log() {
     echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
@@ -126,7 +163,13 @@ OPTIONS:
     --update     Check for and download plugin updates
     --debug      Enable debug mode for verbose output
     --dry-run    Validate configuration and test API access without downloading
+    --timeout N  Set download timeout in seconds (default: 300)
     --help       Show this help message
+
+ENVIRONMENT VARIABLES:
+    CONNECTION_TIMEOUT  Timeout for initial connection (default: 10 seconds)
+    DOWNLOAD_TIMEOUT    Maximum time for downloads (default: 300 seconds)
+    GITHUB_TOKEN        GitHub API token to avoid rate limiting
 
 EXAMPLES:
     $0                 # Install all enabled plugins
@@ -134,6 +177,7 @@ EXAMPLES:
     $0 --update        # Update all plugins to latest versions
     $0 --debug         # Run with debug output to troubleshoot issues
     $0 --dry-run       # Test configuration without downloading
+    $0 --timeout 600   # Set download timeout to 10 minutes
 
 CONFIGURATION:
     Edit plugins.json to enable/disable plugins or add new ones.
@@ -153,6 +197,94 @@ EOF
 ################################################################################
 # Dependency Checks
 ################################################################################
+
+validate_config() {
+    log "Validating plugins.json configuration..."
+    
+    # Check if file is valid JSON
+    if ! jq empty "$CONFIG_FILE" 2>/dev/null; then
+        error "Invalid JSON in configuration file: ${CONFIG_FILE}"
+        error "Please check the JSON syntax using a validator"
+        return 1
+    fi
+    
+    # Check if plugins array exists
+    if ! jq -e '.plugins' "$CONFIG_FILE" &>/dev/null; then
+        error "Missing 'plugins' array in configuration file"
+        return 1
+    fi
+    
+    # Validate each plugin entry
+    local plugin_count
+    plugin_count=$(jq '.plugins | length' "$CONFIG_FILE")
+    local validation_errors=0
+    
+    for i in $(seq 0 $((plugin_count - 1))); do
+        local plugin_json
+        plugin_json=$(jq ".plugins[$i]" "$CONFIG_FILE")
+        
+        local name
+        name=$(echo "$plugin_json" | jq -r '.name // empty')
+        if [ -z "$name" ]; then
+            error "Plugin at index $i is missing required field: 'name'"
+            ((validation_errors++))
+            continue
+        fi
+        
+        # Check required fields (enabled can be true or false, but must exist)
+        if ! echo "$plugin_json" | jq -e 'has("enabled")' &>/dev/null; then
+            error "Plugin '${name}' is missing required field: 'enabled'"
+            ((validation_errors++))
+        fi
+        
+        local source
+        source=$(echo "$plugin_json" | jq -r '.source // empty')
+        if [ -z "$source" ]; then
+            error "Plugin '${name}' is missing required field: 'source'"
+            ((validation_errors++))
+            continue
+        fi
+        
+        # Validate source type (allow 'manual' as a valid source type for manual installs)
+        if [[ "$source" != "github" && "$source" != "modrinth" && "$source" != "manual" ]]; then
+            error "Plugin '${name}' has invalid source type: '${source}' (must be 'github', 'modrinth', or 'manual')"
+            ((validation_errors++))
+            continue
+        fi
+        
+        # Validate source-specific fields (skip manual sources)
+        if [ "$source" = "github" ]; then
+            local repo
+            repo=$(echo "$plugin_json" | jq -r '.repo // empty')
+            if [ -z "$repo" ]; then
+                error "Plugin '${name}' with source 'github' is missing required field: 'repo'"
+                ((validation_errors++))
+            fi
+            
+            local asset_pattern
+            asset_pattern=$(echo "$plugin_json" | jq -r '.asset_pattern // empty')
+            if [ -z "$asset_pattern" ]; then
+                warning "Plugin '${name}' with source 'github' is missing 'asset_pattern' (may cause download issues)"
+            fi
+        elif [ "$source" = "modrinth" ]; then
+            local project_id
+            project_id=$(echo "$plugin_json" | jq -r '.project_id // empty')
+            if [ -z "$project_id" ]; then
+                error "Plugin '${name}' with source 'modrinth' is missing required field: 'project_id'"
+                ((validation_errors++))
+            fi
+        fi
+        # Skip validation for 'manual' sources as they're installed manually
+    done
+    
+    if [ $validation_errors -gt 0 ]; then
+        error "Configuration validation failed with ${validation_errors} error(s)"
+        return 1
+    fi
+    
+    success "Configuration validation passed"
+    return 0
+}
 
 check_dependencies() {
     log "Checking required dependencies..."
@@ -199,19 +331,43 @@ download_file() {
     local http_code
     
     if command -v curl &> /dev/null; then
-        http_code=$(curl -L -w "%{http_code}" -o "$output" -s "$url")
-        if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+        # Use curl with timeouts
+        # Note: -s silences progress, -S shows errors, output goes to file
+        http_code=$(curl -L -w "%{http_code}" -o "$output" -sS \
+            --connect-timeout "$CONNECTION_TIMEOUT" \
+            --max-time "$DOWNLOAD_TIMEOUT" \
+            "$url" 2>/dev/null)
+        local curl_exit=$?
+        
+        if [ $curl_exit -eq 0 ] && [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
             return 0
+        elif [ $curl_exit -eq 28 ]; then
+            error "Download timeout after ${DOWNLOAD_TIMEOUT}s: $url"
+            rm -f "$output"
+            return 1
+        elif [ $curl_exit -eq 7 ]; then
+            error "Connection failed (timeout after ${CONNECTION_TIMEOUT}s): $url"
+            rm -f "$output"
+            return 1
         else
             error "HTTP error $http_code when downloading: $url"
             rm -f "$output"
             return 1
         fi
     elif command -v wget &> /dev/null; then
-        if wget -q -O "$output" "$url"; then
+        # Use wget with timeouts
+        if wget -q -O "$output" \
+            --connect-timeout="$CONNECTION_TIMEOUT" \
+            --timeout="$DOWNLOAD_TIMEOUT" \
+            "$url" 2>/dev/null; then
             return 0
         else
-            error "Failed to download: $url"
+            local wget_exit=$?
+            if [ $wget_exit -eq 4 ]; then
+                error "Connection timeout: $url"
+            else
+                error "Failed to download: $url"
+            fi
             rm -f "$output"
             return 1
         fi
@@ -245,6 +401,74 @@ download_with_retry() {
     
     error "All $max_attempts download attempts failed for: $url"
     return 1
+}
+
+verify_checksum() {
+    local file="$1"
+    local expected_hash="$2"
+    local hash_algorithm="$3"
+    
+    if [ -z "$expected_hash" ] || [ "$expected_hash" = "null" ]; then
+        debug "No checksum provided for verification"
+        return 0
+    fi
+    
+    local actual_hash=""
+    
+    case "$hash_algorithm" in
+        sha512)
+            if command -v sha512sum &> /dev/null; then
+                actual_hash=$(sha512sum "$file" | awk '{print $1}')
+            elif command -v shasum &> /dev/null; then
+                actual_hash=$(shasum -a 512 "$file" | awk '{print $1}')
+            else
+                warning "sha512sum not available, skipping checksum verification"
+                return 0
+            fi
+            ;;
+        sha256)
+            if command -v sha256sum &> /dev/null; then
+                actual_hash=$(sha256sum "$file" | awk '{print $1}')
+            elif command -v shasum &> /dev/null; then
+                actual_hash=$(shasum -a 256 "$file" | awk '{print $1}')
+            else
+                warning "sha256sum not available, skipping checksum verification"
+                return 0
+            fi
+            ;;
+        sha1)
+            if command -v sha1sum &> /dev/null; then
+                actual_hash=$(sha1sum "$file" | awk '{print $1}')
+            elif command -v shasum &> /dev/null; then
+                actual_hash=$(shasum -a 1 "$file" | awk '{print $1}')
+            else
+                warning "sha1sum not available, skipping checksum verification"
+                return 0
+            fi
+            ;;
+        *)
+            warning "Unsupported hash algorithm: $hash_algorithm"
+            return 0
+            ;;
+    esac
+    
+    if [ -z "$actual_hash" ]; then
+        warning "Failed to compute checksum for $file"
+        return 0
+    fi
+    
+    debug "Expected hash ($hash_algorithm): $expected_hash"
+    debug "Actual hash ($hash_algorithm): $actual_hash"
+    
+    if [ "$actual_hash" = "$expected_hash" ]; then
+        debug "Checksum verification passed"
+        return 0
+    else
+        error "Checksum verification failed!"
+        error "Expected: $expected_hash"
+        error "Got: $actual_hash"
+        return 1
+    fi
 }
 
 ################################################################################
@@ -476,20 +700,29 @@ install_modrinth_plugin() {
     local version_number
     version_number=$(echo "$version_info" | jq -r '.version_number')
     
-    # Prefer primary file, fallback to first file
-    local download_url
-    download_url=$(echo "$version_info" | jq -r '
+    # Get file information with checksums
+    local file_info
+    file_info=$(echo "$version_info" | jq -r '
         .files | 
-        (map(select(.primary == true)) | .[0].url) // 
-        .[0].url
+        (map(select(.primary == true)) | .[0]) // 
+        .[0]
     ')
     
+    local download_url
+    download_url=$(echo "$file_info" | jq -r '.url')
+    
     local filename
-    filename=$(echo "$version_info" | jq -r '
-        .files | 
-        (map(select(.primary == true)) | .[0].filename) // 
-        .[0].filename
-    ')
+    filename=$(echo "$file_info" | jq -r '.filename')
+    
+    # Get checksums if available
+    local sha512_hash
+    sha512_hash=$(echo "$file_info" | jq -r '.hashes.sha512 // empty')
+    
+    local sha256_hash
+    sha256_hash=$(echo "$file_info" | jq -r '.hashes.sha256 // empty')
+    
+    local sha1_hash
+    sha1_hash=$(echo "$file_info" | jq -r '.hashes.sha1 // empty')
     
     # Validate URL
     if ! validate_url "$download_url"; then
@@ -517,6 +750,9 @@ install_modrinth_plugin() {
     if [ "$DRY_RUN_MODE" = true ]; then
         success "[DRY RUN] Would download ${name} ${version_number} → ${filename}"
         log "  URL: ${download_url}"
+        if [ -n "$sha512_hash" ]; then
+            log "  SHA512: ${sha512_hash}"
+        fi
         return 0
     fi
     
@@ -525,19 +761,48 @@ install_modrinth_plugin() {
     
     if download_with_retry "$download_url" "$output_path"; then
         # Validate the downloaded file
-        if validate_download "$output_path"; then
-            success "Downloaded ${name} ${version_number} → ${filename}"
-            
-            # Update version cache
-            grep -v "^${name}:" "$VERSION_CACHE" 2>/dev/null > "${VERSION_CACHE}.tmp" || true
-            echo "${name}:${version_number}" >> "${VERSION_CACHE}.tmp"
-            mv "${VERSION_CACHE}.tmp" "$VERSION_CACHE"
-            
-            return 0
-        else
+        if ! validate_download "$output_path"; then
             error "Downloaded file validation failed for ${name}"
             return 1
         fi
+        
+        # Verify checksum (prefer SHA512, then SHA256, then SHA1)
+        if [ -n "$sha512_hash" ]; then
+            if verify_checksum "$output_path" "$sha512_hash" "sha512"; then
+                success "Checksum verified (SHA512)"
+            else
+                error "Checksum verification failed for ${name}"
+                rm -f "$output_path"
+                return 1
+            fi
+        elif [ -n "$sha256_hash" ]; then
+            if verify_checksum "$output_path" "$sha256_hash" "sha256"; then
+                success "Checksum verified (SHA256)"
+            else
+                error "Checksum verification failed for ${name}"
+                rm -f "$output_path"
+                return 1
+            fi
+        elif [ -n "$sha1_hash" ]; then
+            if verify_checksum "$output_path" "$sha1_hash" "sha1"; then
+                success "Checksum verified (SHA1)"
+            else
+                error "Checksum verification failed for ${name}"
+                rm -f "$output_path"
+                return 1
+            fi
+        else
+            warning "No checksum available for verification"
+        fi
+        
+        success "Downloaded ${name} ${version_number} → ${filename}"
+        
+        # Update version cache
+        grep -v "^${name}:" "$VERSION_CACHE" 2>/dev/null > "${VERSION_CACHE}.tmp" || true
+        echo "${name}:${version_number}" >> "${VERSION_CACHE}.tmp"
+        mv "${VERSION_CACHE}.tmp" "$VERSION_CACHE"
+        
+        return 0
     else
         error "Failed to download ${name} from Modrinth after multiple attempts"
         warning "Troubleshooting suggestions:"
@@ -563,7 +828,7 @@ install_plugin() {
     
     if [ "$enabled" != "true" ]; then
         warning "Skipping ${name} (disabled in config)"
-        return 0
+        return 2  # Return special code for skipped plugins
     fi
     
     local source
@@ -583,6 +848,10 @@ install_plugin() {
             project_id=$(echo "$plugin_json" | jq -r '.project_id')
             
             install_modrinth_plugin "$name" "$project_id"
+            ;;
+        manual)
+            warning "Skipping ${name} (manual installation required)"
+            return 2  # Return special code for manually installed plugins
             ;;
         *)
             error "Unknown source type: ${source} for ${name}"
@@ -615,6 +884,14 @@ main() {
                 DRY_RUN_MODE=true
                 shift
                 ;;
+            --timeout)
+                if [[ ! "$2" =~ ^[0-9]+$ ]] || [ "$2" -le 0 ]; then
+                    error "Invalid timeout value: $2 (must be a positive integer)"
+                    exit 1
+                fi
+                DOWNLOAD_TIMEOUT="$2"
+                shift 2
+                ;;
             --help)
                 show_help
                 ;;
@@ -629,6 +906,23 @@ main() {
     log "=== Minecraft Plugin Auto-Installer ==="
     echo ""
     
+    # Check for lock file (prevent concurrent execution)
+    if [ -f "$LOCK_FILE" ]; then
+        error "Another instance of the plugin installer is already running (lock file exists: $LOCK_FILE)"
+        echo "If you're sure no other instance is running, remove the lock file manually:"
+        echo "  rm $LOCK_FILE"
+        exit 1
+    fi
+    
+    # Create lock file with PID atomically to prevent race conditions
+    if ! (set -C; echo $$ > "$LOCK_FILE") 2>/dev/null; then
+        error "Failed to create lock file: $LOCK_FILE"
+        error "Another instance may have started simultaneously"
+        exit 1
+    fi
+    
+    debug "Created lock file: $LOCK_FILE (PID: $$)"
+    
     # Check dependencies
     check_dependencies
     
@@ -638,12 +932,19 @@ main() {
         exit 1
     fi
     
+    # Validate configuration
+    if ! validate_config; then
+        error "Configuration validation failed. Please fix the errors above."
+        exit 1
+    fi
+    
     # Create plugins directory
     mkdir -p "$PLUGINS_DIR"
     touch "$VERSION_CACHE"
     
     log "Plugin directory: ${PLUGINS_DIR}"
     log "Configuration: ${CONFIG_FILE}"
+    log "Timeouts: connection=${CONNECTION_TIMEOUT}s, download=${DOWNLOAD_TIMEOUT}s"
     
     if [ "$FORCE_DOWNLOAD" = true ]; then
         warning "Force download mode enabled - all plugins will be re-downloaded"
@@ -690,7 +991,14 @@ main() {
         if install_plugin "$plugin_json"; then
             ((success_count++))
         else
-            ((fail_count++))
+            local exit_code=$?
+            if [ $exit_code -eq 2 ]; then
+                # Plugin was skipped (disabled)
+                ((skip_count++))
+            else
+                # Plugin installation failed
+                ((fail_count++))
+            fi
         fi
         
         echo ""
@@ -701,6 +1009,9 @@ main() {
     echo ""
     log "=== Installation Summary ==="
     success "Successful: ${success_count}"
+    if [ $skip_count -gt 0 ]; then
+        warning "Skipped: ${skip_count}"
+    fi
     if [ $fail_count -gt 0 ]; then
         error "Failed: ${fail_count}"
     fi
