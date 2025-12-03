@@ -26,11 +26,20 @@ if [ ! -f "$SERVER_JAR" ]; then
     
     # Get the latest Paper build for the specified Minecraft version
     echo "Fetching latest Paper build information..."
-    PAPER_BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/${MINECRAFT_VERSION}" | grep -o '"builds":\[[0-9,]*\]' | grep -o '[0-9]*' | tail -1)
     
-    if [ -z "$PAPER_BUILD" ]; then
+    # Use jq if available for better JSON parsing, otherwise use grep
+    if command -v jq &> /dev/null; then
+        PAPER_BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/${MINECRAFT_VERSION}" | jq -r '.builds[-1]')
+    else
+        # Fallback to grep-based parsing
+        PAPER_BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/${MINECRAFT_VERSION}" | grep -oP '(?<="builds":\[)[0-9,]+(?=\])' | tr ',' '\n' | tail -1)
+    fi
+    
+    if [ -z "$PAPER_BUILD" ] || [ "$PAPER_BUILD" = "null" ]; then
         echo "Error: Could not fetch Paper build information for version $MINECRAFT_VERSION"
         echo "Please check that version $MINECRAFT_VERSION is available at https://papermc.io/downloads"
+        echo ""
+        echo "You can manually download the Paper JAR and place it as server.jar in this directory."
         exit 1
     fi
     
@@ -40,6 +49,8 @@ if [ ! -f "$SERVER_JAR" ]; then
     if ! curl -f -o "$SERVER_JAR" "$PAPER_JAR_URL"; then
         echo "Error: Failed to download Paper server JAR"
         echo "URL attempted: $PAPER_JAR_URL"
+        echo ""
+        echo "You can manually download Paper from https://papermc.io/downloads"
         exit 1
     fi
     echo "Paper server download completed successfully"

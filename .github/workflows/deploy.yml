@@ -64,10 +64,17 @@ jobs:
             echo "Downloading Paper server for Minecraft version ${MINECRAFT_VERSION}..."
             
             # Get the latest Paper build for the specified Minecraft version
-            PAPER_BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/${MINECRAFT_VERSION}" | grep -o '"builds":\[[0-9,]*\]' | grep -o '[0-9]*' | tail -1)
+            # Use jq if available for better JSON parsing, otherwise use grep
+            if command -v jq &> /dev/null; then
+              PAPER_BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/${MINECRAFT_VERSION}" | jq -r '.builds[-1]')
+            else
+              # Fallback to grep-based parsing
+              PAPER_BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/${MINECRAFT_VERSION}" | grep -oP '(?<="builds":\[)[0-9,]+(?=\])' | tr ',' '\n' | tail -1)
+            fi
             
-            if [ -z "$PAPER_BUILD" ]; then
+            if [ -z "$PAPER_BUILD" ] || [ "$PAPER_BUILD" = "null" ]; then
               echo "Error: Could not fetch Paper build information for version ${MINECRAFT_VERSION}"
+              echo "Please verify the version is available at https://papermc.io/downloads"
               exit 1
             fi
             
@@ -76,6 +83,7 @@ jobs:
             
             curl -f -o server.jar "$PAPER_JAR_URL" || {
               echo "Failed to download Paper server JAR"
+              echo "URL: ${PAPER_JAR_URL}"
               exit 1
             }
             echo "Paper server download completed successfully"
