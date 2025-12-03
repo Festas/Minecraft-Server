@@ -44,6 +44,9 @@ WAIT_FOR_RATE_LIMIT=false
 CONNECTION_TIMEOUT="${CONNECTION_TIMEOUT:-10}"
 DOWNLOAD_TIMEOUT="${DOWNLOAD_TIMEOUT:-300}"
 
+# Rate limit wait configuration
+MAX_RATE_LIMIT_WAIT="${MAX_RATE_LIMIT_WAIT:-300}"  # Maximum seconds to wait for rate limit reset
+
 # Modrinth compatible loaders (space-separated for easy maintenance)
 MODRINTH_LOADERS="paper bukkit spigot purpur folia"
 
@@ -521,12 +524,12 @@ check_github_rate_limit() {
             fi
             
             if [ "$WAIT_FOR_RATE_LIMIT" = true ]; then
-                if [ $wait_seconds -le 300 ]; then
+                if [ $wait_seconds -le $MAX_RATE_LIMIT_WAIT ]; then
                     warning "Waiting for rate limit to reset (${wait_seconds}s)..."
                     sleep $wait_seconds
                     return 0
                 else
-                    warning "Wait time is too long (${wait_seconds}s > 300s)"
+                    warning "Wait time is too long (${wait_seconds}s > ${MAX_RATE_LIMIT_WAIT}s)"
                     warning "Rate limit will reset in $((wait_seconds / 60)) minutes"
                     return 1
                 fi
@@ -846,13 +849,11 @@ install_modrinth_plugin() {
     loader_pattern=$(echo "$MODRINTH_LOADERS" | tr ' ' '|')
     
     # Get the latest version for compatible loaders
-    # Expanded loader support for better compatibility
+    # Use max_by for better performance than sorting entire array
     local version_info
     version_info=$(echo "$versions_json" | jq -r --arg loaders "$loader_pattern" '
         [.[] | select(.loaders and (.loaders | length > 0) and (.loaders[] | test($loaders; "i")))] | 
-        sort_by(.date_published) | 
-        reverse | 
-        if length > 0 then .[0] else null end
+        if length > 0 then max_by(.date_published) else null end
     ')
     
     if [ -z "$version_info" ] || [ "$version_info" = "null" ]; then
@@ -1056,7 +1057,9 @@ install_plugin_with_fallback() {
                 local fallback_repo
                 fallback_repo=$(echo "$plugin_json" | jq -r '.fallback_repo // empty')
                 local fallback_pattern
-                fallback_pattern=$(echo "$plugin_json" | jq -r '.fallback_asset_pattern // .asset_pattern')
+                # Use fallback_asset_pattern if available, otherwise try to use asset_pattern
+                # If neither exists (e.g., primary is modrinth), use a generic pattern
+                fallback_pattern=$(echo "$plugin_json" | jq -r '.fallback_asset_pattern // .asset_pattern // ".*\\.jar$"')
                 
                 if [ -n "$fallback_repo" ]; then
                     if install_github_plugin "$name" "$fallback_repo" "$fallback_pattern" "$allow_prerelease"; then
@@ -1180,6 +1183,10 @@ main() {
                 shift 2
                 ;;
             --max-retries)
+                if [ -z "${2:-}" ]; then
+                    error "Missing value for --max-retries"
+                    exit 1
+                fi
                 if [[ ! "$2" =~ ^[0-9]+$ ]] || [ "$2" -lt 1 ]; then
                     error "Invalid max-retries value: $2 (must be a positive integer)"
                     exit 1
