@@ -7,8 +7,13 @@ Type=simple
 User=deploy
 Group=deploy
 WorkingDirectory=/home/deploy/minecraft-server
-# Load configuration and start server
-ExecStart=/bin/bash -c 'source /home/deploy/minecraft-server/config.sh 2>/dev/null || { MIN_RAM=2G; MAX_RAM=4G; }; exec /usr/bin/java -Xms${MIN_RAM} -Xmx${MAX_RAM} -jar server.jar nogui'
+
+# RAM configuration
+Environment="MIN_RAM=2G"
+Environment="MAX_RAM=4G"
+
+# Start and stop commands
+ExecStart=/usr/bin/java -Xms${MIN_RAM} -Xmx${MAX_RAM} -jar server.jar nogui
 ExecStop=/bin/kill -SIGINT $MAINPID
 Restart=on-failure
 RestartSec=10
@@ -17,7 +22,7 @@ RestartSec=10
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=true
+ProtectHome=read-only
 ReadWritePaths=/home/deploy/minecraft-server
 
 [Install]
