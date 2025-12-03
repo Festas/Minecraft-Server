@@ -184,7 +184,7 @@ find_matching_asset() {
     url=$(echo "$release_json" | jq -r --arg pattern "$pattern" '
         .assets // [] | 
         map(select(.name | test($pattern; "i"))) | 
-        .[0].browser_download_url // empty
+        if length > 0 then .[0].browser_download_url else empty end
     ')
     
     echo "$url"
@@ -242,7 +242,7 @@ install_github_plugin() {
     # List available assets for debugging
     if [ "$DEBUG_MODE" = true ]; then
         debug "Available assets:"
-        echo "$release_json" | jq -r '.assets[].name // empty' 2>/dev/null | while read -r asset; do
+        echo "$release_json" | jq -r '.assets // [] | .[].name // empty' 2>/dev/null | while read -r asset; do
             if [ -n "$asset" ]; then
                 debug "  - $asset"
             fi
@@ -255,7 +255,7 @@ install_github_plugin() {
     if [ -z "$asset_url" ]; then
         error "No matching asset found for pattern: ${pattern}"
         warning "Available assets in release:"
-        echo "$release_json" | jq -r '.assets[].name // "No assets found"' 2>/dev/null | head -10
+        echo "$release_json" | jq -r '.assets // [] | if length > 0 then .[].name else "No assets found" end' 2>/dev/null | head -10
         return 1
     fi
     
