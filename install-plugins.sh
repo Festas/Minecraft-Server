@@ -332,10 +332,11 @@ download_file() {
     
     if command -v curl &> /dev/null; then
         # Use curl with timeouts
-        http_code=$(curl -L -w "%{http_code}" -o "$output" -s \
+        # Note: -s silences progress, -S shows errors, output goes to file
+        http_code=$(curl -L -w "%{http_code}" -o "$output" -sS \
             --connect-timeout "$CONNECTION_TIMEOUT" \
             --max-time "$DOWNLOAD_TIMEOUT" \
-            "$url" 2>&1)
+            "$url" 2>/dev/null)
         local curl_exit=$?
         
         if [ $curl_exit -eq 0 ] && [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
@@ -358,7 +359,7 @@ download_file() {
         if wget -q -O "$output" \
             --connect-timeout="$CONNECTION_TIMEOUT" \
             --timeout="$DOWNLOAD_TIMEOUT" \
-            "$url" 2>&1; then
+            "$url" 2>/dev/null; then
             return 0
         else
             local wget_exit=$?
