@@ -22,6 +22,7 @@ The festas_builds server is growing from a friends-only server to a **full commu
 
 - ✅ **Paper Server** - High-performance Spigot fork with plugin support
 - ✅ **Optimized Performance** - Aikar's JVM flags for better garbage collection
+- ✅ **Auto Plugin Installation** - Automated system to download and install plugins
 - ✅ Automated deployment via GitHub Actions
 - ✅ Systemd service for automatic server management
 - ✅ Easy configuration management
@@ -41,6 +42,52 @@ The festas_builds server is growing from a friends-only server to a **full commu
 
 ---
 
+## 🎮 Plugin Auto-Installation
+
+The server includes an automated plugin installation system that downloads and installs all recommended plugins with a single command:
+
+```bash
+# Install all enabled plugins
+./install-plugins.sh
+
+# Update plugins to latest versions
+./update-plugins.sh
+```
+
+### Quick Start
+
+1. SSH to your server: `ssh deploy@your-server-ip`
+2. Navigate to server directory: `cd /home/deploy/minecraft-server`
+3. Install plugins: `./install-plugins.sh`
+4. Restart server: `sudo systemctl restart minecraft.service`
+
+The system automatically:
+- Downloads plugins from GitHub Releases and Modrinth
+- Selects the correct JAR files (Bukkit/Paper versions)
+- Tracks versions for smart updates
+- Backs up old plugins before updating
+
+### Customization
+
+Edit `plugins.json` to enable/disable specific plugins:
+
+```json
+{
+  "name": "LuckPerms",
+  "enabled": true,  // Change to false to disable
+  "category": "essential",
+  ...
+}
+```
+
+**For complete documentation**, see [PLUGINS.md](PLUGINS.md) - includes:
+- How to add new plugins
+- Troubleshooting guide
+- Advanced configuration
+- Cron automation for updates
+
+---
+
 ## 🛠️ What's Included
 
 - **Server Configuration Files**
@@ -48,6 +95,11 @@ The festas_builds server is growing from a friends-only server to a **full commu
   - `server.properties` - Minecraft server configuration with festas_builds branding
   - `eula.txt` - Minecraft EULA acceptance
   - `start.sh` - Paper server startup script with optimized JVM flags
+  
+- **Plugin Management**
+  - `plugins.json` - Plugin configuration (enable/disable, sources)
+  - `install-plugins.sh` - Automated plugin installation script
+  - `update-plugins.sh` - Plugin update script with backup support
   
 - **System Integration**
   - `minecraft.service` - Systemd service file with Aikar's flags

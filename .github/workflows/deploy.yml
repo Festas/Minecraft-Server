@@ -5,6 +5,15 @@ on:
     branches:
       - main
   workflow_dispatch:  # Allows manual triggering
+    inputs:
+      install_plugins:
+        description: 'Install/update plugins during deployment'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 jobs:
   deploy:
@@ -38,6 +47,11 @@ jobs:
         scp start.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         scp backup.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         scp update.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        
+        # Copy plugin installation files
+        scp plugins.json ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        scp install-plugins.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        scp update-plugins.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         
         # Make scripts executable
         ssh ${SERVER_USER}@${SERVER_HOST} "chmod +x /home/deploy/minecraft-server/*.sh"
@@ -87,6 +101,30 @@ jobs:
               exit 1
             }
             echo "Paper server download completed successfully"
+          fi
+        EOF
+        
+    - name: Install/Update Plugins
+      if: github.event.inputs.install_plugins == 'true'
+      env:
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+      run: |
+        ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+          cd /home/deploy/minecraft-server
+          
+          # Check if jq is installed
+          if ! command -v jq &> /dev/null; then
+            echo "jq is not installed. Installing..."
+            sudo apt update && sudo apt install -y jq
+          fi
+          
+          # Run plugin installation script
+          if [ -f "install-plugins.sh" ]; then
+            echo "Installing/updating plugins..."
+            ./install-plugins.sh --update
+          else
+            echo "install-plugins.sh not found, skipping plugin installation"
           fi
         EOF
         
