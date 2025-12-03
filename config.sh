@@ -1,3 +1,4 @@
+#!/bin/bash
 # Minecraft Paper Server Configuration
 # This file contains deployment configuration for your Minecraft server
 
