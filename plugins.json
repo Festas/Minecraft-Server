@@ -6,7 +6,7 @@
       "category": "essential",
       "source": "github",
       "repo": "LuckPerms/LuckPerms",
-      "asset_pattern": "Bukkit",
+      "asset_pattern": "LuckPerms-Bukkit-.*\\.jar$",
       "description": "Advanced permissions management system"
     },
     {
@@ -41,7 +41,7 @@
       "category": "essential",
       "source": "github",
       "repo": "EngineHub/WorldEdit",
-      "asset_pattern": "worldedit-bukkit",
+      "asset_pattern": "worldedit-bukkit-.*-dist\\.jar$",
       "description": "In-game world editor for building"
     },
     {
@@ -50,7 +50,7 @@
       "category": "essential",
       "source": "github",
       "repo": "EngineHub/WorldGuard",
-      "asset_pattern": "worldguard-bukkit",
+      "asset_pattern": "worldguard-bukkit-.*-dist\\.jar$",
       "description": "Region protection and zone management"
     },
     {

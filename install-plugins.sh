@@ -32,6 +32,7 @@ VERSION_CACHE="${PLUGINS_DIR}/.plugin_versions"
 # Command line flags
 FORCE_DOWNLOAD=false
 UPDATE_MODE=false
+DEBUG_MODE=false
 
 ################################################################################
 # Helper Functions
@@ -53,6 +54,12 @@ warning() {
     echo -e "${YELLOW}⚠${NC} $1" | tee -a "$LOG_FILE"
 }
 
+debug() {
+    if [ "$DEBUG_MODE" = true ]; then
+        echo -e "${YELLOW}[DEBUG]${NC} $1" | tee -a "$LOG_FILE"
+    fi
+}
+
 show_help() {
     cat << EOF
 Minecraft Plugin Auto-Installer
@@ -62,12 +69,14 @@ Usage: $0 [OPTIONS]
 OPTIONS:
     --force      Force re-download all plugins (skip version check)
     --update     Check for and download plugin updates
+    --debug      Enable debug mode for verbose output
     --help       Show this help message
 
 EXAMPLES:
     $0                 # Install all enabled plugins
     $0 --force         # Force re-download all plugins
     $0 --update        # Update all plugins to latest versions
+    $0 --debug         # Run with debug output to troubleshoot issues
 
 CONFIGURATION:
     Edit plugins.json to enable/disable plugins or add new ones.
@@ -161,17 +170,35 @@ find_matching_asset() {
     local release_json="$1"
     local pattern="$2"
     
+    # Check if assets array exists and is not empty
+    local has_assets
+    has_assets=$(echo "$release_json" | jq 'has("assets") and (.assets | length > 0)')
+    
+    if [ "$has_assets" != "true" ]; then
+        echo ""
+        return 1
+    fi
+    
     # Find asset URL matching the pattern
-    echo "$release_json" | jq -r --arg pattern "$pattern" '
-        .assets[] | 
-        select(.name | test($pattern; "i")) | 
-        .browser_download_url
-    ' | head -n 1
+    local url
+    url=$(echo "$release_json" | jq -r --arg pattern "$pattern" '
+        .assets // [] | 
+        map(select(.name | test($pattern; "i"))) | 
+        .[0].browser_download_url // empty
+    ')
+    
+    echo "$url"
 }
 
 get_release_version() {
     local release_json="$1"
-    echo "$release_json" | jq -r '.tag_name'
+    local version
+    version=$(echo "$release_json" | jq -r '.tag_name // empty')
+    if [ -z "$version" ] || [ "$version" = "null" ]; then
+        echo ""
+        return 1
+    fi
+    echo "$version"
 }
 
 install_github_plugin() {
@@ -180,26 +207,59 @@ install_github_plugin() {
     local pattern="$3"
     
     log "Fetching latest release for ${name} from GitHub..."
+    debug "Repository: ${repo}"
+    debug "Asset pattern: ${pattern}"
     
     local release_json
     release_json=$(get_github_latest_release "$repo")
     
-    if [ -z "$release_json" ] || [ "$release_json" = "null" ]; then
-        error "Failed to fetch release information for ${name}"
+    # Check for API errors
+    if [ -z "$release_json" ]; then
+        error "Empty response from GitHub API for ${name}"
+        return 1
+    fi
+    
+    # Check for error message in response
+    local api_message
+    api_message=$(echo "$release_json" | jq -r '.message // empty')
+    if [ -n "$api_message" ]; then
+        error "GitHub API error for ${name}: ${api_message}"
+        debug "Full response: $release_json"
         return 1
     fi
     
     local version
     version=$(get_release_version "$release_json")
     
+    if [ -z "$version" ]; then
+        error "Could not determine version for ${name}"
+        debug "Release JSON: $release_json"
+        return 1
+    fi
+    
+    debug "Found version: ${version}"
+    
+    # List available assets for debugging
+    if [ "$DEBUG_MODE" = true ]; then
+        debug "Available assets:"
+        echo "$release_json" | jq -r '.assets[].name // empty' 2>/dev/null | while read -r asset; do
+            if [ -n "$asset" ]; then
+                debug "  - $asset"
+            fi
+        done
+    fi
+    
     local asset_url
     asset_url=$(find_matching_asset "$release_json" "$pattern")
     
-    if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
+    if [ -z "$asset_url" ]; then
         error "No matching asset found for pattern: ${pattern}"
-        echo "$release_json" | jq -r '.assets[].name' | head -5
+        warning "Available assets in release:"
+        echo "$release_json" | jq -r '.assets[].name // "No assets found"' 2>/dev/null | head -10
         return 1
     fi
+    
+    debug "Matched asset URL: ${asset_url}"
     
     local filename
     filename=$(basename "$asset_url")
@@ -381,6 +441,10 @@ main() {
                 UPDATE_MODE=true
                 shift
                 ;;
+            --debug)
+                DEBUG_MODE=true
+                shift
+                ;;
             --help)
                 show_help
                 ;;
@@ -417,6 +481,10 @@ main() {
     
     if [ "$UPDATE_MODE" = true ]; then
         log "Update mode enabled - checking for newer versions"
+    fi
+    
+    if [ "$DEBUG_MODE" = true ]; then
+        warning "Debug mode enabled - verbose output will be shown"
     fi
     
     echo ""
