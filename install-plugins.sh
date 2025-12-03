@@ -56,25 +56,25 @@ cleanup() {
         rm -f "$LOCK_FILE"
     fi
     
-    # Clean up any temporary files
-    if [ -n "${TEMP_FILES:-}" ]; then
-        for temp_file in $TEMP_FILES; do
-            if [ -f "$temp_file" ]; then
-                debug "Removing temporary file: $temp_file"
-                rm -f "$temp_file"
-            fi
-        done
-    fi
+    # Clean up temporary version cache files
+    rm -f "${VERSION_CACHE}.tmp" 2>/dev/null || true
     
-    # If interrupted, show cleanup message
-    if [ $exit_code -ne 0 ] && [ "${INTERRUPTED:-false}" = "true" ]; then
+    # If we're exiting due to a signal, show cleanup message
+    if [ $exit_code -ne 0 ] && [ "${SIGNAL_RECEIVED:-false}" = "true" ]; then
         echo ""
         warning "Script interrupted. Cleaned up partial downloads and temporary files."
     fi
 }
 
-# Set trap to cleanup on exit, interrupt, or termination
-trap cleanup EXIT INT TERM
+# Signal handler for interrupts
+handle_signal() {
+    SIGNAL_RECEIVED=true
+    exit 130  # Standard exit code for SIGINT
+}
+
+# Set trap to cleanup on exit, and handle interrupt signals
+trap cleanup EXIT
+trap handle_signal INT TERM
 
 log() {
     echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
@@ -329,9 +329,6 @@ download_file() {
     local url="$1"
     local output="$2"
     local http_code
-    
-    # Track temp file for cleanup
-    TEMP_FILES="${TEMP_FILES:-} ${output}"
     
     if command -v curl &> /dev/null; then
         # Use curl with timeouts
@@ -887,6 +884,10 @@ main() {
                 shift
                 ;;
             --timeout)
+                if [[ ! "$2" =~ ^[0-9]+$ ]] || [ "$2" -le 0 ]; then
+                    error "Invalid timeout value: $2 (must be a positive integer)"
+                    exit 1
+                fi
                 DOWNLOAD_TIMEOUT="$2"
                 shift 2
                 ;;
@@ -912,9 +913,10 @@ main() {
         exit 1
     fi
     
-    # Create lock file with PID
-    if ! echo $$ > "$LOCK_FILE"; then
+    # Create lock file with PID atomically to prevent race conditions
+    if ! (set -C; echo $$ > "$LOCK_FILE") 2>/dev/null; then
         error "Failed to create lock file: $LOCK_FILE"
+        error "Another instance may have started simultaneously"
         exit 1
     fi
     
