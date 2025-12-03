@@ -53,17 +53,52 @@ You should see output showing Java version 17 or higher.
 
 ### 2. Configure Firewall
 
-Open the Minecraft server port (default: 25565):
+Open the Minecraft server ports:
 
 ```bash
 # If using UFW (Ubuntu Firewall)
-sudo ufw allow 25565/tcp
-sudo ufw allow 25565/udp
+# Java Edition port
+sudo ufw allow 25565/tcp comment "Minecraft Java"
+sudo ufw allow 25565/udp comment "Minecraft Java"
+
+# Bedrock Edition port (for cross-platform play with Geyser)
+sudo ufw allow 19132/udp comment "Minecraft Bedrock"
+
+# Reload firewall
+sudo ufw reload
+
+# Verify
+sudo ufw status
+```
+
+**For Bedrock Edition support**, port 19132 UDP is required. See [BEDROCK-SETUP.md](BEDROCK-SETUP.md) for details.
+
+**Alternative firewall configurations:**
+
+```bash
+# If using firewalld (CentOS/RHEL/Fedora)
+sudo firewall-cmd --permanent --add-port=25565/tcp
+sudo firewall-cmd --permanent --add-port=25565/udp
+sudo firewall-cmd --permanent --add-port=19132/udp
+sudo firewall-cmd --reload
 
 # If using iptables
 sudo iptables -A INPUT -p tcp --dport 25565 -j ACCEPT
 sudo iptables -A INPUT -p udp --dport 25565 -j ACCEPT
+sudo iptables -A INPUT -p udp --dport 19132 -j ACCEPT
+sudo iptables-save | sudo tee /etc/iptables/rules.v4
 ```
+
+**Hetzner Cloud Firewall:**
+
+If using Hetzner Cloud, also configure the cloud firewall:
+
+1. Go to **Cloud Console** → **Firewalls**
+2. Add rules for:
+   - Port 25565 TCP (Java Edition)
+   - Port 25565 UDP (Java Edition)
+   - Port 19132 UDP (Bedrock Edition)
+3. Apply to your server
 
 ### 3. Setup Deploy User Permissions
 
@@ -217,6 +252,35 @@ From your Minecraft client:
    - **Server Name**: Your server name
    - **Server Address**: `your-server-ip:25565`
 5. Click **Done** and connect
+
+### 6. Test Bedrock Connectivity (Optional)
+
+If you've installed Geyser and Floodgate for cross-platform play:
+
+1. Verify port 19132 is open:
+   ```bash
+   sudo netstat -tulpn | grep 19132
+   # or
+   sudo ss -tulpn | grep 19132
+   ```
+
+2. Test from outside the server:
+   ```bash
+   # From your local machine (not the server)
+   nc -zvu your-server-ip 19132
+   ```
+
+3. Check Geyser logs:
+   ```bash
+   sudo journalctl -u minecraft.service | grep -i geyser
+   ```
+   Look for: `[Geyser-Spigot] Started Geyser on 0.0.0.0:19132`
+
+4. Connect with Bedrock Edition:
+   - Mobile/Windows 10: Add server with address `your-server-ip` and port `19132`
+   - See [BEDROCK-SETUP.md](BEDROCK-SETUP.md) for detailed instructions
+
+**Note:** If Bedrock players can't connect, it's usually a firewall issue. Double-check that port 19132 UDP is open in both the OS firewall and Hetzner Cloud Firewall.
 
 ---
 
