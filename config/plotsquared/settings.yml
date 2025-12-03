@@ -1,0 +1,229 @@
+# PlotSquared Settings Configuration
+# Template configuration for festas_builds build competitions
+# See: https://intellectualsites.github.io/plotsquared-documentation/
+
+settings:
+  # PlotSquared branding - customize for festas_builds
+  titles: true
+  titles_as_actionbar: true
+  
+  # Auto-update - keep PlotSquared up to date
+  update_notifications: true
+  
+  # Database settings
+  # For small servers: SQLite (default)
+  # For larger servers (50+ players): MySQL recommended
+  database:
+    type: SQLite
+    # For MySQL, uncomment and configure:
+    # type: MySQL
+    # host: localhost
+    # port: 3306
+    # database: plotsquared
+    # username: plotsquared_user
+    # password: your_secure_password
+
+  # Plot claiming settings
+  claiming:
+    # Maximum plots per player (adjust based on competition format)
+    max_plots: 1
+    
+    # Allow plot merging (good for team competitions)
+    plot_merge: true
+    
+    # Confirm plot deletion
+    confirmation: true
+
+  # Competition-specific settings
+  economy:
+    # Use economy for plot claiming (set to false for free competition plots)
+    use: false
+    
+    # Plot claiming price (if economy enabled)
+    prices:
+      claim: 0
+      merge: 0
+      sell: 0
+
+  # Rating and visiting
+  ratings:
+    # Enable plot rating system (useful for voting on competition entries)
+    enabled: true
+    
+    # Categories for rating (competition judging criteria)
+    categories:
+      - creativity
+      - technique
+      - theme_adherence
+      - overall
+
+  # Claiming system
+  claim:
+    # Auto-claim plots on join (useful for competitions)
+    auto_claim: false
+    
+    # Max auto claims
+    max_automatic_claims: 1
+
+  # Teleportation
+  teleport:
+    # Delay before teleport (in seconds)
+    delay: 0
+    
+    # Teleport on plot claim
+    on_claim: true
+    
+    # Teleport on plot auto-claim
+    on_auto: true
+
+  # World settings
+  worlds:
+    # Default world generation
+    type: normal
+    
+    # Generator settings
+    generator:
+      # Terrain generation (flat for build competitions)
+      type: flat
+      
+      # Flat world presets
+      settings: "minecraft:bedrock,2*minecraft:dirt,minecraft:grass_block;"
+
+  # Plot settings
+  plot:
+    # Plot size for competitions (blocks per side)
+    # 100x100 is good for most build competitions
+    size: 100
+    
+    # Road width between plots
+    road_width: 7
+    
+    # Plot height (build limit)
+    height: 256
+    
+    # Wall blocks
+    wall:
+      block: stone_bricks
+      
+    # Road blocks
+    road:
+      block: quartz_block
+      
+    # Plot floor
+    floor:
+      block: grass_block
+      
+    # Border blocks
+    border:
+      block: quartz_block
+
+  # Plot components (theme customization)
+  components:
+    wall:
+      block: stone_bricks
+    floor:
+      block: grass_block
+    air:
+      block: air
+    border:
+      block: quartz_block
+    main:
+      block: grass_block
+
+# Messages and branding
+chat:
+  # Prefix for PlotSquared messages
+  prefix: "&8[&6festas_builds &eCompetitions&8] "
+  
+  # Custom messages
+  messages:
+    claimed: "&aYou have claimed this competition plot! Good luck building!"
+    not_claimed: "&cThis plot is not claimed."
+    plot_not_found: "&cPlot not found."
+    not_in_plot: "&cYou are not standing in a plot."
+    not_owner: "&cYou do not own this plot."
+
+# Schematic settings (for saving competition entries)
+schematics:
+  # Enable schematic saving
+  save_and_load: true
+  
+  # Schematic directory
+  directory: "schematics"
+
+# Flags (plot protection settings)
+flags:
+  default:
+    # Default flags for all plots
+    use: true
+    break: true
+    place: true
+    
+    # Disable PvP in competition plots
+    pvp: false
+    
+    # Disable mob spawning
+    mob_spawning: false
+    
+    # Block explosions
+    explosion: false
+    
+    # Time setting (for consistent lighting)
+    time: 6000  # Noon
+
+# festas_builds Competition Custom Settings
+# These can be adjusted per competition
+
+competition:
+  # Competition theme rotation
+  theme_announcement: "&6&l✦ NEW COMPETITION THEME ✦&r\n&e{theme}\n&7Build period: {duration}\n&aType /plots auto to claim your plot!"
+  
+  # Voting period
+  voting_enabled: true
+  voting_duration: "3 days"
+  
+  # Rewards (integrate with economy or manual rewards)
+  rewards:
+    first_place: "Winner Crown cosmetic + Featured build"
+    second_place: "Silver Trophy cosmetic"
+    third_place: "Bronze Medal cosmetic"
+    participation: "Builder XP points"
+
+# WorldEdit integration
+worldedit:
+  # Allow WorldEdit in plots
+  enabled: true
+  
+  # Max blocks per WorldEdit operation
+  max_blocks: 50000
+  
+  # Max iterations
+  max_iterations: 1000
+
+# Performance settings
+performance:
+  # Chunk processing
+  chunk_processor: true
+  
+  # Auto-purge old plots
+  auto_purge:
+    enabled: false
+    # days: 90
+    
+  # Clear plots on unclaim
+  clear_on_unclaim: false
+
+# Backup settings (recommended for competitions)
+backup:
+  # Automatic backup before clearing
+  automatic: true
+  
+  # Backup location
+  directory: "backups/competition-plots"
+
+# TODO: Customize these settings for your competitions
+# 1. Adjust plot size based on competition type
+# 2. Set max_plots based on whether players can enter multiple times
+# 3. Configure rating categories for your judging criteria
+# 4. Customize messages with festas_builds branding
+# 5. Set up economy integration if using paid entries (keep EULA compliant!)

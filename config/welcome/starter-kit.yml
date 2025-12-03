@@ -1,0 +1,401 @@
+# Starter Kit Configuration for festas_builds
+# Given to new players on their first join
+
+# Main Starter Kit
+starter_kit:
+  enabled: true
+  name: "&6festas_builds Starter Kit"
+  
+  # Items in the kit
+  items:
+    # Tools
+    - type: diamond_pickaxe
+      amount: 1
+      name: "&bBuilder's Pickaxe"
+      lore:
+        - "&7Start your building journey!"
+        - "&7festas_builds community"
+      enchantments:
+        efficiency: 3
+        unbreaking: 2
+    
+    - type: diamond_axe
+      amount: 1
+      name: "&bBuilder's Axe"
+      lore:
+        - "&7Chop wood efficiently!"
+      enchantments:
+        efficiency: 3
+        unbreaking: 2
+    
+    - type: diamond_shovel
+      amount: 1
+      name: "&bBuilder's Shovel"
+      lore:
+        - "&7Dig faster!"
+      enchantments:
+        efficiency: 3
+        unbreaking: 2
+    
+    # Building materials
+    - type: oak_planks
+      amount: 64
+      name: "&eOak Planks"
+    
+    - type: cobblestone
+      amount: 64
+      name: "&7Cobblestone"
+    
+    - type: glass
+      amount: 64
+      name: "&fGlass"
+    
+    - type: torch
+      amount: 32
+      name: "&6Torches"
+    
+    - type: oak_log
+      amount: 32
+      name: "&eOak Logs"
+    
+    # Food
+    - type: cooked_beef
+      amount: 16
+      name: "&cCooked Beef"
+      lore:
+        - "&7Stay fed while building!"
+    
+    - type: bread
+      amount: 16
+      name: "&eBread"
+    
+    # Special items
+    - type: compass
+      amount: 1
+      name: "&bSpawn Compass"
+      lore:
+        - "&7Points to spawn"
+        - "&7Use /spawn to teleport back"
+    
+    - type: written_book
+      amount: 1
+      name: "&6festas_builds Server Guide"
+      author: "festas_builds"
+      title: "&6Server Guide"
+      pages:
+        - |
+          &0&lWelcome!
+          
+          &0Welcome to the
+          &0festas_builds
+          &0community server!
+          
+          &0This guide will help
+          &0you get started.
+        - |
+          &0&lBasic Commands
+          
+          &0/spawn - Return to spawn
+          &0/sethome - Set your home
+          &0/home - Go home
+          &0/tpa <player> - Teleport request
+          &0/help - More commands
+        - |
+          &0&lProtecting Builds
+          
+          &0Use a golden shovel
+          &0to claim land!
+          
+          &0Right-click corners
+          &0to create a claim.
+          
+          &0/trust <player> to
+          &0add friends.
+        - |
+          &0&lCosmetics
+          
+          &0Unlock cosmetics by
+          &0playing and ranking up!
+          
+          &0/cosmetics - View hats
+          &0/pp - Particle effects
+          
+          &0Earn ranks through
+          &0playtime and events.
+        - |
+          &0&lCompetitions
+          
+          &0Weekly build
+          &0competitions!
+          
+          &0Check /plots when
+          &0a competition starts.
+          
+          &0Win exclusive
+          &0cosmetics and ranks!
+        - |
+          &0&lCommunity
+          
+          &0Join our Discord:
+          &0/discord
+          
+          &0Read the rules:
+          &0/rules
+          
+          &0Be respectful and
+          &0have fun building!
+    
+    - type: golden_shovel
+      amount: 1
+      name: "&6Claiming Tool"
+      lore:
+        - "&7Right-click corners to claim land"
+        - "&7Protects your builds from grief"
+        - "&7/claim for help"
+  
+  # Cooldown (first join only)
+  cooldown: "first_join_only"
+  
+  # Delay before giving kit (seconds)
+  delay: 5
+  
+  # Sound on receiving kit
+  sound:
+    enabled: true
+    sound: "ENTITY_EXPERIENCE_ORB_PICKUP"
+    volume: 1.0
+    pitch: 1.0
+  
+  # Message when receiving kit
+  message:
+    - ""
+    - "&a&l✓ &7You received the &6festas_builds Starter Kit&7!"
+    - "&7Use these tools and materials to start building!"
+    - ""
+
+# Rank-up Kits (given when players rank up)
+rank_kits:
+  # Builder Kit (10 hours)
+  builder:
+    enabled: true
+    name: "&eBuilder's Kit"
+    
+    items:
+      - type: diamond_block
+        amount: 16
+        name: "&bDiamond Blocks"
+        lore:
+          - "&7For your next big build!"
+      
+      - type: emerald_block
+        amount: 16
+        name: "&aEmerald Blocks"
+      
+      - type: quartz_block
+        amount: 64
+        name: "&fQuartz Blocks"
+      
+      - type: iron_block
+        amount: 32
+        name: "&7Iron Blocks"
+      
+      - type: gold_block
+        amount: 32
+        name: "&6Gold Blocks"
+      
+      - type: glowstone
+        amount: 64
+        name: "&eLighting"
+      
+      - type: glass_pane
+        amount: 64
+        name: "&fGlass Panes"
+    
+    message: "&a&l✓ &7You received the &eBuilder's Kit&7!"
+  
+  # Architect Kit (50 hours)
+  architect:
+    enabled: true
+    name: "&6Architect's Kit"
+    
+    items:
+      - type: netherite_block
+        amount: 4
+        name: "&8Netherite Blocks"
+        lore:
+          - "&7Premium building material!"
+      
+      - type: prismarine
+        amount: 64
+        name: "&bPrismarine"
+      
+      - type: nether_bricks
+        amount: 64
+        name: "&cNether Bricks"
+      
+      - type: sandstone
+        amount: 64
+        name: "&eSandstone"
+      
+      - type: dark_oak_planks
+        amount: 64
+        name: "&8Dark Oak Planks"
+      
+      - type: sea_lantern
+        amount: 32
+        name: "&bSea Lanterns"
+      
+      - type: end_rod
+        amount: 32
+        name: "&fEnd Rods"
+      
+      - type: shulker_box
+        amount: 1
+        color: purple
+        name: "&dArchitect's Storage"
+        lore:
+          - "&7Portable storage for your builds"
+    
+    message: "&a&l✓ &7You received the &6Architect's Kit&7!"
+  
+  # Master Builder Kit (200 hours)
+  master_builder:
+    enabled: true
+    name: "&b&lMaster Builder's Kit"
+    
+    items:
+      - type: beacon
+        amount: 1
+        name: "&bBeacon"
+        lore:
+          - "&7For your master builds!"
+      
+      - type: elytra
+        amount: 1
+        name: "&fElytra"
+        lore:
+          - "&7Fly in style!"
+        enchantments:
+          unbreaking: 3
+          mending: 1
+      
+      - type: shulker_box
+        amount: 3
+        color: purple
+        name: "&dMaster's Shulker Box"
+      
+      - type: diamond_block
+        amount: 64
+        name: "&bDiamond Blocks"
+      
+      - type: netherite_block
+        amount: 16
+        name: "&8Netherite Blocks"
+      
+      - type: enchanted_golden_apple
+        amount: 8
+        name: "&6God Apples"
+        lore:
+          - "&7Because you're a master!"
+    
+    message: "&a&l✓ &7You received the &b&lMaster Builder's Kit&7!"
+
+# Competition Participant Kit
+# Given when players join a build competition
+competition_kit:
+  enabled: true
+  name: "&6Competition Kit"
+  
+  items:
+    - type: oak_planks
+      amount: 64
+    - type: stone
+      amount: 64
+    - type: glass
+      amount: 64
+    - type: torch
+      amount: 64
+    - type: glowstone
+      amount: 32
+    - type: water_bucket
+      amount: 1
+    - type: lava_bucket
+      amount: 1
+  
+  give_on_plot_claim: true
+  message: "&a&l✓ &7Competition kit given! Good luck building!"
+
+# Weekly Kit (optional, for supporters)
+weekly_kit:
+  enabled: false  # Set to true if you want weekly kits
+  name: "&aWeekly Supporter Kit"
+  permission: "kits.weekly"
+  
+  items:
+    - type: diamond
+      amount: 16
+    - type: emerald
+      amount: 16
+    - type: gold_ingot
+      amount: 32
+  
+  cooldown: 168  # hours (1 week)
+  message: "&a&l✓ &7Weekly kit received! Come back next week!"
+
+# Kit Commands
+commands:
+  # /kit - List available kits
+  list:
+    enabled: true
+    command: "/kit"
+    permission: "kits.list"
+  
+  # /kit <name> - Claim a kit
+  claim:
+    enabled: true
+    permission: "kits.claim"
+  
+  # Admin: /kit give <player> <kit>
+  give:
+    enabled: true
+    permission: "kits.admin"
+
+# EssentialsX Integration
+# If using EssentialsX, these kits should be defined in kits.yml
+essentialsx:
+  enabled: true
+  use_essentials_kits: true
+
+# Customization Options
+customization:
+  # Play sound when receiving kit
+  play_sound: true
+  sound: "ENTITY_PLAYER_LEVELUP"
+  
+  # Show title when receiving kit
+  show_title: true
+  title: "&aKit Received!"
+  subtitle: "&7%kit_name%"
+  
+  # Hologram at spawn showing available kits
+  hologram:
+    enabled: false  # Requires hologram plugin
+    location: "spawn"
+    text:
+      - "&6&lStarter Kits"
+      - "&7First join: Starter Kit"
+      - "&7Rank up: Special kits!"
+
+# Notes
+# - Starter kit is given once per player (first join only)
+# - Rank kits are given automatically on rank-up
+# - Competition kit is given when claiming a competition plot
+# - All kits are EULA compliant (can be earned through gameplay)
+
+# TODO for server admins:
+# 1. Install EssentialsX or a kit plugin
+# 2. Configure kits in the plugin's config
+# 3. Test starter kit on first join
+# 4. Adjust item quantities based on server economy
+# 5. Set up automatic kit giving on rank-up
+# 6. Consider weekly supporter kits (EULA compliant)

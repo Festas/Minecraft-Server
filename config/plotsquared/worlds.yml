@@ -1,0 +1,112 @@
+# PlotSquared Worlds Configuration
+# Configuration for the competition world
+# See: https://intellectualsites.github.io/plotsquared-documentation/
+
+worlds:
+  # Main competition world
+  competition:
+    # World generator (PlotSquared)
+    generator:
+      type: PlotSquared
+      terrain: FLAT
+      
+      # Plot settings for this world
+      plot:
+        height: 256
+        size: 100
+        filling:
+          - stone
+          - dirt
+          - grass_block
+        floor:
+          - grass_block
+        
+      # Road configuration
+      road:
+        width: 7
+        height: 64
+        block: quartz_block
+        
+      # Wall configuration
+      wall:
+        block: stone_bricks
+        height: 64
+        filling: stone_bricks
+        
+    # World-specific settings
+    settings:
+      # Natural mob spawning
+      natural_mob_spawning: false
+      
+      # Animal spawning
+      animal_spawning: false
+      
+      # Spawn configuration
+      spawn:
+        default: true
+        custom: false
+        
+    # Flags specific to competition world
+    flags:
+      pvp: false
+      mob-spawning: false
+      explosion: false
+      block-ignition: false
+      fire-spread: false
+      leaf-decay: true
+      grass-growth: true
+      vine-growth: true
+      ice-melt: false
+      snow-melt: false
+      
+      # Time lock (noon for consistent building light)
+      time: 6000
+      
+      # Weather lock (clear)
+      weather: clear
+      
+      # Deny entry to non-plotowners (during voting period)
+      # deny-entry: false
+      
+    # Economy settings for this world
+    economy:
+      use: false
+      
+    # Claiming settings
+    claiming:
+      max-plots: 1
+      auto-merge: false
+      
+    # Permissions
+    permissions:
+      # Allow WorldEdit
+      worldedit: true
+
+  # Alternative: Monthly competition world (rotate monthly)
+  # competition_monthly:
+  #   generator:
+  #     type: PlotSquared
+  #     terrain: FLAT
+  #   # ... same settings as above
+
+  # Alternative: Team competition world (larger plots)
+  # competition_team:
+  #   generator:
+  #     type: PlotSquared
+  #   plot:
+  #     size: 150  # Larger for team builds
+  #   claiming:
+  #     max-plots: 1
+  #     plot-merge: true  # Allow teams to merge plots
+
+# World aliases (optional)
+aliases:
+  comp: competition
+  builds: competition
+
+# TODO: Customize world settings
+# 1. Create the competition world in your server
+# 2. Adjust plot size for different competition formats
+# 3. Configure flags based on competition rules
+# 4. Set up permissions for builders vs. spectators
+# 5. Consider separate worlds for different competition types

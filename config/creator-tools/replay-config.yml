@@ -1,0 +1,426 @@
+# AdvancedReplay Configuration for festas_builds
+# Record and replay gameplay for content creation
+# Note: This is a template - actual plugin config will be in plugins/AdvancedReplay/
+
+# Recording Settings
+recording:
+  # Enable recording system
+  enabled: true
+  
+  # Default recording quality
+  quality:
+    # TPS (ticks per second) to record at
+    # 20 = full speed, 10 = half speed but smaller files
+    tps: 20
+    
+    # Record player actions
+    players: true
+    
+    # Record entity movements
+    entities: true
+    
+    # Record block changes
+    blocks: true
+    
+    # Record chat messages
+    chat: true
+  
+  # Storage settings
+  storage:
+    # Where to save replay files
+    directory: "plugins/AdvancedReplay/replays/"
+    
+    # Max replay file size (MB)
+    max_file_size: 500
+    
+    # Auto-delete replays older than (days)
+    auto_delete_after: 30
+    
+    # Compress replay files
+    compress: true
+    compression_level: 5  # 1-9, higher = smaller but slower
+  
+  # Recording limits
+  limits:
+    # Maximum recording duration (minutes)
+    max_duration: 60
+    
+    # Warn at duration (minutes)
+    warn_at: 50
+    
+    # Max concurrent recordings per player
+    max_concurrent: 3
+    
+    # Max total recordings per player
+    max_stored: 10
+
+# Playback Settings
+playback:
+  # Enable playback system
+  enabled: true
+  
+  # Camera controls
+  camera:
+    # Smooth camera movement
+    smoothing: true
+    smoothing_factor: 0.8
+    
+    # Camera speed options
+    speeds:
+      slow: 0.5
+      normal: 1.0
+      fast: 2.0
+      very_fast: 5.0
+    
+    # Free camera mode (spectator-like)
+    free_cam: true
+    
+    # Follow player mode
+    follow_player: true
+    
+    # Orbit camera mode
+    orbit: true
+    orbit_distance: 5.0
+  
+  # Playback speed
+  speed:
+    # Available playback speeds
+    options: [0.25, 0.5, 1.0, 2.0, 4.0]
+    default: 1.0
+    
+    # Minimum speed
+    min: 0.1
+    
+    # Maximum speed
+    max: 10.0
+  
+  # Playback controls
+  controls:
+    # Pause/play
+    pause: true
+    
+    # Jump to time
+    seek: true
+    
+    # Frame-by-frame
+    frame_step: true
+    
+    # Loop replay
+    loop: true
+
+# Camera Paths
+camera_paths:
+  # Enable camera path system
+  enabled: true
+  
+  # Path settings
+  settings:
+    # Smooth paths with splines
+    smooth_paths: true
+    
+    # Interpolation method
+    interpolation: "cubic"  # linear, cubic, bezier
+    
+    # Path speed
+    default_speed: 1.0
+    
+    # Auto-rotate camera to look at target
+    auto_look_at: true
+  
+  # Keyframe system
+  keyframes:
+    # Max keyframes per path
+    max_keyframes: 50
+    
+    # Keyframe easing
+    easing: "ease-in-out"  # linear, ease-in, ease-out, ease-in-out
+
+# Recording Modes
+recording_modes:
+  # Manual recording (creator controls start/stop)
+  manual:
+    enabled: true
+    permission: "advancedreplay.record"
+    
+  # Auto-record (specific events)
+  auto:
+    enabled: false
+    
+    # Auto-record competition builds
+    competitions: false
+    
+    # Auto-record specific worlds
+    worlds: []
+    
+    # Auto-record in regions
+    regions: []
+  
+  # Server-wide recording (admin only)
+  server_wide:
+    enabled: true
+    permission: "advancedreplay.record.server"
+    max_duration: 120  # minutes
+
+# Export Settings
+export:
+  # Enable export to video
+  enabled: false  # Requires external software
+  
+  # Export formats
+  formats:
+    - mp4
+    - avi
+    - mov
+  
+  # Export quality
+  quality:
+    resolution: "1920x1080"
+    framerate: 60
+    bitrate: "8000k"
+  
+  # FFmpeg integration (if available)
+  ffmpeg:
+    enabled: false
+    path: "/usr/bin/ffmpeg"
+
+# Sharing Settings
+sharing:
+  # Enable replay sharing
+  enabled: true
+  
+  # Share permissions
+  permissions:
+    # Anyone can view shared replays
+    view_shared: "advancedreplay.view"
+    
+    # Only creator can edit
+    edit_own: "advancedreplay.edit.own"
+  
+  # Public replay library
+  public_library:
+    enabled: true
+    max_public_replays: 5  # per player
+  
+  # Export replay file
+  export_file:
+    enabled: true
+    permission: "advancedreplay.export"
+
+# UI Settings
+ui:
+  # Replay browser
+  browser:
+    # Sort replays by
+    sort_by: "date"  # date, name, duration, size
+    
+    # Items per page
+    per_page: 10
+    
+    # Show thumbnails
+    thumbnails: false
+  
+  # Timeline scrubber
+  timeline:
+    enabled: true
+    show_events: true  # Show markers for events
+    show_players: true  # Show when players appear/disappear
+
+# Performance
+performance:
+  # Async recording (better performance)
+  async_recording: true
+  
+  # Buffer size (MB)
+  buffer_size: 100
+  
+  # Save interval (seconds)
+  save_interval: 60
+  
+  # Render distance during playback
+  render_distance: 8
+
+# Commands
+commands:
+  # Start recording
+  record:
+    command: "/replay record"
+    aliases: ["/rec"]
+    permission: "advancedreplay.record"
+  
+  # Stop recording
+  stop:
+    command: "/replay stop"
+    permission: "advancedreplay.record"
+  
+  # Play replay
+  play:
+    command: "/replay play <name>"
+    permission: "advancedreplay.play"
+  
+  # Pause playback
+  pause:
+    command: "/replay pause"
+    permission: "advancedreplay.play"
+  
+  # List replays
+  list:
+    command: "/replay list"
+    permission: "advancedreplay.list"
+  
+  # Delete replay
+  delete:
+    command: "/replay delete <name>"
+    permission: "advancedreplay.delete.own"
+  
+  # Camera controls
+  camera:
+    command: "/replay camera <mode>"
+    permission: "advancedreplay.camera"
+  
+  # Create camera path
+  path:
+    command: "/replay path <create|add|play>"
+    permission: "advancedreplay.path"
+
+# Events to Record
+events:
+  # Player actions
+  player_events:
+    - join
+    - quit
+    - death
+    - respawn
+    - teleport
+    - command
+  
+  # Block events
+  block_events:
+    - place
+    - break
+    - interact
+  
+  # Entity events
+  entity_events:
+    - spawn
+    - death
+    - interact
+
+# Notifications
+notifications:
+  # Notify when recording starts
+  recording_start:
+    enabled: true
+    message: "&a&l✓ Recording started!"
+    sound: "BLOCK_NOTE_BLOCK_PLING"
+  
+  # Notify when recording stops
+  recording_stop:
+    enabled: true
+    message: "&c&l✓ Recording stopped!"
+    duration_message: "&7Duration: &e%duration%"
+    sound: "BLOCK_NOTE_BLOCK_PLING"
+  
+  # Warn when nearing max duration
+  duration_warning:
+    enabled: true
+    message: "&e⚠ Recording will stop in %time%!"
+  
+  # Warn when storage is low
+  storage_warning:
+    enabled: true
+    message: "&e⚠ Replay storage is %percent%% full!"
+
+# Integration
+integration:
+  # WorldEdit/FAWE
+  worldedit:
+    enabled: false
+    record_edits: false
+  
+  # Citizens NPCs
+  citizens:
+    enabled: true
+    record_npcs: true
+
+# Creator Features
+creator_features:
+  # Quick record hotkey
+  quick_record:
+    enabled: true
+    item: "clock"
+    name: "&6Quick Record"
+    lore:
+      - "&7Right-click to start/stop recording"
+  
+  # Recording presets
+  presets:
+    # Cinematic preset
+    cinematic:
+      quality: high
+      tps: 20
+      entities: true
+      smooth_cam: true
+      
+    # Fast preset (smaller files)
+    fast:
+      quality: medium
+      tps: 10
+      entities: false
+      compress: true
+    
+    # Timelapse preset
+    timelapse:
+      quality: medium
+      tps: 5
+      entities: false
+      compress: true
+
+# Best Practices for Creators
+tips:
+  - "Record in chunks - easier to manage than one long recording"
+  - "Use camera paths for smooth cinematic shots"
+  - "Combine with client-side Replay Mod for best results"
+  - "Export replays for editing in video software"
+  - "Clean up old replays to save storage space"
+  - "Use spectator mode during playback for free camera"
+
+# LuckPerms Setup
+luckperms_commands:
+  - "lp group creator permission set advancedreplay.record true"
+  - "lp group creator permission set advancedreplay.play true"
+  - "lp group creator permission set advancedreplay.camera true"
+  - "lp group creator permission set advancedreplay.path true"
+  - "lp group creator permission set advancedreplay.export true"
+
+# Use Cases
+use_cases:
+  - "Record competition builds for showcase videos"
+  - "Create cinematic server tours"
+  - "Document building process for timelapses"
+  - "Record events and ceremonies"
+  - "Capture memorable moments"
+  - "Create promotional content for the server"
+
+# Alternative: Client-Side Replay Mod
+# For best quality, recommend creators use Replay Mod client-side:
+client_side_alternative:
+  name: "Replay Mod"
+  url: "https://www.replaymod.com/"
+  advantages:
+    - "Higher quality recordings"
+    - "More camera control options"
+    - "Built-in video rendering"
+    - "Free camera in singleplayer-like environment"
+    - "No server load"
+  
+  note: "This server-side plugin is for convenience, but Replay Mod provides better quality for serious content creation"
+
+# TODO for server admins:
+# 1. Download AdvancedReplay from SpigotMC (manual download)
+# 2. Install plugin and restart server
+# 3. Configure recording quality based on server resources
+# 4. Grant permissions to creator rank
+# 5. Test recording and playback
+# 6. Set up auto-cleanup for old replays
+# 7. Document replay system for creators
+# 8. Consider recommending Replay Mod for professional content

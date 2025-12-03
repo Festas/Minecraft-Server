@@ -1,0 +1,367 @@
+# Rank Progression & Cosmetic Rewards System
+# festas_builds community server ranks based on playtime and achievements
+
+# Rank Structure
+ranks:
+  # Rank 1: Newcomer (Starting rank)
+  newcomer:
+    display_name: "&7Newcomer"
+    prefix: "&7[Newcomer]&r"
+    playtime_required: 0  # Hours
+    requirements:
+      - "Join the server"
+    
+    permissions:
+      # Basic gameplay
+      - "essentials.home"
+      - "essentials.sethome"
+      - "essentials.spawn"
+      - "essentials.tpa"
+      - "essentials.tpaccept"
+      - "essentials.back"
+      - "griefprevention.createclaims"
+      
+      # Cosmetics unlocked
+      - "cosmetics.hat.builder_helmet"
+      - "cosmetics.hat.party_hat"
+      - "cosmetics.hat.chef_hat"
+      - "cosmetics.backpack.leather"
+      - "cosmetics.balloon.red"
+      - "cosmetics.balloon.blue"
+      - "playerparticles.effect.flame"
+      - "playerparticles.effect.heart"
+      - "playerparticles.effect.note"
+    
+    cosmetics_unlocked:
+      - "Basic particle effects (flame, heart, notes)"
+      - "Basic hats (builder helmet, party hat)"
+      - "Leather backpack"
+      - "Basic balloons"
+    
+    features:
+      max_homes: 1
+      max_claims: 5
+      claim_blocks: 100
+    
+    broadcast_on_rankup: true
+    rankup_message: "&a{player} has joined festas_builds as a Newcomer!"
+
+  # Rank 2: Builder (10 hours)
+  builder:
+    display_name: "&eBuilder"
+    prefix: "&e[Builder]&r"
+    playtime_required: 10  # Hours
+    requirements:
+      - "10 hours playtime"
+      - "Build at least one claim"
+    
+    permissions:
+      # Inherit from newcomer
+      - "group.newcomer"
+      
+      # Additional permissions
+      - "essentials.warp"
+      - "worldedit.wand"
+      - "worldedit.selection.*"
+      
+      # New cosmetics
+      - "cosmetics.hat.crown_basic"
+      - "cosmetics.hat.construction"
+      - "cosmetics.backpack.colorful"
+      - "playerparticles.effect.villager_happy"
+      - "playerparticles.effect.enchantment_table"
+      - "playerparticles.effect.drip_water"
+    
+    cosmetics_unlocked:
+      - "Basic crown"
+      - "Construction helmet"
+      - "Happy particles & enchanting aura"
+      - "Colorful backpack"
+      - "Water drop effects"
+    
+    features:
+      max_homes: 3
+      max_claims: 10
+      claim_blocks: 500
+    
+    broadcast_on_rankup: true
+    rankup_message: "&e{player} has been promoted to Builder! Keep building!"
+
+  # Rank 3: Architect (50 hours)
+  architect:
+    display_name: "&6Architect"
+    prefix: "&6[Architect]&r"
+    playtime_required: 50  # Hours
+    requirements:
+      - "50 hours playtime"
+      - "Have at least 3 active claims"
+      - "Complete at least 1 build competition"
+    
+    permissions:
+      # Inherit from builder
+      - "group.builder"
+      
+      # WorldEdit capabilities
+      - "worldedit.clipboard.*"
+      - "worldedit.generation.*"
+      
+      # Advanced cosmetics
+      - "cosmetics.hat.crown_silver"
+      - "cosmetics.hat.tophat"
+      - "cosmetics.hat.wizard"
+      - "cosmetics.backpack.diamond"
+      - "cosmetics.balloon.rainbow"
+      - "playerparticles.effect.end_rod"
+      - "playerparticles.effect.firework"
+      - "playerparticles.effect.dragon_breath"
+      - "playerparticles.effect.totem_of_undying"
+      - "playerparticles.combo.rainbow"
+    
+    cosmetics_unlocked:
+      - "Silver crown & elegant hats"
+      - "Rainbow balloon bundle"
+      - "Advanced particle effects (dragon breath, fireworks)"
+      - "Rainbow trail particle combo"
+      - "Diamond backpack"
+    
+    features:
+      max_homes: 5
+      max_claims: 20
+      claim_blocks: 2000
+      worldedit_max_blocks: 50000
+    
+    broadcast_on_rankup: true
+    rankup_message: "&6{player} has ascended to Architect! A true master of building!"
+
+  # Rank 4: Master Builder (200 hours)
+  master_builder:
+    display_name: "&b&lMaster Builder"
+    prefix: "&b&l[Master]&r"
+    playtime_required: 200  # Hours
+    requirements:
+      - "200 hours playtime"
+      - "Win or place in top 3 of a build competition"
+      - "Help 5+ new players"
+    
+    permissions:
+      # Inherit from architect
+      - "group.architect"
+      
+      # Advanced WorldEdit
+      - "worldedit.schematic.*"
+      - "worldedit.history.*"
+      
+      # Premium cosmetics
+      - "cosmetics.hat.crown_gold"
+      - "cosmetics.hat.halo"
+      - "cosmetics.backpack.wings"
+      - "playerparticles.effect.soul_fire_flame"
+      - "playerparticles.effect.cherry_leaves"
+      - "playerparticles.effect.sculk_soul"
+      - "playerparticles.combo.builder"
+    
+    cosmetics_unlocked:
+      - "Golden Master's Crown"
+      - "Angelic halo"
+      - "Angel wings backpack (cosmetic)"
+      - "Soul fire & cherry blossom particles"
+      - "Master Builder Aura combo"
+    
+    features:
+      max_homes: 10
+      max_claims: 50
+      claim_blocks: 10000
+      worldedit_max_blocks: 500000
+      priority_join: true
+    
+    broadcast_on_rankup: true
+    rankup_message: "&b&l✦ {player} has achieved MASTER BUILDER status! ✦"
+
+  # Special Rank: Legend (Competition winner)
+  legend:
+    display_name: "&d&lLegend"
+    prefix: "&d&l[LEGEND]&r"
+    requirements:
+      - "Win a major build competition"
+      - "OR: 500+ hours playtime"
+      - "Nominated by community/staff"
+    
+    permissions:
+      # Inherit from master_builder
+      - "group.master_builder"
+      
+      # Exclusive cosmetics
+      - "cosmetics.hat.winner"
+      - "cosmetics.hat.laurel"
+      - "playerparticles.effect.electric_spark"
+      - "playerparticles.effect.glow"
+      - "playerparticles.effect.trial_spawner_detection_ominous"
+    
+    cosmetics_unlocked:
+      - "Competition Winner Crown (diamond)"
+      - "Laurel wreath"
+      - "Winner's Spark particles"
+      - "Champion glow effect"
+      - "Legendary Aura (exclusive)"
+    
+    features:
+      max_homes: 20
+      max_claims: 100
+      claim_blocks: 50000
+      worldedit_max_blocks: 1000000
+      priority_join: true
+      chat_color: true
+    
+    broadcast_on_rankup: true
+    rankup_message: "&d&l✦✦✦ {player} is now a LEGEND! ✦✦✦"
+
+# Special Roles (not automatic, granted by staff)
+special_roles:
+  # Content creator role
+  creator:
+    display_name: "&6Creator"
+    prefix: "&6[Creator]&r"
+    requirements:
+      - "festas_builds content creator"
+      - "Applied and approved by staff"
+    
+    permissions:
+      - "group.architect"  # Start at architect level
+      - "supervanish.vanish"
+      - "supervanish.silentjoin"
+      - "supervanish.silentquit"
+      - "worldedit.*"
+      - "minecraft.command.gamemode"
+      - "minecraft.command.time"
+      - "minecraft.command.weather"
+      - "cosmetics.festas.creator"
+      - "cosmetics.festas.cape"
+    
+    cosmetics_unlocked:
+      - "Exclusive festas_builds Creator Crown"
+      - "Creator cape"
+      - "All particle effects"
+    
+    features:
+      filming_tools: true
+      vanish_mode: true
+      all_cosmetics: true
+
+  # Supporter role (optional, for donations)
+  supporter:
+    display_name: "&aSupporter"
+    prefix: "&a[Supporter]&r"
+    requirements:
+      - "Support festas_builds server"
+      - "Monthly or one-time donation"
+    
+    permissions:
+      # Cosmetic only - EULA compliant
+      - "cosmetics.festas.cape"
+      - "playerparticles.combo.festas"
+      - "chat.color"  # Color codes in chat
+    
+    cosmetics_unlocked:
+      - "Festas_builds supporter cape"
+      - "Special festas_builds particle combo"
+      - "Chat color codes"
+    
+    features:
+      # NO GAMEPLAY ADVANTAGES (EULA)
+      priority_queue: true  # When server is full
+      colored_chat: true
+      supporter_prefix: true
+    
+    eula_compliant: true
+    notes: "Supporters get cosmetic perks only. No gameplay advantages!"
+
+# Rank-up System
+rankup:
+  # Automatic or manual
+  automatic: true
+  
+  # Check interval (minutes)
+  check_interval: 30
+  
+  # Announce rank-ups globally
+  broadcast: true
+  
+  # Give rewards on rank-up
+  rewards:
+    builder:
+      - "Give starter builder kit"
+      - "Broadcast achievement"
+    architect:
+      - "Give advanced building kit"
+      - "Grant competition entry badge"
+    master_builder:
+      - "Give master builder kit"
+      - "Feature on Discord"
+    legend:
+      - "Give legendary kit"
+      - "Add to hall of fame"
+
+# LuckPerms Integration Commands
+# Use these to set up ranks in LuckPerms:
+
+luckperms_setup:
+  commands:
+    # Create groups
+    - "lp creategroup newcomer"
+    - "lp creategroup builder"
+    - "lp creategroup architect"
+    - "lp creategroup master_builder"
+    - "lp creategroup legend"
+    - "lp creategroup creator"
+    - "lp creategroup supporter"
+    
+    # Set inheritance
+    - "lp group builder parent set newcomer"
+    - "lp group architect parent set builder"
+    - "lp group master_builder parent set architect"
+    - "lp group legend parent set master_builder"
+    
+    # Set prefixes
+    - "lp group newcomer meta setprefix '&7[Newcomer] '"
+    - "lp group builder meta setprefix '&e[Builder] '"
+    - "lp group architect meta setprefix '&6[Architect] '"
+    - "lp group master_builder meta setprefix '&b&l[Master] '"
+    - "lp group legend meta setprefix '&d&l[LEGEND] '"
+    - "lp group creator meta setprefix '&6[Creator] '"
+    - "lp group supporter meta setprefix '&a[Supporter] '"
+    
+    # Grant permissions (example for builder)
+    - "lp group builder permission set cosmetics.hat.crown_basic true"
+    - "lp group builder permission set playerparticles.effect.villager_happy true"
+    # ... repeat for all permissions listed above
+
+# Playtime Tracking
+# Use a plugin like PlayTime or Statistics to track player hours
+# Or use: /lp user <player> permission set group.builder true
+
+# Competition Winner Rewards
+competition_rewards:
+  first_place:
+    - rank: legend (if not already)
+    - cosmetic: winner_crown
+    - particle: electric_spark
+    - announcement: "Server-wide broadcast"
+    - feature: "Featured on Discord and website"
+  
+  second_place:
+    - cosmetic: crown_silver
+    - particle: firework
+    - announcement: "Server-wide broadcast"
+  
+  third_place:
+    - cosmetic: crown_basic
+    - particle: totem_of_undying
+
+# TODO for server admins:
+# 1. Install LuckPerms and set up groups with commands above
+# 2. Install a playtime tracking plugin
+# 3. Configure auto-rank-up based on playtime
+# 4. Test rank progression with a test player
+# 5. Ensure all cosmetic permissions are properly assigned
+# 6. Set up competition winner rewards
+# 7. Document the rank system for players

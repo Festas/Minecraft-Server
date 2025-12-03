@@ -1,0 +1,398 @@
+# Interactive Tutorial System for festas_builds
+# 5-step tutorial to help new players get started
+
+# Tutorial Settings
+tutorial:
+  enabled: true
+  
+  # Auto-start tutorial on first join
+  auto_start: true
+  
+  # Tutorial command
+  command: "/tutorial"
+  aliases: ["/guide", "/start"]
+  
+  # Skip permission (for returning players)
+  skip_permission: "tutorial.skip"
+  
+  # Reward for completing tutorial
+  completion_reward:
+    enabled: true
+    items:
+      - diamond: 5
+      - emerald: 3
+    commands:
+      - "lp user %player% permission set tutorial.completed true"
+    message: "&a&l✓ Tutorial completed! You're ready to build!"
+
+# Tutorial Steps
+steps:
+  # Step 1: Welcome
+  step_1:
+    id: "welcome"
+    title: "&6&lWelcome to festas_builds!"
+    description: "Learn the basics of our community server"
+    
+    location:
+      world: "world"
+      x: 0
+      y: 65
+      z: 0
+      # If you have a tutorial area, set coordinates here
+    
+    # NPC that greets the player
+    npc:
+      enabled: true
+      name: "&6Tutorial Guide"
+      skin: "festas_builds"  # Player name for skin
+      messages:
+        - "&eHello, %player%!"
+        - "&7Welcome to festas_builds community server."
+        - "&7I'll help you get started with a quick tutorial."
+        - ""
+        - "&aClick me or type &e/tutorial next &ato continue!"
+    
+    # Messages shown to player
+    messages:
+      - ""
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - "&6&l   WELCOME TO FESTAS_BUILDS"
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - ""
+      - "&7This server is a creative building community"
+      - "&7for festas_builds fans and builders!"
+      - ""
+      - "&eFeatures:"
+      - "&7• Build and protect your creations"
+      - "&7• Weekly building competitions"
+      - "&7• Unlock cosmetics and ranks"
+      - "&7• Active Discord community"
+      - ""
+      - "&aType &e/tutorial next &ato continue!"
+      - ""
+    
+    # Action button/item
+    action_item:
+      type: emerald
+      name: "&aContinue Tutorial"
+      lore:
+        - "&7Click to continue"
+    
+    # Next step trigger
+    next_trigger:
+      type: "command"  # or "interact_npc", "click_item", "location"
+      value: "/tutorial next"
+  
+  # Step 2: Claiming Land
+  step_2:
+    id: "claiming"
+    title: "&6&lProtecting Your Builds"
+    description: "Learn how to claim land and prevent griefing"
+    
+    # Teleport to claiming tutorial area
+    location:
+      world: "world"
+      x: 10
+      y: 65
+      z: 10
+    
+    npc:
+      enabled: true
+      name: "&6Land Claims Guide"
+      messages:
+        - "&eProtecting your builds is important!"
+        - "&7Use a &6Golden Shovel &7to claim land."
+        - "&7Right-click two corners to create a claim."
+        - ""
+        - "&aTry it now with the shovel in your inventory!"
+    
+    messages:
+      - ""
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - "&6&l   CLAIMING LAND"
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - ""
+      - "&7To protect your builds from griefing:"
+      - ""
+      - "&e1. &7Hold a &6Golden Shovel"
+      - "&e2. &7Right-click one corner of your area"
+      - "&e3. &7Right-click the opposite corner"
+      - "&e4. &7Your claim is created!"
+      - ""
+      - "&aUseful commands:"
+      - "&e/trust <player> &7- Allow a friend to build"
+      - "&e/untrust <player> &7- Remove access"
+      - "&e/abandonclaim &7- Delete current claim"
+      - "&e/claimslist &7- See all your claims"
+      - ""
+      - "&7You've been given a golden shovel!"
+      - "&aTry creating a claim now!"
+      - ""
+    
+    # Give player golden shovel
+    give_items:
+      - type: golden_shovel
+        amount: 1
+        name: "&6Claiming Tool"
+        lore:
+          - "&7Right-click corners to claim"
+    
+    # Demonstrate claiming (if in tutorial world)
+    demonstration:
+      enabled: true
+      type: "show_claim"
+      area:
+        corner1: {x: 5, y: 64, z: 5}
+        corner2: {x: 15, y: 70, z: 15}
+    
+    # Complete when player makes a claim
+    next_trigger:
+      type: "event"
+      value: "player_claim_land"
+      alternative_command: "/tutorial next"
+  
+  # Step 3: Build Competitions
+  step_3:
+    id: "competitions"
+    title: "&6&lBuild Competitions"
+    description: "Join weekly building competitions!"
+    
+    location:
+      world: "world"
+      x: 20
+      y: 65
+      z: 10
+    
+    npc:
+      enabled: true
+      name: "&6Competition Host"
+      messages:
+        - "&eWe run weekly building competitions!"
+        - "&7Compete with other builders for prizes."
+        - "&7Win exclusive cosmetics and ranks!"
+        - ""
+        - "&aCheck &e/plots &awhen competitions start!"
+    
+    messages:
+      - ""
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - "&6&l   BUILD COMPETITIONS"
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - ""
+      - "&7Weekly themed building competitions!"
+      - ""
+      - "&eHow it works:"
+      - "&71. Competition theme is announced"
+      - "&72. Claim a plot with &e/plots auto"
+      - "&73. Build according to the theme"
+      - "&74. Voting period begins"
+      - "&75. Winners get exclusive rewards!"
+      - ""
+      - "&aRewards:"
+      - "&7• Exclusive cosmetics"
+      - "&7• Special ranks (Legend status!)"
+      - "&7• Featured on Discord"
+      - "&7• Winner's particle effects"
+      - ""
+      - "&eCommands:"
+      - "&e/plots auto &7- Claim competition plot"
+      - "&e/plots visit <player> &7- Visit builds"
+      - "&e/plot rate <1-10> &7- Vote on builds"
+      - ""
+    
+    # Show example competition plot (if available)
+    demonstration:
+      enabled: false
+    
+    next_trigger:
+      type: "command"
+      value: "/tutorial next"
+  
+  # Step 4: Community Features
+  step_4:
+    id: "community"
+    title: "&6&lCommunity Features"
+    description: "Discord, cosmetics, and more!"
+    
+    location:
+      world: "world"
+      x: 0
+      y: 65
+      z: 20
+    
+    npc:
+      enabled: true
+      name: "&6Community Manager"
+      messages:
+        - "&eJoin our Discord community!"
+        - "&7Chat with other builders and get updates."
+        - "&7Unlock cosmetics by playing and ranking up!"
+        - ""
+        - "&aType &e/discord &afor the invite link!"
+    
+    messages:
+      - ""
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - "&6&l   COMMUNITY FEATURES"
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - ""
+      - "&eDiscord Integration:"
+      - "&7• Server chat bridges to Discord"
+      - "&7• Get announcements and updates"
+      - "&7• Share your builds"
+      - "&7• Connect with the community"
+      - "&aJoin: &e/discord"
+      - ""
+      - "&eCosmetics System:"
+      - "&7• Unlock hats, particles, and more"
+      - "&7• Rank up through playtime"
+      - "&7• Win cosmetics in competitions"
+      - "&aView: &e/cosmetics &7and &e/pp"
+      - ""
+      - "&eRank Progression:"
+      - "&7Newcomer → Builder → Architect → Master Builder → Legend"
+      - "&7Each rank unlocks new cosmetics and perks!"
+      - ""
+      - "&eUseful Commands:"
+      - "&e/discord &7- Discord invite link"
+      - "&e/cosmetics &7- Open cosmetics menu"
+      - "&e/pp &7- Particle effects"
+      - "&e/rules &7- Server rules"
+      - "&e/help &7- Full command list"
+      - ""
+    
+    next_trigger:
+      type: "command"
+      value: "/tutorial next"
+  
+  # Step 5: Start Building!
+  step_5:
+    id: "complete"
+    title: "&6&lStart Building!"
+    description: "You're ready to go!"
+    
+    # Teleport to spawn
+    location:
+      world: "world"
+      x: 0
+      y: 65
+      z: 0
+      teleport_to_spawn: true
+    
+    npc:
+      enabled: true
+      name: "&6festas_builds"
+      messages:
+        - "&eTutorial complete!"
+        - "&7You're now ready to start building."
+        - "&7Remember to claim your land and have fun!"
+        - ""
+        - "&aGood luck, and welcome to the community!"
+    
+    messages:
+      - ""
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - "&6&l   TUTORIAL COMPLETE!"
+      - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+      - ""
+      - "&aYou're ready to start building!"
+      - ""
+      - "&eQuick recap:"
+      - "&7✓ Claim land with a golden shovel"
+      - "&7✓ Join competitions with &e/plots auto"
+      - "&7✓ Unlock cosmetics by playing"
+      - "&7✓ Join Discord: &e/discord"
+      - "&7✓ Be respectful and have fun!"
+      - ""
+      - "&eUseful Starting Commands:"
+      - "&e/sethome &7- Set your home location"
+      - "&e/home &7- Return home"
+      - "&e/spawn &7- Return to spawn"
+      - "&e/tpa <player> &7- Teleport to player"
+      - "&e/claim &7- Start claiming land"
+      - ""
+      - "&6&lHappy building!"
+      - ""
+    
+    # Final reward
+    reward:
+      enabled: true
+      items:
+        - type: diamond
+          amount: 5
+        - type: emerald
+          amount: 3
+        - type: experience_bottle
+          amount: 10
+      title:
+        title: "&a&lTutorial Complete!"
+        subtitle: "&7You earned a reward!"
+    
+    # Mark tutorial as completed
+    completion:
+      permission: "tutorial.completed"
+      broadcast: "&e%player% &7completed the tutorial! Welcome to festas_builds!"
+      
+    # Teleport to spawn
+    actions:
+      - "teleport_spawn"
+      - "give_completion_reward"
+      - "mark_completed"
+
+# Tutorial NPCs (requires Citizens plugin)
+npcs:
+  enabled: true
+  
+  # Main tutorial NPC at spawn
+  spawn_npc:
+    enabled: true
+    name: "&6Tutorial Guide"
+    location:
+      world: "world"
+      x: 0
+      y: 65
+      z: 5
+    skin: "festas_builds"
+    messages:
+      - "&eNeed help getting started?"
+      - "&aClick me or type &e/tutorial &ato start!"
+    interact_command: "/tutorial start"
+
+# Skip Tutorial
+skip:
+  enabled: true
+  command: "/tutorial skip"
+  permission: "tutorial.skip"
+  confirmation_required: true
+  message: "&cAre you sure you want to skip the tutorial? Type &e/tutorial skip confirm"
+
+# Tutorial World (optional)
+# Create a separate tutorial world for demonstrations
+tutorial_world:
+  enabled: false
+  world_name: "tutorial"
+  reset_on_complete: true
+  protect_blocks: true
+
+# Progress Tracking
+progress:
+  enabled: true
+  save_progress: true
+  show_actionbar: true
+  actionbar_format: "&eTutorial: &f%step%/5 &7- &a%step_name%"
+
+# Rewards
+rewards:
+  diamonds: 5
+  emeralds: 3
+  experience_levels: 5
+  custom_items: []
+
+# TODO for server admins:
+# 1. Install Citizens plugin for NPCs
+# 2. Create tutorial area at spawn or dedicated world
+# 3. Place NPCs at specified locations
+# 4. Test tutorial flow from start to finish
+# 5. Adjust teleport coordinates to match your spawn
+# 6. Customize NPC skins (use player names or texture codes)
+# 7. Set up completion rewards in LuckPerms

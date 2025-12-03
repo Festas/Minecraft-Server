@@ -1,0 +1,201 @@
+# PlayerParticles Configuration for festas_builds
+# Cosmetic particle effects that players can unlock
+# See: https://github.com/Esophose/PlayerParticles
+
+# Global settings
+settings:
+  # Enable particle effects
+  enabled: true
+  
+  # Max particles per player
+  max-particles-per-player: 3
+  
+  # Particle update interval (ticks)
+  # Lower = smoother but more server load
+  update-interval: 5
+  
+  # Allow particles in all worlds
+  disabled-worlds: []
+  
+  # Particle visibility distance
+  visibility-distance: 32
+
+# Particle effects available on festas_builds
+# Players can unlock these through ranks, playtime, or competitions
+
+effects:
+  # Basic effects - Available to all players
+  basic:
+    - effect: flame
+      name: "Flame Trail"
+      permission: "playerparticles.effect.flame"
+      description: "Leave a trail of flames behind you"
+      unlock: "default"
+      
+    - effect: heart
+      name: "Love Aura"
+      permission: "playerparticles.effect.heart"
+      description: "Hearts floating around you"
+      unlock: "default"
+      
+    - effect: note
+      name: "Music Notes"
+      permission: "playerparticles.effect.note"
+      description: "Musical notes appear above your head"
+      unlock: "default"
+
+  # Builder rank effects - 10+ hours playtime
+  builder:
+    - effect: villager_happy
+      name: "Happy Particles"
+      permission: "playerparticles.effect.villager_happy"
+      description: "Green sparkles showing your building joy"
+      unlock: "builder_rank"
+      
+    - effect: enchantment_table
+      name: "Enchanting Aura"
+      permission: "playerparticles.effect.enchantment_table"
+      description: "Mystical symbols swirl around you"
+      unlock: "builder_rank"
+      
+    - effect: drip_water
+      name: "Water Drops"
+      permission: "playerparticles.effect.drip_water"
+      description: "Refreshing water droplets"
+      unlock: "builder_rank"
+
+  # Architect rank effects - 50+ hours playtime
+  architect:
+    - effect: end_rod
+      name: "Beam of Light"
+      permission: "playerparticles.effect.end_rod"
+      description: "Bright light beam particles"
+      unlock: "architect_rank"
+      
+    - effect: firework
+      name: "Celebration"
+      permission: "playerparticles.effect.firework"
+      description: "Colorful firework bursts"
+      unlock: "architect_rank"
+      
+    - effect: dragon_breath
+      name: "Dragon Aura"
+      permission: "playerparticles.effect.dragon_breath"
+      description: "Purple dragon breath effect"
+      unlock: "architect_rank"
+      
+    - effect: totem_of_undying
+      name: "Totem Blessing"
+      permission: "playerparticles.effect.totem_of_undying"
+      description: "Golden totem particles"
+      unlock: "architect_rank"
+
+  # Master Builder rank effects - 200+ hours playtime
+  master_builder:
+    - effect: soul_fire_flame
+      name: "Soul Fire"
+      permission: "playerparticles.effect.soul_fire_flame"
+      description: "Blue soul fire trail"
+      unlock: "master_builder_rank"
+      
+    - effect: cherry_leaves
+      name: "Cherry Blossom"
+      permission: "playerparticles.effect.cherry_leaves"
+      description: "Pink cherry blossom petals"
+      unlock: "master_builder_rank"
+      
+    - effect: sculk_soul
+      name: "Sculk Energy"
+      permission: "playerparticles.effect.sculk_soul"
+      description: "Mysterious sculk particles"
+      unlock: "master_builder_rank"
+
+  # Competition winner effects - Special rewards
+  competition_winners:
+    - effect: electric_spark
+      name: "Winner's Spark"
+      permission: "playerparticles.effect.electric_spark"
+      description: "Electric sparks of victory"
+      unlock: "competition_winner"
+      
+    - effect: glow
+      name: "Champion Glow"
+      permission: "playerparticles.effect.glow"
+      description: "Radiant golden glow"
+      unlock: "competition_winner"
+      
+    - effect: trial_spawner_detection_ominous
+      name: "Legendary Aura"
+      permission: "playerparticles.effect.trial_spawner_detection_ominous"
+      description: "Rare ominous effect for legends only"
+      unlock: "legend_rank"
+
+# Festas_builds custom particle combinations
+# These are pre-configured combos players can select
+
+custom_combos:
+  rainbow_trail:
+    name: "Rainbow Trail"
+    particles:
+      - redstone (red)
+      - redstone (orange)
+      - redstone (yellow)
+      - redstone (green)
+      - redstone (blue)
+      - redstone (purple)
+    permission: "playerparticles.combo.rainbow"
+    unlock: "architect_rank"
+    
+  builder_aura:
+    name: "Master Builder Aura"
+    particles:
+      - enchantment_table
+      - end_rod
+      - villager_happy
+    permission: "playerparticles.combo.builder"
+    unlock: "master_builder_rank"
+    
+  festas_special:
+    name: "festas_builds Special"
+    particles:
+      - flame (gold themed)
+      - note (musical)
+      - heart
+    permission: "playerparticles.combo.festas"
+    unlock: "supporter"
+    description: "Exclusive to festas_builds supporters"
+
+# Styles - How particles are displayed
+styles:
+  - trail: "Follows you as you move"
+  - halo: "Circle above your head"
+  - orbit: "Particles orbit around you"
+  - wings: "Particle wings on your back"
+  - feet: "Particles at your feet"
+  - point: "Static point where you stand"
+
+# Commands
+# /pp - Main particle menu
+# /pp list - List available effects
+# /pp add <effect> <style> - Add a particle effect
+# /pp remove <id> - Remove a particle effect
+# /pp reset - Remove all your particles
+# /pp info - Show your current particles
+
+# Integration with LuckPerms
+# Grant permissions based on ranks:
+# lp group builder permission set playerparticles.effect.* true
+# lp group architect permission set playerparticles.combo.* true
+
+# EULA Compliance
+# ✅ Particles are purely cosmetic
+# ✅ No gameplay advantage
+# ✅ Can be given as rewards or unlocked through playtime
+# ✅ Safe for monetization as supporter perks
+
+# TODO for server admins:
+# 1. Install PlayerParticles plugin
+# 2. Set up LuckPerms groups (newcomer, builder, architect, master_builder)
+# 3. Assign permissions based on the unlock tiers above
+# 4. Test particle effects in-game
+# 5. Adjust max-particles-per-player based on server performance
