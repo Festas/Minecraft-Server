@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   minecraft:
     # Use the itzg/minecraft-server image - a production-ready Minecraft server container
@@ -90,6 +88,7 @@ services:
       - ./config:/data/plugins:ro
     
     # Health check to ensure the server is running properly
+    # The mc-health command is provided by the itzg/minecraft-server image
     healthcheck:
       test: mc-health
       interval: 30s
