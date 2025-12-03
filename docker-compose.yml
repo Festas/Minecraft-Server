@@ -1,0 +1,148 @@
+services:
+  minecraft:
+    # Use the itzg/minecraft-server image - a production-ready Minecraft server container
+    # Documentation: https://docker-minecraft-server.readthedocs.io/
+    image: itzg/minecraft-server:latest
+    
+    # Container name for easy reference
+    container_name: minecraft-server
+    
+    # Automatically restart the container unless explicitly stopped
+    restart: unless-stopped
+    
+    # Expose Minecraft server ports
+    ports:
+      # Java Edition port
+      - "25565:25565"
+      # Bedrock Edition port (if using Geyser plugin)
+      - "19132:19132/udp"
+    
+    # Environment variables for server configuration
+    environment:
+      # Accept the Minecraft EULA (required to run the server)
+      # By setting this to TRUE, you agree to https://account.mojang.com/documents/minecraft_eula
+      EULA: "TRUE"
+      
+      # Server type - using Paper for better performance
+      TYPE: "PAPER"
+      
+      # Minecraft version (use "LATEST" or specify a version like "1.20.4")
+      VERSION: "1.20.4"
+      
+      # Memory settings for the Java server
+      # Adjust these based on your system resources
+      MEMORY: "4G"
+      INIT_MEMORY: "2G"
+      
+      # Server properties
+      # MOTD (Message of the Day) shown in server list
+      MOTD: "§6festas_builds §b✦ §aCommunity Server"
+      
+      # Server difficulty (peaceful, easy, normal, hard)
+      DIFFICULTY: "normal"
+      
+      # Game mode (survival, creative, adventure, spectator)
+      MODE: "survival"
+      
+      # Maximum players allowed
+      MAX_PLAYERS: "20"
+      
+      # Enable server whitelist (set to TRUE if you want to restrict access)
+      WHITELIST: "FALSE"
+      
+      # Server properties for world generation
+      LEVEL_TYPE: "minecraft:normal"
+      SPAWN_PROTECTION: "16"
+      VIEW_DISTANCE: "10"
+      
+      # Enable command blocks
+      ENABLE_COMMAND_BLOCK: "TRUE"
+      
+      # PVP (Player vs Player) setting
+      PVP: "TRUE"
+      
+      # Online mode (set to FALSE for offline/cracked servers, but not recommended)
+      ONLINE_MODE: "TRUE"
+      
+      # Sync plugins and configs from the mounted directories
+      # This ensures plugins are copied into the server on startup
+      SYNC_SKIP_NEWER_IN_DESTINATION: "FALSE"
+    
+    # Volume mounts to persist data and configurations
+    volumes:
+      # Persist world data - this is your most important data!
+      - ./data/world:/data/world
+      
+      # Persist server configuration files
+      - ./data/config:/data/config
+      
+      # Mount plugins directory
+      # Place your plugin JARs in ./plugins/ and they'll be loaded by the server
+      - ./plugins:/plugins:ro
+      
+      # Mount server configuration overrides
+      # Use this for server.properties, ops.json, whitelist.json, etc.
+      - ./server.properties:/data/server.properties:ro
+      
+      # Optional: Mount custom plugins configuration
+      - ./config:/data/plugins:ro
+    
+    # Health check to ensure the server is running properly
+    # The mc-health command is provided by the itzg/minecraft-server image
+    healthcheck:
+      test: mc-health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# Optional: Add a backup service using the same image
+# Uncomment this section to enable automated backups
+#
+#  backup:
+#    image: itzg/mc-backup
+#    container_name: minecraft-backup
+#    restart: unless-stopped
+#    depends_on:
+#      - minecraft
+#    environment:
+#      BACKUP_INTERVAL: "24h"
+#      PRUNE_BACKUPS_DAYS: "7"
+#      RCON_HOST: minecraft
+#      RCON_PORT: 25575
+#    volumes:
+#      - ./data:/data:ro
+#      - ./backups:/backups
+
+# Create named volumes for better data management (alternative to bind mounts)
+# Uncomment this section if you prefer using named volumes
+#
+# volumes:
+#   minecraft-data:
+#   minecraft-plugins:
+
+# Notes:
+# 1. First-time setup:
+#    - Create the plugins directory: mkdir -p plugins config data
+#    - Copy your plugin JARs to the plugins/ directory
+#    - Run: docker-compose up -d
+#
+# 2. Managing the server:
+#    - Start: docker-compose up -d
+#    - Stop: docker-compose down
+#    - View logs: docker-compose logs -f minecraft
+#    - Execute commands: docker exec -i minecraft rcon-cli
+#
+# 3. Accessing the console:
+#    - Attach to console: docker attach minecraft-server
+#    - Detach: Press Ctrl+P, Ctrl+Q (do NOT use Ctrl+C as it stops the server)
+#
+# 4. Updating the server:
+#    - Change VERSION environment variable
+#    - Run: docker-compose down && docker-compose up -d
+#
+# 5. For production use:
+#    - Consider using Docker secrets for sensitive data
+#    - Set up automated backups
+#    - Configure firewall rules
+#    - Use a reverse proxy for additional features
