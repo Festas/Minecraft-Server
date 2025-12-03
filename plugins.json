@@ -133,6 +133,83 @@
       "repo": "GeyserMC/Floodgate",
       "asset_pattern": "floodgate.*spigot",
       "description": "Allows Bedrock players to join without Java account"
+    },
+    {
+      "name": "FastAsyncWorldEdit",
+      "enabled": false,
+      "category": "competitions",
+      "source": "github",
+      "repo": "IntellectualSites/FastAsyncWorldEdit",
+      "asset_pattern": "FastAsyncWorldEdit-Bukkit",
+      "description": "Enhanced WorldEdit for better performance, required by PlotSquared"
+    },
+    {
+      "name": "PlotSquared",
+      "enabled": false,
+      "category": "competitions",
+      "source": "github",
+      "repo": "IntellectualSites/PlotSquared",
+      "asset_pattern": "PlotSquared-Bukkit",
+      "description": "Plot management for build competitions"
+    },
+    {
+      "name": "PlayerParticles",
+      "enabled": false,
+      "category": "cosmetics",
+      "source": "github",
+      "repo": "Esophose/PlayerParticles",
+      "asset_pattern": "PlayerParticles",
+      "description": "Customizable particle effects for players"
+    },
+    {
+      "name": "HeadDatabase",
+      "enabled": false,
+      "category": "cosmetics",
+      "source": "manual",
+      "download_url": "https://www.spigotmc.org/resources/head-database.14280/",
+      "description": "Access to 40,000+ custom player heads - MANUAL DOWNLOAD from SpigotMC required"
+    },
+    {
+      "name": "HMCCosmetics",
+      "enabled": false,
+      "category": "cosmetics",
+      "source": "manual",
+      "download_url": "https://www.spigotmc.org/resources/hmccosmetics.103924/",
+      "description": "Hats, backpacks, and cosmetic items - MANUAL DOWNLOAD from SpigotMC required"
+    },
+    {
+      "name": "Citizens",
+      "enabled": false,
+      "category": "welcome",
+      "source": "github",
+      "repo": "CitizensDev/Citizens2",
+      "asset_pattern": "Citizens",
+      "description": "NPC plugin for interactive tutorials"
+    },
+    {
+      "name": "DeluxeHub",
+      "enabled": false,
+      "category": "welcome",
+      "source": "manual",
+      "download_url": "https://www.spigotmc.org/resources/deluxehub.49425/",
+      "description": "Hub management and join actions - MANUAL DOWNLOAD from SpigotMC required"
+    },
+    {
+      "name": "SuperVanish",
+      "enabled": false,
+      "category": "creator-tools",
+      "source": "github",
+      "repo": "MylesIsCool/SuperVanish",
+      "asset_pattern": "SuperVanish",
+      "description": "Invisible mode for content creators filming"
+    },
+    {
+      "name": "AdvancedReplay",
+      "enabled": false,
+      "category": "creator-tools",
+      "source": "manual",
+      "download_url": "https://www.spigotmc.org/resources/advancedreplay.52849/",
+      "description": "Record and replay gameplay - MANUAL DOWNLOAD from SpigotMC required"
     }
   ]
 }

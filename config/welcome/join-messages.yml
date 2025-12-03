@@ -1,0 +1,275 @@
+# Welcome Messages for festas_builds Server
+# Customizable join messages for first-time and returning players
+
+# First Join Messages
+# Shown when a player joins for the very first time
+first_join:
+  enabled: true
+  
+  # Messages sent to the new player
+  messages:
+    - ""
+    - "&6&l✦ &b&lWELCOME TO FESTAS_BUILDS! &6&l✦"
+    - ""
+    - "&7Welcome, &e%player%&7!"
+    - "&7You've joined the official festas_builds community server."
+    - ""
+    - "&aType &e/tutorial &ato get started!"
+    - "&aType &e/rules &ato read the server rules."
+    - "&aJoin our Discord: &e/discord"
+    - ""
+  
+  # Title shown to new player
+  title:
+    enabled: true
+    title: "&b&lWelcome!"
+    subtitle: "&7to festas_builds"
+    fade_in: 10
+    stay: 70
+    fade_out: 20
+  
+  # Sound played on first join
+  sound:
+    enabled: true
+    sound: "ENTITY_PLAYER_LEVELUP"
+    volume: 1.0
+    pitch: 1.0
+  
+  # Broadcast to all players when someone joins for the first time
+  broadcast:
+    enabled: true
+    messages:
+      - "&6&l★ &eEveryone welcome &b%player% &eto the community! &6&l★"
+  
+  # Give starter kit automatically
+  give_starter_kit: true
+  
+  # Teleport to spawn
+  teleport_to_spawn: true
+  
+  # Actions on first join
+  actions:
+    - "give_starter_kit"
+    - "teleport_spawn"
+    - "start_tutorial"  # If tutorial plugin is installed
+  
+  # Delay before showing messages (ticks, 20 = 1 second)
+  delay: 40
+
+# Returning Player Join Messages
+# Shown when a player joins (not their first time)
+returning_join:
+  enabled: true
+  
+  # Message format
+  # %player% = player name
+  # %rank% = player rank (from LuckPerms)
+  message: "&8[&a+&8] &e%player% &7has joined the server!"
+  
+  # Alternative: Different messages based on rank
+  rank_specific:
+    enabled: false
+    messages:
+      legend: "&8[&a+&8] &d&l[LEGEND] &e%player% &7has joined!"
+      master_builder: "&8[&a+&8] &b[Master] &e%player% &7has joined!"
+      architect: "&8[&a+&8] &6[Architect] &e%player% &7has joined!"
+      builder: "&8[&a+&8] &e[Builder] &e%player% &7has joined!"
+      default: "&8[&a+&8] &e%player% &7has joined!"
+  
+  # Show only to nearby players (radius in blocks, 0 = everyone)
+  broadcast_radius: 0
+  
+  # Personal welcome message
+  personal_message:
+    enabled: true
+    message: "&7Welcome back, &e%player%&7! &aGood to see you again!"
+    delay: 20  # ticks
+
+# Leave Messages
+leave:
+  enabled: true
+  
+  # Message format
+  message: "&8[&c-&8] &e%player% &7has left the server."
+  
+  # Rank-specific leave messages
+  rank_specific:
+    enabled: false
+    messages:
+      legend: "&8[&c-&8] &d&l[LEGEND] &e%player% &7has left."
+      master_builder: "&8[&c-&8] &b[Master] &e%player% &7has left."
+      default: "&8[&c-&8] &e%player% &7has left."
+
+# Special Events
+special_events:
+  # Player milestones
+  milestones:
+    enabled: true
+    
+    # Playtime milestones
+    playtime:
+      10_hours:
+        message: "&6★ &e%player% &7has played for &a10 hours&7!"
+        broadcast: true
+      
+      50_hours:
+        message: "&6★ &e%player% &7has played for &a50 hours&7! Dedicated builder!"
+        broadcast: true
+      
+      100_hours:
+        message: "&6★ &e%player% &7has played for &a100 hours&7! Amazing dedication!"
+        broadcast: true
+      
+      200_hours:
+        message: "&6&l★★ &e%player% &7has played for &a200 hours&7! Master Builder!"
+        broadcast: true
+  
+  # First claim
+  first_claim:
+    enabled: true
+    message: "&a%player% &7has protected their first build! &e/trust &7to add friends."
+    broadcast: false
+    personal: true
+  
+  # First home set
+  first_home:
+    enabled: true
+    message: "&7You've set your home! Use &e/home &7to return anytime."
+    broadcast: false
+    personal: true
+
+# MOTD (Message of the Day) Configuration
+motd:
+  enabled: true
+  
+  # Rotate through multiple MOTDs
+  rotation:
+    enabled: true
+    interval: daily  # daily, weekly, or hourly
+  
+  # List of MOTDs
+  messages:
+    - "&7Check out the latest builds at spawn!"
+    - "&7New build competition starting soon!"
+    - "&7Don't forget to claim your land with &e/claim"
+    - "&7Join our Discord: &e/discord"
+    - "&7Use &e/cosmetics &7to customize your appearance!"
+    - "&7Visit other players' builds with &e/tpa"
+
+# Tutorial Prompts
+# Remind new players about important commands
+tutorial_prompts:
+  enabled: true
+  
+  # Show these messages at intervals for new players
+  prompts:
+    - delay: 300  # seconds (5 minutes)
+      message: "&eTIP: &7Claim land to protect your builds! Use &e/claim"
+    
+    - delay: 600  # 10 minutes
+      message: "&eTIP: &7Set your home with &e/sethome &7and return with &e/home"
+    
+    - delay: 900  # 15 minutes
+      message: "&eTIP: &7Teleport to other players with &e/tpa <player>"
+    
+    - delay: 1200  # 20 minutes
+      message: "&eTIP: &7Check out cosmetics with &e/cosmetics"
+    
+    - delay: 1800  # 30 minutes
+      message: "&eTIP: &7Join our Discord community! &e/discord"
+  
+  # Only show to players with less than X hours
+  max_playtime: 5  # hours
+
+# Rank-up Announcements
+rankup:
+  enabled: true
+  
+  # Format: %player% = player name, %rank% = new rank name
+  messages:
+    builder: "&e%player% &7has been promoted to &eBuilder&7!"
+    architect: "&6%player% &7has been promoted to &6Architect&7!"
+    master_builder: "&b&l%player% &7has achieved &b&lMaster Builder &7status!"
+    legend: "&d&l✦✦✦ %player% &7is now a &d&lLEGEND&7! &d&l✦✦✦"
+  
+  # Broadcast to server
+  broadcast: true
+  
+  # Title notification
+  title:
+    enabled: true
+    title: "&aCongratulations!"
+    subtitle: "&7You are now %rank%"
+
+# Competition Announcements
+competition:
+  start:
+    title: "&6&lNEW COMPETITION!"
+    subtitle: "&e%theme%"
+    message: "&6&l✦ NEW BUILD COMPETITION! ✦\n&eTheme: &f%theme%\n&7Duration: %duration%\n&aType &e/plots auto &ato claim your plot!"
+    broadcast: true
+  
+  end:
+    title: "&6&lVOTING TIME!"
+    subtitle: "&7Rate the builds!"
+    message: "&6&l✦ COMPETITION ENDED! ✦\n&7Voting period has begun!\n&aVisit builds with &e/plots visit <player>"
+    broadcast: true
+  
+  winner:
+    title: "&6&lWINNER: %player%"
+    subtitle: "&eCongratulations!"
+    message: "&6&l✦✦✦ COMPETITION WINNER ✦✦✦\n&e1st Place: &f%first%\n&e2nd Place: &f%second%\n&e3rd Place: &f%third%"
+    broadcast: true
+
+# Commands Configuration
+commands:
+  # /welcome - Show welcome info again
+  welcome:
+    enabled: true
+    permission: "welcome.use"
+  
+  # /rules - Show server rules
+  rules:
+    enabled: true
+    permission: none
+  
+  # /discord - Show Discord link
+  discord:
+    enabled: true
+    permission: none
+    link: "discord.gg/your-invite"  # TODO: Add your Discord invite
+
+# Plugin Integration
+integration:
+  # EssentialsX
+  essentialsx:
+    enabled: true
+    override_join_message: true
+    override_quit_message: true
+  
+  # DeluxeHub (if installed)
+  deluxehub:
+    enabled: false
+    use_hub_features: true
+  
+  # LuckPerms (for rank-specific messages)
+  luckperms:
+    enabled: true
+    check_ranks: true
+
+# Placeholders
+# Available placeholders:
+# %player% - Player name
+# %rank% - Player rank (from LuckPerms)
+# %playtime% - Total playtime
+# %balance% - Economy balance (if Vault installed)
+# %online% - Online player count
+# %max_players% - Max players
+
+# TODO for server admins:
+# 1. Install EssentialsX or DeluxeHub for join message handling
+# 2. Configure your Discord link
+# 3. Customize messages to match your server's style
+# 4. Test first join vs returning join messages
+# 5. Set up LuckPerms integration for rank-specific messages
+# 6. Configure MOTD rotation

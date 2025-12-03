@@ -1,0 +1,280 @@
+# Creator Permissions Configuration
+# LuckPerms permission setup for festas_builds content creators
+
+# Creator Rank Overview
+# This rank is granted to festas_builds content creators
+# who want to film and create content on the server
+
+creator_rank:
+  display_name: "&6Creator"
+  prefix: "&6[Creator]&r "
+  suffix: ""
+  
+  # Requirements to get creator rank
+  requirements:
+    - "Be a festas_builds content creator (YouTube/Twitch)"
+    - "Apply through Discord"
+    - "Be approved by server staff"
+    - "Agree to content creation guidelines"
+  
+  # Inherit permissions from architect rank
+  parent_group: "architect"
+
+# Core Permissions
+core_permissions:
+  # Vanish Mode
+  vanish:
+    - "supervanish.vanish"  # Toggle vanish
+    - "supervanish.silentjoin"  # Join without announcement
+    - "supervanish.silentquit"  # Leave without announcement
+    - "supervanish.see"  # See other vanished players
+    - "supervanish.keepvanish"  # Stay vanished on rejoin
+    - "supervanish.use"  # Use all vanish features
+  
+  # Replay Recording
+  replay:
+    - "advancedreplay.record"  # Start/stop recordings
+    - "advancedreplay.play"  # Play replays
+    - "advancedreplay.camera"  # Camera controls
+    - "advancedreplay.path"  # Create camera paths
+    - "advancedreplay.export"  # Export replays
+    - "advancedreplay.list"  # List replays
+    - "advancedreplay.delete.own"  # Delete own replays
+  
+  # WorldEdit (for set building/cleanup)
+  worldedit:
+    - "worldedit.wand"  # Use WorldEdit wand
+    - "worldedit.selection.*"  # Selection tools
+    - "worldedit.clipboard.*"  # Copy/paste
+    - "worldedit.history.*"  # Undo/redo
+    - "worldedit.region.*"  # Region operations
+    - "worldedit.generation.*"  # Generation tools
+    - "worldedit.schematic.save"  # Save schematics
+    - "worldedit.schematic.load"  # Load schematics
+  
+  # Game Mode
+  gamemode:
+    - "minecraft.command.gamemode"  # Change gamemode
+    - "minecraft.command.gamemode.creative"  # Creative mode
+    - "minecraft.command.gamemode.spectator"  # Spectator mode (for camera)
+    - "minecraft.command.gamemode.survival"  # Survival mode
+  
+  # Time & Weather Control
+  time_weather:
+    - "minecraft.command.time"  # Change time
+    - "minecraft.command.time.set"  # Set time
+    - "minecraft.command.weather"  # Change weather
+    - "minecraft.command.weather.set"  # Set weather
+  
+  # Teleportation
+  teleport:
+    - "minecraft.command.tp"  # Teleport command
+    - "minecraft.command.teleport"  # Teleport command (alt)
+    - "essentials.tp"  # EssentialsX teleport
+    - "essentials.tphere"  # Teleport player to you
+    - "essentials.tppos"  # Teleport to coordinates
+    - "essentials.top"  # Teleport to highest block
+    - "essentials.back"  # Return to previous location
+
+# Advanced Permissions
+advanced_permissions:
+  # Flight (useful for camera movement)
+  flight:
+    - "essentials.fly"  # Toggle fly mode
+    - "minecraft.command.fly"  # Fly command
+  
+  # Bypass Restrictions
+  bypass:
+    - "worldguard.region.bypass"  # Bypass region protection (for filming)
+    - "griefprevention.ignoreclaims"  # Bypass claims (viewing only, not editing)
+  
+  # Command Blocks (for map making creators)
+  command_blocks:
+    - "minecraft.command.setblock"  # Place blocks via command
+    - "minecraft.command.fill"  # Fill areas
+  
+  # Diagnostics
+  diagnostics:
+    - "spark.profiler"  # Performance profiling (optional)
+
+# Cosmetics
+cosmetics:
+  # Exclusive creator cosmetics
+  exclusive:
+    - "cosmetics.festas.creator"  # festas_builds creator crown
+    - "cosmetics.festas.cape"  # Creator cape
+  
+  # All cosmetics unlocked
+  all_cosmetics:
+    - "cosmetics.hat.*"  # All hats
+    - "cosmetics.backpack.*"  # All backpacks
+    - "cosmetics.balloon.*"  # All balloons
+    - "playerparticles.effect.*"  # All particle effects
+    - "playerparticles.combo.*"  # All particle combos
+
+# Safety Restrictions
+# Even creators should have some restrictions
+restrictions:
+  # Cannot ban/kick players
+  no_moderation:
+    - "-essentials.ban"
+    - "-essentials.kick"
+    - "-essentials.tempban"
+    - "-minecraft.command.ban"
+    - "-minecraft.command.kick"
+  
+  # Cannot give items to others (prevents unfair advantages)
+  no_give:
+    - "-essentials.give"
+    - "-minecraft.command.give"
+  
+  # Cannot modify server settings
+  no_admin:
+    - "-minecraft.command.stop"
+    - "-minecraft.command.restart"
+    - "-bukkit.command.reload"
+  
+  # Cannot access other players' inventories
+  no_inventory_access:
+    - "-essentials.invsee"
+    - "-essentials.enderchest.others"
+
+# LuckPerms Setup Commands
+# Run these commands to set up the creator rank
+
+luckperms_setup:
+  # Create the group
+  create_group:
+    - "lp creategroup creator"
+  
+  # Set inheritance (inherit from architect rank)
+  inheritance:
+    - "lp group creator parent set architect"
+  
+  # Set display info
+  display:
+    - "lp group creator meta setprefix '&6[Creator] '"
+    - "lp group creator meta setsuffix ''"
+    - "lp group creator displayname 'Creator'"
+  
+  # Grant vanish permissions
+  vanish_perms:
+    - "lp group creator permission set supervanish.vanish true"
+    - "lp group creator permission set supervanish.silentjoin true"
+    - "lp group creator permission set supervanish.silentquit true"
+    - "lp group creator permission set supervanish.see true"
+    - "lp group creator permission set supervanish.keepvanish true"
+    - "lp group creator permission set supervanish.use true"
+  
+  # Grant replay permissions
+  replay_perms:
+    - "lp group creator permission set advancedreplay.record true"
+    - "lp group creator permission set advancedreplay.play true"
+    - "lp group creator permission set advancedreplay.camera true"
+    - "lp group creator permission set advancedreplay.path true"
+    - "lp group creator permission set advancedreplay.export true"
+  
+  # Grant gamemode permissions
+  gamemode_perms:
+    - "lp group creator permission set minecraft.command.gamemode true"
+    - "lp group creator permission set minecraft.command.gamemode.creative true"
+    - "lp group creator permission set minecraft.command.gamemode.spectator true"
+    - "lp group creator permission set minecraft.command.gamemode.survival true"
+  
+  # Grant time/weather permissions
+  time_weather_perms:
+    - "lp group creator permission set minecraft.command.time true"
+    - "lp group creator permission set minecraft.command.time.set true"
+    - "lp group creator permission set minecraft.command.weather true"
+    - "lp group creator permission set minecraft.command.weather.set true"
+  
+  # Grant teleport permissions
+  teleport_perms:
+    - "lp group creator permission set minecraft.command.tp true"
+    - "lp group creator permission set essentials.tp true"
+    - "lp group creator permission set essentials.tphere true"
+    - "lp group creator permission set essentials.tppos true"
+  
+  # Grant fly permission
+  fly_perms:
+    - "lp group creator permission set essentials.fly true"
+  
+  # Grant WorldEdit permissions
+  worldedit_perms:
+    - "lp group creator permission set worldedit.* true"
+  
+  # Grant cosmetics
+  cosmetic_perms:
+    - "lp group creator permission set cosmetics.festas.creator true"
+    - "lp group creator permission set cosmetics.festas.cape true"
+    - "lp group creator permission set cosmetics.hat.* true"
+    - "lp group creator permission set playerparticles.effect.* true"
+  
+  # Apply restrictions
+  restrictions:
+    - "lp group creator permission set essentials.ban false"
+    - "lp group creator permission set essentials.kick false"
+    - "lp group creator permission set essentials.give false"
+    - "lp group creator permission set minecraft.command.stop false"
+
+# Assigning Creator Rank
+assign_rank:
+  # Add a user to creator group
+  command: "lp user <username> parent add creator"
+  
+  # Remove a user from creator group
+  remove_command: "lp user <username> parent remove creator"
+  
+  # Check user's groups
+  check_command: "lp user <username> info"
+
+# Creator Guidelines
+guidelines:
+  rules:
+    - "Use vanish mode only for filming, not spying on players"
+    - "Don't interfere with player gameplay while vanished"
+    - "Use gamemode changes only in your own claims or creative areas"
+    - "Don't abuse WorldEdit to grief or disrupt the server"
+    - "Be respectful of other players' builds in content"
+    - "Credit the festas_builds server in your content"
+    - "Follow all standard server rules even with creator perks"
+  
+  content_requirements:
+    - "Tag videos with 'festas_builds' or server name"
+    - "Include server IP in video descriptions (if agreed)"
+    - "Be family-friendly in content featuring the server"
+    - "Don't showcase exploits or bugs publicly"
+    - "Blur player names if they request privacy"
+
+# Revoking Creator Status
+revocation:
+  reasons:
+    - "Abuse of permissions"
+    - "Griefing or malicious behavior"
+    - "Creating inappropriate content"
+    - "Inactivity (6+ months without content)"
+    - "Player request to remove creator status"
+  
+  process:
+    - "Staff discussion and vote"
+    - "Notification to creator"
+    - "Rank removal via LuckPerms"
+    - "Optional: Allow appeal after 30 days"
+
+# Temporary Creator Access
+temp_access:
+  # For one-time filming sessions
+  duration: "7 days"
+  command: "lp user <username> parent addtemp creator 7d"
+  
+  # Use case: Guest creators, collaborations, special events
+  note: "Use temporary permissions for non-regular creators"
+
+# TODO for server admins:
+# 1. Create creator rank in LuckPerms with commands above
+# 2. Set up application process (Discord form recommended)
+# 3. Document creator guidelines clearly
+# 4. Test all permissions with a test creator account
+# 5. Create a #creator-applications channel in Discord
+# 6. Train staff on evaluating creator applications
+# 7. Set up creator-specific chat channel for coordination

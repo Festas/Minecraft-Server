@@ -33,7 +33,22 @@ See [BEDROCK-SETUP.md](BEDROCK-SETUP.md) for detailed setup instructions.
 
 ---
 
-## 📋 Features
+## ✨ Server Features
+
+This is a fully-featured community server with:
+
+- 🌐 **Live Web Map** - Explore the world in your browser with BlueMap
+- 🏆 **Build Competitions** - Weekly themed building contests with PlotSquared
+- 🎭 **Cosmetics** - Unlock particles, hats, and more through gameplay
+- 📢 **Welcome System** - Interactive tutorial for new players
+- 🎬 **Creator Tools** - Filming and recording capabilities for content creators
+- 🛡️ **Land Protection** - GriefPrevention, WorldGuard, and CoreProtect
+- 🌍 **Cross-Platform** - Bedrock Edition support via Geyser
+- 💬 **Discord Integration** - Chat bridge and announcements
+
+See [FEATURES.md](FEATURES.md) for complete details.
+
+## 📋 Technical Features
 
 - ✅ **Paper Server** - High-performance Spigot fork with plugin support
 - ✅ **Optimized Performance** - Aikar's JVM flags for better garbage collection
@@ -44,9 +59,6 @@ See [BEDROCK-SETUP.md](BEDROCK-SETUP.md) for detailed setup instructions.
 - ✅ Backup scripts included
 - ✅ Update scripts for version upgrades
 - ✅ Comprehensive documentation
-- 🔜 Plugin ecosystem (LuckPerms, EssentialsX, CoreProtect, WorldGuard)
-- 🔜 Discord integration
-- 🔜 Web-based live map
 
 ## 📚 Documentation
 

@@ -1,0 +1,327 @@
+# Server Rules for festas_builds Community Server
+# Displayed with /rules command and shown to new players
+
+# Rules Configuration
+rules:
+  enabled: true
+  command: "/rules"
+  aliases: ["/serverrules", "/info"]
+  
+  # Show rules automatically on first join
+  show_on_first_join: true
+  delay: 60  # seconds after joining
+  
+  # Require acceptance (optional)
+  require_acceptance: false
+  acceptance_command: "/rules accept"
+
+# Server Rules
+# These are displayed when players type /rules
+rules_list:
+  header:
+    - ""
+    - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+    - "&6&l       FESTAS_BUILDS SERVER RULES"
+    - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+    - ""
+  
+  rules:
+    - id: 1
+      title: "&e1. Be Respectful to All Players"
+      description:
+        - "&7• Treat everyone with kindness and respect"
+        - "&7• No harassment, bullying, or hate speech"
+        - "&7• Respect different building styles and opinions"
+        - "&7• Keep chat friendly and welcoming"
+      
+    - id: 2
+      title: "&e2. No Griefing or Stealing"
+      description:
+        - "&7• Do not destroy or modify others' builds"
+        - "&7• Do not take items from chests you don't own"
+        - "&7• Use the claiming system to protect your builds"
+        - "&7• Report griefing to staff immediately"
+      punishment: "&cFirst offense: Warning | Second: Temp ban | Third: Permanent ban"
+    
+    - id: 3
+      title: "&e3. No Cheating or Exploiting"
+      description:
+        - "&7• No hacked clients or unfair mods"
+        - "&7• No exploiting game bugs or glitches"
+        - "&7• No x-ray texture packs or resource packs"
+        - "&7• Allowed: Optifine, shaders, minimaps (no cave/entity mode)"
+      punishment: "&cPermanent ban - no exceptions"
+    
+    - id: 4
+      title: "&e4. Keep Chat Family-Friendly"
+      description:
+        - "&7• No excessive swearing or profanity"
+        - "&7• No NSFW content or inappropriate topics"
+        - "&7• No spamming or excessive caps"
+        - "&7• English only in main chat (other languages in /msg)"
+      punishment: "&cMute → Temp ban → Permanent ban"
+    
+    - id: 5
+      title: "&e5. Follow Staff Instructions"
+      description:
+        - "&7• Listen to moderators and admins"
+        - "&7• Don't argue with staff decisions in chat"
+        - "&7• Use /helpop to request staff assistance"
+        - "&7• Report issues through proper channels"
+    
+    - id: 6
+      title: "&e6. Have Fun and Be Creative!"
+      description:
+        - "&7• Build amazing creations"
+        - "&7• Join build competitions"
+        - "&7• Help other players"
+        - "&7• Share your builds on Discord"
+        - "&7• Enjoy the community!"
+  
+  footer:
+    - ""
+    - "&7Not following these rules may result in warnings,"
+    - "&7temporary bans, or permanent bans depending on severity."
+    - ""
+    - "&aQuestions? Ask in chat or &e/discord"
+    - "&7Staff: Use &e/report <player> <reason> &7to report rule violations"
+    - ""
+    - "&6&l⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯"
+    - ""
+
+# Additional Rules (Detailed)
+detailed_rules:
+  building:
+    title: "&6Building Guidelines"
+    rules:
+      - "Build at least 100 blocks from spawn (protected area)"
+      - "Respect chunk borders when building near others"
+      - "No offensive or inappropriate builds"
+      - "No lag machines or redstone spam"
+      - "Claim your land to protect your builds"
+  
+  competitions:
+    title: "&6Competition Rules"
+    rules:
+      - "Follow the competition theme"
+      - "Build within your plot boundaries"
+      - "No copying from the internet (original builds only)"
+      - "No inappropriate or offensive builds"
+      - "Be a good sport - congratulate winners!"
+  
+  claims:
+    title: "&6Land Claiming Rules"
+    rules:
+      - "Don't claim land right next to someone else"
+      - "Don't claim excessive land you won't use"
+      - "Remove abandoned claims if requested"
+      - "Use /trust to collaborate with friends"
+  
+  discord:
+    title: "&6Discord Rules"
+    rules:
+      - "Same chat rules apply in Discord"
+      - "Use appropriate channels"
+      - "No @everyone/@here spam"
+      - "Follow Discord TOS and Community Guidelines"
+
+# Rule Acceptance (optional feature)
+acceptance:
+  enabled: false
+  required_for_play: false
+  
+  # First join - must accept rules
+  first_join:
+    enabled: true
+    message:
+      - ""
+      - "&cBefore you start playing, please read the rules:"
+      - "&e/rules"
+      - ""
+      - "&aType &e/rules accept &ato accept the rules and continue."
+      - ""
+    
+    # Block actions until rules accepted
+    block_actions:
+      - break_blocks
+      - place_blocks
+      - interact
+      - chat
+    
+    # Kick if not accepted within time
+    kick_after: 300  # seconds (5 minutes)
+    kick_message: "&cYou must accept the rules to play. Rejoin and type /rules accept"
+
+# Punishment System Integration
+punishments:
+  enabled: true
+  
+  # Warnings before punishments
+  warnings:
+    griefing: 1  # 1 warning, then ban
+    chat_violations: 2  # 2 warnings, then mute
+    general: 3  # 3 warnings, then temp ban
+  
+  # Ban durations (hours)
+  temp_ban_durations:
+    first_offense: 24
+    second_offense: 168  # 1 week
+    third_offense: 720  # 1 month
+  
+  # Auto-ban triggers
+  auto_ban:
+    hacking: true  # Instant ban for hacks
+    severe_grief: true  # Instant ban for mass grief
+
+# Staff Commands
+staff_commands:
+  - "/warn <player> <reason> - Issue a warning"
+  - "/kick <player> <reason> - Kick a player"
+  - "/tempban <player> <duration> <reason> - Temporary ban"
+  - "/ban <player> <reason> - Permanent ban"
+  - "/mute <player> <duration> <reason> - Mute a player"
+  - "/co inspect - Inspect block changes (CoreProtect)"
+  - "/co rollback u:<player> t:<time> - Rollback griefing"
+
+# Appeal Process
+appeals:
+  enabled: true
+  info:
+    - "&7If you were banned and believe it was a mistake:"
+    - "&7• Join our Discord: discord.gg/your-invite"
+    - "&7• Post in #ban-appeals channel"
+    - "&7• Include your username and ban reason"
+    - "&7• Explain your side respectfully"
+    - "&7• Staff will review and respond"
+  
+  discord_link: "discord.gg/your-invite"  # TODO: Add your Discord invite
+
+# Rules Book (given to new players)
+rules_book:
+  enabled: true
+  give_on_first_join: true
+  
+  book:
+    title: "&6Server Rules"
+    author: "festas_builds"
+    pages:
+      - |
+        &0&lFESTAS_BUILDS
+        &0&lSERVER RULES
+        
+        &0Please read these
+        &0rules carefully.
+        
+        &0Following the rules
+        &0ensures everyone
+        &0has fun!
+        
+        &0Type /rules to
+        &0view rules anytime.
+      
+      - |
+        &0&l1. Respect
+        
+        &0Be kind to all
+        &0players.
+        
+        &0No harassment,
+        &0bullying, or hate
+        &0speech.
+        
+        &0Treat others how
+        &0you want to be
+        &0treated!
+      
+      - |
+        &0&l2. No Griefing
+        
+        &0Don't destroy or
+        &0steal from others.
+        
+        &0Use a golden shovel
+        &0to claim land and
+        &0protect your builds.
+        
+        &0Report grief to
+        &0staff immediately.
+      
+      - |
+        &0&l3. No Cheating
+        
+        &0No hacked clients,
+        &0x-ray, or exploits.
+        
+        &0Optifine and shaders
+        &0are allowed.
+        
+        &0Cheating = instant
+        &0permanent ban.
+      
+      - |
+        &0&l4. Chat Rules
+        
+        &0Keep chat friendly.
+        
+        &0No spam, excessive
+        &0caps, or NSFW.
+        
+        &0English in main
+        &0chat, other languages
+        &0in private messages.
+      
+      - |
+        &0&l5. Listen to Staff
+        
+        &0Follow moderator
+        &0instructions.
+        
+        &0Use /helpop for
+        &0assistance.
+        
+        &0Don't argue with
+        &0staff in chat.
+      
+      - |
+        &0&l6. Have Fun!
+        
+        &0Build amazing
+        &0creations!
+        
+        &0Join competitions!
+        
+        &0Help other players!
+        
+        &0Enjoy the festas_
+        &0builds community!
+
+# Signs at Spawn
+# Place these signs at spawn for rule reminders
+spawn_signs:
+  rules_board:
+    - "&6&l[SERVER RULES]"
+    - "&7Be respectful"
+    - "&7No griefing"
+    - "&7No cheating"
+    - "&eType /rules"
+  
+  claiming:
+    - "&6&l[LAND CLAIMS]"
+    - "&7Use golden shovel"
+    - "&7to protect builds"
+    - "&eRight-click corners"
+  
+  discord:
+    - "&b&l[DISCORD]"
+    - "&7Join our community!"
+    - "&e/discord"
+    - "&7for invite link"
+
+# TODO for server admins:
+# 1. Review and customize rules for your server
+# 2. Set up punishment commands (warn, ban, mute plugins)
+# 3. Create rules board at spawn with signs
+# 4. Configure Discord invite link
+# 5. Train staff on rule enforcement
+# 6. Set up CoreProtect for grief detection
+# 7. Test /rules command in-game

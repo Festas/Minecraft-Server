@@ -1,0 +1,335 @@
+# HMCCosmetics Configuration for festas_builds
+# Hats, backpacks, balloons, and other cosmetic items
+# Note: This is a template - actual config will be in plugins/HMCCosmetics/
+
+# Global Settings
+settings:
+  # Enable cosmetics
+  enabled: true
+  
+  # Database (SQLite for small servers, MySQL for larger)
+  database:
+    type: sqlite
+    # For MySQL:
+    # type: mysql
+    # host: localhost
+    # port: 3306
+    # database: hmccosmetics
+    # username: cosmetics_user
+    # password: secure_password
+  
+  # GUI settings
+  gui:
+    title: "festas_builds Cosmetics"
+    size: 54  # Inventory size (9, 18, 27, 36, 45, 54)
+    
+  # Wardrobe menu
+  wardrobe:
+    enabled: true
+    command: /cosmetics
+    aliases: [wardrobe, hats, cosmetic]
+
+# Cosmetic Categories
+categories:
+  hats:
+    enabled: true
+    name: "&6Hats"
+    icon: golden_helmet
+    slot: 10
+    
+  backpacks:
+    enabled: true
+    name: "&eBackpacks"
+    icon: leather_chestplate
+    slot: 12
+    
+  balloons:
+    enabled: true
+    name: "&bBalloons"
+    icon: string
+    slot: 14
+    
+  pets:
+    enabled: false  # Disabled for now
+    name: "&dPets"
+    icon: spawner
+    slot: 16
+
+# Hats Collection
+hats:
+  # Basic hats - Available to all players
+  basic:
+    - id: builder_helmet
+      name: "&eBuilder's Hard Hat"
+      material: golden_helmet
+      permission: "cosmetics.hat.builder"
+      unlock: "default"
+      lore:
+        - "&7Safety first!"
+        - "&7Available to all builders"
+      
+    - id: party_hat
+      name: "&dParty Hat"
+      material: player_head
+      texture: "party_hat_texture"  # Base64 or player head
+      permission: "cosmetics.hat.party"
+      unlock: "default"
+      lore:
+        - "&7Let's celebrate!"
+    
+    - id: chef_hat
+      name: "&fChef's Hat"
+      material: white_wool
+      permission: "cosmetics.hat.chef"
+      unlock: "default"
+      lore:
+        - "&7Cooking up creativity!"
+
+  # Builder rank hats - 10+ hours playtime
+  builder_rank:
+    - id: crown_basic
+      name: "&6Basic Crown"
+      material: golden_helmet
+      glow: true
+      permission: "cosmetics.hat.crown_basic"
+      unlock: "builder_rank"
+      lore:
+        - "&7A crown for dedicated builders"
+        - "&eUnlock: 10 hours playtime"
+      
+    - id: construction_helmet
+      name: "&eConstruction Helmet"
+      material: iron_helmet
+      permission: "cosmetics.hat.construction"
+      unlock: "builder_rank"
+      lore:
+        - "&7Build big things!"
+
+  # Architect rank hats - 50+ hours playtime
+  architect_rank:
+    - id: crown_silver
+      name: "&fSilver Crown"
+      material: iron_helmet
+      glow: true
+      enchanted: true
+      permission: "cosmetics.hat.crown_silver"
+      unlock: "architect_rank"
+      lore:
+        - "&7Crown of the Architect"
+        - "&eUnlock: 50 hours playtime"
+      
+    - id: top_hat
+      name: "&8Elegant Top Hat"
+      material: player_head
+      texture: "top_hat_texture"
+      permission: "cosmetics.hat.tophat"
+      unlock: "architect_rank"
+      lore:
+        - "&7Sophisticated and stylish"
+    
+    - id: wizard_hat
+      name: "&5Wizard Hat"
+      material: player_head
+      texture: "wizard_hat_texture"
+      permission: "cosmetics.hat.wizard"
+      unlock: "architect_rank"
+      lore:
+        - "&7Channel your magical building powers"
+
+  # Master Builder rank hats - 200+ hours playtime
+  master_builder_rank:
+    - id: crown_gold
+      name: "&6Master's Golden Crown"
+      material: golden_helmet
+      glow: true
+      enchanted: true
+      permission: "cosmetics.hat.crown_gold"
+      unlock: "master_builder_rank"
+      lore:
+        - "&7The ultimate builder's crown"
+        - "&eUnlock: 200 hours playtime"
+        - "&6Only for Master Builders!"
+      
+    - id: halo
+      name: "&eAngelic Halo"
+      material: player_head
+      texture: "halo_texture"
+      permission: "cosmetics.hat.halo"
+      unlock: "master_builder_rank"
+      lore:
+        - "&7A divine builder's blessing"
+
+  # Competition winner hats - Special rewards
+  competition_winners:
+    - id: winner_crown
+      name: "&6&lCompetition Winner Crown"
+      material: diamond_helmet
+      glow: true
+      enchanted: true
+      permission: "cosmetics.hat.winner"
+      unlock: "competition_winner"
+      lore:
+        - "&6&lCOMPETITION WINNER"
+        - "&7Awarded to competition champions"
+        - "&eExclusive and prestigious!"
+      
+    - id: laurel_wreath
+      name: "&aLaurel Wreath"
+      material: player_head
+      texture: "laurel_wreath_texture"
+      permission: "cosmetics.hat.laurel"
+      unlock: "competition_winner"
+      lore:
+        - "&7Champion's honor"
+
+  # Seasonal hats
+  seasonal:
+    - id: santa_hat
+      name: "&cSanta Hat"
+      material: player_head
+      texture: "santa_hat_texture"
+      permission: "cosmetics.hat.santa"
+      unlock: "seasonal_winter"
+      available_months: [12, 1]  # December, January
+      lore:
+        - "&7Ho ho ho!"
+        - "&cAvailable in December"
+    
+    - id: pumpkin_head
+      name: "&6Spooky Pumpkin"
+      material: carved_pumpkin
+      permission: "cosmetics.hat.pumpkin"
+      unlock: "seasonal_halloween"
+      available_months: [10]  # October
+      lore:
+        - "&7Happy Halloween!"
+
+# Backpacks
+backpacks:
+  basic:
+    - id: leather_backpack
+      name: "&7Basic Backpack"
+      material: leather_chestplate
+      permission: "cosmetics.backpack.leather"
+      unlock: "default"
+      lore:
+        - "&7Carry your building supplies!"
+    
+    - id: colorful_backpack
+      name: "&bColorful Backpack"
+      material: leather_chestplate
+      color: "0x3498db"  # RGB color
+      permission: "cosmetics.backpack.colorful"
+      unlock: "builder_rank"
+      lore:
+        - "&7A splash of color!"
+
+  special:
+    - id: diamond_backpack
+      name: "&bDiamond Backpack"
+      material: diamond_chestplate
+      glow: true
+      permission: "cosmetics.backpack.diamond"
+      unlock: "architect_rank"
+      lore:
+        - "&7Luxurious storage"
+        - "&eUnlock: Architect rank"
+    
+    - id: wings
+      name: "&fAngel Wings"
+      material: elytra
+      permission: "cosmetics.backpack.wings"
+      unlock: "master_builder_rank"
+      lore:
+        - "&7Soar above the competition"
+        - "&7(Cosmetic only - no flying!)"
+
+# Balloons
+balloons:
+  basic:
+    - id: red_balloon
+      name: "&cRed Balloon"
+      material: red_wool
+      permission: "cosmetics.balloon.red"
+      unlock: "default"
+      lore:
+        - "&7A cheerful red balloon"
+    
+    - id: blue_balloon
+      name: "&9Blue Balloon"
+      material: blue_wool
+      permission: "cosmetics.balloon.blue"
+      unlock: "default"
+      lore:
+        - "&7A calming blue balloon"
+
+  special:
+    - id: rainbow_balloons
+      name: "&6Rainbow Balloons"
+      material: white_wool
+      glow: true
+      permission: "cosmetics.balloon.rainbow"
+      unlock: "architect_rank"
+      lore:
+        - "&7A bundle of colorful balloons"
+        - "&eUnlock: Architect rank"
+
+# Festas_builds Special Cosmetics
+festas_special:
+  - id: festas_crown
+    name: "&6&lfestas_builds Creator Crown"
+    category: hat
+    material: netherite_helmet
+    glow: true
+    enchanted: true
+    permission: "cosmetics.festas.creator"
+    unlock: "creator_rank"
+    lore:
+      - "&6Exclusive to festas_builds creators"
+      - "&7Show your allegiance!"
+  
+  - id: festas_cape
+    name: "&6&lfestas_builds Cape"
+    category: backpack
+    material: elytra
+    glow: true
+    permission: "cosmetics.festas.cape"
+    unlock: "supporter"
+    lore:
+      - "&6Thank you for supporting festas_builds!"
+      - "&7Exclusive supporter cosmetic"
+
+# Commands
+commands:
+  main: /cosmetics
+  aliases:
+    - /wardrobe
+    - /hats
+    - /hat
+    - /cosmetic
+
+# Permissions structure
+# cosmetics.* - All cosmetics (admin)
+# cosmetics.hat.* - All hats
+# cosmetics.backpack.* - All backpacks
+# cosmetics.balloon.* - All balloons
+# cosmetics.use - Use cosmetics command
+
+# Integration with LuckPerms
+# Example: lp group builder permission set cosmetics.hat.crown_basic true
+
+# EULA Compliance
+# ✅ All cosmetics are visual only
+# ✅ No gameplay advantages
+# ✅ Can be monetized as supporter perks
+# ✅ Can be earned through playtime/achievements
+# ✅ Competition rewards are fair and cosmetic
+
+# TODO for server admins:
+# 1. Download HMCCosmetics from SpigotMC (manual download required)
+# 2. Install plugin and restart server
+# 3. Configure cosmetics in plugins/HMCCosmetics/config.yml
+# 4. Set up player head textures (from minecraft-heads.com)
+# 5. Assign permissions via LuckPerms based on ranks
+# 6. Test all cosmetics in-game
+# 7. Create supporter-exclusive cosmetics if monetizing

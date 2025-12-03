@@ -1,0 +1,307 @@
+# SuperVanish Configuration for festas_builds
+# Vanish mode for content creators filming on the server
+
+# Global Settings
+settings:
+  # Enable SuperVanish
+  enabled: true
+  
+  # Check for updates
+  check-for-updates: true
+  
+  # Enable message configuration
+  enable-messages: true
+
+# Vanish Features
+vanish:
+  # Silent join/quit for vanished players
+  silent-join: true
+  silent-quit: true
+  
+  # Hide vanished players from tab list
+  hide-from-tab: true
+  
+  # Make vanished players invisible
+  invisible: true
+  
+  # Disable collision with vanished players
+  disable-collision: true
+  
+  # Prevent item pickup while vanished
+  prevent-item-pickup: false  # Allow creators to pick up items
+  
+  # Prevent damage while vanished
+  prevent-damage: true
+  
+  # Enable night vision while vanished
+  night-vision: true
+  
+  # Enable speed effect while vanished (for camera movement)
+  speed-effect:
+    enabled: false  # Disable by default, can enable per-creator
+    level: 2
+
+# Interaction Settings
+# What can vanished players interact with?
+interaction:
+  # Can open doors/trapdoors
+  doors: true
+  
+  # Can open chests/containers
+  chests: true
+  
+  # Can press buttons/levers
+  buttons: true
+  
+  # Can break blocks
+  break-blocks: true
+  
+  # Can place blocks
+  place-blocks: true
+  
+  # Can attack entities
+  attack-entities: false
+  
+  # Can use items
+  use-items: true
+  
+  # Can trigger pressure plates
+  pressure-plates: false
+
+# Visual Settings for Filming
+visual:
+  # Particle effects when vanishing/reappearing
+  particles:
+    enabled: true
+    vanish: "PORTAL"
+    reappear: "EXPLOSION_LARGE"
+  
+  # Sound effects
+  sounds:
+    enabled: true
+    vanish: "ENTITY_ENDERMAN_TELEPORT"
+    reappear: "ENTITY_ENDERMAN_TELEPORT"
+    volume: 1.0
+    pitch: 1.0
+  
+  # Potion effects while vanished
+  potion-effects:
+    - "NIGHT_VISION:0:permanent"
+    # Optionally add speed for camera movement
+    # - "SPEED:1:permanent"
+
+# Auto-Vanish
+auto-vanish:
+  # Auto-vanish on join (for creators)
+  on-join: false  # Set per-player with permission
+  
+  # Remember vanish state between sessions
+  remember-state: true
+  
+  # Auto-vanish in specific worlds
+  worlds:
+    enabled: false
+    list:
+      - "filming_world"
+
+# See Other Vanished Players
+see-vanished:
+  # Staff/creators can see other vanished staff/creators
+  enabled: true
+  permission: "supervanish.see"
+  
+  # Show indicator for vanished players you can see
+  show-indicator: true
+  indicator: "&7[VANISHED]"
+
+# Messages
+messages:
+  # Vanish on
+  vanish-on:
+    player: "&aYou are now vanished. You can film freely!"
+    staff-see: "&7%player% &7is now vanished."
+  
+  # Vanish off
+  vanish-off:
+    player: "&cYou are no longer vanished."
+    staff-see: "&7%player% &7is no longer vanished."
+  
+  # Silent join (when vanished)
+  silent-join:
+    enabled: true
+    # No message shown
+  
+  # Silent quit (when vanished)
+  silent-quit:
+    enabled: true
+    # No message shown
+  
+  # Fake join/quit (show fake messages)
+  fake-messages:
+    enabled: false
+    join: "&e%player% joined the game"
+    quit: "&e%player% left the game"
+
+# Commands
+commands:
+  # Main vanish command
+  vanish:
+    enabled: true
+    command: "/vanish"
+    aliases: ["/v", "/invis", "/invisible"]
+    permission: "supervanish.vanish"
+  
+  # Silent join command
+  silentjoin:
+    enabled: true
+    command: "/silentjoin"
+    aliases: ["/sj"]
+    permission: "supervanish.silentjoin"
+  
+  # Silent quit command
+  silentquit:
+    enabled: true
+    command: "/silentquit"
+    aliases: ["/sq"]
+    permission: "supervanish.silentquit"
+
+# Permissions
+# Grant these to creators/staff
+permissions:
+  basic:
+    - "supervanish.vanish"  # Use /vanish
+    - "supervanish.silentjoin"  # Silent join when vanished
+    - "supervanish.silentquit"  # Silent quit when vanished
+  
+  advanced:
+    - "supervanish.see"  # See other vanished players
+    - "supervanish.use"  # Use all features
+    - "supervanish.keepvanish"  # Stay vanished on rejoin
+  
+  creator_full:
+    - "supervanish.*"  # All vanish permissions
+
+# Integration with Other Plugins
+integration:
+  # Don't show vanished players in dynmap/bluemap
+  hide-from-map: true
+  
+  # Hide from Discord bridge (DiscordSRV)
+  hide-from-discord: true
+  
+  # Hide from player list plugins
+  hide-from-lists: true
+
+# Filming Mode Presets
+# Custom configurations for different filming scenarios
+filming_modes:
+  # Cinematic mode (no effects, smooth movement)
+  cinematic:
+    speed: 0
+    night_vision: true
+    invisible: true
+    no_clip: false  # Use spectator mode instead
+    damage: false
+  
+  # Exploration mode (faster movement)
+  exploration:
+    speed: 2
+    night_vision: true
+    invisible: true
+    damage: false
+  
+  # Build showcase mode
+  showcase:
+    speed: 0
+    night_vision: true
+    invisible: true
+    interact: true
+
+# Creator-Specific Settings
+creator_settings:
+  # Automatically give vanish on join if they have permission
+  auto_vanish_creators: true
+  
+  # Special prefix for vanished creators (shown to those who can see them)
+  vanished_prefix: "&7[FILMING] "
+  
+  # Allow creators to use /gamemode while vanished
+  allow_gamemode: true
+  
+  # Allow creators to use /tp while vanished
+  allow_teleport: true
+
+# Logging
+logging:
+  # Log vanish/unvanish events
+  log_vanish: true
+  
+  # Log who can see vanished players
+  log_visibility: false
+  
+  # Log to console
+  console: true
+  
+  # Log to file
+  file:
+    enabled: true
+    path: "plugins/SuperVanish/logs/"
+
+# Anti-Abuse
+anti_abuse:
+  # Cooldown between vanish toggles (seconds)
+  cooldown: 3
+  
+  # Prevent vanish in combat
+  combat_check:
+    enabled: false  # Not needed for building server
+  
+  # Alert staff when someone vanishes
+  alert_staff:
+    enabled: false
+    message: "&7%player% &7has vanished."
+
+# Tips for Content Creators
+# These are displayed when using /vanish
+tips:
+  enabled: true
+  messages:
+    - "&eTIP: Use &f/gamemode spectator &efor smooth camera flight!"
+    - "&eTIP: Combine with Replay Mod for cinematic recording!"
+    - "&eTIP: Use &f/time &eand &f/weather &eto control environment!"
+    - "&eTIP: You're invisible to players but can still interact!"
+
+# LuckPerms Setup
+# Grant these permissions to creator rank:
+luckperms_commands:
+  - "lp group creator permission set supervanish.vanish true"
+  - "lp group creator permission set supervanish.silentjoin true"
+  - "lp group creator permission set supervanish.silentquit true"
+  - "lp group creator permission set supervanish.see true"
+  - "lp group creator permission set supervanish.keepvanish true"
+
+# Use Cases for Creators
+use_cases:
+  - "Recording timelapse videos without player interference"
+  - "Filming cinematic shots of builds"
+  - "Exploring the server for content without disturbing players"
+  - "Testing camera angles and shots"
+  - "Streaming without constant player interactions"
+  - "Preparing for video series or showcases"
+
+# Best Practices
+best_practices:
+  - "Always unvanish after filming to interact with community"
+  - "Use spectator mode for smooth camera movement"
+  - "Combine with Replay Mod client-side for best results"
+  - "Notify staff before large filming sessions"
+  - "Be respectful - don't abuse vanish to spy on players"
+
+# TODO for server admins:
+# 1. Download SuperVanish from GitHub releases
+# 2. Install plugin and restart server
+# 3. Configure vanish settings in plugins/SuperVanish/config.yml
+# 4. Grant permissions to creator rank via LuckPerms
+# 5. Test vanish mode with a creator account
+# 6. Set up logging for accountability
+# 7. Document filming guidelines for creators
