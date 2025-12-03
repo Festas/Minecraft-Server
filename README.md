@@ -18,6 +18,21 @@ The festas_builds server is growing from a friends-only server to a **full commu
 
 ---
 
+## 🎮 Cross-Platform Play
+
+This server supports both **Java Edition** and **Bedrock Edition** players!
+
+| Edition | Address | Port | Protocol |
+|---------|---------|------|----------|
+| Java | your-server-ip | 25565 | TCP |
+| Bedrock | your-server-ip | 19132 | UDP |
+
+Bedrock players on mobile, console, and Windows 10/11 can play together with Java players thanks to [Geyser](https://geysermc.org/).
+
+See [BEDROCK-SETUP.md](BEDROCK-SETUP.md) for detailed setup instructions.
+
+---
+
 ## 📋 Features
 
 - ✅ **Paper Server** - High-performance Spigot fork with plugin support
@@ -36,6 +51,7 @@ The festas_builds server is growing from a friends-only server to a **full commu
 ## 📚 Documentation
 
 - **[PLUGINS.md](PLUGINS.md)** - Comprehensive plugin guide with installation instructions
+- **[BEDROCK-SETUP.md](BEDROCK-SETUP.md)** - Cross-platform play setup guide (Geyser + Floodgate)
 - **[ROADMAP.md](ROADMAP.md)** - Server growth roadmap and future plans
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide
 - **[server-icon-instructions.md](server-icon-instructions.md)** - Custom server icon setup
@@ -136,10 +152,11 @@ Edit `plugins.json` to enable/disable specific plugins:
 ## 📊 Server Requirements
 
 - **OS**: Ubuntu 20.04+, Debian 11+, or similar Linux distribution
-- **RAM**: Minimum 2GB (4GB+ recommended)
+- **RAM**: Minimum 2GB (4GB+ recommended, 6GB+ for Bedrock support)
 - **Disk**: At least 10GB free space
 - **Java**: OpenJDK 17 or higher
-- **Network**: Port 25565 (TCP/UDP) open
+- **Network**: Port 25565 (TCP/UDP) open for Java Edition
+- **Network (Bedrock)**: Port 19132 (UDP) open for Bedrock Edition cross-play
 
 ## 🔧 Configuration
 

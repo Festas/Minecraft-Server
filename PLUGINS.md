@@ -240,6 +240,131 @@ These are the core plugins every community server needs for moderation, protecti
 
 ---
 
+## Cross-Platform Play (Bedrock Edition Support)
+
+Enable Bedrock Edition players (mobile, console, Windows 10/11) to play alongside Java Edition players.
+
+### Geyser-Spigot
+**Purpose:** Translates Bedrock protocol to Java protocol for cross-platform play
+
+**Why You Need It:** Allows players on mobile devices, consoles (Xbox, PlayStation, Switch), and Windows 10/11 Bedrock Edition to connect to your Java server.
+
+**Download:**
+- Official: https://geysermc.org/download#geyser
+- GitHub: https://github.com/GeyserMC/Geyser
+
+**How It Works:**
+- Bedrock players connect on port **19132** (UDP)
+- Geyser translates their connection to Java protocol
+- Players appear on the Java server and can interact normally
+- Works seamlessly with Java Edition players
+
+**Quick Setup:**
+1. Install Geyser-Spigot and Floodgate (see below)
+2. Open port 19132 UDP in your firewall
+3. Configure Geyser (auto-generated on first run)
+4. Bedrock players connect to `your-server-ip:19132`
+
+**Configuration Template:**
+
+We provide a template at `config/geyser-config.yml`. Key settings:
+
+```yaml
+bedrock:
+  address: 0.0.0.0       # Listen on all interfaces
+  port: 19132            # Bedrock port (UDP)
+  motd1: festas_builds
+  motd2: Community Server
+
+remote:
+  address: 127.0.0.1     # Java server (localhost)
+  port: 25565
+  auth-type: floodgate   # Use Floodgate authentication
+```
+
+**Configuration Tips:**
+- Set `auth-type: floodgate` to allow Bedrock players without Java accounts
+- Use `passthrough-motd: true` to show the same MOTD as Java players
+- Customize `motd1` and `motd2` for Bedrock-specific messages
+- Adjust `max-players` to limit Bedrock player count separately
+
+**Common Issues:**
+
+**Bedrock players can't connect:**
+- Check firewall allows port 19132 UDP
+- Verify Geyser is running: `sudo journalctl -u minecraft.service | grep Geyser`
+- Test port: `nc -zvu your-server-ip 19132`
+
+**Performance issues:**
+- Bedrock protocol translation is CPU-intensive
+- Limit Bedrock players or increase server RAM
+- Monitor with `spark` plugin
+
+**Links:**
+- Official Wiki: https://wiki.geysermc.org/geyser/
+- Discord Support: https://discord.gg/geysermc
+- Bedrock Setup Guide: [BEDROCK-SETUP.md](BEDROCK-SETUP.md)
+
+---
+
+### Floodgate
+**Purpose:** Allows Bedrock players to join without a Java Edition account
+
+**Why You Need It:** Required for Geyser to work properly. Without Floodgate, Bedrock players would need to own both Bedrock AND Java Edition.
+
+**Download:**
+- Official: https://geysermc.org/download#floodgate
+- GitHub: https://github.com/GeyserMC/Floodgate
+
+**How It Works:**
+- Authenticates Bedrock players using their Xbox Live account
+- Adds a prefix to Bedrock usernames (e.g., ".PlayerName")
+- Prevents username conflicts between Java and Bedrock players
+
+**Quick Setup:**
+1. Install Floodgate plugin
+2. Install Geyser-Spigot
+3. Set `auth-type: floodgate` in Geyser config
+4. Restart server
+
+**Configuration Template:**
+
+We provide a template at `config/floodgate-config.yml`:
+
+```yaml
+# Prefix for Bedrock players (prevents conflicts)
+username-prefix: "."
+
+# Replace spaces (Bedrock allows spaces, Java doesn't)
+replace-spaces: true
+```
+
+**Example:** Bedrock player "Steve123" appears as ".Steve123" on the server.
+
+**Configuration Tips:**
+- Keep the prefix (`.` is common and unobtrusive)
+- Alternative prefixes: `*`, `~`, `-`, or `_`
+- Don't remove the prefix - causes username conflicts
+- Use LuckPerms to give Bedrock players different permissions if needed
+
+**Common Issues:**
+
+**Bedrock players have no prefix:**
+- Verify Floodgate config has `username-prefix: "."`
+- Restart server after config changes
+- Check Floodgate loaded: `/plugins`
+
+**Username conflicts:**
+- This happens if you remove the prefix
+- Re-enable the prefix in Floodgate config
+- Bedrock and Java players with same name will conflict without it
+
+**Links:**
+- Official Wiki: https://wiki.geysermc.org/floodgate/
+- Setup Guide: [BEDROCK-SETUP.md](BEDROCK-SETUP.md)
+
+---
+
 ## Phase 2: Community Features
 
 Add these once you have 10+ active players and want to enhance the community experience.
@@ -390,11 +515,12 @@ Add these when you have 30+ players or want to take your server to the next leve
 4. **WorldGuard** - Protect spawn
 5. **CoreProtect** - Start logging everything
 6. **GriefPrevention** - Let players claim land
-7. Test everything works
-8. **Vault** - Economy API
-9. **DiscordSRV** - Community bridge
-10. **PlaceholderAPI** - Integration layer
-11. **BlueMap** - Show off your world
+7. **Geyser-Spigot + Floodgate** - Cross-platform play (optional but recommended)
+8. Test everything works
+9. **Vault** - Economy API
+10. **DiscordSRV** - Community bridge
+11. **PlaceholderAPI** - Integration layer
+12. **BlueMap** - Show off your world
 
 ---
 

@@ -1,0 +1,6 @@
+# Prefix for Bedrock player usernames (to avoid conflicts with Java names)
+# The dot prefix is common and works well
+username-prefix: "."
+
+# Replace spaces in Bedrock usernames (Bedrock allows spaces, Java doesn't)
+replace-spaces: true

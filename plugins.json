@@ -115,6 +115,24 @@
       "repo": "lucko/spark",
       "asset_pattern": "spark.*bukkit",
       "description": "Performance profiler and monitoring"
+    },
+    {
+      "name": "Geyser-Spigot",
+      "enabled": true,
+      "category": "essential",
+      "source": "github",
+      "repo": "GeyserMC/Geyser",
+      "asset_pattern": "Geyser.*Spigot",
+      "description": "Translates Bedrock protocol to Java protocol for cross-platform play"
+    },
+    {
+      "name": "Floodgate",
+      "enabled": true,
+      "category": "essential",
+      "source": "github",
+      "repo": "GeyserMC/Floodgate",
+      "asset_pattern": "floodgate.*spigot",
+      "description": "Allows Bedrock players to join without Java account"
     }
   ]
 }

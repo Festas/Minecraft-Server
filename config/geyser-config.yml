@@ -1,0 +1,25 @@
+bedrock:
+  # The IP address that will listen for Bedrock connections
+  address: 0.0.0.0
+  # The port that will listen for Bedrock connections
+  port: 19132
+  # The MOTD that will be shown to Bedrock players
+  motd1: festas_builds
+  motd2: Community Server
+  # The server name that will be shown in the Bedrock server list
+  server-name: festas_builds Server
+
+remote:
+  # The address of the Java server (localhost since same server)
+  address: 127.0.0.1
+  # The port of the Java server
+  port: 25565
+  # Authentication type
+  auth-type: floodgate
+
+# Show a nicer ping message
+passthrough-motd: true
+passthrough-player-counts: true
+
+# Prefix for Bedrock player names (to distinguish from Java players)
+# Floodgate will handle this with its own prefix setting
