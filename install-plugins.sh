@@ -180,6 +180,7 @@ find_matching_asset() {
     fi
     
     # Find asset URL matching the pattern
+    # Note: Uses case-insensitive matching ("i" flag) for flexibility
     local url
     url=$(echo "$release_json" | jq -r --arg pattern "$pattern" '
         .assets // [] | 
