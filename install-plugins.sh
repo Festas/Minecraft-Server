@@ -33,6 +33,7 @@ VERSION_CACHE="${PLUGINS_DIR}/.plugin_versions"
 FORCE_DOWNLOAD=false
 UPDATE_MODE=false
 DEBUG_MODE=false
+DRY_RUN_MODE=false
 
 ################################################################################
 # Helper Functions
@@ -60,6 +61,60 @@ debug() {
     fi
 }
 
+validate_url() {
+    local url="$1"
+    
+    if [ -z "$url" ]; then
+        debug "URL validation failed: URL is empty"
+        return 1
+    fi
+    
+    if [[ ! "$url" =~ ^https:// ]]; then
+        debug "URL validation failed: URL does not start with https://"
+        return 1
+    fi
+    
+    if [[ ! "$url" =~ \.jar$ ]]; then
+        warning "URL does not end with .jar: $url"
+    fi
+    
+    return 0
+}
+
+validate_download() {
+    local file="$1"
+    
+    if [ ! -f "$file" ]; then
+        error "Downloaded file does not exist: $file"
+        return 1
+    fi
+    
+    # Check file size (works on both Linux and macOS)
+    local size
+    size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null)
+    
+    if [ -z "$size" ] || [ "$size" -eq 0 ]; then
+        error "Downloaded file is empty: $file"
+        rm -f "$file"
+        return 1
+    fi
+    
+    debug "Downloaded file size: ${size} bytes"
+    
+    # Verify it's a valid ZIP/JAR file (JAR files are ZIP archives)
+    if command -v file &> /dev/null; then
+        local file_type
+        file_type=$(file -b "$file")
+        if [[ ! "$file_type" =~ (Zip|Java) ]]; then
+            warning "Downloaded file may not be a valid JAR: $file_type"
+        else
+            debug "File type verified: $file_type"
+        fi
+    fi
+    
+    return 0
+}
+
 show_help() {
     cat << EOF
 Minecraft Plugin Auto-Installer
@@ -70,6 +125,7 @@ OPTIONS:
     --force      Force re-download all plugins (skip version check)
     --update     Check for and download plugin updates
     --debug      Enable debug mode for verbose output
+    --dry-run    Validate configuration and test API access without downloading
     --help       Show this help message
 
 EXAMPLES:
@@ -77,10 +133,18 @@ EXAMPLES:
     $0 --force         # Force re-download all plugins
     $0 --update        # Update all plugins to latest versions
     $0 --debug         # Run with debug output to troubleshoot issues
+    $0 --dry-run       # Test configuration without downloading
 
 CONFIGURATION:
     Edit plugins.json to enable/disable plugins or add new ones.
     Set "enabled": true/false for each plugin.
+
+TROUBLESHOOTING:
+    If downloads fail, try:
+    - Use --debug to see detailed error messages
+    - Set GITHUB_TOKEN environment variable to avoid rate limiting
+    - Check if the repository has releases
+    - Verify asset patterns match actual file names
 
 EOF
     exit 0
@@ -132,14 +196,55 @@ check_dependencies() {
 download_file() {
     local url="$1"
     local output="$2"
+    local http_code
     
     if command -v curl &> /dev/null; then
-        curl -L -f -s -o "$output" "$url"
+        http_code=$(curl -L -w "%{http_code}" -o "$output" -s "$url")
+        if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            return 0
+        else
+            error "HTTP error $http_code when downloading: $url"
+            rm -f "$output"
+            return 1
+        fi
     elif command -v wget &> /dev/null; then
-        wget -q -O "$output" "$url"
+        if wget -q -O "$output" "$url"; then
+            return 0
+        else
+            error "Failed to download: $url"
+            rm -f "$output"
+            return 1
+        fi
     else
         return 1
     fi
+}
+
+download_with_retry() {
+    local url="$1"
+    local output="$2"
+    local max_attempts=3
+    local attempt=1
+    local wait_time=2
+    
+    while [ $attempt -le $max_attempts ]; do
+        debug "Download attempt $attempt of $max_attempts"
+        
+        if download_file "$url" "$output"; then
+            return 0
+        fi
+        
+        if [ $attempt -lt $max_attempts ]; then
+            warning "Download attempt $attempt failed, retrying in ${wait_time}s..."
+            sleep $wait_time
+            ((wait_time*=2))
+        fi
+        
+        ((attempt++))
+    done
+    
+    error "All $max_attempts download attempts failed for: $url"
+    return 1
 }
 
 ################################################################################
@@ -255,8 +360,18 @@ install_github_plugin() {
     
     if [ -z "$asset_url" ]; then
         error "No matching asset found for pattern: ${pattern}"
+        warning "Troubleshooting suggestions:"
+        warning "  1. Check available assets below and update the pattern in plugins.json"
+        warning "  2. Verify the repository has releases: https://github.com/${repo}/releases"
+        warning "  3. Use --debug mode for more details"
         warning "Available assets in release:"
         echo "$release_json" | jq -r '.assets // [] | map(.name // "unknown") | if length > 0 then .[] else "No assets found" end' 2>/dev/null | head -10
+        return 1
+    fi
+    
+    # Validate URL before attempting download
+    if ! validate_url "$asset_url"; then
+        error "Invalid asset URL for ${name}: ${asset_url}"
         return 1
     fi
     
@@ -280,20 +395,37 @@ install_github_plugin() {
         fi
     fi
     
+    # In dry-run mode, just show what would be downloaded
+    if [ "$DRY_RUN_MODE" = true ]; then
+        success "[DRY RUN] Would download ${name} ${version} → ${filename}"
+        log "  URL: ${asset_url}"
+        return 0
+    fi
+    
     log "Downloading ${name} ${version}..."
     log "  URL: ${asset_url}"
     
-    if download_file "$asset_url" "$output_path"; then
-        success "Downloaded ${name} ${version} → ${filename}"
-        
-        # Update version cache
-        grep -v "^${name}:" "$VERSION_CACHE" 2>/dev/null > "${VERSION_CACHE}.tmp" || true
-        echo "${name}:${version}" >> "${VERSION_CACHE}.tmp"
-        mv "${VERSION_CACHE}.tmp" "$VERSION_CACHE"
-        
-        return 0
+    if download_with_retry "$asset_url" "$output_path"; then
+        # Validate the downloaded file
+        if validate_download "$output_path"; then
+            success "Downloaded ${name} ${version} → ${filename}"
+            
+            # Update version cache
+            grep -v "^${name}:" "$VERSION_CACHE" 2>/dev/null > "${VERSION_CACHE}.tmp" || true
+            echo "${name}:${version}" >> "${VERSION_CACHE}.tmp"
+            mv "${VERSION_CACHE}.tmp" "$VERSION_CACHE"
+            
+            return 0
+        else
+            error "Downloaded file validation failed for ${name}"
+            return 1
+        fi
     else
-        error "Failed to download ${name}"
+        error "Failed to download ${name} after multiple attempts"
+        warning "Troubleshooting suggestions:"
+        warning "  1. Check your internet connection"
+        warning "  2. Verify the URL is accessible: ${asset_url}"
+        warning "  3. If rate limited, set GITHUB_TOKEN environment variable"
         return 1
     fi
 }
@@ -344,11 +476,27 @@ install_modrinth_plugin() {
     local version_number
     version_number=$(echo "$version_info" | jq -r '.version_number')
     
+    # Prefer primary file, fallback to first file
     local download_url
-    download_url=$(echo "$version_info" | jq -r '.files[0].url')
+    download_url=$(echo "$version_info" | jq -r '
+        .files | 
+        (map(select(.primary == true)) | .[0].url) // 
+        .[0].url
+    ')
     
     local filename
-    filename=$(echo "$version_info" | jq -r '.files[0].filename')
+    filename=$(echo "$version_info" | jq -r '
+        .files | 
+        (map(select(.primary == true)) | .[0].filename) // 
+        .[0].filename
+    ')
+    
+    # Validate URL
+    if ! validate_url "$download_url"; then
+        error "Invalid download URL for ${name}: ${download_url}"
+        return 1
+    fi
+    
     local output_path="${PLUGINS_DIR}/${filename}"
     
     # Check if already downloaded
@@ -365,20 +513,37 @@ install_modrinth_plugin() {
         fi
     fi
     
+    # In dry-run mode, just show what would be downloaded
+    if [ "$DRY_RUN_MODE" = true ]; then
+        success "[DRY RUN] Would download ${name} ${version_number} → ${filename}"
+        log "  URL: ${download_url}"
+        return 0
+    fi
+    
     log "Downloading ${name} ${version_number}..."
     log "  URL: ${download_url}"
     
-    if download_file "$download_url" "$output_path"; then
-        success "Downloaded ${name} ${version_number} → ${filename}"
-        
-        # Update version cache
-        grep -v "^${name}:" "$VERSION_CACHE" 2>/dev/null > "${VERSION_CACHE}.tmp" || true
-        echo "${name}:${version_number}" >> "${VERSION_CACHE}.tmp"
-        mv "${VERSION_CACHE}.tmp" "$VERSION_CACHE"
-        
-        return 0
+    if download_with_retry "$download_url" "$output_path"; then
+        # Validate the downloaded file
+        if validate_download "$output_path"; then
+            success "Downloaded ${name} ${version_number} → ${filename}"
+            
+            # Update version cache
+            grep -v "^${name}:" "$VERSION_CACHE" 2>/dev/null > "${VERSION_CACHE}.tmp" || true
+            echo "${name}:${version_number}" >> "${VERSION_CACHE}.tmp"
+            mv "${VERSION_CACHE}.tmp" "$VERSION_CACHE"
+            
+            return 0
+        else
+            error "Downloaded file validation failed for ${name}"
+            return 1
+        fi
     else
-        error "Failed to download ${name}"
+        error "Failed to download ${name} from Modrinth after multiple attempts"
+        warning "Troubleshooting suggestions:"
+        warning "  1. Check your internet connection"
+        warning "  2. Verify the project exists: https://modrinth.com/plugin/${project_id}"
+        warning "  3. Try again later if Modrinth API is having issues"
         return 1
     fi
 }
@@ -446,6 +611,10 @@ main() {
                 DEBUG_MODE=true
                 shift
                 ;;
+            --dry-run)
+                DRY_RUN_MODE=true
+                shift
+                ;;
             --help)
                 show_help
                 ;;
@@ -486,6 +655,10 @@ main() {
     
     if [ "$DEBUG_MODE" = true ]; then
         warning "Debug mode enabled - verbose output will be shown"
+    fi
+    
+    if [ "$DRY_RUN_MODE" = true ]; then
+        warning "Dry-run mode enabled - no files will be downloaded"
     fi
     
     echo ""

@@ -15,7 +15,7 @@
       "category": "essential",
       "source": "github",
       "repo": "EssentialsX/Essentials",
-      "asset_pattern": "EssentialsX-[0-9]",
+      "asset_pattern": "^EssentialsX-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar$",
       "description": "Core commands (/home, /spawn, /tpa, /warp)"
     },
     {
@@ -24,7 +24,7 @@
       "category": "essential",
       "source": "github",
       "repo": "EssentialsX/Essentials",
-      "asset_pattern": "EssentialsXSpawn",
+      "asset_pattern": "^EssentialsXSpawn-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar$",
       "description": "Spawn management for EssentialsX"
     },
     {
@@ -59,7 +59,7 @@
       "category": "essential",
       "source": "github",
       "repo": "TechFortress/GriefPrevention",
-      "asset_pattern": "GriefPrevention",
+      "asset_pattern": "^GriefPrevention.*\\.jar$",
       "description": "Player land claims and grief prevention"
     },
     {
@@ -68,7 +68,7 @@
       "category": "community",
       "source": "github",
       "repo": "DiscordSRV/DiscordSRV",
-      "asset_pattern": "DiscordSRV-Build",
+      "asset_pattern": "^DiscordSRV-Build-.*\\.jar$",
       "description": "Discord-Minecraft chat bridge"
     },
     {
@@ -86,7 +86,7 @@
       "category": "community",
       "source": "github",
       "repo": "PlaceholderAPI/PlaceholderAPI",
-      "asset_pattern": "PlaceholderAPI-[0-9]",
+      "asset_pattern": "^PlaceholderAPI-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar$",
       "description": "Placeholder system for plugins"
     },
     {
@@ -158,7 +158,7 @@
       "category": "cosmetics",
       "source": "github",
       "repo": "Esophose/PlayerParticles",
-      "asset_pattern": "PlayerParticles",
+      "asset_pattern": "^PlayerParticles-[0-9]+\\.[0-9]+.*\\.jar$",
       "description": "Customizable particle effects for players"
     },
     {
@@ -183,7 +183,7 @@
       "category": "welcome",
       "source": "github",
       "repo": "CitizensDev/Citizens2",
-      "asset_pattern": "Citizens",
+      "asset_pattern": "^Citizens-[0-9]+\\.[0-9]+\\.[0-9]+-b[0-9]+\\.jar$",
       "description": "NPC plugin for interactive tutorials"
     },
     {
@@ -200,7 +200,7 @@
       "category": "creator-tools",
       "source": "github",
       "repo": "MylesIsCool/SuperVanish",
-      "asset_pattern": "SuperVanish",
+      "asset_pattern": "^SuperVanish.*\\.jar$",
       "description": "Invisible mode for content creators filming"
     },
     {
