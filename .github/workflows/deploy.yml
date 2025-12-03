@@ -109,9 +109,13 @@ jobs:
       env:
         SERVER_HOST: ${{ secrets.SERVER_HOST }}
         SERVER_USER: ${{ secrets.SERVER_USER }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+        ssh ${SERVER_USER}@${SERVER_HOST} << EOF
           cd /home/deploy/minecraft-server
+          
+          # Export GitHub token for use by install-plugins.sh
+          export GITHUB_TOKEN="${GITHUB_TOKEN}"
           
           # Check if jq is installed
           if ! command -v jq &> /dev/null; then

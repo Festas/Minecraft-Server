@@ -480,17 +480,32 @@ get_github_latest_release() {
     local api_url="https://api.github.com/repos/${repo}/releases/latest"
     
     # Use GitHub token if available to avoid rate limiting
+    # Include User-Agent and Accept headers as recommended by GitHub API
     if [ -n "${GITHUB_TOKEN:-}" ]; then
         if command -v curl &> /dev/null; then
-            curl -s -H "Authorization: Bearer ${GITHUB_TOKEN}" "$api_url"
+            curl -s \
+                -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                -H "Accept: application/vnd.github+json" \
+                -H "User-Agent: Minecraft-Plugin-Installer" \
+                "$api_url"
         else
-            wget -q -O - --header="Authorization: Bearer ${GITHUB_TOKEN}" "$api_url"
+            wget -q -O - \
+                --header="Authorization: Bearer ${GITHUB_TOKEN}" \
+                --header="Accept: application/vnd.github+json" \
+                --header="User-Agent: Minecraft-Plugin-Installer" \
+                "$api_url"
         fi
     else
         if command -v curl &> /dev/null; then
-            curl -s "$api_url"
+            curl -s \
+                -H "Accept: application/vnd.github+json" \
+                -H "User-Agent: Minecraft-Plugin-Installer" \
+                "$api_url"
         else
-            wget -q -O - "$api_url"
+            wget -q -O - \
+                --header="Accept: application/vnd.github+json" \
+                --header="User-Agent: Minecraft-Plugin-Installer" \
+                "$api_url"
         fi
     fi
 }
