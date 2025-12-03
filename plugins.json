@@ -1,0 +1,120 @@
+{
+  "plugins": [
+    {
+      "name": "LuckPerms",
+      "enabled": true,
+      "category": "essential",
+      "source": "github",
+      "repo": "LuckPerms/LuckPerms",
+      "asset_pattern": "Bukkit",
+      "description": "Advanced permissions management system"
+    },
+    {
+      "name": "EssentialsX",
+      "enabled": true,
+      "category": "essential",
+      "source": "github",
+      "repo": "EssentialsX/Essentials",
+      "asset_pattern": "EssentialsX-[0-9]",
+      "description": "Core commands (/home, /spawn, /tpa, /warp)"
+    },
+    {
+      "name": "EssentialsXSpawn",
+      "enabled": true,
+      "category": "essential",
+      "source": "github",
+      "repo": "EssentialsX/Essentials",
+      "asset_pattern": "EssentialsXSpawn",
+      "description": "Spawn management for EssentialsX"
+    },
+    {
+      "name": "CoreProtect",
+      "enabled": true,
+      "category": "essential",
+      "source": "modrinth",
+      "project_id": "lu3oWuz1",
+      "description": "Block logging and rollback tool"
+    },
+    {
+      "name": "WorldEdit",
+      "enabled": true,
+      "category": "essential",
+      "source": "github",
+      "repo": "EngineHub/WorldEdit",
+      "asset_pattern": "worldedit-bukkit",
+      "description": "In-game world editor for building"
+    },
+    {
+      "name": "WorldGuard",
+      "enabled": true,
+      "category": "essential",
+      "source": "github",
+      "repo": "EngineHub/WorldGuard",
+      "asset_pattern": "worldguard-bukkit",
+      "description": "Region protection and zone management"
+    },
+    {
+      "name": "GriefPrevention",
+      "enabled": true,
+      "category": "essential",
+      "source": "github",
+      "repo": "TechFortress/GriefPrevention",
+      "asset_pattern": "GriefPrevention",
+      "description": "Player land claims and grief prevention"
+    },
+    {
+      "name": "DiscordSRV",
+      "enabled": true,
+      "category": "community",
+      "source": "github",
+      "repo": "DiscordSRV/DiscordSRV",
+      "asset_pattern": "DiscordSRV-Build",
+      "description": "Discord-Minecraft chat bridge"
+    },
+    {
+      "name": "Vault",
+      "enabled": true,
+      "category": "community",
+      "source": "github",
+      "repo": "milkbowl/Vault",
+      "asset_pattern": "Vault\\.jar",
+      "description": "Economy API for plugins"
+    },
+    {
+      "name": "PlaceholderAPI",
+      "enabled": true,
+      "category": "community",
+      "source": "github",
+      "repo": "PlaceholderAPI/PlaceholderAPI",
+      "asset_pattern": "PlaceholderAPI-[0-9]",
+      "description": "Placeholder system for plugins"
+    },
+    {
+      "name": "BlueMap",
+      "enabled": false,
+      "category": "optional",
+      "source": "github",
+      "repo": "BlueMap-Minecraft/BlueMap",
+      "asset_pattern": "BlueMap.*paper",
+      "description": "Web-based 3D live map"
+    },
+    {
+      "name": "TAB",
+      "enabled": false,
+      "category": "optional",
+      "source": "github",
+      "repo": "NEZNAMY/TAB",
+      "asset_pattern": "TAB v[0-9].*\\.jar$",
+      "description": "Custom tab list and nametags"
+    },
+    {
+      "name": "spark",
+      "enabled": false,
+      "category": "optional",
+      "source": "github",
+      "repo": "lucko/spark",
+      "asset_pattern": "spark.*bukkit",
+      "description": "Performance profiler and monitoring"
+    }
+  ]
+}

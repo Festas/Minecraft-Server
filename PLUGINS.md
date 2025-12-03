@@ -2,6 +2,33 @@
 
 This guide outlines the recommended plugins for building a scalable, well-managed community Minecraft server. Plugins are organized into phases to make the transition from a small server to a full community server manageable.
 
+---
+
+## 🚀 Quick Start: Auto-Install Plugins
+
+We provide an automated plugin installation system that downloads and installs all recommended plugins with a single command:
+
+```bash
+# Install all enabled plugins
+./install-plugins.sh
+
+# Force re-download all plugins
+./install-plugins.sh --force
+
+# Update plugins to latest versions
+./update-plugins.sh
+```
+
+### How It Works
+
+1. **Configuration**: Edit `plugins.json` to enable/disable plugins
+2. **Installation**: Run `./install-plugins.sh` to download enabled plugins
+3. **Updates**: Run `./update-plugins.sh` to check for and install updates
+
+See [Auto-Install System Documentation](#auto-install-system) below for complete details.
+
+---
+
 ## Installation Instructions
 
 ### General Plugin Installation
@@ -412,3 +439,275 @@ Add these when you have 30+ players or want to take your server to the next leve
 - Test plugins on a local server before deploying to production
 
 **Remember:** Start small! Don't install 20 plugins at once. Add them gradually and configure each one properly.
+
+---
+
+## 🤖 Auto-Install System
+
+The festas_builds server includes an automated plugin installation system that simplifies plugin management.
+
+### Features
+
+- ✅ **Automatic Downloads** - Fetches plugins from GitHub Releases and Modrinth
+- ✅ **Version Tracking** - Keeps track of installed versions
+- ✅ **Smart Updates** - Only downloads when updates are available
+- ✅ **Asset Matching** - Automatically selects the correct JAR file (Bukkit/Paper versions)
+- ✅ **Backup on Update** - Backs up old plugins before updating
+- ✅ **Progress Logging** - Detailed logs of all operations
+- ✅ **Flexible Configuration** - Enable/disable plugins via JSON config
+
+### Prerequisites
+
+The scripts require the following tools (usually pre-installed on most Linux systems):
+
+- `curl` or `wget` - For downloading files
+- `jq` - For JSON parsing
+
+**Installation on Ubuntu/Debian:**
+```bash
+sudo apt update && sudo apt install -y curl jq
+```
+
+**Installation on CentOS/RHEL:**
+```bash
+sudo yum install -y curl jq
+```
+
+### Using the Auto-Installer
+
+#### 1. Install All Enabled Plugins
+
+```bash
+cd /home/deploy/minecraft-server
+./install-plugins.sh
+```
+
+This will:
+- Read the `plugins.json` configuration
+- Download all plugins where `"enabled": true`
+- Save them to the `plugins/` directory
+- Track versions in `plugins/.plugin_versions`
+- Log all actions to `plugin-install.log`
+
+#### 2. Update Plugins
+
+```bash
+./update-plugins.sh
+```
+
+This will:
+- Check each plugin for newer versions
+- Backup current plugins to `plugins/backups/`
+- Download and install updates
+- Keep the last 5 backups
+
+#### 3. Force Re-download
+
+```bash
+./install-plugins.sh --force
+```
+
+Useful when:
+- A download was corrupted
+- You want to ensure you have fresh copies
+- Troubleshooting plugin issues
+
+### Configuration: plugins.json
+
+The `plugins.json` file controls which plugins are installed:
+
+```json
+{
+  "plugins": [
+    {
+      "name": "LuckPerms",
+      "enabled": true,
+      "category": "essential",
+      "source": "github",
+      "repo": "LuckPerms/LuckPerms",
+      "asset_pattern": "Bukkit",
+      "description": "Advanced permissions management system"
+    }
+  ]
+}
+```
+
+**Fields:**
+- `name` - Plugin display name
+- `enabled` - `true` to install, `false` to skip
+- `category` - `essential`, `community`, or `optional` (for organization)
+- `source` - `github` or `modrinth`
+- `repo` - GitHub repository (format: `owner/repo`)
+- `project_id` - Modrinth project ID (for Modrinth plugins)
+- `asset_pattern` - Regex pattern to match the correct JAR file
+- `description` - What the plugin does
+
+### Adding New Plugins
+
+#### From GitHub Releases
+
+1. Find the GitHub repository (e.g., `AuthorName/PluginName`)
+2. Note the asset naming pattern (e.g., "bukkit", "paper", or specific filename pattern)
+3. Add to `plugins.json`:
+
+```json
+{
+  "name": "MyNewPlugin",
+  "enabled": true,
+  "category": "community",
+  "source": "github",
+  "repo": "AuthorName/PluginName",
+  "asset_pattern": "bukkit",
+  "description": "What the plugin does"
+}
+```
+
+#### From Modrinth
+
+1. Go to the plugin's Modrinth page (e.g., `https://modrinth.com/plugin/example`)
+2. Copy the project ID from the URL or page
+3. Add to `plugins.json`:
+
+```json
+{
+  "name": "MyModrinthPlugin",
+  "enabled": true,
+  "category": "community",
+  "source": "modrinth",
+  "project_id": "abc123xyz",
+  "description": "What the plugin does"
+}
+```
+
+### Enabling/Disabling Plugins
+
+To disable a plugin without removing it:
+
+1. Edit `plugins.json`
+2. Change `"enabled": true` to `"enabled": false`
+3. Remove the plugin JAR manually from `plugins/` directory (or let it stay for later re-enable)
+
+To re-enable:
+1. Change back to `"enabled": true`
+2. Run `./install-plugins.sh`
+
+### Automated Updates via Cron
+
+To automatically check for plugin updates daily:
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add this line to check for updates at 3 AM daily
+0 3 * * * cd /home/deploy/minecraft-server && ./update-plugins.sh >> /home/deploy/minecraft-server/cron-plugin-update.log 2>&1
+```
+
+**Note:** Automatic updates will restart plugins when the server restarts. Consider the timing carefully.
+
+### GitHub Actions Integration
+
+The deployment workflow (`.github/workflows/deploy.yml`) can optionally install/update plugins:
+
+**Manual Workflow Trigger:**
+1. Go to GitHub Actions tab
+2. Select "Deploy Minecraft Server" workflow
+3. Click "Run workflow"
+4. Set "Install/update plugins during deployment" to `true`
+5. Run workflow
+
+This is useful for:
+- Initial server setup
+- Deploying plugin configuration changes
+- Updating plugins as part of server updates
+
+### Troubleshooting
+
+#### "jq: command not found"
+
+Install jq:
+```bash
+sudo apt update && sudo apt install -y jq
+```
+
+#### "No matching asset found for pattern"
+
+The `asset_pattern` in `plugins.json` doesn't match any release assets. To fix:
+
+1. Go to the GitHub releases page for the plugin
+2. Look at the JAR filenames
+3. Update the `asset_pattern` to match (case-insensitive regex)
+
+Example patterns:
+- `"Bukkit"` - matches "LuckPerms-Bukkit-5.4.102.jar"
+- `"EssentialsX-[0-9]"` - matches "EssentialsX-2.20.1.jar" but not "EssentialsXSpawn-2.20.1.jar"
+- `"worldedit-bukkit"` - matches "worldedit-bukkit-7.2.15.jar"
+
+#### "Failed to fetch release information"
+
+Possible causes:
+- GitHub rate limiting (try setting GITHUB_TOKEN environment variable)
+- Invalid repository name in `plugins.json`
+- Repository doesn't have releases
+
+Check the GitHub repo manually and verify it has releases published.
+
+#### Plugin JAR Downloaded but Not Loading
+
+1. Check Minecraft/Paper version compatibility
+2. Verify the plugin is in the correct `plugins/` directory
+3. Check server logs: `sudo journalctl -u minecraft.service -n 100`
+4. Ensure dependencies are installed (e.g., WorldGuard requires WorldEdit)
+
+#### Rate Limiting (GitHub API)
+
+If you hit GitHub rate limits (60 requests/hour for unauthenticated):
+
+1. Create a GitHub Personal Access Token (no special permissions needed)
+2. Set it as an environment variable:
+```bash
+export GITHUB_TOKEN="your_token_here"
+./install-plugins.sh
+```
+
+Authenticated requests get 5,000 requests/hour.
+
+### Advanced Usage
+
+#### Custom Plugin Directory
+
+By default, plugins are installed to `./plugins/`. To use a different directory, edit the scripts:
+
+```bash
+# In install-plugins.sh and update-plugins.sh
+PLUGINS_DIR="/path/to/custom/plugins"
+```
+
+#### Dry Run Mode
+
+To see what would be downloaded without actually downloading:
+
+```bash
+# Review the plugins.json
+cat plugins.json | jq '.plugins[] | select(.enabled == true) | {name, source, repo}'
+```
+
+#### Backup Management
+
+Backups are stored in `plugins/backups/backup_YYYYMMDD_HHMMSS/`. The system keeps the last 5 backups automatically.
+
+To restore from a backup:
+```bash
+cp plugins/backups/backup_20250101_030000/*.jar plugins/
+```
+
+### Log Files
+
+- `plugin-install.log` - Installation and download logs
+- `plugin-update.log` - Update operation logs
+
+Review these files if something goes wrong:
+```bash
+tail -f plugin-install.log
+```
+
