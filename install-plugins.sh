@@ -44,6 +44,9 @@ WAIT_FOR_RATE_LIMIT=false
 CONNECTION_TIMEOUT="${CONNECTION_TIMEOUT:-10}"
 DOWNLOAD_TIMEOUT="${DOWNLOAD_TIMEOUT:-300}"
 
+# Modrinth compatible loaders (space-separated for easy maintenance)
+MODRINTH_LOADERS="paper bukkit spigot purpur folia"
+
 ################################################################################
 # Helper Functions
 ################################################################################
@@ -523,7 +526,8 @@ check_github_rate_limit() {
                     sleep $wait_seconds
                     return 0
                 else
-                    warning "Wait time is too long (${wait_seconds}s > 300s), use --wait-for-rate-limit to wait anyway"
+                    warning "Wait time is too long (${wait_seconds}s > 300s)"
+                    warning "Rate limit will reset in $((wait_seconds / 60)) minutes"
                     return 1
                 fi
             fi
@@ -837,38 +841,58 @@ install_modrinth_plugin() {
         return 1
     fi
     
-    # Get the latest version for Paper/Bukkit/Spigot/Purpur/Folia (compatible loaders)
-    # Expanded from just "paper|bukkit" to include more compatible loaders
+    # Convert MODRINTH_LOADERS to pipe-separated for regex
+    local loader_pattern
+    loader_pattern=$(echo "$MODRINTH_LOADERS" | tr ' ' '|')
+    
+    # Get the latest version for compatible loaders
+    # Expanded loader support for better compatibility
     local version_info
-    version_info=$(echo "$versions_json" | jq -r '
-        [.[] | select(.loaders[] | test("paper|bukkit|spigot|purpur|folia"; "i"))] | 
+    version_info=$(echo "$versions_json" | jq -r --arg loaders "$loader_pattern" '
+        [.[] | select(.loaders and (.loaders | length > 0) and (.loaders[] | test($loaders; "i")))] | 
         sort_by(.date_published) | 
         reverse | 
-        .[0]
+        if length > 0 then .[0] else null end
     ')
     
     if [ -z "$version_info" ] || [ "$version_info" = "null" ]; then
         error "No compatible version found for ${name}"
-        debug "Tried loaders: paper, bukkit, spigot, purpur, folia"
+        debug "Tried loaders: $MODRINTH_LOADERS"
         return 1
     fi
     
     local version_number
-    version_number=$(echo "$version_info" | jq -r '.version_number')
+    version_number=$(echo "$version_info" | jq -r '.version_number // empty')
+    
+    if [ -z "$version_number" ]; then
+        error "Could not determine version number for ${name}"
+        return 1
+    fi
     
     # Get file information with checksums
     local file_info
     file_info=$(echo "$version_info" | jq -r '
-        .files | 
-        (map(select(.primary == true)) | .[0]) // 
-        .[0]
+        .files // [] | 
+        if length == 0 then null
+        else (map(select(.primary == true)) | if length > 0 then .[0] else null end) // .[0]
+        end
     ')
     
+    if [ -z "$file_info" ] || [ "$file_info" = "null" ]; then
+        error "No downloadable files found for ${name}"
+        return 1
+    fi
+    
     local download_url
-    download_url=$(echo "$file_info" | jq -r '.url')
+    download_url=$(echo "$file_info" | jq -r '.url // empty')
     
     local filename
-    filename=$(echo "$file_info" | jq -r '.filename')
+    filename=$(echo "$file_info" | jq -r '.filename // empty')
+    
+    if [ -z "$download_url" ] || [ -z "$filename" ]; then
+        error "Invalid file information for ${name}"
+        return 1
+    fi
     
     # Get checksums if available
     local sha512_hash
@@ -1156,7 +1180,7 @@ main() {
                 shift 2
                 ;;
             --max-retries)
-                if [[ ! "$2" =~ ^[0-9]+$ ]] || [ "$2" -le 0 ]; then
+                if [[ ! "$2" =~ ^[0-9]+$ ]] || [ "$2" -lt 1 ]; then
                     error "Invalid max-retries value: $2 (must be a positive integer)"
                     exit 1
                 fi
