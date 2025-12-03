@@ -36,6 +36,8 @@ FORCE_DOWNLOAD=false
 UPDATE_MODE=false
 DEBUG_MODE=false
 DRY_RUN_MODE=false
+MAX_RETRIES=2
+WAIT_FOR_RATE_LIMIT=false
 
 # Timeout configuration (in seconds)
 # Can be overridden with environment variables
@@ -159,12 +161,14 @@ Minecraft Plugin Auto-Installer
 Usage: $0 [OPTIONS]
 
 OPTIONS:
-    --force      Force re-download all plugins (skip version check)
-    --update     Check for and download plugin updates
-    --debug      Enable debug mode for verbose output
-    --dry-run    Validate configuration and test API access without downloading
-    --timeout N  Set download timeout in seconds (default: 300)
-    --help       Show this help message
+    --force                 Force re-download all plugins (skip version check)
+    --update                Check for and download plugin updates
+    --debug                 Enable debug mode for verbose output
+    --dry-run               Validate configuration and test API access without downloading
+    --timeout N             Set download timeout in seconds (default: 300)
+    --max-retries N         Maximum retry passes for failed plugins (default: 2)
+    --wait-for-rate-limit   Automatically wait when rate limited instead of failing
+    --help                  Show this help message
 
 ENVIRONMENT VARIABLES:
     CONNECTION_TIMEOUT  Timeout for initial connection (default: 10 seconds)
@@ -172,23 +176,33 @@ ENVIRONMENT VARIABLES:
     GITHUB_TOKEN        GitHub API token to avoid rate limiting
 
 EXAMPLES:
-    $0                 # Install all enabled plugins
-    $0 --force         # Force re-download all plugins
-    $0 --update        # Update all plugins to latest versions
-    $0 --debug         # Run with debug output to troubleshoot issues
-    $0 --dry-run       # Test configuration without downloading
-    $0 --timeout 600   # Set download timeout to 10 minutes
+    $0                          # Install all enabled plugins
+    $0 --force                  # Force re-download all plugins
+    $0 --update                 # Update all plugins to latest versions
+    $0 --debug                  # Run with debug output to troubleshoot issues
+    $0 --dry-run                # Test configuration without downloading
+    $0 --timeout 600            # Set download timeout to 10 minutes
+    $0 --max-retries 3          # Retry failed plugins up to 3 times
+    $0 --wait-for-rate-limit    # Wait when rate limited instead of failing
 
 CONFIGURATION:
     Edit plugins.json to enable/disable plugins or add new ones.
     Set "enabled": true/false for each plugin.
+    
+    Fallback Sources:
+    - Add "fallback_source": "github" or "modrinth" with corresponding fields
+    - Add "fallback_repo": "owner/repo" for GitHub fallback
+    - Add "fallback_project_id": "project-id" for Modrinth fallback
+    - Add "fallback_url": "https://..." for manual URL fallback
 
 TROUBLESHOOTING:
     If downloads fail, try:
     - Use --debug to see detailed error messages
     - Set GITHUB_TOKEN environment variable to avoid rate limiting
+    - Use --wait-for-rate-limit to automatically wait when rate limited
     - Check if the repository has releases
     - Verify asset patterns match actual file names
+    - Configure fallback sources in plugins.json
 
 EOF
     exit 0
@@ -475,39 +489,111 @@ verify_checksum() {
 # GitHub Release Functions
 ################################################################################
 
-get_github_latest_release() {
-    local repo="$1"
-    local api_url="https://api.github.com/repos/${repo}/releases/latest"
+check_github_rate_limit() {
+    local headers="$1"
+    
+    # Extract rate limit headers
+    local remaining
+    remaining=$(echo "$headers" | grep -i "x-ratelimit-remaining:" | tail -1 | cut -d: -f2 | tr -d ' \r\n' || echo "")
+    
+    local reset_time
+    reset_time=$(echo "$headers" | grep -i "x-ratelimit-reset:" | tail -1 | cut -d: -f2 | tr -d ' \r\n' || echo "")
+    
+    if [ "$DEBUG_MODE" = true ] && [ -n "$remaining" ]; then
+        debug "GitHub rate limit remaining: $remaining"
+    fi
+    
+    # If rate limited (remaining = 0)
+    if [ "$remaining" = "0" ] && [ -n "$reset_time" ]; then
+        local current_time
+        current_time=$(date +%s)
+        local wait_seconds=$((reset_time - current_time))
+        
+        if [ $wait_seconds -gt 0 ]; then
+            error "GitHub API rate limit exceeded!"
+            warning "Rate limit will reset in $wait_seconds seconds ($(date -d "@$reset_time" 2>/dev/null || date -r "$reset_time" 2>/dev/null))"
+            
+            if [ -z "${GITHUB_TOKEN:-}" ]; then
+                warning "Suggestion: Set GITHUB_TOKEN environment variable to increase rate limit from 60 to 5000 requests/hour"
+            fi
+            
+            if [ "$WAIT_FOR_RATE_LIMIT" = true ]; then
+                if [ $wait_seconds -le 300 ]; then
+                    warning "Waiting for rate limit to reset (${wait_seconds}s)..."
+                    sleep $wait_seconds
+                    return 0
+                else
+                    warning "Wait time is too long (${wait_seconds}s > 300s), use --wait-for-rate-limit to wait anyway"
+                    return 1
+                fi
+            fi
+            return 1
+        fi
+    fi
+    
+    return 0
+}
+
+get_github_api_with_headers() {
+    local api_url="$1"
+    local temp_headers
+    temp_headers=$(mktemp)
+    local temp_body
+    temp_body=$(mktemp)
     
     # Use GitHub token if available to avoid rate limiting
     # Include User-Agent and Accept headers as recommended by GitHub API
     if [ -n "${GITHUB_TOKEN:-}" ]; then
         if command -v curl &> /dev/null; then
-            curl -s \
+            curl -s -D "$temp_headers" -o "$temp_body" \
                 -H "Authorization: Bearer ${GITHUB_TOKEN}" \
                 -H "Accept: application/vnd.github+json" \
                 -H "User-Agent: Minecraft-Plugin-Installer" \
                 "$api_url"
         else
-            wget -q -O - \
+            wget -q -S -O "$temp_body" \
                 --header="Authorization: Bearer ${GITHUB_TOKEN}" \
                 --header="Accept: application/vnd.github+json" \
                 --header="User-Agent: Minecraft-Plugin-Installer" \
-                "$api_url"
+                "$api_url" 2> "$temp_headers"
         fi
     else
         if command -v curl &> /dev/null; then
-            curl -s \
+            curl -s -D "$temp_headers" -o "$temp_body" \
                 -H "Accept: application/vnd.github+json" \
                 -H "User-Agent: Minecraft-Plugin-Installer" \
                 "$api_url"
         else
-            wget -q -O - \
+            wget -q -S -O "$temp_body" \
                 --header="Accept: application/vnd.github+json" \
                 --header="User-Agent: Minecraft-Plugin-Installer" \
-                "$api_url"
+                "$api_url" 2> "$temp_headers"
         fi
     fi
+    
+    # Check rate limit
+    if ! check_github_rate_limit "$(cat "$temp_headers")"; then
+        rm -f "$temp_headers" "$temp_body"
+        return 1
+    fi
+    
+    cat "$temp_body"
+    rm -f "$temp_headers" "$temp_body"
+    return 0
+}
+
+get_github_latest_release() {
+    local repo="$1"
+    local api_url="https://api.github.com/repos/${repo}/releases/latest"
+    
+    get_github_api_with_headers "$api_url"
+}
+
+get_github_all_releases() {
+    local repo="$1"
+    local api_url="https://api.github.com/repos/${repo}/releases"
+    
+    get_github_api_with_headers "$api_url"
 }
 
 find_matching_asset() {
@@ -523,7 +609,7 @@ find_matching_asset() {
         return 1
     fi
     
-    # Find asset URL matching the pattern
+    # Try exact pattern match first
     # Note: Uses case-insensitive matching ("i" flag) for flexibility
     local url
     url=$(echo "$release_json" | jq -r --arg pattern "$pattern" '
@@ -532,7 +618,29 @@ find_matching_asset() {
         if length > 0 then .[0].browser_download_url else empty end
     ')
     
-    echo "$url"
+    if [ -n "$url" ]; then
+        debug "Matched asset using exact pattern"
+        echo "$url"
+        return 0
+    fi
+    
+    # Fallback 1: Try matching just .jar files (excluding sources, javadoc, etc.)
+    debug "Exact pattern match failed, trying fuzzy matching..."
+    url=$(echo "$release_json" | jq -r '
+        .assets // [] | 
+        map(select(.name | test("\\.jar$"; "i"))) |
+        map(select(.name | test("-(sources|javadoc|api)\\.jar$"; "i") | not)) |
+        if length > 0 then .[0].browser_download_url else empty end
+    ')
+    
+    if [ -n "$url" ]; then
+        warning "Used fuzzy matching: found .jar file (excluding sources/javadoc)"
+        echo "$url"
+        return 0
+    fi
+    
+    echo ""
+    return 1
 }
 
 get_release_version() {
@@ -550,6 +658,7 @@ install_github_plugin() {
     local name="$1"
     local repo="$2"
     local pattern="$3"
+    local allow_prerelease="${4:-false}"
     
     log "Fetching latest release for ${name} from GitHub..."
     debug "Repository: ${repo}"
@@ -558,7 +667,7 @@ install_github_plugin() {
     local release_json
     release_json=$(get_github_latest_release "$repo")
     
-    # Check for API errors
+    # Check for API errors or rate limiting
     if [ -z "$release_json" ]; then
         error "Empty response from GitHub API for ${name}"
         return 1
@@ -567,10 +676,40 @@ install_github_plugin() {
     # Check for error message in response
     local api_message
     api_message=$(echo "$release_json" | jq -r '.message // empty')
-    if [ -n "$api_message" ]; then
-        error "GitHub API error for ${name}: ${api_message}"
-        debug "Full response: $release_json"
-        return 1
+    
+    # If /releases/latest fails, try /releases and get first non-prerelease
+    if [ -n "$api_message" ] && [[ "$api_message" =~ (Not Found|rate limit) ]]; then
+        if [[ "$api_message" =~ "rate limit" ]]; then
+            error "GitHub API rate limit exceeded for ${name}"
+            return 1
+        fi
+        
+        warning "No 'latest' release found, trying all releases..."
+        local all_releases
+        all_releases=$(get_github_all_releases "$repo")
+        
+        if [ -z "$all_releases" ]; then
+            error "Failed to fetch releases for ${name}"
+            return 1
+        fi
+        
+        # Try to find first non-prerelease
+        release_json=$(echo "$all_releases" | jq -r '
+            [.[] | select(.prerelease == false)] | 
+            if length > 0 then .[0] else empty end
+        ')
+        
+        # If no non-prerelease found and prereleases are allowed, use first prerelease
+        if [ -z "$release_json" ] || [ "$release_json" = "null" ]; then
+            if [ "$allow_prerelease" = "true" ]; then
+                warning "No stable release found, using pre-release..."
+                release_json=$(echo "$all_releases" | jq -r '.[0] // empty')
+            else
+                error "No stable release found for ${name}"
+                warning "Set allow_prerelease in config to allow pre-releases"
+                return 1
+            fi
+        fi
     fi
     
     local version
@@ -698,10 +837,11 @@ install_modrinth_plugin() {
         return 1
     fi
     
-    # Get the latest version for Paper/Bukkit (compatible with recent Minecraft versions)
+    # Get the latest version for Paper/Bukkit/Spigot/Purpur/Folia (compatible loaders)
+    # Expanded from just "paper|bukkit" to include more compatible loaders
     local version_info
     version_info=$(echo "$versions_json" | jq -r '
-        [.[] | select(.loaders[] | test("paper|bukkit"; "i"))] | 
+        [.[] | select(.loaders[] | test("paper|bukkit|spigot|purpur|folia"; "i"))] | 
         sort_by(.date_published) | 
         reverse | 
         .[0]
@@ -709,6 +849,7 @@ install_modrinth_plugin() {
     
     if [ -z "$version_info" ] || [ "$version_info" = "null" ]; then
         error "No compatible version found for ${name}"
+        debug "Tried loaders: paper, bukkit, spigot, purpur, folia"
         return 1
     fi
     
@@ -832,6 +973,139 @@ install_modrinth_plugin() {
 # Main Installation Logic
 ################################################################################
 
+install_plugin_with_fallback() {
+    local plugin_json="$1"
+    local name
+    name=$(echo "$plugin_json" | jq -r '.name')
+    
+    local source
+    source=$(echo "$plugin_json" | jq -r '.source')
+    
+    local allow_prerelease
+    allow_prerelease=$(echo "$plugin_json" | jq -r '.allow_prerelease // false')
+    
+    # Try primary source
+    local result=0
+    case "$source" in
+        github)
+            local repo
+            repo=$(echo "$plugin_json" | jq -r '.repo')
+            local pattern
+            pattern=$(echo "$plugin_json" | jq -r '.asset_pattern')
+            
+            if ! install_github_plugin "$name" "$repo" "$pattern" "$allow_prerelease"; then
+                result=1
+            fi
+            ;;
+        modrinth)
+            local project_id
+            project_id=$(echo "$plugin_json" | jq -r '.project_id')
+            
+            if ! install_modrinth_plugin "$name" "$project_id"; then
+                result=1
+            fi
+            ;;
+        manual)
+            warning "Skipping ${name} (manual installation required)"
+            return 2  # Return special code for manually installed plugins
+            ;;
+        *)
+            error "Unknown source type: ${source} for ${name}"
+            return 1
+            ;;
+    esac
+    
+    # If primary source succeeded, return success
+    if [ $result -eq 0 ]; then
+        return 0
+    fi
+    
+    # Try fallback sources
+    local fallback_source
+    fallback_source=$(echo "$plugin_json" | jq -r '.fallback_source // empty')
+    
+    if [ -n "$fallback_source" ]; then
+        warning "Primary source failed, trying fallback source: ${fallback_source}"
+        
+        case "$fallback_source" in
+            github)
+                local fallback_repo
+                fallback_repo=$(echo "$plugin_json" | jq -r '.fallback_repo // empty')
+                local fallback_pattern
+                fallback_pattern=$(echo "$plugin_json" | jq -r '.fallback_asset_pattern // .asset_pattern')
+                
+                if [ -n "$fallback_repo" ]; then
+                    if install_github_plugin "$name" "$fallback_repo" "$fallback_pattern" "$allow_prerelease"; then
+                        success "Installed from fallback GitHub repository"
+                        return 0
+                    fi
+                else
+                    error "Fallback source 'github' specified but 'fallback_repo' is missing"
+                fi
+                ;;
+            modrinth)
+                local fallback_project_id
+                fallback_project_id=$(echo "$plugin_json" | jq -r '.fallback_project_id // empty')
+                
+                if [ -n "$fallback_project_id" ]; then
+                    if install_modrinth_plugin "$name" "$fallback_project_id"; then
+                        success "Installed from fallback Modrinth project"
+                        return 0
+                    fi
+                else
+                    error "Fallback source 'modrinth' specified but 'fallback_project_id' is missing"
+                fi
+                ;;
+            *)
+                error "Unknown fallback source type: ${fallback_source}"
+                ;;
+        esac
+    fi
+    
+    # Try fallback URL as last resort
+    local fallback_url
+    fallback_url=$(echo "$plugin_json" | jq -r '.fallback_url // empty')
+    
+    if [ -n "$fallback_url" ]; then
+        warning "Trying fallback URL as last resort..."
+        
+        if ! validate_url "$fallback_url"; then
+            error "Invalid fallback URL for ${name}: ${fallback_url}"
+            return 1
+        fi
+        
+        local filename
+        filename=$(basename "$fallback_url")
+        local output_path="${PLUGINS_DIR}/${filename}"
+        
+        # In dry-run mode, just show what would be downloaded
+        if [ "$DRY_RUN_MODE" = true ]; then
+            success "[DRY RUN] Would download ${name} from fallback URL → ${filename}"
+            log "  URL: ${fallback_url}"
+            return 0
+        fi
+        
+        log "Downloading ${name} from fallback URL..."
+        log "  URL: ${fallback_url}"
+        
+        if download_with_retry "$fallback_url" "$output_path"; then
+            if validate_download "$output_path"; then
+                success "Downloaded ${name} from fallback URL → ${filename}"
+                return 0
+            else
+                error "Fallback URL download validation failed for ${name}"
+                return 1
+            fi
+        else
+            error "Failed to download ${name} from fallback URL"
+            return 1
+        fi
+    fi
+    
+    # All sources failed
+    return 1
+}
+
 install_plugin() {
     local plugin_json="$1"
     
@@ -846,33 +1120,7 @@ install_plugin() {
         return 2  # Return special code for skipped plugins
     fi
     
-    local source
-    source=$(echo "$plugin_json" | jq -r '.source')
-    
-    case "$source" in
-        github)
-            local repo
-            repo=$(echo "$plugin_json" | jq -r '.repo')
-            local pattern
-            pattern=$(echo "$plugin_json" | jq -r '.asset_pattern')
-            
-            install_github_plugin "$name" "$repo" "$pattern"
-            ;;
-        modrinth)
-            local project_id
-            project_id=$(echo "$plugin_json" | jq -r '.project_id')
-            
-            install_modrinth_plugin "$name" "$project_id"
-            ;;
-        manual)
-            warning "Skipping ${name} (manual installation required)"
-            return 2  # Return special code for manually installed plugins
-            ;;
-        *)
-            error "Unknown source type: ${source} for ${name}"
-            return 1
-            ;;
-    esac
+    install_plugin_with_fallback "$plugin_json"
 }
 
 ################################################################################
@@ -906,6 +1154,18 @@ main() {
                 fi
                 DOWNLOAD_TIMEOUT="$2"
                 shift 2
+                ;;
+            --max-retries)
+                if [[ ! "$2" =~ ^[0-9]+$ ]] || [ "$2" -le 0 ]; then
+                    error "Invalid max-retries value: $2 (must be a positive integer)"
+                    exit 1
+                fi
+                MAX_RETRIES="$2"
+                shift 2
+                ;;
+            --wait-for-rate-limit)
+                WAIT_FOR_RATE_LIMIT=true
+                shift
                 ;;
             --help)
                 show_help
@@ -960,6 +1220,7 @@ main() {
     log "Plugin directory: ${PLUGINS_DIR}"
     log "Configuration: ${CONFIG_FILE}"
     log "Timeouts: connection=${CONNECTION_TIMEOUT}s, download=${DOWNLOAD_TIMEOUT}s"
+    log "Max retry passes: ${MAX_RETRIES}"
     
     if [ "$FORCE_DOWNLOAD" = true ]; then
         warning "Force download mode enabled - all plugins will be re-downloaded"
@@ -977,6 +1238,10 @@ main() {
         warning "Dry-run mode enabled - no files will be downloaded"
     fi
     
+    if [ "$WAIT_FOR_RATE_LIMIT" = true ]; then
+        log "Rate limit wait mode enabled - will wait for rate limits to reset"
+    fi
+    
     echo ""
     
     # Read and process plugins
@@ -989,34 +1254,94 @@ main() {
     local success_count=0
     local skip_count=0
     local fail_count=0
+    local failed_plugins=()
     
-    for i in $(seq 0 $((plugin_count - 1))); do
-        local plugin_json
-        plugin_json=$(jq ".plugins[$i]" "$CONFIG_FILE")
-        
-        local name
-        name=$(echo "$plugin_json" | jq -r '.name')
-        
-        local category
-        category=$(echo "$plugin_json" | jq -r '.category')
-        
-        echo "============================================================"
-        log "Processing: ${name} [${category}]"
-        
-        if install_plugin "$plugin_json"; then
-            ((success_count++))
-        else
-            local exit_code=$?
-            if [ $exit_code -eq 2 ]; then
-                # Plugin was skipped (disabled)
-                ((skip_count++))
-            else
-                # Plugin installation failed
-                ((fail_count++))
-            fi
+    # Retry loop
+    for retry_pass in $(seq 1 $MAX_RETRIES); do
+        if [ $retry_pass -gt 1 ]; then
+            echo ""
+            echo "============================================================"
+            warning "Retry pass ${retry_pass}/${MAX_RETRIES} for ${#failed_plugins[@]} failed plugin(s)"
+            echo "============================================================"
+            echo ""
         fi
         
-        echo ""
+        local current_failed=()
+        
+        # Determine which plugins to process
+        if [ $retry_pass -eq 1 ]; then
+            # First pass: process all plugins
+            for i in $(seq 0 $((plugin_count - 1))); do
+                local plugin_json
+                plugin_json=$(jq ".plugins[$i]" "$CONFIG_FILE")
+                
+                local name
+                name=$(echo "$plugin_json" | jq -r '.name')
+                
+                local category
+                category=$(echo "$plugin_json" | jq -r '.category')
+                
+                echo "============================================================"
+                log "Processing: ${name} [${category}]"
+                
+                if install_plugin "$plugin_json"; then
+                    ((success_count++))
+                else
+                    local exit_code=$?
+                    if [ $exit_code -eq 2 ]; then
+                        # Plugin was skipped (disabled)
+                        ((skip_count++))
+                    else
+                        # Plugin installation failed
+                        ((fail_count++))
+                        current_failed+=("$i")
+                    fi
+                fi
+                
+                echo ""
+            done
+        else
+            # Retry pass: only process previously failed plugins
+            for i in "${failed_plugins[@]}"; do
+                local plugin_json
+                plugin_json=$(jq ".plugins[$i]" "$CONFIG_FILE")
+                
+                local name
+                name=$(echo "$plugin_json" | jq -r '.name')
+                
+                local category
+                category=$(echo "$plugin_json" | jq -r '.category')
+                
+                echo "============================================================"
+                log "Retrying: ${name} [${category}]"
+                
+                if install_plugin "$plugin_json"; then
+                    ((success_count++))
+                    ((fail_count--))
+                else
+                    local exit_code=$?
+                    if [ $exit_code -ne 2 ]; then
+                        # Still failed
+                        current_failed+=("$i")
+                    fi
+                fi
+                
+                echo ""
+            done
+        fi
+        
+        # Update failed plugins list
+        failed_plugins=("${current_failed[@]}")
+        
+        # If no failures, break early
+        if [ ${#failed_plugins[@]} -eq 0 ]; then
+            break
+        fi
+        
+        # If this isn't the last retry, show what will be retried
+        if [ $retry_pass -lt $MAX_RETRIES ] && [ ${#failed_plugins[@]} -gt 0 ]; then
+            warning "${#failed_plugins[@]} plugin(s) will be retried in next pass"
+        fi
     done
     
     # Summary
@@ -1029,6 +1354,14 @@ main() {
     fi
     if [ $fail_count -gt 0 ]; then
         error "Failed: ${fail_count}"
+        if [ ${#failed_plugins[@]} -gt 0 ]; then
+            error "Failed plugins:"
+            for i in "${failed_plugins[@]}"; do
+                local name
+                name=$(jq -r ".plugins[$i].name" "$CONFIG_FILE")
+                error "  - ${name}"
+            done
+        fi
     fi
     echo ""
     log "Plugins installed to: ${PLUGINS_DIR}"
@@ -1036,7 +1369,7 @@ main() {
     echo ""
     
     if [ $fail_count -gt 0 ]; then
-        warning "Some plugins failed to install. Check the log for details."
+        warning "Some plugins failed to install after ${MAX_RETRIES} attempt(s). Check the log for details."
         exit 1
     else
         success "All enabled plugins installed successfully!"
