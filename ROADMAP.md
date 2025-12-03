@@ -116,21 +116,47 @@ This roadmap outlines the transformation of the festas_builds Minecraft server f
 - [ ] Optional: Install **Jobs Reborn** for earning money
 
 ### Community Events
-- [ ] Plan first community event
-  - [ ] Build competition
+- [x] Plan first community event
+  - [x] Build competition system implemented
   - [ ] PvP tournament
   - [ ] Treasure hunt
   - [ ] Community project
-- [ ] Create event calendar
-- [ ] Set up rewards for events (in-game currency, special items)
+- [x] Create event calendar
+- [x] Set up rewards for events (cosmetics, ranks)
+
+### Build Competition System
+- [x] Install **PlotSquared** and **FastAsyncWorldEdit**
+- [x] Configure competition world with plot settings
+- [x] Create competition manager script
+- [x] Set up theme library (100+ themes)
+- [x] Configure voting system
+- [x] Set up competition rewards (cosmetics, ranks)
+
+### Cosmetics & Rewards System
+- [x] Install **PlayerParticles** for particle effects
+- [x] Configure particle effects (basic to legendary)
+- [x] Set up rank progression (Newcomer → Legend)
+- [x] Create cosmetics unlock system
+- [x] Configure hats and backpacks (HMCCosmetics)
+- [x] EULA-compliant cosmetic system
+
+### Welcome & Tutorial System
+- [x] Design welcome messages with festas_builds branding
+- [x] Create 5-step interactive tutorial system
+- [x] Configure starter kit for new players
+- [x] Set up server rules system
+- [x] Plan NPC tutorial guides (Citizens)
 
 ### Content Creation Support
-- [ ] Create content creator guidelines
-  - [ ] Recording permissions
-  - [ ] How to credit the server
-  - [ ] Server IP sharing policy
-- [ ] Set up spectator mode access for filming
-- [ ] Consider creator rank with special permissions
+- [x] Create content creator guidelines
+  - [x] Recording permissions
+  - [x] How to credit the server
+  - [x] Server IP sharing policy
+- [x] Set up vanish mode for filming (SuperVanish)
+- [x] Configure replay recording system
+- [x] Create creator rank with special permissions
+- [x] Set up filming tools kit
+- [x] Configure camera controls and presets
 
 **Timeline:** 4 weeks  
 **Player Capacity:** 40-50 concurrent players  
@@ -160,12 +186,13 @@ This roadmap outlines the transformation of the festas_builds Minecraft server f
 - [ ] Consider dedicated database server for CoreProtect/LuckPerms
 
 ### Live Map
-- [ ] Install **BlueMap** or **Dynmap**
-  - [ ] Configure web server (port 8100)
-  - [ ] Enable player markers
-  - [ ] Hide protected/secret regions
-- [ ] Set up reverse proxy (nginx) for clean URL
-- [ ] Add SSL certificate for HTTPS
+- [x] Install **BlueMap** (configured in plugins.json)
+  - [x] Configure web server (port 8100)
+  - [x] Enable player markers
+  - [x] Hide protected/secret regions
+- [x] Set up reverse proxy (nginx) for clean URL
+- [x] Add SSL certificate instructions for HTTPS
+- [x] Create complete setup documentation (BLUEMAP-SETUP.md)
 
 ### Website & Branding
 - [ ] Create server website

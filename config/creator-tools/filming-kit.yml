@@ -1,0 +1,498 @@
+# Filming Kit Configuration for festas_builds Creators
+# Quick-access tools and items for content creation
+
+# Filming Kit Overview
+# This kit gives creators instant access to filming tools
+# Can be given via command or GUI menu
+
+filming_kit:
+  enabled: true
+  name: "&6&lCreator Filming Kit"
+  permission: "kits.filming"
+  
+  # Command to get the kit
+  command: "/filmingkit"
+  aliases: ["/fkit", "/filming"]
+  
+  # Cooldown between uses (seconds)
+  # Set to 0 for no cooldown for creators
+  cooldown: 0
+  
+  # Auto-give on join (for creators)
+  auto_give: false
+
+# Kit Items
+items:
+  # Toggle items (right-click to activate)
+  toggles:
+    # Vanish mode toggle
+    - slot: 0
+      type: ender_eye
+      amount: 1
+      name: "&dVanish Mode"
+      lore:
+        - "&7Right-click to toggle vanish"
+        - "&7Become invisible to players"
+        - ""
+        - "&aCurrent: &f%vanish_status%"
+      command: "/vanish"
+      enchanted: true
+    
+    # Gamemode cycle
+    - slot: 1
+      type: comparator
+      amount: 1
+      name: "&bGamemode Selector"
+      lore:
+        - "&7Right-click to cycle gamemode"
+        - "&7Creative → Spectator → Survival"
+        - ""
+        - "&aCurrent: &f%gamemode%"
+      commands:
+        - "/gamemode creative"
+        - "/gamemode spectator"
+        - "/gamemode survival"
+    
+    # Flight toggle
+    - slot: 2
+      type: elytra
+      amount: 1
+      name: "&fFlight Toggle"
+      lore:
+        - "&7Right-click to toggle flight"
+        - "&7Useful for camera movement"
+        - ""
+        - "&aCurrent: &f%fly_status%"
+      command: "/fly"
+      enchanted: false
+  
+  # Time control
+  time_control:
+    - slot: 3
+      type: clock
+      amount: 1
+      name: "&eTime Control"
+      lore:
+        - "&7Right-click to cycle time"
+        - "&7Day → Noon → Sunset → Night → Midnight"
+        - ""
+        - "&aCurrent: &f%current_time%"
+      commands:
+        - "/time set day"
+        - "/time set noon"
+        - "/time set sunset"
+        - "/time set night"
+        - "/time set midnight"
+      rotate_commands: true
+    
+    # Time freeze
+    - slot: 4
+      type: ice
+      amount: 1
+      name: "&bFreeze Time"
+      lore:
+        - "&7Right-click to freeze time"
+        - "&7Perfect for consistent lighting"
+        - ""
+        - "&aStatus: &f%time_frozen%"
+      command: "/gamerule doDaylightCycle %toggle%"
+  
+  # Weather control
+  weather_control:
+    - slot: 5
+      type: sunflower
+      amount: 1
+      name: "&6Weather Control"
+      lore:
+        - "&7Right-click to cycle weather"
+        - "&7Clear → Rain → Thunder"
+        - ""
+        - "&aCurrent: &f%weather%"
+      commands:
+        - "/weather clear"
+        - "/weather rain"
+        - "/weather thunder"
+      rotate_commands: true
+  
+  # Replay controls
+  replay_controls:
+    - slot: 6
+      type: repeater
+      amount: 1
+      name: "&cReplay Controls"
+      lore:
+        - "&7Right-click for replay menu"
+        - "&7Record, playback, and manage"
+        - ""
+        - "&7Left-click: &aStart recording"
+        - "&7Right-click: &cStop recording"
+      commands:
+        left_click: "/replay record"
+        right_click: "/replay stop"
+    
+    - slot: 7
+      type: redstone
+      amount: 1
+      name: "&4Camera Paths"
+      lore:
+        - "&7Right-click to open camera tools"
+        - "&7Create cinematic camera paths"
+      command: "/replay path"
+  
+  # Teleport tools
+  teleport:
+    - slot: 8
+      type: ender_pearl
+      amount: 16
+      name: "&5Quick Teleport Pearls"
+      lore:
+        - "&7Throw to teleport"
+        - "&7No damage on landing"
+      prevent_damage: true
+
+# Quick Access Menu
+# GUI menu for filming tools
+quick_menu:
+  enabled: true
+  command: "/filmmenu"
+  
+  # Menu layout (9x3 = 27 slots)
+  title: "&6&lFilming Tools Menu"
+  size: 27
+  
+  items:
+    # Row 1: Camera & Recording
+    - slot: 0
+      type: ender_eye
+      name: "&dToggle Vanish"
+      command: "/vanish"
+    
+    - slot: 1
+      type: comparator
+      name: "&bGamemode: Spectator"
+      command: "/gamemode spectator"
+    
+    - slot: 2
+      type: elytra
+      name: "&fToggle Flight"
+      command: "/fly"
+    
+    - slot: 3
+      type: repeater
+      name: "&cStart Recording"
+      command: "/replay record"
+    
+    - slot: 4
+      type: redstone
+      name: "&4Stop Recording"
+      command: "/replay stop"
+    
+    - slot: 5
+      type: hopper
+      name: "&eReplay List"
+      command: "/replay list"
+    
+    # Row 2: Time & Weather
+    - slot: 9
+      type: sunflower
+      name: "&eDay (6000)"
+      command: "/time set 6000"
+    
+    - slot: 10
+      type: clock
+      name: "&6Noon (12000)"
+      command: "/time set 12000"
+    
+    - slot: 11
+      type: orange_concrete
+      name: "&6Sunset (18000)"
+      command: "/time set 18000"
+    
+    - slot: 12
+      type: blue_concrete
+      name: "&9Night (13000)"
+      command: "/time set 13000"
+    
+    - slot: 13
+      type: black_concrete
+      name: "&8Midnight (18000)"
+      command: "/time set 18000"
+    
+    - slot: 14
+      type: ice
+      name: "&bFreeze Time"
+      command: "/gamerule doDaylightCycle false"
+    
+    - slot: 15
+      type: water_bucket
+      name: "&bClear Weather"
+      command: "/weather clear"
+    
+    - slot: 16
+      type: gray_concrete
+      name: "&7Rain"
+      command: "/weather rain"
+    
+    - slot: 17
+      type: redstone_block
+      name: "&cThunder"
+      command: "/weather thunder"
+    
+    # Row 3: Teleport & Utilities
+    - slot: 18
+      type: compass
+      name: "&aSpawn"
+      command: "/spawn"
+    
+    - slot: 19
+      type: ender_pearl
+      name: "&dTeleport to Coordinates"
+      prompt: "Enter coordinates (x y z)"
+      command: "/tp %input%"
+    
+    - slot: 20
+      type: oak_door
+      name: "&eWorldEdit Wand"
+      command: "/wand"
+    
+    - slot: 21
+      type: golden_axe
+      name: "&6WorldEdit Brush"
+      command: "/brush"
+    
+    - slot: 22
+      type: book
+      name: "&bFilming Guide"
+      action: "give_book"
+      book: "filming_guide"
+    
+    - slot: 26
+      type: barrier
+      name: "&cClose Menu"
+      action: "close"
+
+# Preset Configurations
+presets:
+  # Cinematic preset
+  cinematic:
+    name: "&6Cinematic Mode"
+    description: "Perfect lighting and weather for filming"
+    actions:
+      - "/gamemode spectator"
+      - "/time set 6000"  # Noon
+      - "/weather clear"
+      - "/gamerule doDaylightCycle false"
+      - "/vanish"
+    notification: "&aActivated cinematic mode!"
+  
+  # Night filming preset
+  night_filming:
+    name: "&9Night Filming Mode"
+    description: "Moody night atmosphere"
+    actions:
+      - "/gamemode spectator"
+      - "/time set 18000"  # Midnight
+      - "/weather clear"
+      - "/gamerule doDaylightCycle false"
+      - "/vanish"
+    notification: "&aActivated night filming mode!"
+  
+  # Dramatic weather preset
+  dramatic:
+    name: "&cDramatic Weather"
+    description: "Thunder and rain for atmosphere"
+    actions:
+      - "/gamemode spectator"
+      - "/time set 16000"  # Stormy time
+      - "/weather thunder"
+      - "/gamerule doDaylightCycle false"
+      - "/vanish"
+    notification: "&aActivated dramatic weather mode!"
+  
+  # Reset to normal
+  reset:
+    name: "&7Reset to Normal"
+    description: "Return to normal gameplay"
+    actions:
+      - "/gamemode survival"
+      - "/gamerule doDaylightCycle true"
+      - "/weather clear"
+      - "/vanish"  # Toggle off if on
+    notification: "&aReset to normal mode!"
+
+# Preset commands
+preset_commands:
+  cinematic: "/filmpreset cinematic"
+  night: "/filmpreset night"
+  dramatic: "/filmpreset dramatic"
+  reset: "/filmpreset reset"
+
+# Filming Guide Book
+# Given in the quick menu
+filming_guide:
+  title: "&6Filming Guide"
+  author: "festas_builds"
+  pages:
+    - |
+      &0&lCREATOR FILMING GUIDE
+      
+      &0Welcome to the
+      &0festas_builds
+      &0filming toolkit!
+      
+      &0This guide covers
+      &0all filming tools
+      &0available to you.
+    
+    - |
+      &0&lVANISH MODE
+      
+      &0/vanish - Toggle
+      &0invisibility
+      
+      &0Use to film without
+      &0player interference.
+      
+      &0You can still
+      &0interact with the
+      &0world normally.
+    
+    - |
+      &0&lGAMEMODES
+      
+      &0Spectator mode is
+      &0best for smooth
+      &0camera flight.
+      
+      &0Creative for
+      &0building sets.
+      
+      &0/gamemode spectator
+      &0/gamemode creative
+    
+    - |
+      &0&lTIME CONTROL
+      
+      &0/time set <time>
+      &0Values: 0-24000
+      
+      &0Presets:
+      &06000 - Day
+      &012000 - Noon
+      &018000 - Night
+      
+      &0/gamerule doDaylight
+      &0Cycle false - Freeze
+    
+    - |
+      &0&lWEATHER CONTROL
+      
+      &0/weather clear
+      &0/weather rain
+      &0/weather thunder
+      
+      &0Combine with time
+      &0control for perfect
+      &0atmosphere!
+    
+    - |
+      &0&lRECORDING
+      
+      &0/replay record
+      &0Start recording
+      
+      &0/replay stop
+      &0Stop recording
+      
+      &0/replay play <name>
+      &0Play a replay
+      
+      &0Use camera paths!
+    
+    - |
+      &0&lBEST PRACTICES
+      
+      &0✓ Use spectator mode
+      &0✓ Freeze time for
+      &0  consistent lighting
+      &0✓ Clear weather unless
+      &0  dramatic scene
+      &0✓ Vanish to avoid
+      &0  interruptions
+      &0✓ Plan shots ahead!
+    
+    - |
+      &0&lRECOMMENDED MODS
+      
+      &0Replay Mod (client)
+      &0- Best for recording
+      &0
+      &0Optifine
+      &0- Performance boost
+      &0
+      &0Shaders
+      &0- Beautiful visuals
+      &0
+      &0Download at
+      &0replaymod.com
+
+# Tips
+tips:
+  enabled: true
+  show_on_kit_receive: true
+  messages:
+    - "&eTIP: Use spectator mode for smooth camera flight!"
+    - "&eTIP: Freeze time with /gamerule doDaylightCycle false"
+    - "&eTIP: Combine vanish + spectator for best filming experience"
+    - "&eTIP: Use /replay for server-side recording"
+    - "&eTIP: Client-side Replay Mod provides better quality"
+    - "&eTIP: Clear weather + noon = perfect lighting"
+
+# Commands Integration
+commands:
+  # Give filming kit
+  give_kit: "/filmingkit"
+  
+  # Open quick menu
+  menu: "/filmmenu"
+  
+  # Apply preset
+  preset: "/filmpreset <name>"
+  
+  # Quick vanish
+  vanish: "/vanish"
+
+# Auto-actions
+auto_actions:
+  # Give kit on first join (creators only)
+  first_join:
+    enabled: true
+    permission: "creator.rank"
+  
+  # Refresh kit on respawn
+  on_respawn:
+    enabled: false
+
+# EssentialsX Kit Configuration
+# Add this to EssentialsX kits.yml:
+essentialsx_kit:
+  name: "filming"
+  delay: 0
+  items:
+    - "ender_eye 1 name:&dVanish_Mode lore:Right-click_to_toggle_vanish"
+    - "comparator 1 name:&bGamemode_Selector"
+    - "elytra 1 name:&fFlight_Toggle"
+    - "clock 1 name:&eTime_Control"
+    - "ice 1 name:&bFreeze_Time"
+    - "sunflower 1 name:&6Weather_Control"
+    - "repeater 1 name:&cReplay_Controls"
+    - "ender_pearl 16 name:&5Quick_Teleport"
+
+# TODO for server admins:
+# 1. Install a custom items plugin (like ItemsAdder or similar)
+# 2. Configure filming kit items with commands
+# 3. Set up GUI menu plugin (like ChestCommands)
+# 4. Test all items and commands
+# 5. Grant filming kit access to creators
+# 6. Create preset command aliases
+# 7. Document filming tools for creators
