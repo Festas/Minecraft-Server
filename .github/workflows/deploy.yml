@@ -57,15 +57,28 @@ jobs:
           if [ -f "config.sh" ]; then
             source config.sh
           else
-            MINECRAFT_JAR_URL="https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
+            MINECRAFT_VERSION="1.20.4"
           fi
           
           if [ ! -f "server.jar" ]; then
-            echo "Downloading Minecraft server JAR..."
-            curl -f -o server.jar "$MINECRAFT_JAR_URL" || {
-              echo "Failed to download server JAR"
+            echo "Downloading Paper server for Minecraft version ${MINECRAFT_VERSION}..."
+            
+            # Get the latest Paper build for the specified Minecraft version
+            PAPER_BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/${MINECRAFT_VERSION}" | grep -o '"builds":\[[0-9,]*\]' | grep -o '[0-9]*' | tail -1)
+            
+            if [ -z "$PAPER_BUILD" ]; then
+              echo "Error: Could not fetch Paper build information for version ${MINECRAFT_VERSION}"
+              exit 1
+            fi
+            
+            echo "Latest Paper build for ${MINECRAFT_VERSION}: ${PAPER_BUILD}"
+            PAPER_JAR_URL="https://api.papermc.io/v2/projects/paper/versions/${MINECRAFT_VERSION}/builds/${PAPER_BUILD}/downloads/paper-${MINECRAFT_VERSION}-${PAPER_BUILD}.jar"
+            
+            curl -f -o server.jar "$PAPER_JAR_URL" || {
+              echo "Failed to download Paper server JAR"
               exit 1
             }
+            echo "Paper server download completed successfully"
           fi
         EOF
         
