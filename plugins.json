@@ -7,6 +7,8 @@
       "source": "github",
       "repo": "LuckPerms/LuckPerms",
       "asset_pattern": "LuckPerms-Bukkit-.*\\.jar$",
+      "fallback_source": "modrinth",
+      "fallback_project_id": "Vebnzrzj",
       "description": "Advanced permissions management system"
     },
     {
@@ -33,6 +35,9 @@
       "category": "essential",
       "source": "modrinth",
       "project_id": "lu3oWuz1",
+      "fallback_source": "github",
+      "fallback_repo": "PlayPro/CoreProtect",
+      "fallback_asset_pattern": "CoreProtect.*\\.jar$",
       "description": "Block logging and rollback tool"
     },
     {

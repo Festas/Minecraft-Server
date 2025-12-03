@@ -658,6 +658,103 @@ Use debug mode when troubleshooting:
 - GitHub API issues
 - Plugin download failures
 
+#### 5. Advanced Options
+
+```bash
+# Retry failed plugins up to 3 times
+./install-plugins.sh --max-retries 3
+
+# Wait for rate limits to reset instead of failing
+./install-plugins.sh --wait-for-rate-limit
+
+# Combine multiple options
+./install-plugins.sh --debug --max-retries 3 --wait-for-rate-limit
+
+# Test configuration without downloading
+./install-plugins.sh --dry-run
+
+# Set custom download timeout (in seconds)
+./install-plugins.sh --timeout 600
+```
+
+**Advanced Options:**
+- `--max-retries N` - Retry failed plugins up to N times (default: 2)
+- `--wait-for-rate-limit` - Wait when GitHub API is rate limited (default: fail immediately)
+- `--dry-run` - Validate configuration without downloading
+- `--timeout N` - Set download timeout in seconds (default: 300)
+
+### Robustness Features
+
+The plugin installer includes several robustness features to ensure 100% success rate:
+
+#### 1. **Fallback Sources**
+Plugins can have fallback download sources if the primary source fails:
+
+```json
+{
+  "name": "LuckPerms",
+  "source": "github",
+  "repo": "LuckPerms/LuckPerms",
+  "asset_pattern": "LuckPerms-Bukkit-.*\\.jar$",
+  "fallback_source": "modrinth",
+  "fallback_project_id": "Vebnzrzj"
+}
+```
+
+Fallback types:
+- **GitHub to Modrinth**: Add `fallback_source: "modrinth"` with `fallback_project_id`
+- **Modrinth to GitHub**: Add `fallback_source: "github"` with `fallback_repo` and `fallback_asset_pattern`
+- **Manual URL**: Add `fallback_url: "https://..."` as last resort
+
+#### 2. **GitHub Rate Limit Handling**
+- Automatically detects GitHub API rate limiting (60 requests/hour without token, 5000 with)
+- Shows remaining rate limit in debug mode
+- Suggests setting `GITHUB_TOKEN` when rate limited
+- With `--wait-for-rate-limit`, automatically waits up to 5 minutes for reset
+
+Set GitHub token to avoid rate limits:
+```bash
+export GITHUB_TOKEN="your_github_token_here"
+./install-plugins.sh
+```
+
+#### 3. **Fallback to All Releases**
+If `/releases/latest` returns 404 (no latest release):
+- Automatically tries `/releases` endpoint
+- Picks first non-prerelease version
+- If only prereleases exist and `allow_prerelease: true` is set, uses prerelease
+
+```json
+{
+  "name": "BetaPlugin",
+  "source": "github",
+  "repo": "Author/Plugin",
+  "asset_pattern": "plugin.*\\.jar$",
+  "allow_prerelease": true
+}
+```
+
+#### 4. **Fuzzy Asset Matching**
+If exact pattern doesn't match:
+1. First tries exact pattern match
+2. Falls back to any `.jar` file (excluding `-sources.jar`, `-javadoc.jar`)
+3. Logs which matching strategy was used
+
+#### 5. **Expanded Loader Support (Modrinth)**
+Now matches more compatible loaders:
+- `paper` (original)
+- `bukkit` (original)
+- `spigot` (new)
+- `purpur` (new)
+- `folia` (new)
+
+#### 6. **Retry Queue**
+Failed plugins are automatically retried:
+- Processes all plugins in first pass
+- Retries failed plugins in second pass (default)
+- Configurable with `--max-retries N`
+- Shows which plugins failed after all retries
+
 ### Configuration: plugins.json
 
 The `plugins.json` file controls which plugins are installed:
@@ -679,14 +776,20 @@ The `plugins.json` file controls which plugins are installed:
 ```
 
 **Fields:**
-- `name` - Plugin display name
-- `enabled` - `true` to install, `false` to skip
-- `category` - `essential`, `community`, or `optional` (for organization)
-- `source` - `github` or `modrinth`
-- `repo` - GitHub repository (format: `owner/repo`)
-- `project_id` - Modrinth project ID (for Modrinth plugins)
-- `asset_pattern` - Regex pattern to match the correct JAR file
-- `description` - What the plugin does
+- `name` - Plugin display name (required)
+- `enabled` - `true` to install, `false` to skip (required)
+- `category` - `essential`, `community`, or `optional` (for organization) (required)
+- `source` - `github`, `modrinth`, or `manual` (required)
+- `repo` - GitHub repository in format `owner/repo` (required for GitHub)
+- `project_id` - Modrinth project ID (required for Modrinth)
+- `asset_pattern` - Regex pattern to match the correct JAR file (required for GitHub)
+- `description` - What the plugin does (optional)
+- `allow_prerelease` - Allow pre-release versions if no stable release (optional, default: false)
+- `fallback_source` - Fallback source type: `github` or `modrinth` (optional)
+- `fallback_repo` - GitHub repo for fallback (required if fallback_source is github)
+- `fallback_project_id` - Modrinth project for fallback (required if fallback_source is modrinth)
+- `fallback_asset_pattern` - Asset pattern for GitHub fallback (optional, uses asset_pattern if not set)
+- `fallback_url` - Direct download URL as last resort (optional)
 
 ### Adding New Plugins
 
@@ -708,6 +811,21 @@ The `plugins.json` file controls which plugins are installed:
 }
 ```
 
+**With Fallback:**
+```json
+{
+  "name": "MyNewPlugin",
+  "enabled": true,
+  "category": "community",
+  "source": "github",
+  "repo": "AuthorName/PluginName",
+  "asset_pattern": "bukkit",
+  "fallback_source": "modrinth",
+  "fallback_project_id": "abc123",
+  "description": "What the plugin does"
+}
+```
+
 #### From Modrinth
 
 1. Go to the plugin's Modrinth page (e.g., `https://modrinth.com/plugin/example`)
@@ -722,6 +840,38 @@ The `plugins.json` file controls which plugins are installed:
   "source": "modrinth",
   "project_id": "abc123xyz",
   "description": "What the plugin does"
+}
+```
+
+**With Fallback:**
+```json
+{
+  "name": "MyModrinthPlugin",
+  "enabled": true,
+  "category": "community",
+  "source": "modrinth",
+  "project_id": "abc123xyz",
+  "fallback_source": "github",
+  "fallback_repo": "AuthorName/PluginName",
+  "fallback_asset_pattern": "plugin.*\\.jar$",
+  "description": "What the plugin does"
+}
+```
+
+#### With Manual Fallback URL
+
+For plugins that need a manual download URL as last resort:
+
+```json
+{
+  "name": "ProprietaryPlugin",
+  "enabled": true,
+  "category": "optional",
+  "source": "github",
+  "repo": "Author/Plugin",
+  "asset_pattern": "plugin.*\\.jar$",
+  "fallback_url": "https://example.com/downloads/plugin-latest.jar",
+  "description": "Plugin with manual fallback"
 }
 ```
 
