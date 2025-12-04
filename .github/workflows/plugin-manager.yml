@@ -196,7 +196,7 @@ jobs:
     
     steps:
       - name: Download plugin artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.3
         with:
           name: minecraft-plugins
           path: plugins
@@ -319,7 +319,7 @@ jobs:
     steps:
       - name: Download installation log
         if: always()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.3
         with:
           name: installation-log
           path: .
