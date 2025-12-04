@@ -225,7 +225,7 @@ jobs:
             PLUGIN_COUNT=$(find "${PLUGINS_PATH}" -maxdepth 1 -name "*.jar" -type f 2>/dev/null | wc -l)
             if [ "$PLUGIN_COUNT" -gt 0 ]; then
               echo "Backing up $PLUGIN_COUNT existing plugin(s) to $BACKUP_DIR"
-              find "${PLUGINS_PATH}" -maxdepth 1 -name "*.jar" -type f -exec cp {} "$BACKUP_DIR/" \;
+              find "${PLUGINS_PATH}" -maxdepth 1 -name "*.jar" -type f -print0 | xargs -0 -I {} cp {} "$BACKUP_DIR/"
               echo "✓ Backup completed"
             else
               echo "No existing plugins to backup"
@@ -237,8 +237,8 @@ jobs:
               BACKUP_COUNT=$(find "${BACKUP_BASE}" -maxdepth 1 -type d -name "backup_*" 2>/dev/null | wc -l)
               if [ "$BACKUP_COUNT" -gt 5 ]; then
                 echo "Cleaning up old backups (keeping last 5)..."
-                find "${BACKUP_BASE}" -maxdepth 1 -type d -name "backup_*" -printf '%T@ %p\n' 2>/dev/null | \
-                  sort -n | head -n -5 | cut -d' ' -f2- | xargs rm -rf
+                # Use ls -t for portable timestamp sorting (works on both Linux and macOS)
+                cd "${BACKUP_BASE}" && ls -dt backup_* 2>/dev/null | tail -n +6 | xargs rm -rf
                 echo "✓ Cleanup completed"
               fi
             fi
@@ -264,7 +264,8 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
           ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
-            chmod 644 ${{ env.SERVER_PLUGINS_PATH }}/*.jar
+            # Set permissions using find for safety
+            find ${{ env.SERVER_PLUGINS_PATH }} -maxdepth 1 -name "*.jar" -type f -exec chmod 644 {} \;
             echo "✓ File permissions set to 644"
           EOF
       
