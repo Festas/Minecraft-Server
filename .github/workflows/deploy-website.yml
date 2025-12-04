@@ -157,7 +157,10 @@ jobs:
             
             # Clean up old images
             echo "Cleaning up old images..."
-            docker image prune -f --filter "until=72h" --filter "reference=ghcr.io/festas/minecraft-server-web"
+            docker image prune -f --filter "until=72h"
+            # Alternative: remove images for the specific repository (unsafe if images are in use)
+            # docker images "ghcr.io/festas/minecraft-server-web" --format "{{.ID}} {{.CreatedAt}}" | \
+            #   awk '$2 < strftime("%Y-%m-%dT%H:%M:%S", systime() - 72*3600) {print $1}' | xargs -r docker rmi
             
             # Success message
             echo "✓ Deployment successful!"
