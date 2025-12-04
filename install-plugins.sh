@@ -614,8 +614,8 @@ get_github_api_with_headers() {
     body_content=$(cat "$temp_body")
     
     # Check if response looks like an error page (HTML or other non-JSON content)
-    # Common patterns: starts with '<', '<!DOCTYPE', '<html', etc.
-    if [[ "$body_content" == \<* ]] || [[ "$body_content" =~ ^[[:space:]]*\< ]]; then
+    # Uses regex to match HTML opening tags with optional leading whitespace
+    if [[ "$body_content" =~ ^[[:space:]]*\< ]]; then
         debug "Received HTML response instead of JSON"
         rm -f "$temp_headers" "$temp_body"
         return 1
