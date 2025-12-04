@@ -6,20 +6,25 @@ on:
       - main
     paths:
       - 'website/**'
-      - 'docker-compose.web.yml'
       - '.github/workflows/deploy-website.yml'
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    outputs:
+      image_sha: ${{ steps.image_sha.outputs.sha }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Get short SHA
+        id: image_sha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -31,196 +36,147 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/festas/minecraft-server-web
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix={{branch}}-
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./website
           file: ./website/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ghcr.io/festas/minecraft-server-web:${{ steps.image_sha.outputs.sha }}
+            ghcr.io/festas/minecraft-server-web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
+    steps:
       - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
         env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SERVER_REGISTRY_USERNAME: ${{ secrets.SERVER_REGISTRY_USERNAME }}
-          SERVER_REGISTRY_PASSWORD: ${{ secrets.SERVER_REGISTRY_PASSWORD }}
-        run: |
-          DEPLOY_PATH="/home/deploy/minecraft-website"
-
-          # Create deployment directory if it doesn't exist
-          ssh ${SERVER_USER}@${SERVER_HOST} "mkdir -p ${DEPLOY_PATH}"
-
-          # Copy docker-compose.web.yml to server
-          scp docker-compose.web.yml ${SERVER_USER}@${SERVER_HOST}:${DEPLOY_PATH}/
-
-          # Deploy on server using bash -s with unquoted heredoc to allow secret expansion
-          ssh ${SERVER_USER}@${SERVER_HOST} bash -s <<EOF
+          IMAGE_SHA: ${{ needs.build-and-push.outputs.image_sha }}
+          REGISTRY: ghcr.io
+          IMAGE_NAME: festas/minecraft-server-web
+          DOMAIN: ${{ secrets.DOMAIN }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_ACTOR: ${{ github.actor }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE_SHA,REGISTRY,IMAGE_NAME,DOMAIN,GHCR_TOKEN,GHCR_ACTOR
+          script: |
             set -e
-            cd /home/deploy/minecraft-website
+            
+            DEPLOY_DIR="/home/deploy/minecraft-website"
+            
+            # Create deployment directory
+            mkdir -p "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+            
+            # Log in to GHCR
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
+            
+            # Pull the specific SHA-tagged image
+            echo "Pulling image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_SHA}"
+            docker pull "${REGISTRY}/${IMAGE_NAME}:${IMAGE_SHA}"
+            
+            # Generate docker-compose.yml
+            cat > docker-compose.yml <<EOF_COMPOSE
+            services:
+              minecraft-web:
+                image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_SHA}
+                container_name: minecraft-web
+                restart: unless-stopped
+                expose:
+                  - "80"
+                healthcheck:
+                  test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 10s
+                networks:
+                  - caddy-network
+                deploy:
+                  resources:
+                    limits:
+                      cpus: '0.5'
+                      memory: 128M
+                    reservations:
+                      cpus: '0.1'
+                      memory: 64M
 
-            # Authenticate to GHCR if credentials are provided
-            if [ -n "${SERVER_REGISTRY_USERNAME}" ] && [ -n "${SERVER_REGISTRY_PASSWORD}" ]; then
-              echo "Authenticating to ghcr.io..."
-              echo "${SERVER_REGISTRY_PASSWORD}" | docker login ghcr.io -u "${SERVER_REGISTRY_USERNAME}" --password-stdin
-            else
-              echo "No registry credentials provided, proceeding without authentication..."
-            fi
-
+            networks:
+              caddy-network:
+                external: true
+            EOF_COMPOSE
+            
             # Create external network if it doesn't exist
             if ! docker network inspect caddy-network >/dev/null 2>&1; then
               echo "Creating caddy-network..."
               docker network create caddy-network
             fi
-
-            # Pull the latest image (with diagnostic output)
-            echo "Pulling latest image from ghcr.io/festas/minecraft-server-web:latest..."
-            if ! docker pull ghcr.io/festas/minecraft-server-web:latest 2>&1; then
-              echo "WARNING: docker pull failed, continuing to diagnostics..."
-              PULL_FAILED=1
-            else
-              echo "✓ Image pulled successfully"
-              PULL_FAILED=0
-            fi
-
-            # Diagnostics after pull
-            echo ""
-            echo "=== Docker Images ==="
-            docker images | grep -E "(REPOSITORY|minecraft-server-web)" || docker images | head -5
-            echo ""
-            echo "=== Docker Info ==="
-            docker info | grep -E "(Server Version|Storage Driver|Operating System|Architecture|CPUs|Total Memory)" || true
-            echo ""
-
-            # Choose compose command: prefer modern 'docker compose', fallback to 'docker-compose'
-            if docker compose version >/dev/null 2>&1; then
-              COMPOSE_CMD="docker compose"
-            elif command -v docker-compose >/dev/null 2>&1; then
-              COMPOSE_CMD="docker-compose"
-            else
-              echo "docker compose not found. Attempting to install docker-compose (legacy)..."
-              if command -v sudo >/dev/null 2>&1; then
-                # Note: Downloading from official Docker GitHub releases. For enhanced security,
-                # consider pre-installing docker-compose on the server using package managers
-                # or pinning to a specific version instead of using 'latest'.
-                sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
-                sudo chmod +x /usr/local/bin/docker-compose
-                COMPOSE_CMD="docker-compose"
-              else
-                # Fallback: install to user's local bin without sudo
-                echo "sudo not available, installing docker-compose to \$HOME/.local/bin..."
-                mkdir -p \$HOME/.local/bin
-                curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)" -o \$HOME/.local/bin/docker-compose
-                chmod +x \$HOME/.local/bin/docker-compose
-                export PATH="\$HOME/.local/bin:\$PATH"
-                if command -v docker-compose >/dev/null 2>&1; then
-                  COMPOSE_CMD="docker-compose"
-                  echo "✓ docker-compose installed successfully to \$HOME/.local/bin"
-                else
-                  echo "ERROR: Failed to install docker-compose to \$HOME/.local/bin" >&2
-                  echo "Please install docker-compose manually or ensure curl is available." >&2
-                  exit 1
-                fi
+            
+            # Deploy with docker compose
+            docker compose up -d
+            
+            # Wait for health check
+            echo "Waiting for container to be healthy..."
+            for i in {1..30}; do
+              HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-web 2>/dev/null || echo "starting")
+              echo "Health status: $HEALTH (attempt $i/30)"
+              if [ "$HEALTH" = "healthy" ]; then
+                echo "✓ Container is healthy"
+                break
               fi
-            fi
-
-            echo ""
-            echo "Using compose command: \$COMPOSE_CMD"
-            echo ""
-
-            # Stop and remove old container
-            \$COMPOSE_CMD -f docker-compose.web.yml down
-
-            # Start new container
-            echo "Starting container with: \$COMPOSE_CMD -f docker-compose.web.yml up -d"
-            \$COMPOSE_CMD -f docker-compose.web.yml up -d
-
-            # Show status
-            \$COMPOSE_CMD -f docker-compose.web.yml ps
-
-            # Diagnostics after compose up
-            echo ""
-            echo "=== Compose Logs (last 200 lines) ==="
-            \$COMPOSE_CMD -f docker-compose.web.yml logs --tail=200 || true
-            echo ""
-            echo "=== Docker PS -a ==="
-            docker ps -a | grep -E "(CONTAINER|minecraft-web)" || docker ps -a
-            echo ""
-            echo "=== Docker Logs for minecraft-web ==="
-            docker logs minecraft-web --tail=50 2>&1 || echo "Container logs not available"
-            echo ""
-          EOF
-
-      - name: Verify deployment
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-        run: |
-          ssh ${SERVER_USER}@${SERVER_HOST} bash -s <<EOF
-            set -e
-            cd /home/deploy/minecraft-website
-
-            # Wait a few seconds for container to start
-            echo "Waiting for container to start..."
-            sleep 5
-
-            # Check container health
-            if docker ps | grep -q minecraft-web; then
-              echo "✓ Container is running"
-
-              # Check health status
-              HEALTH=\$(docker inspect --format='{{.State.Health.Status}}' minecraft-web 2>/dev/null || echo "no-health")
-              echo "Health status: \$HEALTH"
-
-              # Test HTTP response
-              if docker exec minecraft-web wget --quiet --tries=1 --spider http://localhost/; then
-                echo "✓ Website is responding"
-              else
-                echo "⚠ Website is not responding"
-                echo "Container logs:"
-                docker logs minecraft-web --tail=100
+              if [ $i -eq 30 ]; then
+                echo "✗ Container did not become healthy in time"
+                docker logs minecraft-web --tail=50
                 exit 1
               fi
-            else
-              echo "✗ Container is not running"
-              echo "Showing diagnostics..."
-              echo "=== Docker PS -a ==="
-              docker ps -a | grep -E "(CONTAINER|minecraft-web)" || docker ps -a
-              echo ""
-              echo "=== Recent container logs (if available) ==="
-              docker logs minecraft-web --tail=100 2>&1 || echo "No logs available"
-              exit 1
-            fi
-          EOF
+              sleep 2
+            done
+            
+            # Clean up old images
+            echo "Cleaning up old images..."
+            docker image prune -f --filter "until=72h" --filter "reference=ghcr.io/festas/minecraft-server-web"
+            
+            # Success message
+            echo "✓ Deployment successful!"
+            echo "Website URL: https://mc.festas-builds.com"
+
+      - name: Handle deployment failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Deployment Failed - Diagnostics ==="
+            echo ""
+            echo "=== Container Status ==="
+            docker ps -a | grep minecraft-web || echo "Container not found"
+            echo ""
+            echo "=== Container Logs ==="
+            docker logs minecraft-web --tail=100 2>&1 || echo "No logs available"
+            echo ""
+            echo "=== Recent Docker Events ==="
+            docker events --since 5m --until 1s 2>&1 | grep minecraft-web || echo "No recent events"
 
       - name: Deployment summary
         if: success()
         run: |
-          echo "## Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The website has been deployed and is now live!" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
-          echo "1. Ensure the Caddy reverse proxy is configured (see WEBSITE.md)" >> $GITHUB_STEP_SUMMARY
-          echo "2. Visit https://mc.festas-builds.com to view the website" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Docker Image:** ghcr.io/festas/minecraft-server-web:latest" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Deployment Successful! 🚀"
+            echo ""
+            echo "The website has been deployed and is now live!"
+            echo ""
+            echo "**Docker Image:** ghcr.io/festas/minecraft-server-web:${{ needs.build-and-push.outputs.image_sha }}"
+            echo "**Website URL:** https://mc.festas-builds.com"
+          } >> "$GITHUB_STEP_SUMMARY"
