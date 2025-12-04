@@ -154,12 +154,18 @@ jobs:
       - name: Check if plugins were downloaded
         id: check_artifacts
         run: |
-          if [ -d "plugins" ] && ls plugins/*.jar 1> /dev/null 2>&1; then
-            echo "has_plugins=true" >> $GITHUB_OUTPUT
-            echo "✓ Plugins downloaded successfully"
+          if [ -d "plugins" ]; then
+            PLUGIN_COUNT=$(find plugins -maxdepth 1 -name "*.jar" -type f 2>/dev/null | wc -l)
+            if [ "$PLUGIN_COUNT" -gt 0 ]; then
+              echo "has_plugins=true" >> $GITHUB_OUTPUT
+              echo "✓ Plugins downloaded successfully ($PLUGIN_COUNT file(s))"
+            else
+              echo "has_plugins=false" >> $GITHUB_OUTPUT
+              echo "No plugins downloaded"
+            fi
           else
             echo "has_plugins=false" >> $GITHUB_OUTPUT
-            echo "No plugins downloaded"
+            echo "No plugins directory found"
           fi
       
       - name: Upload plugins artifact
@@ -215,10 +221,11 @@ jobs:
             # Create backup directory
             mkdir -p "$BACKUP_DIR"
             
-            # Backup existing jar files
-            if ls ${PLUGINS_PATH}/*.jar 1> /dev/null 2>&1; then
-              echo "Backing up existing plugins to $BACKUP_DIR"
-              cp ${PLUGINS_PATH}/*.jar "$BACKUP_DIR/" 2>/dev/null || true
+            # Backup existing jar files using find for safety
+            PLUGIN_COUNT=$(find "${PLUGINS_PATH}" -maxdepth 1 -name "*.jar" -type f 2>/dev/null | wc -l)
+            if [ "$PLUGIN_COUNT" -gt 0 ]; then
+              echo "Backing up $PLUGIN_COUNT existing plugin(s) to $BACKUP_DIR"
+              find "${PLUGINS_PATH}" -maxdepth 1 -name "*.jar" -type f -exec cp {} "$BACKUP_DIR/" \;
               echo "✓ Backup completed"
             else
               echo "No existing plugins to backup"
@@ -227,10 +234,11 @@ jobs:
             # Keep only last 5 backups
             BACKUP_BASE="${PLUGINS_PATH}/backups"
             if [ -d "$BACKUP_BASE" ]; then
-              BACKUP_COUNT=$(ls -1d ${BACKUP_BASE}/backup_* 2>/dev/null | wc -l)
+              BACKUP_COUNT=$(find "${BACKUP_BASE}" -maxdepth 1 -type d -name "backup_*" 2>/dev/null | wc -l)
               if [ "$BACKUP_COUNT" -gt 5 ]; then
                 echo "Cleaning up old backups (keeping last 5)..."
-                ls -1td ${BACKUP_BASE}/backup_* | tail -n +6 | xargs rm -rf
+                find "${BACKUP_BASE}" -maxdepth 1 -type d -name "backup_*" -printf '%T@ %p\n' 2>/dev/null | \
+                  sort -n | head -n -5 | cut -d' ' -f2- | xargs rm -rf
                 echo "✓ Cleanup completed"
               fi
             fi
