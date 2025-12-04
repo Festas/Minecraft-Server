@@ -5,10 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Join the festas_builds community Minecraft server - featuring cross-platform play, build competitions, and creative tools!">
     <title>festas_builds Minecraft Server</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <!-- Note: Replace og-image.jpg with an actual 1200x630px image for social media previews -->
+    <meta property="og:title" content="festas_builds Minecraft Server">
+    <meta property="og:description" content="Join our community Minecraft server featuring cross-platform play, build competitions, cosmetics, and creative tools!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mc.festas-builds.com">
+    <meta property="og:image" content="https://mc.festas-builds.com/images/og-image.jpg">
+    <meta property="og:site_name" content="festas_builds Minecraft Server">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="festas_builds Minecraft Server">
+    <meta name="twitter:description" content="Join our community Minecraft server featuring cross-platform play, build competitions, cosmetics, and creative tools!">
+    <meta name="twitter:image" content="https://mc.festas-builds.com/images/og-image.jpg">
+    
+    <!-- Structured Data (Schema.org) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "GameServer",
+      "name": "festas_builds Minecraft Server",
+      "description": "Community Minecraft server featuring cross-platform play, build competitions, and creative tools",
+      "game": {
+        "@type": "VideoGame",
+        "name": "Minecraft"
+      },
+      "url": "https://mc.festas-builds.com",
+      "playersOnline": "0-20",
+      "maximumAttendeeCapacity": 20
+    }
+    </script>
+    
+    <!-- Preload Critical Assets -->
+    <link rel="preload" href="css/style.css" as="style">
+    <link rel="preload" href="js/main.js" as="script">
+    
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode">
+        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </button>
+
+    <!-- Animated Background -->
+    <div class="animated-bg" id="animatedBg"></div>
+
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
@@ -32,7 +90,17 @@
                 </div>
                 <div class="server-status" id="serverStatus">
                     <span class="status-indicator"></span>
-                    <span class="status-text">Server Status</span>
+                    <span class="status-text">Checking status...</span>
+                </div>
+                <div class="server-stats" id="serverStats">
+                    <div class="stat-item">
+                        <span class="stat-label">Players:</span>
+                        <span class="stat-value" id="playerCount">-/-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Uptime:</span>
+                        <span class="stat-value" id="serverUptime">-</span>
+                    </div>
                 </div>
             </div>
 
@@ -212,7 +280,7 @@
             <div class="bluemap-content">
                 <h2>Explore the World</h2>
                 <p>View our server map in beautiful 3D. See player locations, discover builds, and plan your next adventure!</p>
-                <a href="#" class="btn btn-map" id="bluemapBtn">
+                <a href="https://map.festas-builds.com" class="btn btn-map" id="bluemapBtn" target="_blank" rel="noopener noreferrer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
                         <line x1="8" y1="2" x2="8" y2="18"></line>
@@ -220,6 +288,335 @@
                     </svg>
                     Open Live Map
                 </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- News & Updates Section -->
+    <section class="news-section">
+        <div class="container">
+            <h2 class="section-title">Latest News & Updates</h2>
+            <div class="news-grid">
+                <article class="news-card">
+                    <div class="news-date">Recent</div>
+                    <h3>Server Launch!</h3>
+                    <p>Welcome to festas_builds! Join our growing community and start building amazing creations.</p>
+                </article>
+                <article class="news-card">
+                    <div class="news-date">Updates</div>
+                    <h3>Cross-Platform Play</h3>
+                    <p>Now supporting both Java and Bedrock Edition! Play from any device.</p>
+                </article>
+                <article class="news-card">
+                    <div class="news-date">Events</div>
+                    <h3>Weekly Build Competitions</h3>
+                    <p>Join our weekly themed building contests and win exclusive cosmetic rewards!</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Build Competition Showcase -->
+    <section class="competition-showcase">
+        <div class="container">
+            <h2 class="section-title">Build Competition Winners</h2>
+            <p class="section-subtitle">Check out amazing builds from our weekly competitions!</p>
+            <div class="showcase-grid">
+                <div class="showcase-card">
+                    <div class="showcase-image-placeholder">
+                        <span class="showcase-icon">🏆</span>
+                    </div>
+                    <h3>Medieval Castle</h3>
+                    <p class="showcase-author">Winner: Player123</p>
+                    <p class="showcase-theme">Theme: Medieval Architecture</p>
+                </div>
+                <div class="showcase-card">
+                    <div class="showcase-image-placeholder">
+                        <span class="showcase-icon">🥈</span>
+                    </div>
+                    <h3>Underwater Base</h3>
+                    <p class="showcase-author">2nd Place: Builder456</p>
+                    <p class="showcase-theme">Theme: Oceanic Structures</p>
+                </div>
+                <div class="showcase-card">
+                    <div class="showcase-image-placeholder">
+                        <span class="showcase-icon">🥉</span>
+                    </div>
+                    <h3>Futuristic City</h3>
+                    <p class="showcase-author">3rd Place: Creator789</p>
+                    <p class="showcase-theme">Theme: Future World</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshot Gallery -->
+    <section class="gallery-section">
+        <div class="container">
+            <h2 class="section-title">Server Gallery</h2>
+            <p class="section-subtitle">Explore amazing builds and highlights from our community</p>
+            <div class="gallery-grid">
+                <div class="gallery-item" data-category="builds">
+                    <div class="gallery-image-placeholder">
+                        <span class="gallery-icon">🏗️</span>
+                    </div>
+                    <div class="gallery-overlay">
+                        <h4>Epic Builds</h4>
+                        <p>Player Creations</p>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="events">
+                    <div class="gallery-image-placeholder">
+                        <span class="gallery-icon">🎉</span>
+                    </div>
+                    <div class="gallery-overlay">
+                        <h4>Server Events</h4>
+                        <p>Community Gatherings</p>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="competitions">
+                    <div class="gallery-image-placeholder">
+                        <span class="gallery-icon">🏆</span>
+                    </div>
+                    <div class="gallery-overlay">
+                        <h4>Competitions</h4>
+                        <p>Build Contest Winners</p>
+                    </div>
+                </div>
+                <div class="gallery-item" data-category="landscapes">
+                    <div class="gallery-image-placeholder">
+                        <span class="gallery-icon">🌄</span>
+                    </div>
+                    <div class="gallery-overlay">
+                        <h4>Landscapes</h4>
+                        <p>Beautiful World Views</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cosmetics Preview -->
+    <section class="cosmetics-section">
+        <div class="container">
+            <h2 class="section-title">Unlock Cosmetics</h2>
+            <p class="section-subtitle">Earn exclusive cosmetic items through gameplay and competitions</p>
+            <div class="cosmetics-grid">
+                <div class="cosmetic-card">
+                    <div class="cosmetic-icon">✨</div>
+                    <h4>Particle Effects</h4>
+                    <p>Flame trails, sparkles, and more!</p>
+                    <span class="unlock-method">Unlock: Rank up</span>
+                </div>
+                <div class="cosmetic-card">
+                    <div class="cosmetic-icon">👑</div>
+                    <h4>Hats & Crowns</h4>
+                    <p>Show off your achievements</p>
+                    <span class="unlock-method">Unlock: Win competitions</span>
+                </div>
+                <div class="cosmetic-card">
+                    <div class="cosmetic-icon">🎒</div>
+                    <h4>Backpacks</h4>
+                    <p>Diamond, rainbow, and angel wings</p>
+                    <span class="unlock-method">Unlock: Playtime</span>
+                </div>
+                <div class="cosmetic-card">
+                    <div class="cosmetic-icon">🎈</div>
+                    <h4>Balloons</h4>
+                    <p>Colorful floating companions</p>
+                    <span class="unlock-method">Unlock: Achievements</span>
+                </div>
+            </div>
+            <div class="rank-progression">
+                <h3>Rank Progression</h3>
+                <div class="ranks">
+                    <div class="rank-item">
+                        <span class="rank-name">Newcomer</span>
+                        <span class="rank-req">Start</span>
+                    </div>
+                    <span class="rank-arrow">→</span>
+                    <div class="rank-item">
+                        <span class="rank-name">Builder</span>
+                        <span class="rank-req">10h</span>
+                    </div>
+                    <span class="rank-arrow">→</span>
+                    <div class="rank-item">
+                        <span class="rank-name">Architect</span>
+                        <span class="rank-req">50h</span>
+                    </div>
+                    <span class="rank-arrow">→</span>
+                    <div class="rank-item">
+                        <span class="rank-name">Master</span>
+                        <span class="rank-req">200h</span>
+                    </div>
+                    <span class="rank-arrow">→</span>
+                    <div class="rank-item highlight">
+                        <span class="rank-name">Legend</span>
+                        <span class="rank-req">Win!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Plugin Highlights -->
+    <section class="plugin-highlights">
+        <div class="container">
+            <h2 class="section-title">Featured Plugins</h2>
+            <p class="section-subtitle">Discover our unique server features and tools</p>
+            <div class="plugin-highlights-grid">
+                <div class="plugin-highlight-card">
+                    <div class="plugin-highlight-icon">🗺️</div>
+                    <h3>BlueMap</h3>
+                    <p>Explore our world in stunning 3D from your browser. View player locations, discover builds, and plan your next adventure in real-time.</p>
+                    <ul class="plugin-features">
+                        <li>Live 3D world rendering</li>
+                        <li>Player location markers</li>
+                        <li>Claim visualization</li>
+                    </ul>
+                </div>
+                <div class="plugin-highlight-card">
+                    <div class="plugin-highlight-icon">🏗️</div>
+                    <h3>PlotSquared</h3>
+                    <p>Weekly build competitions with dedicated 100x100 plots. Show your creativity with themed challenges and win exclusive rewards!</p>
+                    <ul class="plugin-features">
+                        <li>100x100 building plots</li>
+                        <li>WorldEdit integration</li>
+                        <li>Competition rating system</li>
+                    </ul>
+                </div>
+                <div class="plugin-highlight-card">
+                    <div class="plugin-highlight-icon">🛡️</div>
+                    <h3>GriefPrevention</h3>
+                    <p>Protect your builds with our easy claim system. Use the golden shovel to claim land and keep your creations safe from griefing.</p>
+                    <ul class="plugin-features">
+                        <li>Golden shovel claims</li>
+                        <li>Trust friends on plots</li>
+                        <li>Automatic protection</li>
+                    </ul>
+                </div>
+                <div class="plugin-highlight-card">
+                    <div class="plugin-highlight-icon">💬</div>
+                    <h3>DiscordSRV</h3>
+                    <p>Stay connected with the community! Chat between Discord and Minecraft, get notifications for events, and never miss out.</p>
+                    <ul class="plugin-features">
+                        <li>Cross-platform chat</li>
+                        <li>Event notifications</li>
+                        <li>Community integration</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Leaderboards Section -->
+    <section class="leaderboards-section">
+        <div class="container">
+            <h2 class="section-title">Player Leaderboards</h2>
+            <div class="leaderboards-grid">
+                <div class="leaderboard-card">
+                    <h3>🏆 Top Builders</h3>
+                    <div class="leaderboard-list">
+                        <div class="leaderboard-item">
+                            <span class="position">1st</span>
+                            <span class="player-name">Coming Soon</span>
+                            <span class="score">-</span>
+                        </div>
+                        <div class="leaderboard-item">
+                            <span class="position">2nd</span>
+                            <span class="player-name">Coming Soon</span>
+                            <span class="score">-</span>
+                        </div>
+                        <div class="leaderboard-item">
+                            <span class="position">3rd</span>
+                            <span class="player-name">Coming Soon</span>
+                            <span class="score">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="leaderboard-card">
+                    <h3>⏱️ Most Playtime</h3>
+                    <div class="leaderboard-list">
+                        <div class="leaderboard-item">
+                            <span class="position">1st</span>
+                            <span class="player-name">Coming Soon</span>
+                            <span class="score">- hrs</span>
+                        </div>
+                        <div class="leaderboard-item">
+                            <span class="position">2nd</span>
+                            <span class="player-name">Coming Soon</span>
+                            <span class="score">- hrs</span>
+                        </div>
+                        <div class="leaderboard-item">
+                            <span class="position">3rd</span>
+                            <span class="player-name">Coming Soon</span>
+                            <span class="score">- hrs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How do I join the server?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Simply add <code>mc.festas-builds.com</code> to your server list! Java Edition players use the default port, while Bedrock Edition players should connect on port <code>19132</code>.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Is the server cross-platform?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! We support both Java and Bedrock Edition, so you can play on PC, mobile, Xbox, PlayStation, or Nintendo Switch.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How do I protect my builds?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Use the golden shovel to claim land with GriefPrevention! Right-click two corners to create a claim. Your builds are automatically protected from griefing.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>What are the server rules?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Be respectful, no griefing, no cheating, keep chat clean, and follow staff instructions. See the full rules section above for details.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How do build competitions work?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Weekly themed competitions are announced in Discord. Claim a plot with <code>/plots auto</code>, build according to the theme, and winners receive exclusive cosmetic rewards!</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How do I unlock cosmetics?</h3>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Cosmetics are earned through playtime, competitions, and achievements. As you rank up from Newcomer to Legend, you'll unlock new particles, hats, and backpacks!</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -238,8 +635,8 @@
                     <ul>
                         <li><a href="#features">Features</a></li>
                         <li><a href="#how-to-join">How to Join</a></li>
-                        <li><a href="#" id="discordLink">Discord Server</a></li>
-                        <li><a href="https://github.com/Festas/Minecraft-Server" target="_blank">GitHub</a></li>
+                        <li><a href="https://discord.gg/YOUR_INVITE_CODE" id="discordLink" target="_blank" rel="noopener noreferrer">Discord Server</a></li>
+                        <li><a href="https://github.com/Festas/Minecraft-Server" target="_blank" rel="noopener noreferrer">GitHub</a></li>
                     </ul>
                 </div>
                 
@@ -260,6 +657,21 @@
             </div>
         </div>
     </footer>
+
+    <!-- Analytics Placeholder (Uncomment and configure when ready) -->
+    <!--
+    Google Analytics:
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    
+    OR Plausible Analytics (Privacy-friendly alternative):
+    <script defer data-domain="mc.festas-builds.com" src="https://plausible.io/js/script.js"></script>
+    -->
 
     <script src="js/main.js"></script>
 </body>

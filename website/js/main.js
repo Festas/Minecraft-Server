@@ -2,12 +2,72 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all features
+    initThemeToggle();
+    initAnimatedBackground();
     initCopyButton();
     initServerStatus();
     initSmoothScroll();
     initBlueMapButton();
     initDiscordLink();
+    initFAQAccordion();
+    initScrollAnimations();
 });
+
+/**
+ * Theme toggle functionality with localStorage persistence
+ */
+function initThemeToggle() {
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    
+    // Check for saved theme preference or default to 'dark'
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    html.setAttribute('data-theme', savedTheme);
+    
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Add a little animation
+            themeToggle.style.transform = 'rotate(360deg)';
+            setTimeout(() => {
+                themeToggle.style.transform = '';
+            }, 300);
+        });
+    }
+}
+
+/**
+ * Create animated background particles
+ */
+function initAnimatedBackground() {
+    const animatedBg = document.getElementById('animatedBg');
+    
+    if (!animatedBg) return;
+    
+    // Create 20 floating particles
+    const particleCount = 20;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        // Random horizontal position
+        particle.style.left = Math.random() * 100 + '%';
+        
+        // Random delay for staggered animation
+        particle.style.animationDelay = Math.random() * 15 + 's';
+        
+        // Random duration for varied speed
+        particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+        
+        animatedBg.appendChild(particle);
+    }
+}
 
 /**
  * Copy server IP to clipboard functionality
@@ -69,48 +129,85 @@ function showCopyFeedback(button, message) {
 }
 
 /**
- * Check server status (placeholder implementation)
- * In production, this would make an API call to check if server is online
+ * Check server status using mcsrvstat.us API
+ * Displays online/offline status, player count, and uptime
  */
 function initServerStatus() {
     const statusIndicator = document.querySelector('.status-indicator');
     const statusText = document.querySelector('.status-text');
+    const playerCount = document.getElementById('playerCount');
+    const serverUptime = document.getElementById('serverUptime');
     
     if (statusIndicator && statusText) {
-        // This is a placeholder - in production you would:
-        // 1. Make an API call to a status endpoint
-        // 2. Use a Minecraft server status API (like mcsrvstat.us or api.mcsrvstat.us)
-        // 3. Update the indicator based on the response
-        
-        // For now, we'll simulate checking the status
         checkServerStatus();
+        
+        // Update status every 60 seconds
+        setInterval(checkServerStatus, 60000);
     }
 }
 
 /**
- * Simulate server status check
- * TODO: Replace this with actual API call in production
- * Example API: https://api.mcsrvstat.us/2/mc.festas-builds.com
+ * Fetch server status from mcsrvstat.us API
  */
 async function checkServerStatus() {
     const statusIndicator = document.querySelector('.status-indicator');
     const statusText = document.querySelector('.status-text');
-
-    // TODO: Replace with actual API call
-    // Example implementation:
-    // const response = await fetch('https://api.mcsrvstat.us/2/mc.festas-builds.com');
-    // const data = await response.json();
-    // const isOnline = data.online;
-
-    const isOnline = true; // Placeholder - update with real status check
+    const playerCount = document.getElementById('playerCount');
+    const serverUptime = document.getElementById('serverUptime');
     
-    if (isOnline) {
-        statusIndicator.style.background = '#7cbd54'; // Green
-        statusText.textContent = 'Server Online';
-    } else {
-        statusIndicator.style.background = '#ff4444'; // Red
-        statusText.textContent = 'Server Offline';
-        statusIndicator.style.animation = 'none';
+    const serverAddress = 'mc.festas-builds.com';
+    
+    try {
+        // Using mcsrvstat.us API for server status
+        const response = await fetch(`https://api.mcsrvstat.us/3/${serverAddress}`);
+        const data = await response.json();
+        
+        if (data.online) {
+            // Server is online
+            statusIndicator.style.background = '#7cbd54'; // Green
+            statusText.textContent = 'Server Online';
+            
+            // Update player count
+            if (playerCount && data.players) {
+                const online = data.players.online || 0;
+                const max = data.players.max || 20;
+                playerCount.textContent = `${online}/${max}`;
+            }
+            
+            // Calculate and display uptime (if available in future)
+            if (serverUptime) {
+                // For now, show a placeholder
+                // In production, you would track server start time
+                serverUptime.textContent = 'Running';
+            }
+        } else {
+            // Server is offline
+            statusIndicator.style.background = '#ff4444'; // Red
+            statusText.textContent = 'Server Offline';
+            statusIndicator.style.animation = 'none';
+            
+            if (playerCount) {
+                playerCount.textContent = '0/20';
+            }
+            
+            if (serverUptime) {
+                serverUptime.textContent = 'Offline';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch server status:', error);
+        
+        // Fallback to unknown status
+        statusIndicator.style.background = '#ffaa00'; // Orange
+        statusText.textContent = 'Status Unknown';
+        
+        if (playerCount) {
+            playerCount.textContent = '-/-';
+        }
+        
+        if (serverUptime) {
+            serverUptime.textContent = '-';
+        }
     }
 }
 
@@ -142,23 +239,20 @@ function initSmoothScroll() {
 
 /**
  * BlueMap button handler
- * Update this URL when BlueMap is configured
+ * Now links to https://map.festas-builds.com
  */
 function initBlueMapButton() {
     const bluemapBtn = document.getElementById('bluemapBtn');
     
+    // The button now has a direct href, but we can still add tracking or other behavior
     if (bluemapBtn) {
         bluemapBtn.addEventListener('click', function(e) {
-            // Replace with actual BlueMap URL when configured
-            // e.g., 'https://map.festas-builds.com'
-            const bluemapUrl = '#'; // Placeholder
-            
-            if (bluemapUrl === '#') {
-                e.preventDefault();
-                alert('BlueMap is not yet configured. Check back soon!');
-            } else {
-                // Open in new tab
-                window.open(bluemapUrl, '_blank');
+            // Track click if analytics are enabled
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'bluemap_click', {
+                    'event_category': 'external_link',
+                    'event_label': 'BlueMap'
+                });
             }
         });
     }
@@ -166,31 +260,48 @@ function initBlueMapButton() {
 
 /**
  * Discord link handler
- * Update this URL with actual Discord invite
  */
 function initDiscordLink() {
     const discordLink = document.getElementById('discordLink');
     
     if (discordLink) {
         discordLink.addEventListener('click', function(e) {
-            // Replace with actual Discord invite URL
-            // e.g., 'https://discord.gg/your-invite-code'
-            const discordUrl = '#'; // Placeholder
-            
-            if (discordUrl === '#') {
-                e.preventDefault();
-                alert('Discord server link will be added soon!');
-            } else {
-                // Open in new tab
-                window.open(discordUrl, '_blank');
+            // Track click if analytics are enabled
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'discord_click', {
+                    'event_category': 'external_link',
+                    'event_label': 'Discord'
+                });
             }
         });
     }
 }
 
 /**
- * Optional: Add scroll animations
- * Reveal elements as they come into view
+ * FAQ Accordion functionality
+ */
+function initFAQAccordion() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        
+        question.addEventListener('click', function() {
+            // Close other open items (optional - remove if you want multiple items open)
+            faqItems.forEach(otherItem => {
+                if (otherItem !== item && otherItem.classList.contains('active')) {
+                    otherItem.classList.remove('active');
+                }
+            });
+            
+            // Toggle current item
+            item.classList.toggle('active');
+        });
+    });
+}
+
+/**
+ * Scroll animations - Reveal elements as they come into view
  */
 function initScrollAnimations() {
     const observerOptions = {
@@ -201,14 +312,20 @@ function initScrollAnimations() {
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.classList.add('fade-in');
+                entry.target.classList.add('animate-in');
                 observer.unobserve(entry.target);
             }
         });
     }, observerOptions);
 
     // Observe all cards and sections
-    document.querySelectorAll('.feature-card, .plugin-card, .rule-item, .join-option').forEach(el => {
+    const elementsToAnimate = document.querySelectorAll(
+        '.feature-card, .plugin-card, .rule-item, .join-option, ' +
+        '.news-card, .showcase-card, .gallery-item, .cosmetic-card, ' +
+        '.plugin-highlight-card, .leaderboard-card, .faq-item'
+    );
+    
+    elementsToAnimate.forEach(el => {
         observer.observe(el);
     });
 }
