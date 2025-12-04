@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   console:
     build:
@@ -44,9 +42,6 @@ services:
       
       # Mount backup script
       - ./backup.sh:/app/backup.sh:ro
-    
-    depends_on:
-      - minecraft
     
     networks:
       - minecraft-network
