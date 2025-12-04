@@ -8,23 +8,23 @@ services:
     build:
       context: ./website
       dockerfile: Dockerfile
-    
+
     # Container name must match the reverse proxy configuration in Caddy
     container_name: minecraft-web
-    
+
     # Restart policy
     restart: unless-stopped
-    
+
     # Join the external Caddy network
     # This network is managed by the Link-in-Bio repository
     networks:
       - caddy-network
-    
+
     # Expose port 80 internally (not published to host)
     # Caddy will proxy requests to this container
     expose:
       - "80"
-    
+
     # Health check to ensure the website is responding
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
@@ -32,7 +32,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-    
+
     # Resource limits (optional but recommended)
     deploy:
       resources:
