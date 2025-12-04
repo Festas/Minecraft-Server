@@ -67,6 +67,12 @@ services:
       # Sync plugins and configs from the mounted directories
       # This ensures plugins are copied into the server on startup
       SYNC_SKIP_NEWER_IN_DESTINATION: "FALSE"
+      
+      # RCON Configuration (for web console remote control)
+      ENABLE_RCON: "TRUE"
+      RCON_PORT: "25575"
+      # IMPORTANT: Change this to a secure password in production!
+      RCON_PASSWORD: "${RCON_PASSWORD:-change-this-secure-rcon-password}"
     
     # Volume mounts to persist data and configurations
     volumes:

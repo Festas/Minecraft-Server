@@ -1,0 +1,8 @@
+{
+  "users": [
+    {
+      "username": "admin",
+      "password": "$2a$10$EXAMPLE.HASH.REPLACE.WITH.ACTUAL.BCRYPT.HASH"
+    }
+  ]
+}

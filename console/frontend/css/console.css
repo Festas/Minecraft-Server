@@ -1,0 +1,223 @@
+/* Console Output Styles */
+.console-card {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    max-height: 800px;
+}
+
+.log-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.log-controls .search-input {
+    flex: 1;
+    margin: 0;
+}
+
+.console-output,
+.log-output {
+    background: #0a0a0a;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 15px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    line-height: 1.4;
+    overflow-y: auto;
+    flex: 1;
+    max-height: 500px;
+}
+
+.log-output {
+    max-height: 200px;
+}
+
+.log-line {
+    margin-bottom: 4px;
+    padding: 2px 4px;
+    border-radius: 2px;
+}
+
+.log-line:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Log Type Colors */
+.log-line.info {
+    color: #b0b0b0;
+}
+
+.log-line.warn {
+    color: #ff9800;
+    background: rgba(255, 152, 0, 0.1);
+}
+
+.log-line.error {
+    color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+    font-weight: bold;
+}
+
+.log-line.chat {
+    color: #4caf50;
+}
+
+.log-line.join {
+    color: #4a9eff;
+}
+
+.log-line.leave {
+    color: #ff9800;
+}
+
+.log-timestamp {
+    color: #666;
+    margin-right: 8px;
+}
+
+.log-message {
+    color: inherit;
+}
+
+/* Command Input */
+.command-input-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    align-items: stretch;
+}
+
+.command-input {
+    flex: 1;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.95em;
+}
+
+.command-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.command-input-container .btn {
+    padding: 12px 24px;
+    white-space: nowrap;
+}
+
+/* Scrollbar Styles */
+.console-output::-webkit-scrollbar,
+.log-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.console-output::-webkit-scrollbar-track,
+.log-output::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.console-output::-webkit-scrollbar-thumb,
+.log-output::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+.console-output::-webkit-scrollbar-thumb:hover,
+.log-output::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Auto-scroll indicator */
+.console-output.paused,
+.log-output.paused {
+    border-color: var(--accent-warning);
+}
+
+.console-output.paused::before,
+.log-output.paused::before {
+    content: "⏸ Auto-scroll paused";
+    display: block;
+    color: var(--accent-warning);
+    font-size: 0.85em;
+    margin-bottom: 10px;
+    padding: 5px;
+    background: rgba(255, 152, 0, 0.1);
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Command History */
+.command-history {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px 4px 0 0;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.command-history.visible {
+    display: block;
+}
+
+.history-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.history-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+/* Log Search Highlighting */
+.log-line.highlight {
+    background: rgba(74, 158, 255, 0.2);
+    border-left: 3px solid var(--accent-primary);
+    padding-left: 8px;
+}
+
+.search-match {
+    background: yellow;
+    color: black;
+    padding: 1px 2px;
+    border-radius: 2px;
+}
+
+/* Loading State */
+.console-output.loading,
+.log-output.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.console-output.loading::after,
+.log-output.loading::after {
+    content: "Loading logs...";
+}
+
+/* Empty State */
+.console-output:empty::after,
+.log-output:empty::after {
+    content: "No logs to display. Waiting for server activity...";
+    color: var(--text-secondary);
+    font-style: italic;
+}

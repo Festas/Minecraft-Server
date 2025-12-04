@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Server Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/minecraft-theme.css">
+</head>
+<body>
+    <div class="console-wrapper">
+        <!-- Header -->
+        <header class="console-header">
+            <div class="header-left">
+                <h1>🎮 Festas Builds - Server Console</h1>
+            </div>
+            <div class="header-right">
+                <span id="currentUser" class="user-badge">Admin</span>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="console-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav>
+                    <button class="nav-item active" data-section="dashboard">
+                        <span>📊</span> Dashboard
+                    </button>
+                    <button class="nav-item" data-section="console">
+                        <span>💻</span> Console
+                    </button>
+                    <button class="nav-item" data-section="players">
+                        <span>👥</span> Players
+                    </button>
+                    <button class="nav-item" data-section="controls">
+                        <span>⚙️</span> Controls
+                    </button>
+                    <button class="nav-item" data-section="backups">
+                        <span>📦</span> Backups
+                    </button>
+                    <button class="nav-item" data-section="settings">
+                        <span>🔧</span> Settings
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="content-section active">
+                    <!-- Server Status -->
+                    <div class="status-bar">
+                        <div class="status-item">
+                            <span id="serverStatus" class="status-indicator">🔴</span>
+                            <span id="serverStatusText">Offline</span>
+                        </div>
+                        <div class="status-item">
+                            <span id="playerCount">0/20 Players</span>
+                        </div>
+                        <div class="status-item">
+                            <span>TPS: <span id="tps">20.0</span></span>
+                        </div>
+                        <div class="status-item">
+                            <span>Uptime: <span id="uptime">0m</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <h3>Quick Actions</h3>
+                        <div class="action-buttons">
+                            <button class="btn btn-success" id="startBtn">▶️ Start</button>
+                            <button class="btn btn-danger" id="stopBtn">⏹️ Stop</button>
+                            <button class="btn btn-warning" id="restartBtn">🔄 Restart</button>
+                            <button class="btn btn-primary" id="saveBtn">💾 Save</button>
+                            <button class="btn btn-primary" id="backupBtn">📦 Backup</button>
+                            <button class="btn btn-danger" id="killBtn">🔌 Kill</button>
+                        </div>
+                    </div>
+
+                    <!-- Server Info Grid -->
+                    <div class="info-grid">
+                        <div class="card">
+                            <h4>Memory Usage</h4>
+                            <div id="memoryUsage" class="stat-value">-- / --</div>
+                        </div>
+                        <div class="card">
+                            <h4>CPU Usage</h4>
+                            <div id="cpuUsage" class="stat-value">--%</div>
+                        </div>
+                        <div class="card">
+                            <h4>Minecraft Version</h4>
+                            <div id="mcVersion" class="stat-value">--</div>
+                        </div>
+                        <div class="card">
+                            <h4>World Size</h4>
+                            <div id="worldSize" class="stat-value">--</div>
+                        </div>
+                    </div>
+
+                    <!-- Live Log Preview -->
+                    <div class="card">
+                        <h3>Live Logs <button id="pauseLogsBtn" class="btn btn-sm">⏸️ Pause</button></h3>
+                        <div id="logPreview" class="log-output"></div>
+                    </div>
+                </section>
+
+                <!-- Console Section -->
+                <section id="console" class="content-section">
+                    <div class="card console-card">
+                        <h3>Console Output</h3>
+                        <div class="log-controls">
+                            <button id="clearLogsBtn" class="btn btn-sm">Clear</button>
+                            <button id="downloadLogsBtn" class="btn btn-sm">Download</button>
+                            <input type="text" id="logSearchInput" placeholder="Search logs..." class="search-input">
+                        </div>
+                        <div id="consoleOutput" class="console-output"></div>
+                        
+                        <div class="command-input-container">
+                            <input 
+                                type="text" 
+                                id="commandInput" 
+                                placeholder="Enter command (e.g., say Hello World)" 
+                                class="command-input"
+                            >
+                            <button id="sendCommandBtn" class="btn btn-primary">Send</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Players Section -->
+                <section id="players" class="content-section">
+                    <div class="card">
+                        <h3>Online Players <span id="onlinePlayersCount">(0)</span></h3>
+                        <div id="playersList" class="players-list">
+                            <p class="no-players">No players online</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Player Actions</h3>
+                        <div class="player-actions-form">
+                            <input type="text" id="playerNameInput" placeholder="Player name" class="input">
+                            <div class="action-buttons">
+                                <button class="btn" id="kickPlayerBtn">Kick</button>
+                                <button class="btn" id="banPlayerBtn">Ban</button>
+                                <button class="btn" id="opPlayerBtn">OP</button>
+                                <button class="btn" id="deopPlayerBtn">De-OP</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Controls Section -->
+                <section id="controls" class="content-section">
+                    <div class="card">
+                        <h3>Quick Commands</h3>
+                        <div class="quick-commands">
+                            <button class="btn" data-command="time set day">☀️ Day</button>
+                            <button class="btn" data-command="time set night">🌙 Night</button>
+                            <button class="btn" data-command="weather clear">☀️ Clear</button>
+                            <button class="btn" data-command="weather rain">🌧️ Rain</button>
+                            <button class="btn" data-command="weather thunder">⛈️ Thunder</button>
+                            <button class="btn" id="broadcastBtn">📢 Broadcast</button>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Difficulty</h3>
+                        <select id="difficultySelect" class="select">
+                            <option value="peaceful">Peaceful</option>
+                            <option value="easy">Easy</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                        <button id="setDifficultyBtn" class="btn btn-primary">Set Difficulty</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Gamemode</h3>
+                        <input type="text" id="gamemodePlayer" placeholder="Player name" class="input">
+                        <select id="gamemodeSelect" class="select">
+                            <option value="survival">Survival</option>
+                            <option value="creative">Creative</option>
+                            <option value="adventure">Adventure</option>
+                            <option value="spectator">Spectator</option>
+                        </select>
+                        <button id="setGamemodeBtn" class="btn btn-primary">Set Gamemode</button>
+                    </div>
+                </section>
+
+                <!-- Backups Section -->
+                <section id="backups" class="content-section">
+                    <div class="card">
+                        <h3>Backups</h3>
+                        <button id="createBackupBtn" class="btn btn-primary">Create Backup Now</button>
+                        <div id="backupsList" class="backups-list">
+                            <p>Loading backups...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings" class="content-section">
+                    <div class="card">
+                        <h3>Console Settings</h3>
+                        <div class="settings-form">
+                            <label>
+                                <input type="checkbox" id="autoScrollSetting" checked> Auto-scroll logs
+                            </label>
+                            <label>
+                                <input type="checkbox" id="soundAlertsSetting"> Sound alerts
+                            </label>
+                            <label>
+                                <input type="checkbox" id="colorCodesSetting" checked> Color-coded logs
+                            </label>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="confirmTitle">Confirm Action</h3>
+            <p id="confirmMessage">Are you sure?</p>
+            <div class="modal-actions">
+                <button id="confirmYes" class="btn btn-danger">Yes</button>
+                <button id="confirmNo" class="btn btn-secondary">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/websocket.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/console.js"></script>
+    <script src="js/players.js"></script>
+    <script src="js/commands.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
