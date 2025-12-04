@@ -1,7 +1,7 @@
 // Player management
 async function loadPlayers() {
     try {
-        const response = await fetch('/api/players/list');
+        const response = await apiRequest('/api/players/list');
         const data = await response.json();
         
         renderPlayersList(data);
@@ -68,7 +68,7 @@ async function kickPlayer(player, reason = '') {
     if (!confirmed) return;
     
     try {
-        const response = await fetch('/api/players/kick', {
+        const response = await apiRequest('/api/players/kick', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ player, reason })
@@ -96,7 +96,7 @@ async function banPlayer(player, reason = '') {
     if (!confirmed) return;
     
     try {
-        const response = await fetch('/api/players/ban', {
+        const response = await apiRequest('/api/players/ban', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ player, reason, confirmed: true })
@@ -117,7 +117,7 @@ async function banPlayer(player, reason = '') {
 
 async function opPlayer(player) {
     try {
-        const response = await fetch('/api/players/op', {
+        const response = await apiRequest('/api/players/op', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ player })
@@ -137,7 +137,7 @@ async function opPlayer(player) {
 
 async function deopPlayer(player) {
     try {
-        const response = await fetch('/api/players/deop', {
+        const response = await apiRequest('/api/players/deop', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ player })
@@ -157,7 +157,7 @@ async function deopPlayer(player) {
 
 async function changeGamemode(player, mode) {
     try {
-        const response = await fetch('/api/players/gamemode', {
+        const response = await apiRequest('/api/players/gamemode', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ player, mode })

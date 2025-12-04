@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check authentication
     checkAuth();
     
+    // Fetch CSRF token (from utils.js)
+    fetchCsrfToken();
+    
     // Initialize WebSocket
     initializeWebSocket();
     
@@ -231,7 +234,7 @@ function setupEventListeners() {
 
 async function logout() {
     try {
-        await fetch('/api/logout', { method: 'POST' });
+        await apiRequest('/api/logout', { method: 'POST' });
         window.location.href = '/console/login.html';
     } catch (error) {
         console.error('Logout failed:', error);
@@ -254,7 +257,7 @@ async function controlServer(action) {
     }
     
     try {
-        const response = await fetch(`/api/server/${action}`, {
+        const response = await apiRequest(`/api/server/${action}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ confirmed: true })

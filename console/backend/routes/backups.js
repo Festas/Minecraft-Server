@@ -1,11 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../auth/auth');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs').promises;
 const path = require('path');
 
-// All backup routes require authentication
+// Rate limiter for backup operations
+const backupRateLimiter = rateLimit({
+    windowMs: 60000, // 1 minute
+    max: 10, // 10 requests per minute
+    message: 'Too many backup requests, please try again later',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// All backup routes require authentication and rate limiting
 router.use(requireAuth);
+router.use(backupRateLimiter);
 
 // Get backups directory from environment or use default
 const BACKUPS_DIR = process.env.BACKUPS_DIR || path.join(process.cwd(), '../../backups');

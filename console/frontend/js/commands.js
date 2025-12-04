@@ -26,7 +26,7 @@ async function executeCommand(command, skipConfirmation = false) {
     }
     
     try {
-        const response = await fetch('/api/commands/execute', {
+        const response = await apiRequest('/api/commands/execute', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ command, confirmed: true })

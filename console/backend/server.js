@@ -3,6 +3,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
 const path = require('path');
 
 // Import services
@@ -32,9 +33,20 @@ const io = socketIo(server, {
 // Port configuration
 const PORT = process.env.CONSOLE_PORT || 3001;
 
-// Security middleware
+// Security middleware - Configure Helmet with proper CSP
 app.use(helmet({
-    contentSecurityPolicy: false, // Allow inline scripts for now
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts (needed for our frontend)
+            styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles
+            imgSrc: ["'self'", "data:", "https://crafatar.com"], // Allow Crafatar for player avatars
+            connectSrc: ["'self'", "ws:", "wss:"], // Allow WebSocket connections
+            fontSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: []
+        }
+    },
     crossOriginEmbedderPolicy: false
 }));
 
@@ -46,16 +58,38 @@ app.use(cookieParser());
 // Session middleware
 app.use(configureSession());
 
-// Serve static frontend files
+// CSRF protection middleware (exclude WebSocket and static files)
+const csrfProtection = csrf({ cookie: false }); // Use session-based CSRF
+
+// Serve static frontend files (no CSRF needed for static files)
 app.use('/console', express.static(path.join(__dirname, '../frontend')));
+
+// Apply CSRF protection to all API routes except login
+app.use('/api', (req, res, next) => {
+    // Skip CSRF for login endpoint (it's the first request)
+    if (req.path === '/login' && req.method === 'POST') {
+        return next();
+    }
+    // Skip CSRF for session check (GET request)
+    if (req.path === '/session' && req.method === 'GET') {
+        return next();
+    }
+    // Apply CSRF to all other API routes
+    csrfProtection(req, res, next);
+});
+
+// CSRF token endpoint
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+});
 
 // API routes
 app.use('/api', apiRoutes);
-app.use('/api/commands', commandRoutes);
-app.use('/api/players', playerRoutes);
-app.use('/api/server', serverRoutes);
-app.use('/api/files', fileRoutes);
-app.use('/api/backups', backupRoutes);
+app.use('/api/commands', csrfProtection, commandRoutes);
+app.use('/api/players', csrfProtection, playerRoutes);
+app.use('/api/server', csrfProtection, serverRoutes);
+app.use('/api/files', csrfProtection, fileRoutes);
+app.use('/api/backups', csrfProtection, backupRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

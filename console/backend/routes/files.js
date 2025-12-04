@@ -1,11 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../auth/auth');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs').promises;
 const path = require('path');
 
-// All file routes require authentication
+// Rate limiter for file operations
+const fileRateLimiter = rateLimit({
+    windowMs: 60000, // 1 minute
+    max: 30, // 30 requests per minute
+    message: 'Too many file operations, please try again later',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// All file routes require authentication and rate limiting
 router.use(requireAuth);
+router.use(fileRateLimiter);
 
 // Get base paths from environment or use defaults
 const SERVER_PROPS_PATH = process.env.SERVER_PROPS_PATH || path.join(process.cwd(), '../../server.properties');
