@@ -1,0 +1,73 @@
+# Docker Compose configuration for festas_builds Minecraft Server Website
+# This file defines the web service that serves the static website
+# The service must join the external 'caddy-network' to be accessible via Caddy reverse proxy
+
+services:
+  minecraft-web:
+    # Build from the website directory
+    build:
+      context: ./website
+      dockerfile: Dockerfile
+    
+    # Container name must match the reverse proxy configuration in Caddy
+    container_name: minecraft-web
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Join the external Caddy network
+    # This network is managed by the Link-in-Bio repository
+    networks:
+      - caddy-network
+    
+    # Expose port 80 internally (not published to host)
+    # Caddy will proxy requests to this container
+    expose:
+      - "80"
+    
+    # Health check to ensure the website is responding
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Resource limits (optional but recommended)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+# External network managed by Caddy (Link-in-Bio repository)
+# This network must already exist before running docker-compose up
+networks:
+  caddy-network:
+    external: true
+
+# Notes:
+# 1. The caddy-network must be created before running this compose file
+#    If it doesn't exist, create it with: docker network create caddy-network
+#
+# 2. Add the following to your Caddyfile (in Link-in-Bio repository):
+#    mc.festas-builds.com {
+#        tls eric@festas-builds.com
+#        encode gzip zstd
+#        reverse_proxy minecraft-web:80
+#    }
+#
+# 3. To deploy:
+#    docker-compose -f docker-compose.web.yml up -d
+#
+# 4. To view logs:
+#    docker-compose -f docker-compose.web.yml logs -f
+#
+# 5. To rebuild after changes:
+#    docker-compose -f docker-compose.web.yml up -d --build
+#
+# 6. To stop:
+#    docker-compose -f docker-compose.web.yml down

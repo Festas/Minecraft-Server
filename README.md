@@ -64,9 +64,26 @@ See [FEATURES.md](FEATURES.md) for complete details.
 
 - **[PLUGINS.md](PLUGINS.md)** - Comprehensive plugin guide with installation instructions
 - **[BEDROCK-SETUP.md](BEDROCK-SETUP.md)** - Cross-platform play setup guide (Geyser + Floodgate)
+- **[WEBSITE.md](WEBSITE.md)** - Website deployment and customization guide
 - **[ROADMAP.md](ROADMAP.md)** - Server growth roadmap and future plans
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide
 - **[server-icon-instructions.md](server-icon-instructions.md)** - Custom server icon setup
+
+---
+
+## 🌐 Server Website
+
+The server has a modern website at **[mc.festas-builds.com](https://mc.festas-builds.com)** featuring:
+
+- 🎮 Server information and connection details
+- ✨ Feature highlights and plugin showcase
+- 📖 How-to-join instructions for Java and Bedrock Edition
+- 📜 Server rules
+- 🗺️ Links to BlueMap and Discord
+
+The website is automatically deployed via GitHub Actions when changes are pushed to the `website/` directory.
+
+See **[WEBSITE.md](WEBSITE.md)** for deployment instructions and customization guide.
 
 ---
 
