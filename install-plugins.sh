@@ -164,6 +164,14 @@ validate_download() {
     return 0
 }
 
+is_valid_json() {
+    local json="$1"
+    if [ -z "$json" ]; then
+        return 1
+    fi
+    echo "$json" | jq empty 2>/dev/null
+}
+
 show_help() {
     cat << EOF
 Minecraft Plugin Auto-Installer
@@ -601,7 +609,18 @@ get_github_api_with_headers() {
         return 1
     fi
     
-    cat "$temp_body"
+    # Before returning the body, validate it's not an HTML response
+    local body_content
+    body_content=$(cat "$temp_body")
+    
+    # Check if response looks like an error page (HTML)
+    if [[ "$body_content" == \<* ]]; then
+        debug "Received HTML response instead of JSON"
+        rm -f "$temp_headers" "$temp_body"
+        return 1
+    fi
+    
+    echo "$body_content"
     rm -f "$temp_headers" "$temp_body"
     return 0
 }
@@ -623,6 +642,12 @@ get_github_all_releases() {
 find_matching_asset() {
     local release_json="$1"
     local pattern="$2"
+    
+    # Validate JSON first
+    if ! is_valid_json "$release_json"; then
+        echo ""
+        return 1
+    fi
     
     # Check if assets array exists and is not empty
     local has_assets
@@ -669,6 +694,13 @@ find_matching_asset() {
 
 get_release_version() {
     local release_json="$1"
+    
+    # Validate JSON first
+    if ! is_valid_json "$release_json"; then
+        echo ""
+        return 1
+    fi
+    
     local version
     version=$(echo "$release_json" | jq -r '.tag_name // empty')
     if [ -z "$version" ] || [ "$version" = "null" ]; then
@@ -697,23 +729,42 @@ install_github_plugin() {
         return 1
     fi
     
-    # Check for error message in response
+    # Check if response is valid JSON
+    if ! is_valid_json "$release_json"; then
+        error "Invalid JSON response from GitHub API for ${name}"
+        debug "Response starts with: ${release_json:0:100}"
+        return 1
+    fi
+    
+    # Check for error message in response (Not Found, Moved Permanently, etc.)
     local api_message
     api_message=$(echo "$release_json" | jq -r '.message // empty')
     
     # If /releases/latest fails, try /releases and get first non-prerelease
-    if [ -n "$api_message" ] && [[ "$api_message" =~ (Not Found|rate limit) ]]; then
+    if [ -n "$api_message" ] && [[ "$api_message" =~ (Not Found|rate limit|Moved Permanently) ]]; then
         if [[ "$api_message" =~ "rate limit" ]]; then
             error "GitHub API rate limit exceeded for ${name}"
             return 1
         fi
         
-        warning "No 'latest' release found, trying all releases..."
+        if [[ "$api_message" =~ "Moved Permanently" ]]; then
+            warning "Repository moved, trying all releases endpoint..."
+        else
+            warning "No 'latest' release found, trying all releases..."
+        fi
+        
         local all_releases
         all_releases=$(get_github_all_releases "$repo")
         
         if [ -z "$all_releases" ]; then
             error "Failed to fetch releases for ${name}"
+            return 1
+        fi
+        
+        # Validate all_releases is valid JSON
+        if ! is_valid_json "$all_releases"; then
+            error "Invalid JSON response from releases endpoint for ${name}"
+            debug "Response starts with: ${all_releases:0:100}"
             return 1
         fi
         
