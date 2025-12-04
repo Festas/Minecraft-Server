@@ -4,10 +4,9 @@
 
 services:
   minecraft-web:
-    # Build from the website directory
-    build:
-      context: ./website
-      dockerfile: Dockerfile
+    # Use pre-built image from GitHub Container Registry
+    # The image is built and pushed by the GitHub Actions workflow
+    image: ghcr.io/festas/minecraft-server-web:latest
 
     # Container name must match the reverse proxy configuration in Caddy
     container_name: minecraft-web
@@ -66,8 +65,8 @@ networks:
 # 4. To view logs:
 #    docker-compose -f docker-compose.web.yml logs -f
 #
-# 5. To rebuild after changes:
-#    docker-compose -f docker-compose.web.yml up -d --build
+# 5. To pull latest image and restart:
+#    docker-compose -f docker-compose.web.yml pull && docker-compose -f docker-compose.web.yml up -d
 #
 # 6. To stop:
 #    docker-compose -f docker-compose.web.yml down
