@@ -62,6 +62,8 @@ jobs:
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_REGISTRY_USERNAME: ${{ secrets.SERVER_REGISTRY_USERNAME }}
+          SERVER_REGISTRY_PASSWORD: ${{ secrets.SERVER_REGISTRY_PASSWORD }}
         run: |
           DEPLOY_PATH="/home/deploy/minecraft-website"
 
@@ -71,9 +73,18 @@ jobs:
           # Copy docker-compose.web.yml to server
           scp docker-compose.web.yml ${SERVER_USER}@${SERVER_HOST}:${DEPLOY_PATH}/
 
-          # Deploy on server
-          ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+          # Deploy on server using bash -s with unquoted heredoc to allow secret expansion
+          ssh ${SERVER_USER}@${SERVER_HOST} bash -s <<EOF
+            set -e
             cd /home/deploy/minecraft-website
+
+            # Authenticate to GHCR if credentials are provided
+            if [ -n "${SERVER_REGISTRY_USERNAME}" ] && [ -n "${SERVER_REGISTRY_PASSWORD}" ]; then
+              echo "Authenticating to ghcr.io..."
+              echo "${SERVER_REGISTRY_PASSWORD}" | docker login ghcr.io -u "${SERVER_REGISTRY_USERNAME}" --password-stdin
+            else
+              echo "No registry credentials provided, proceeding without authentication..."
+            fi
 
             # Create external network if it doesn't exist
             if ! docker network inspect caddy-network >/dev/null 2>&1; then
@@ -81,8 +92,24 @@ jobs:
               docker network create caddy-network
             fi
 
-            # Pull the latest image
-            docker pull ghcr.io/festas/minecraft-server-web:latest || true
+            # Pull the latest image (with diagnostic output)
+            echo "Pulling latest image from ghcr.io/festas/minecraft-server-web:latest..."
+            if ! docker pull ghcr.io/festas/minecraft-server-web:latest 2>&1; then
+              echo "WARNING: docker pull failed, continuing to diagnostics..."
+              PULL_FAILED=1
+            else
+              echo "✓ Image pulled successfully"
+              PULL_FAILED=0
+            fi
+
+            # Diagnostics after pull
+            echo ""
+            echo "=== Docker Images ==="
+            docker images | grep -E "(REPOSITORY|minecraft-server-web)" || docker images | head -5
+            echo ""
+            echo "=== Docker Info ==="
+            docker info | grep -E "(Server Version|Storage Driver|Operating System|Architecture|CPUs|Total Memory)" || true
+            echo ""
 
             # Choose compose command: prefer modern 'docker compose', fallback to 'docker-compose'
             if docker compose version >/dev/null 2>&1; then
@@ -95,27 +122,52 @@ jobs:
                 # Note: Downloading from official Docker GitHub releases. For enhanced security,
                 # consider pre-installing docker-compose on the server using package managers
                 # or pinning to a specific version instead of using 'latest'.
-                sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)" -o /usr/local/bin/docker-compose
                 sudo chmod +x /usr/local/bin/docker-compose
                 COMPOSE_CMD="docker-compose"
               else
-                echo "ERROR: neither 'docker compose' nor 'docker-compose' are available on the server," >&2
-                echo "and sudo is not available to install docker-compose." >&2
-                echo "Please install docker-compose or enable sudo for the deploy user." >&2
-                exit 1
+                # Fallback: install to user's local bin without sudo
+                echo "sudo not available, installing docker-compose to \$HOME/.local/bin..."
+                mkdir -p \$HOME/.local/bin
+                curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)" -o \$HOME/.local/bin/docker-compose
+                chmod +x \$HOME/.local/bin/docker-compose
+                export PATH="\$HOME/.local/bin:\$PATH"
+                if command -v docker-compose >/dev/null 2>&1; then
+                  COMPOSE_CMD="docker-compose"
+                  echo "✓ docker-compose installed successfully to \$HOME/.local/bin"
+                else
+                  echo "ERROR: Failed to install docker-compose to \$HOME/.local/bin" >&2
+                  echo "Please install docker-compose manually or ensure curl is available." >&2
+                  exit 1
+                fi
               fi
             fi
 
-            echo "Using compose command: $COMPOSE_CMD"
+            echo ""
+            echo "Using compose command: \$COMPOSE_CMD"
+            echo ""
 
             # Stop and remove old container
-            $COMPOSE_CMD -f docker-compose.web.yml down
+            \$COMPOSE_CMD -f docker-compose.web.yml down
 
             # Start new container
-            $COMPOSE_CMD -f docker-compose.web.yml up -d
+            echo "Starting container with: \$COMPOSE_CMD -f docker-compose.web.yml up -d"
+            \$COMPOSE_CMD -f docker-compose.web.yml up -d
 
             # Show status
-            $COMPOSE_CMD -f docker-compose.web.yml ps
+            \$COMPOSE_CMD -f docker-compose.web.yml ps
+
+            # Diagnostics after compose up
+            echo ""
+            echo "=== Compose Logs (last 200 lines) ==="
+            \$COMPOSE_CMD -f docker-compose.web.yml logs --tail=200 || true
+            echo ""
+            echo "=== Docker PS -a ==="
+            docker ps -a | grep -E "(CONTAINER|minecraft-web)" || docker ps -a
+            echo ""
+            echo "=== Docker Logs for minecraft-web ==="
+            docker logs minecraft-web --tail=50 2>&1 || echo "Container logs not available"
+            echo ""
           EOF
 
       - name: Verify deployment
@@ -123,10 +175,12 @@ jobs:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
-          ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+          ssh ${SERVER_USER}@${SERVER_HOST} bash -s <<EOF
+            set -e
             cd /home/deploy/minecraft-website
 
             # Wait a few seconds for container to start
+            echo "Waiting for container to start..."
             sleep 5
 
             # Check container health
@@ -134,18 +188,26 @@ jobs:
               echo "✓ Container is running"
 
               # Check health status
-              HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-web 2>/dev/null || echo "no-health")
-              echo "Health status: $HEALTH"
+              HEALTH=\$(docker inspect --format='{{.State.Health.Status}}' minecraft-web 2>/dev/null || echo "no-health")
+              echo "Health status: \$HEALTH"
 
               # Test HTTP response
               if docker exec minecraft-web wget --quiet --tries=1 --spider http://localhost/; then
                 echo "✓ Website is responding"
               else
                 echo "⚠ Website is not responding"
+                echo "Container logs:"
+                docker logs minecraft-web --tail=100
                 exit 1
               fi
             else
               echo "✗ Container is not running"
+              echo "Showing diagnostics..."
+              echo "=== Docker PS -a ==="
+              docker ps -a | grep -E "(CONTAINER|minecraft-web)" || docker ps -a
+              echo ""
+              echo "=== Recent container logs (if available) ==="
+              docker logs minecraft-web --tail=100 2>&1 || echo "No logs available"
               exit 1
             fi
           EOF
