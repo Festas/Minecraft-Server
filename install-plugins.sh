@@ -613,8 +613,9 @@ get_github_api_with_headers() {
     local body_content
     body_content=$(cat "$temp_body")
     
-    # Check if response looks like an error page (HTML)
-    if [[ "$body_content" == \<* ]]; then
+    # Check if response looks like an error page (HTML or other non-JSON content)
+    # Common patterns: starts with '<', '<!DOCTYPE', '<html', etc.
+    if [[ "$body_content" == \<* ]] || [[ "$body_content" =~ ^[[:space:]]*\< ]]; then
         debug "Received HTML response instead of JSON"
         rm -f "$temp_headers" "$temp_body"
         return 1
@@ -732,7 +733,8 @@ install_github_plugin() {
     # Check if response is valid JSON
     if ! is_valid_json "$release_json"; then
         error "Invalid JSON response from GitHub API for ${name}"
-        debug "Response starts with: ${release_json:0:100}"
+        # Use portable method to show response preview
+        debug "Response starts with: $(echo "$release_json" | head -c 100)"
         return 1
     fi
     
@@ -764,7 +766,8 @@ install_github_plugin() {
         # Validate all_releases is valid JSON
         if ! is_valid_json "$all_releases"; then
             error "Invalid JSON response from releases endpoint for ${name}"
-            debug "Response starts with: ${all_releases:0:100}"
+            # Use portable method to show response preview
+            debug "Response starts with: $(echo "$all_releases" | head -c 100)"
             return 1
         fi
         
