@@ -290,9 +290,9 @@ validate_config() {
             continue
         fi
         
-        # Validate source type (allow 'manual' as a valid source type for manual installs)
-        if [[ "$source" != "github" && "$source" != "modrinth" && "$source" != "manual" ]]; then
-            error "Plugin '${name}' has invalid source type: '${source}' (must be 'github', 'modrinth', or 'manual')"
+        # Validate source type (allow 'manual' and 'url' as valid source types)
+        if [[ "$source" != "github" && "$source" != "modrinth" && "$source" != "manual" && "$source" != "url" ]]; then
+            error "Plugin '${name}' has invalid source type: '${source}' (must be 'github', 'modrinth', 'url', or 'manual')"
             ((validation_errors++))
             continue
         fi
@@ -316,6 +316,13 @@ validate_config() {
             project_id=$(echo "$plugin_json" | jq -r '.project_id // empty')
             if [ -z "$project_id" ]; then
                 error "Plugin '${name}' with source 'modrinth' is missing required field: 'project_id'"
+                ((validation_errors++))
+            fi
+        elif [ "$source" = "url" ]; then
+            local direct_url
+            direct_url=$(echo "$plugin_json" | jq -r '.direct_url // empty')
+            if [ -z "$direct_url" ]; then
+                error "Plugin '${name}' with source 'url' is missing required field: 'direct_url'"
                 ((validation_errors++))
             fi
         fi
@@ -1487,6 +1494,71 @@ install_plugin_with_fallback() {
             
             if ! install_modrinth_plugin "$name" "$project_id"; then
                 result=1
+            fi
+            ;;
+        url)
+            local direct_url
+            direct_url=$(echo "$plugin_json" | jq -r '.direct_url')
+            
+            if [ -z "$direct_url" ] || [ "$direct_url" = "null" ]; then
+                error "Plugin ${name} has source 'url' but missing 'direct_url' field"
+                return 1
+            fi
+            
+            log "Downloading ${name} from URL..."
+            log "  URL: ${direct_url}"
+            
+            local filename
+            filename=$(basename "$direct_url")
+            # If filename doesn't end with .jar, use plugin name
+            if [[ ! "$filename" =~ \.jar$ ]]; then
+                filename="${name}.jar"
+            fi
+            
+            local output_path="${PLUGINS_DIR}/${filename}"
+            
+            # Check if already downloaded
+            if [ "$FORCE_DOWNLOAD" = false ] && [ -f "$output_path" ]; then
+                local cached_version
+                cached_version=$(grep "^${name}:" "$VERSION_CACHE" 2>/dev/null | cut -d: -f2 || echo "")
+                local config_version
+                config_version=$(echo "$plugin_json" | jq -r '.version // empty')
+                
+                if [ -n "$config_version" ] && [ "$cached_version" = "$config_version" ]; then
+                    success "${name} ${config_version} already installed (${filename})"
+                    return 0
+                elif [ "$UPDATE_MODE" = false ]; then
+                    success "${name} already exists (${filename}), use --update to check for updates"
+                    return 0
+                fi
+            fi
+            
+            # In dry-run mode, just show what would be downloaded
+            if [ "$DRY_RUN_MODE" = true ]; then
+                success "[DRY RUN] Would download ${name} → ${filename}"
+                log "  URL: ${direct_url}"
+                return 0
+            fi
+            
+            if download_with_retry "$direct_url" "$output_path"; then
+                if validate_download "$output_path"; then
+                    local version
+                    version=$(echo "$plugin_json" | jq -r '.version // "unknown"')
+                    success "Downloaded ${name} ${version} → ${filename}"
+                    
+                    # Update version cache
+                    grep -v "^${name}:" "$VERSION_CACHE" 2>/dev/null > "${VERSION_CACHE}.tmp" || true
+                    echo "${name}:${version}" >> "${VERSION_CACHE}.tmp"
+                    mv "${VERSION_CACHE}.tmp" "$VERSION_CACHE"
+                    
+                    return 0
+                else
+                    error "Downloaded file validation failed for ${name}"
+                    return 1
+                fi
+            else
+                error "Failed to download ${name} from URL"
+                return 1
             fi
             ;;
         manual)
