@@ -93,12 +93,15 @@ jobs:
               echo "docker compose not found. Attempting to install docker-compose (legacy)..."
               if command -v sudo >/dev/null 2>&1; then
                 # Note: Downloading from official Docker GitHub releases. For enhanced security,
-                # consider pre-installing docker-compose on the server using package managers.
+                # consider pre-installing docker-compose on the server using package managers
+                # or pinning to a specific version instead of using 'latest'.
                 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
                 sudo chmod +x /usr/local/bin/docker-compose
                 COMPOSE_CMD="docker-compose"
               else
-                echo "ERROR: neither 'docker compose' nor 'docker-compose' are available on the server, and sudo is not available to install docker-compose. Please install docker-compose or enable sudo for the deploy user." >&2
+                echo "ERROR: neither 'docker compose' nor 'docker-compose' are available on the server," >&2
+                echo "and sudo is not available to install docker-compose." >&2
+                echo "Please install docker-compose or enable sudo for the deploy user." >&2
                 exit 1
               fi
             fi
