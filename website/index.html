@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Join the festas_builds community Minecraft server - featuring cross-platform play, build competitions, and creative tools!">
+    <title>festas_builds Minecraft Server</title>
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="server-title">
+                <span class="highlight-gold">✦</span> 
+                <span class="highlight-blue">festas_builds</span> 
+                <span class="highlight-gold">✦</span>
+            </h1>
+            <p class="tagline">Community Minecraft Server</p>
+            
+            <div class="server-ip-container">
+                <div class="server-ip">
+                    <span class="ip-label">Server Address:</span>
+                    <span class="ip-address" id="serverIp">mc.festas-builds.com</span>
+                    <button class="copy-btn" id="copyBtn" aria-label="Copy server address">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="server-status" id="serverStatus">
+                    <span class="status-indicator"></span>
+                    <span class="status-text">Server Status</span>
+                </div>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="#how-to-join" class="btn btn-primary">How to Join</a>
+                <a href="#features" class="btn btn-secondary">Learn More</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Server Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3>Live Web Map</h3>
+                    <p>Explore the world in 3D with BlueMap. View player locations and builds in real-time from your browser.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🏆</div>
+                    <h3>Build Competitions</h3>
+                    <p>Weekly themed building contests with PlotSquared. Show your creativity and win exclusive rewards!</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🎭</div>
+                    <h3>Cosmetics & Rewards</h3>
+                    <p>Unlock particles, hats, and cosmetic items through gameplay. Rank up from Newcomer to Legend!</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Land Protection</h3>
+                    <p>Protect your builds with GriefPrevention. Trust friends and keep your creations safe with CoreProtect rollback.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Cross-Platform Play</h3>
+                    <p>Java and Bedrock Edition support! Play on PC, mobile, Xbox, PlayStation, or Nintendo Switch.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>Discord Integration</h3>
+                    <p>Chat bridge connects Discord and Minecraft. Stay connected with the community even when offline!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How to Join Section -->
+    <section id="how-to-join" class="how-to-join">
+        <div class="container">
+            <h2 class="section-title">How to Join</h2>
+            
+            <div class="join-options">
+                <div class="join-option">
+                    <h3><span class="edition-icon">☕</span> Java Edition</h3>
+                    <ol class="steps-list">
+                        <li>Launch Minecraft Java Edition</li>
+                        <li>Click "Multiplayer"</li>
+                        <li>Click "Add Server"</li>
+                        <li>Enter server address: <code>mc.festas-builds.com</code></li>
+                        <li>Click "Done" and connect!</li>
+                    </ol>
+                    <p class="port-info">Default port: 25565 (TCP)</p>
+                </div>
+                
+                <div class="join-option">
+                    <h3><span class="edition-icon">📱</span> Bedrock Edition</h3>
+                    <ol class="steps-list">
+                        <li>Launch Minecraft Bedrock Edition</li>
+                        <li>Go to "Servers" tab</li>
+                        <li>Click "Add Server"</li>
+                        <li>Enter address: <code>mc.festas-builds.com</code></li>
+                        <li>Port: <code>19132</code></li>
+                        <li>Save and connect!</li>
+                    </ol>
+                    <p class="platform-support">Supported: Mobile, Xbox, PlayStation, Switch, Windows 10/11</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Plugins Showcase Section -->
+    <section class="plugins">
+        <div class="container">
+            <h2 class="section-title">Essential Plugins</h2>
+            <div class="plugins-grid">
+                <div class="plugin-card">
+                    <h4>LuckPerms</h4>
+                    <p>Advanced permission management with rank progression system</p>
+                </div>
+                <div class="plugin-card">
+                    <h4>EssentialsX</h4>
+                    <p>Core commands like /home, /tpa, /spawn, and warps</p>
+                </div>
+                <div class="plugin-card">
+                    <h4>CoreProtect</h4>
+                    <p>Block logging and rollback protection against griefing</p>
+                </div>
+                <div class="plugin-card">
+                    <h4>WorldGuard</h4>
+                    <p>Region protection and zone management</p>
+                </div>
+                <div class="plugin-card">
+                    <h4>GriefPrevention</h4>
+                    <p>Player land claims with golden shovel</p>
+                </div>
+                <div class="plugin-card">
+                    <h4>Geyser + Floodgate</h4>
+                    <p>Cross-platform play for Bedrock Edition</p>
+                </div>
+                <div class="plugin-card">
+                    <h4>BlueMap</h4>
+                    <p>Beautiful 3D web-based live map</p>
+                </div>
+                <div class="plugin-card">
+                    <h4>DiscordSRV</h4>
+                    <p>Discord-Minecraft chat bridge</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Rules Section -->
+    <section class="rules">
+        <div class="container">
+            <h2 class="section-title">Server Rules</h2>
+            <div class="rules-list">
+                <div class="rule-item">
+                    <span class="rule-number">1</span>
+                    <div class="rule-content">
+                        <h4>Be Respectful</h4>
+                        <p>Treat all players with respect. No harassment, hate speech, or toxic behavior.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-number">2</span>
+                    <div class="rule-content">
+                        <h4>No Griefing</h4>
+                        <p>Do not destroy or modify other players' builds without permission. Use land claims!</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-number">3</span>
+                    <div class="rule-content">
+                        <h4>No Cheating</h4>
+                        <p>No hacks, x-ray mods, or exploits. Play fair and keep the game fun for everyone.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-number">4</span>
+                    <div class="rule-content">
+                        <h4>Keep Chat Clean</h4>
+                        <p>No spam, advertising, or inappropriate content in chat. Keep it family-friendly.</p>
+                    </div>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-number">5</span>
+                    <div class="rule-content">
+                        <h4>Follow Staff Instructions</h4>
+                        <p>Listen to moderators and administrators. They're here to help and keep the server safe.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BlueMap Link Section -->
+    <section class="bluemap-section">
+        <div class="container">
+            <div class="bluemap-content">
+                <h2>Explore the World</h2>
+                <p>View our server map in beautiful 3D. See player locations, discover builds, and plan your next adventure!</p>
+                <a href="#" class="btn btn-map" id="bluemapBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                        <line x1="8" y1="2" x2="8" y2="18"></line>
+                        <line x1="16" y1="6" x2="16" y2="22"></line>
+                    </svg>
+                    Open Live Map
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>festas_builds Server</h3>
+                    <p>A community-driven Minecraft server built for creativity, collaboration, and fun.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#how-to-join">How to Join</a></li>
+                        <li><a href="#" id="discordLink">Discord Server</a></li>
+                        <li><a href="https://github.com/Festas/Minecraft-Server" target="_blank">GitHub</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Server Info</h4>
+                    <ul>
+                        <li>Version: 1.20.4</li>
+                        <li>Software: Paper</li>
+                        <li>Max Players: 20</li>
+                        <li>Cross-Platform: ✓</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 festas_builds. Minecraft is a trademark of Mojang Studios.</p>
+                <p class="eula-note">This server is fully <a href="https://www.minecraft.net/en-us/eula" target="_blank">Mojang EULA compliant</a>.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+name: Deploy Website
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+      - 'docker-compose.web.yml'
+      - '.github/workflows/deploy-website.yml'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/festas/minecraft-server-web
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./website
+          file: ./website/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          DEPLOY_PATH="/home/deploy/minecraft-website"
+
+          # Create deployment directory if it doesn't exist
+          ssh ${SERVER_USER}@${SERVER_HOST} "mkdir -p ${DEPLOY_PATH}"
+
+          # Copy docker-compose.web.yml to server
+          scp docker-compose.web.yml ${SERVER_USER}@${SERVER_HOST}:${DEPLOY_PATH}/
+
+          # Deploy on server
+          ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+            cd /home/deploy/minecraft-website
+
+            # Create external network if it doesn't exist
+            if ! docker network inspect caddy-network >/dev/null 2>&1; then
+              echo "Creating caddy-network..."
+              docker network create caddy-network
+            fi
+
+            # Pull the latest image
+            docker pull ghcr.io/festas/minecraft-server-web:latest
+
+            # Stop and remove old container
+            docker-compose -f docker-compose.web.yml down
+
+            # Start new container
+            docker-compose -f docker-compose.web.yml up -d
+
+            # Show status
+            docker-compose -f docker-compose.web.yml ps
+          EOF
+
+      - name: Verify deployment
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+            cd /home/deploy/minecraft-website
+
+            # Wait a few seconds for container to start
+            sleep 5
+
+            # Check container health
+            if docker ps | grep -q minecraft-web; then
+              echo "✓ Container is running"
+
+              # Check health status
+              HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-web 2>/dev/null || echo "no-health")
+              echo "Health status: $HEALTH"
+
+              # Test HTTP response
+              if docker exec minecraft-web wget --quiet --tries=1 --spider http://localhost/; then
+                echo "✓ Website is responding"
+              else
+                echo "⚠ Website is not responding"
+                exit 1
+              fi
+            else
+              echo "✗ Container is not running"
+              exit 1
+            fi
+          EOF
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "## Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The website has been deployed and is now live!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
+          echo "1. Ensure the Caddy reverse proxy is configured (see WEBSITE.md)" >> $GITHUB_STEP_SUMMARY
+          echo "2. Visit https://mc.festas-builds.com to view the website" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Image:** ghcr.io/festas/minecraft-server-web:latest" >> $GITHUB_STEP_SUMMARY
