@@ -27,6 +27,7 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGINS_DIR="${SCRIPT_DIR}/plugins"
 CONFIG_FILE="${SCRIPT_DIR}/plugins.json"
+WISHLIST_FILE="${SCRIPT_DIR}/plugins-wishlist.txt"
 LOG_FILE="${SCRIPT_DIR}/plugin-install.log"
 VERSION_CACHE="${PLUGINS_DIR}/.plugin_versions"
 LOCK_FILE="/tmp/minecraft-plugin-installer.lock"
@@ -36,6 +37,9 @@ FORCE_DOWNLOAD=false
 UPDATE_MODE=false
 DEBUG_MODE=false
 DRY_RUN_MODE=false
+DISCOVER_MODE=false
+INTERACTIVE_MODE=false
+DISCOVER_AND_INSTALL=false
 MAX_RETRIES=2
 WAIT_FOR_RATE_LIMIT=false
 
@@ -171,6 +175,9 @@ OPTIONS:
     --update                Check for and download plugin updates
     --debug                 Enable debug mode for verbose output
     --dry-run               Validate configuration and test API access without downloading
+    --discover              Auto-discover plugins from plugins-wishlist.txt
+    --interactive           Use with --discover for interactive confirmation
+    --install               Use with --discover to install after discovery
     --timeout N             Set download timeout in seconds (default: 300)
     --max-retries N         Maximum retry passes for failed plugins (default: 2)
     --wait-for-rate-limit   Automatically wait when rate limited instead of failing
@@ -190,10 +197,20 @@ EXAMPLES:
     $0 --timeout 600            # Set download timeout to 10 minutes
     $0 --max-retries 3          # Retry failed plugins up to 3 times
     $0 --wait-for-rate-limit    # Wait when rate limited instead of failing
+    $0 --discover               # Auto-discover plugins from wishlist
+    $0 --discover --interactive # Interactively confirm each discovered plugin
+    $0 --discover --install     # Discover and immediately install plugins
+    $0 --discover --dry-run     # Show what would be discovered (no changes)
 
 CONFIGURATION:
     Edit plugins.json to enable/disable plugins or add new ones.
     Set "enabled": true/false for each plugin.
+    
+    Plugin Discovery:
+    - Create plugins-wishlist.txt with plugin names (one per line)
+    - Run with --discover to automatically find and add plugins
+    - Use --interactive to confirm each plugin before adding
+    - Found plugins are added with source: "modrinth" by default
     
     Fallback Sources:
     - Add "fallback_source": "github" or "modrinth" with corresponding fields
@@ -995,6 +1012,385 @@ install_modrinth_plugin() {
 }
 
 ################################################################################
+# Plugin Discovery Functions
+################################################################################
+
+# Search for a plugin on Modrinth by name
+search_modrinth_plugin() {
+    local plugin_name="$1"
+    local api_url="https://api.modrinth.com/v2/search"
+    
+    # URL encode the plugin name for query
+    local encoded_name
+    encoded_name=$(echo "$plugin_name" | jq -sRr @uri)
+    
+    # Build facets for Minecraft plugins with compatible loaders
+    local facets='[["project_type:plugin"],["categories:paper","categories:bukkit","categories:spigot"]]'
+    
+    debug "Searching Modrinth for: $plugin_name"
+    
+    local search_url="${api_url}?query=${encoded_name}&facets=${facets}&limit=5"
+    
+    local response
+    if command -v curl &> /dev/null; then
+        response=$(curl -s -H "User-Agent: Minecraft-Plugin-Installer/1.0" "$search_url")
+    else
+        response=$(wget -q --header="User-Agent: Minecraft-Plugin-Installer/1.0" -O - "$search_url")
+    fi
+    
+    if [ -z "$response" ] || [ "$response" = "null" ]; then
+        debug "No response from Modrinth API"
+        return 1
+    fi
+    
+    # Return the response for further processing
+    echo "$response"
+}
+
+# Search for a plugin on GitHub by name
+search_github_plugin() {
+    local plugin_name="$1"
+    
+    # URL encode the plugin name for query
+    local encoded_name
+    encoded_name=$(echo "$plugin_name" | jq -sRr @uri)
+    
+    local api_url="https://api.github.com/search/repositories?q=${encoded_name}+minecraft+plugin&sort=stars&per_page=5"
+    
+    debug "Searching GitHub for: $plugin_name"
+    
+    local response
+    if command -v curl &> /dev/null; then
+        if [ -n "${GITHUB_TOKEN:-}" ]; then
+            response=$(curl -s \
+                -H "Accept: application/vnd.github+json" \
+                -H "User-Agent: Minecraft-Plugin-Installer/1.0" \
+                -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+                "$api_url")
+        else
+            response=$(curl -s \
+                -H "Accept: application/vnd.github+json" \
+                -H "User-Agent: Minecraft-Plugin-Installer/1.0" \
+                "$api_url")
+        fi
+    else
+        response=$(wget -q \
+            --header="Accept: application/vnd.github+json" \
+            --header="User-Agent: Minecraft-Plugin-Installer/1.0" \
+            -O - "$api_url")
+    fi
+    
+    if [ -z "$response" ] || [ "$response" = "null" ]; then
+        debug "No response from GitHub API"
+        return 1
+    fi
+    
+    echo "$response"
+}
+
+# Add a plugin to plugins.json
+add_plugin_to_config() {
+    local name="$1"
+    local source="$2"
+    local project_id="$3"
+    local repo="$4"
+    local description="$5"
+    
+    debug "Adding plugin to config: name=$name, source=$source"
+    
+    if [ "$DRY_RUN_MODE" = true ]; then
+        log "[DRY-RUN] Would add plugin: $name (source: $source)"
+        return 0
+    fi
+    
+    # Create a temporary file for the updated config
+    local temp_config="${CONFIG_FILE}.tmp"
+    
+    # Build the new plugin entry
+    local new_plugin
+    if [ "$source" = "modrinth" ]; then
+        new_plugin=$(jq -n \
+            --arg name "$name" \
+            --arg project_id "$project_id" \
+            --arg desc "$description" \
+            '{
+                name: $name,
+                enabled: true,
+                category: "discovered",
+                source: "modrinth",
+                project_id: $project_id,
+                description: $desc
+            }')
+    elif [ "$source" = "github" ]; then
+        new_plugin=$(jq -n \
+            --arg name "$name" \
+            --arg repo "$repo" \
+            --arg desc "$description" \
+            '{
+                name: $name,
+                enabled: true,
+                category: "discovered",
+                source: "github",
+                repo: $repo,
+                asset_pattern: ".*\\.jar$",
+                description: $desc
+            }')
+    else
+        error "Invalid source type for add_plugin_to_config: $source"
+        return 1
+    fi
+    
+    # Add the plugin to the config
+    if jq --argjson plugin "$new_plugin" '.plugins += [$plugin]' "$CONFIG_FILE" > "$temp_config"; then
+        mv "$temp_config" "$CONFIG_FILE"
+        success "Added $name to plugins.json"
+        return 0
+    else
+        error "Failed to add $name to plugins.json"
+        rm -f "$temp_config"
+        return 1
+    fi
+}
+
+# Check if a plugin already exists in plugins.json
+plugin_exists_in_config() {
+    local name="$1"
+    
+    # Check if plugin with this name already exists (case-insensitive)
+    local exists
+    exists=$(jq -r --arg name "$name" '.plugins[] | select(.name | ascii_downcase == ($name | ascii_downcase)) | .name' "$CONFIG_FILE")
+    
+    if [ -n "$exists" ]; then
+        return 0  # Plugin exists
+    else
+        return 1  # Plugin does not exist
+    fi
+}
+
+# Discover and add plugins from wishlist
+discover_plugins() {
+    log "=== Plugin Discovery Mode ==="
+    echo ""
+    
+    # Check if wishlist file exists
+    if [ ! -f "$WISHLIST_FILE" ]; then
+        error "Wishlist file not found: $WISHLIST_FILE"
+        echo "Create the file and add plugin names (one per line)"
+        return 1
+    fi
+    
+    log "Reading plugins from: $WISHLIST_FILE"
+    echo ""
+    
+    # Read plugin names from wishlist (skip comments and empty lines)
+    local plugin_names=()
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip comments and empty lines
+        if [[ "$line" =~ ^[[:space:]]*# ]] || [[ -z "${line// /}" ]]; then
+            continue
+        fi
+        
+        # Trim whitespace
+        line=$(echo "$line" | xargs)
+        
+        if [ -n "$line" ]; then
+            plugin_names+=("$line")
+        fi
+    done < "$WISHLIST_FILE"
+    
+    if [ ${#plugin_names[@]} -eq 0 ]; then
+        warning "No plugin names found in $WISHLIST_FILE"
+        return 0
+    fi
+    
+    log "Found ${#plugin_names[@]} plugin(s) in wishlist"
+    echo ""
+    
+    local found_count=0
+    local skipped_count=0
+    local failed_count=0
+    
+    # Process each plugin
+    for plugin_name in "${plugin_names[@]}"; do
+        log "Processing: $plugin_name"
+        
+        # Check if plugin already exists
+        if plugin_exists_in_config "$plugin_name"; then
+            warning "Plugin '$plugin_name' already exists in plugins.json - skipping"
+            ((skipped_count++))
+            echo ""
+            continue
+        fi
+        
+        # Try Modrinth first
+        local modrinth_results
+        modrinth_results=$(search_modrinth_plugin "$plugin_name")
+        
+        local found=false
+        local project_id=""
+        local description=""
+        local source=""
+        local repo=""
+        
+        if [ -n "$modrinth_results" ]; then
+            # Check if response is valid JSON
+            if echo "$modrinth_results" | jq empty 2>/dev/null; then
+                # Parse Modrinth results
+                local hits_count
+                hits_count=$(echo "$modrinth_results" | jq -r '.hits | length // 0' 2>/dev/null || echo "0")
+                
+                if [ "$hits_count" -gt 0 ]; then
+                    # Get the first (best) match
+                    local first_hit
+                    first_hit=$(echo "$modrinth_results" | jq -r '.hits[0]')
+                    
+                    local hit_title
+                    hit_title=$(echo "$first_hit" | jq -r '.title // .slug')
+                    
+                    project_id=$(echo "$first_hit" | jq -r '.project_id // empty')
+                    description=$(echo "$first_hit" | jq -r '.description // "Discovered plugin"')
+                    
+                    # Limit description length
+                    if [ ${#description} -gt 100 ]; then
+                        description="${description:0:97}..."
+                    fi
+                    
+                    if [ -n "$project_id" ]; then
+                        found=true
+                        source="modrinth"
+                        
+                        if [ "$INTERACTIVE_MODE" = true ]; then
+                            echo ""
+                            log "Found on Modrinth:"
+                            echo "  Title: $hit_title"
+                            echo "  Project ID: $project_id"
+                            echo "  Description: $description"
+                            echo ""
+                            
+                            read -r -p "Add this plugin to plugins.json? [Y/n] " response
+                            case "$response" in
+                                [nN][oO]|[nN])
+                                    warning "Skipped $plugin_name"
+                                    ((skipped_count++))
+                                    found=false
+                                    ;;
+                                *)
+                                    ;;
+                            esac
+                        else
+                            success "Found on Modrinth: $hit_title (project_id: $project_id)"
+                        fi
+                    fi
+                fi
+            fi
+        fi
+        
+        # If not found on Modrinth, try GitHub
+        if [ "$found" = false ]; then
+            debug "Trying GitHub search..."
+            local github_results
+            github_results=$(search_github_plugin "$plugin_name")
+            
+            if [ -n "$github_results" ]; then
+                # Check if response is valid JSON
+                if echo "$github_results" | jq empty 2>/dev/null; then
+                    local total_count
+                    total_count=$(echo "$github_results" | jq -r '.total_count // 0' 2>/dev/null || echo "0")
+                    
+                    if [ "$total_count" -gt 0 ]; then
+                        # Get the first (best) match
+                        local first_repo
+                        first_repo=$(echo "$github_results" | jq -r '.items[0]')
+                        
+                        local repo_name
+                        repo_name=$(echo "$first_repo" | jq -r '.full_name // empty')
+                        
+                        local repo_description
+                        repo_description=$(echo "$first_repo" | jq -r '.description // "Discovered plugin"')
+                        
+                        # Limit description length
+                        if [ ${#repo_description} -gt 100 ]; then
+                            repo_description="${repo_description:0:97}..."
+                        fi
+                        
+                        if [ -n "$repo_name" ]; then
+                            found=true
+                            source="github"
+                            repo="$repo_name"
+                            description="$repo_description"
+                            
+                            if [ "$INTERACTIVE_MODE" = true ]; then
+                                echo ""
+                                log "Found on GitHub:"
+                                echo "  Repository: $repo_name"
+                                echo "  Description: $repo_description"
+                                echo ""
+                                
+                                read -r -p "Add this plugin to plugins.json? [Y/n] " response
+                                case "$response" in
+                                    [nN][oO]|[nN])
+                                        warning "Skipped $plugin_name"
+                                        ((skipped_count++))
+                                        found=false
+                                        ;;
+                                    *)
+                                        ;;
+                                esac
+                            else
+                                success "Found on GitHub: $repo_name"
+                            fi
+                        fi
+                    fi
+                fi
+            fi
+        fi
+        
+        # Add to config if found and not skipped
+        if [ "$found" = true ]; then
+            if add_plugin_to_config "$plugin_name" "$source" "$project_id" "$repo" "$description"; then
+                ((found_count++))
+            else
+                ((failed_count++))
+            fi
+        else
+            warning "Plugin '$plugin_name' not found on Modrinth or GitHub"
+            ((failed_count++))
+        fi
+        
+        echo ""
+    done
+    
+    # Summary
+    echo "============================================================"
+    echo ""
+    log "=== Discovery Summary ==="
+    success "Found and added: ${found_count}"
+    if [ $skipped_count -gt 0 ]; then
+        warning "Skipped (already exists or declined): ${skipped_count}"
+    fi
+    if [ $failed_count -gt 0 ]; then
+        warning "Not found or failed: ${failed_count}"
+    fi
+    echo ""
+    
+    if [ $found_count -gt 0 ]; then
+        success "Plugins have been added to $CONFIG_FILE"
+        
+        if [ "$DISCOVER_AND_INSTALL" = true ]; then
+            echo ""
+            log "Installing newly discovered plugins..."
+            echo ""
+            # We'll let the main function handle this by not returning early
+            return 0
+        fi
+    fi
+    
+    if [ "$DISCOVER_AND_INSTALL" = false ]; then
+        log "Run './install-plugins.sh' to install the discovered plugins"
+    fi
+}
+
+################################################################################
 # Main Installation Logic
 ################################################################################
 
@@ -1174,6 +1570,18 @@ main() {
                 DRY_RUN_MODE=true
                 shift
                 ;;
+            --discover)
+                DISCOVER_MODE=true
+                shift
+                ;;
+            --interactive)
+                INTERACTIVE_MODE=true
+                shift
+                ;;
+            --install)
+                DISCOVER_AND_INSTALL=true
+                shift
+                ;;
             --timeout)
                 if [[ ! "$2" =~ ^[0-9]+$ ]] || [ "$2" -le 0 ]; then
                     error "Invalid timeout value: $2 (must be a positive integer)"
@@ -1274,6 +1682,26 @@ main() {
     fi
     
     echo ""
+    
+    # Handle discovery mode
+    if [ "$DISCOVER_MODE" = true ]; then
+        discover_plugins
+        
+        # If not installing after discovery, exit here
+        if [ "$DISCOVER_AND_INSTALL" = false ]; then
+            exit 0
+        fi
+        
+        # Re-validate config after discovery
+        if ! validate_config; then
+            error "Configuration validation failed after discovery. Please fix the errors above."
+            exit 1
+        fi
+        
+        echo ""
+        log "Proceeding with installation of discovered plugins..."
+        echo ""
+    fi
     
     # Read and process plugins
     local plugin_count

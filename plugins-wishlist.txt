@@ -1,0 +1,3 @@
+# Test wishlist - plugins not currently in config
+TabList
+PlaceholderAPI
