@@ -89,19 +89,20 @@ function initServerStatus() {
 
 /**
  * Simulate server status check
- * Replace this with actual API call in production
+ * TODO: Replace this with actual API call in production
+ * Example API: https://api.mcsrvstat.us/2/mc.festas-builds.com
  */
 async function checkServerStatus() {
     const statusIndicator = document.querySelector('.status-indicator');
     const statusText = document.querySelector('.status-text');
-    
-    // Placeholder: Set to online by default
-    // In production, replace with actual API call like:
+
+    // TODO: Replace with actual API call
+    // Example implementation:
     // const response = await fetch('https://api.mcsrvstat.us/2/mc.festas-builds.com');
     // const data = await response.json();
     // const isOnline = data.online;
-    
-    const isOnline = true; // Placeholder
+
+    const isOnline = true; // Placeholder - update with real status check
     
     if (isOnline) {
         statusIndicator.style.background = '#7cbd54'; // Green
@@ -205,13 +206,10 @@ function initScrollAnimations() {
             }
         });
     }, observerOptions);
-    
+
     // Observe all cards and sections
     document.querySelectorAll('.feature-card, .plugin-card, .rule-item, .join-option').forEach(el => {
         observer.observe(el);
     });
 }
 
-// Optional: Initialize scroll animations if you want them
-// Uncomment the line below to enable:
-// initScrollAnimations();

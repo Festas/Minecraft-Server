@@ -63,8 +63,10 @@ jobs:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
+          DEPLOY_PATH="/home/deploy/minecraft-server"
+
           # Copy docker-compose.web.yml to server
-          scp docker-compose.web.yml ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+          scp docker-compose.web.yml ${SERVER_USER}@${SERVER_HOST}:${DEPLOY_PATH}/
 
           # Deploy on server
           ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
