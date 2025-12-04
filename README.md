@@ -48,6 +48,33 @@ This is a fully-featured community server with:
 
 See [FEATURES.md](FEATURES.md) for complete details.
 
+## 💻 Web Console
+
+Manage your server with a powerful web-based console featuring:
+
+- 🔐 **Secure Authentication** - Session-based login with bcrypt encryption
+- 📊 **Real-time Dashboard** - Live stats, player count, TPS, memory/CPU
+- 💬 **Live Console** - Execute commands with RCON, view logs via WebSocket
+- 👥 **Player Management** - Kick, ban, OP, teleport, change gamemodes
+- ⚡ **Quick Actions** - Start, stop, restart, save, backup with one click
+- 📦 **Backup Management** - Create and manage server backups
+- 🎨 **Minecraft Theme** - Dark mode with blocky Minecraft-inspired design
+- 📱 **Responsive** - Works on desktop, tablet, and mobile
+
+**Quick Setup:**
+```bash
+# 1. Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# 2. Start console
+docker compose -f docker-compose.console.yml up -d
+
+# 3. Access at http://your-server:3001/console
+```
+
+See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
+
 ## 📋 Technical Features
 
 - ✅ **Paper Server** - High-performance Spigot fork with plugin support
@@ -62,6 +89,7 @@ See [FEATURES.md](FEATURES.md) for complete details.
 
 ## 📚 Documentation
 
+- **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** - Web console setup and management guide
 - **[PLUGINS.md](PLUGINS.md)** - Comprehensive plugin guide with installation instructions
 - **[BEDROCK-SETUP.md](BEDROCK-SETUP.md)** - Cross-platform play setup guide (Geyser + Floodgate)
 - **[WEBSITE.md](WEBSITE.md)** - Website deployment and customization guide
