@@ -1,0 +1,11 @@
+{
+  "theme": "dark",
+  "autoScroll": true,
+  "soundAlerts": false,
+  "logFilters": {
+    "info": true,
+    "warn": true,
+    "error": true,
+    "chat": true
+  }
+}

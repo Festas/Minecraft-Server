@@ -32,3 +32,14 @@ Thumbs.db
 *.pem
 *.key
 id_rsa*
+
+# Console configuration
+console/backend/node_modules/
+console/backend/config/users.json
+.env
+*.env
+!.env.example
+
+# Build artifacts
+dist/
+build/
