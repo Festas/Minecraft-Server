@@ -1025,11 +1025,14 @@ search_modrinth_plugin() {
     encoded_name=$(echo "$plugin_name" | jq -sRr @uri)
     
     # Build facets for Minecraft plugins with compatible loaders
+    # URL encode the facets parameter
     local facets='[["project_type:plugin"],["categories:paper","categories:bukkit","categories:spigot"]]'
+    local encoded_facets
+    encoded_facets=$(echo "$facets" | jq -sRr @uri)
     
     debug "Searching Modrinth for: $plugin_name"
     
-    local search_url="${api_url}?query=${encoded_name}&facets=${facets}&limit=5"
+    local search_url="${api_url}?query=${encoded_name}&facets=${encoded_facets}&limit=5"
     
     local response
     if command -v curl &> /dev/null; then
@@ -1185,8 +1188,8 @@ discover_plugins() {
     # Read plugin names from wishlist (skip comments and empty lines)
     local plugin_names=()
     while IFS= read -r line || [ -n "$line" ]; do
-        # Skip comments and empty lines
-        if [[ "$line" =~ ^[[:space:]]*# ]] || [[ -z "${line// /}" ]]; then
+        # Skip comments and empty lines using single regex
+        if [[ "$line" =~ ^[[:space:]]*($|#) ]]; then
             continue
         fi
         
@@ -1237,7 +1240,10 @@ discover_plugins() {
             if echo "$modrinth_results" | jq empty 2>/dev/null; then
                 # Parse Modrinth results
                 local hits_count
-                hits_count=$(echo "$modrinth_results" | jq -r '.hits | length // 0' 2>/dev/null || echo "0")
+                if ! hits_count=$(echo "$modrinth_results" | jq -r '.hits | length // 0' 2>/dev/null); then
+                    debug "Failed to parse Modrinth search results for $plugin_name"
+                    hits_count=0
+                fi
                 
                 if [ "$hits_count" -gt 0 ]; then
                     # Get the first (best) match
@@ -1295,7 +1301,10 @@ discover_plugins() {
                 # Check if response is valid JSON
                 if echo "$github_results" | jq empty 2>/dev/null; then
                     local total_count
-                    total_count=$(echo "$github_results" | jq -r '.total_count // 0' 2>/dev/null || echo "0")
+                    if ! total_count=$(echo "$github_results" | jq -r '.total_count // 0' 2>/dev/null); then
+                        debug "Failed to parse GitHub search results for $plugin_name"
+                        total_count=0
+                    fi
                     
                     if [ "$total_count" -gt 0 ]; then
                         # Get the first (best) match
