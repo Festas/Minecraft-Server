@@ -1,24 +1,8 @@
-# Minecraft Plugin Wishlist
-# 
-# This file contains a list of plugins you'd like to automatically discover
-# and add to your plugins.json configuration.
-#
-# Usage:
-#   1. Add plugin names below (one per line)
-#   2. Run: ./install-plugins.sh --discover
-#   3. The system will search Modrinth and GitHub for these plugins
-#   4. Found plugins will be automatically added to plugins.json
-#
-# Lines starting with # are comments and will be ignored
-# Empty lines are also ignored
-#
-# Examples:
-# EssentialsX
-# LuckPerms
-# Vault
-# WorldEdit
-# WorldGuard
-# GriefPrevention
-# CoreProtect
-#
-# Add your desired plugins below:
+EssentialsX
+LuckPerms
+Vault
+WorldEdit
+WorldGuard
+GriefPrevention
+CoreProtect
+PlugManX
