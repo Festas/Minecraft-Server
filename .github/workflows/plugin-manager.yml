@@ -237,8 +237,8 @@ jobs:
               BACKUP_COUNT=$(find "${BACKUP_BASE}" -maxdepth 1 -type d -name "backup_*" 2>/dev/null | wc -l)
               if [ "$BACKUP_COUNT" -gt 5 ]; then
                 echo "Cleaning up old backups (keeping last 5)..."
-                # Use ls -t for portable timestamp sorting (works on both Linux and macOS)
-                cd "${BACKUP_BASE}" && ls -dt backup_* 2>/dev/null | tail -n +6 | xargs rm -rf
+                # Use ls -t for portable timestamp sorting with proper quoting
+                cd "${BACKUP_BASE}" && ls -dt backup_* 2>/dev/null | tail -n +6 | while read -r dir; do rm -rf "$dir"; done
                 echo "✓ Cleanup completed"
               fi
             fi
@@ -252,11 +252,16 @@ jobs:
           # Create plugins directory if it doesn't exist
           ssh ${SERVER_USER}@${SERVER_HOST} "mkdir -p ${{ env.SERVER_PLUGINS_PATH }}"
           
-          # Deploy plugins
+          # Deploy plugins using find to avoid glob expansion issues
           echo "Deploying plugins to server..."
-          scp plugins/*.jar ${SERVER_USER}@${SERVER_HOST}:${{ env.SERVER_PLUGINS_PATH }}/
-          
-          echo "✓ Plugins deployed successfully"
+          cd plugins
+          if ls *.jar 1> /dev/null 2>&1; then
+            scp *.jar ${SERVER_USER}@${SERVER_HOST}:${{ env.SERVER_PLUGINS_PATH }}/
+            echo "✓ Plugins deployed successfully"
+          else
+            echo "Error: No plugin files found to deploy"
+            exit 1
+          fi
       
       - name: Set file permissions
         env:
