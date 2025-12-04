@@ -85,13 +85,15 @@ jobs:
             docker pull ghcr.io/festas/minecraft-server-web:latest || true
 
             # Choose compose command: prefer modern 'docker compose', fallback to 'docker-compose'
-            if docker --version >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+            if docker compose version >/dev/null 2>&1; then
               COMPOSE_CMD="docker compose"
             elif command -v docker-compose >/dev/null 2>&1; then
               COMPOSE_CMD="docker-compose"
             else
               echo "docker compose not found. Attempting to install docker-compose (legacy)..."
               if command -v sudo >/dev/null 2>&1; then
+                # Note: Downloading from official Docker GitHub releases. For enhanced security,
+                # consider pre-installing docker-compose on the server using package managers.
                 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
                 sudo chmod +x /usr/local/bin/docker-compose
                 COMPOSE_CMD="docker-compose"
