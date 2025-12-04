@@ -129,7 +129,7 @@ function showCopyFeedback(button, message) {
 }
 
 /**
- * Check server status using mcstatus.io API
+ * Check server status using mcsrvstat.us API
  * Displays online/offline status, player count, and uptime
  */
 function initServerStatus() {
@@ -147,7 +147,7 @@ function initServerStatus() {
 }
 
 /**
- * Fetch server status from mcstatus.io API
+ * Fetch server status from mcsrvstat.us API
  */
 async function checkServerStatus() {
     const statusIndicator = document.querySelector('.status-indicator');
@@ -158,7 +158,7 @@ async function checkServerStatus() {
     const serverAddress = 'mc.festas-builds.com';
     
     try {
-        // Using mcstatus.io API for server status
+        // Using mcsrvstat.us API for server status
         const response = await fetch(`https://api.mcsrvstat.us/3/${serverAddress}`);
         const data = await response.json();
         
@@ -260,7 +260,6 @@ function initBlueMapButton() {
 
 /**
  * Discord link handler
- * Update the href in HTML with actual Discord invite
  */
 function initDiscordLink() {
     const discordLink = document.getElementById('discordLink');
@@ -274,9 +273,6 @@ function initDiscordLink() {
                     'event_label': 'Discord'
                 });
             }
-            
-            // Note: Update the href in HTML to your actual Discord invite URL
-            // Current placeholder: https://discord.gg/YOUR_INVITE_CODE
         });
     }
 }
@@ -316,15 +312,7 @@ function initScrollAnimations() {
     const observer = new IntersectionObserver(function(entries) {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                entry.target.style.opacity = '0';
-                entry.target.style.transform = 'translateY(30px)';
-                
-                setTimeout(() => {
-                    entry.target.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }, 100);
-                
+                entry.target.classList.add('animate-in');
                 observer.unobserve(entry.target);
             }
         });
@@ -340,21 +328,5 @@ function initScrollAnimations() {
     elementsToAnimate.forEach(el => {
         observer.observe(el);
     });
-}
-
-/**
- * Lazy loading for images (when you add actual images)
- * Add loading="lazy" attribute to img tags in HTML
- */
-if ('loading' in HTMLImageElement.prototype) {
-    // Browser supports native lazy loading
-    const images = document.querySelectorAll('img[loading="lazy"]');
-    images.forEach(img => {
-        img.src = img.dataset.src || img.src;
-    });
-} else {
-    // Fallback for browsers that don't support lazy loading
-    // You can add an intersection observer implementation here if needed
-    console.log('Native lazy loading not supported');
 }
 
