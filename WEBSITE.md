@@ -16,6 +16,23 @@ The website is a modern, responsive landing page that provides:
 
 The website is containerized using Docker and served via nginx, integrated with the existing Caddy reverse proxy infrastructure.
 
+### Deployment Directory Structure
+
+The website is deployed to a **separate directory** from the Minecraft server:
+
+```
+/home/deploy/
+├── minecraft-server/     # Main Minecraft server files
+│   ├── server.jar
+│   ├── plugins/
+│   ├── config.sh
+│   └── ...
+└── minecraft-website/    # Website deployment
+    └── docker-compose.web.yml
+```
+
+This separation keeps the website deployment independent from the Minecraft server deployment.
+
 ---
 
 ## 🏗️ Architecture
@@ -100,11 +117,11 @@ If you need to deploy manually:
 # SSH to your server
 ssh deploy@your-server-ip
 
-# Navigate to server directory
-cd /home/deploy/minecraft-server
+# Navigate to website directory
+cd /home/deploy/minecraft-website
 
-# Pull latest changes
-git pull origin main
+# Copy docker-compose.web.yml if not already present
+# (from minecraft-server repository)
 
 # Build and start the container
 docker-compose -f docker-compose.web.yml up -d --build
@@ -324,7 +341,7 @@ Possible statuses:
 
 2. **Rebuild container:**
    ```bash
-   cd /home/deploy/minecraft-server
+   cd /home/deploy/minecraft-website
    docker-compose -f docker-compose.web.yml up -d --build
    ```
 

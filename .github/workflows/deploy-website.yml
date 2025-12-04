@@ -63,14 +63,17 @@ jobs:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
-          DEPLOY_PATH="/home/deploy/minecraft-server"
+          DEPLOY_PATH="/home/deploy/minecraft-website"
+
+          # Create deployment directory if it doesn't exist
+          ssh ${SERVER_USER}@${SERVER_HOST} "mkdir -p ${DEPLOY_PATH}"
 
           # Copy docker-compose.web.yml to server
           scp docker-compose.web.yml ${SERVER_USER}@${SERVER_HOST}:${DEPLOY_PATH}/
 
           # Deploy on server
           ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
-            cd /home/deploy/minecraft-server
+            cd /home/deploy/minecraft-website
 
             # Create external network if it doesn't exist
             if ! docker network inspect caddy-network >/dev/null 2>&1; then
@@ -97,6 +100,8 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
           ssh ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+            cd /home/deploy/minecraft-website
+
             # Wait a few seconds for container to start
             sleep 5
 
