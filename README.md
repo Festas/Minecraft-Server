@@ -78,6 +78,9 @@ The server includes an automated plugin installation system that downloads and i
 # Install all enabled plugins
 ./install-plugins.sh
 
+# Auto-discover and add plugins from wishlist
+./install-plugins.sh --discover
+
 # Update plugins to latest versions
 ./update-plugins.sh
 ```
@@ -94,6 +97,30 @@ The system automatically:
 - Selects the correct JAR files (Bukkit/Paper versions)
 - Tracks versions for smart updates
 - Backs up old plugins before updating
+
+### Plugin Discovery
+
+Easily add new plugins without manually searching for repository paths or project IDs:
+
+```bash
+# Create a wishlist of plugin names
+cat > plugins-wishlist.txt << 'EOF'
+Vault
+PlaceholderAPI
+ChestShop
+EOF
+
+# Discover and add to plugins.json
+./install-plugins.sh --discover
+
+# Interactive mode (confirm each plugin)
+./install-plugins.sh --discover --interactive
+
+# Discover and install in one step
+./install-plugins.sh --discover --install
+```
+
+The discovery feature searches Modrinth and GitHub, automatically extracting the correct source information and adding it to your `plugins.json`.
 
 ### Customization
 

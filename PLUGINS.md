@@ -683,6 +683,110 @@ Use debug mode when troubleshooting:
 - `--dry-run` - Validate configuration without downloading
 - `--timeout N` - Set download timeout in seconds (default: 300)
 
+#### 6. Plugin Discovery (Auto-Find Plugins)
+
+The discovery feature automatically searches for plugins and adds them to your `plugins.json` configuration. Instead of manually looking up repository paths and project IDs, simply create a wishlist of plugin names.
+
+**Create a wishlist file:**
+
+```bash
+# Create plugins-wishlist.txt with plugin names
+cat > plugins-wishlist.txt << 'EOF'
+# Plugins I want to discover
+TabList
+PlaceholderAPI
+ChestShop
+Citizens
+Dynmap
+EOF
+```
+
+**Discover plugins automatically:**
+
+```bash
+# Auto-discover and add to plugins.json
+./install-plugins.sh --discover
+
+# Interactive mode - confirm each plugin
+./install-plugins.sh --discover --interactive
+
+# Discover and immediately install
+./install-plugins.sh --discover --install
+
+# Dry-run to see what would be found
+./install-plugins.sh --discover --dry-run
+```
+
+**How it works:**
+
+1. Reads plugin names from `plugins-wishlist.txt` (one per line)
+2. Searches Modrinth API for each plugin
+3. If not found on Modrinth, searches GitHub
+4. Adds found plugins to `plugins.json` with:
+   - `source: "modrinth"` (preferred) or `source: "github"`
+   - Correct `project_id` or `repo` information
+   - `enabled: true` by default
+   - `category: "discovered"`
+5. Skips plugins that already exist in `plugins.json`
+
+**Interactive mode features:**
+
+- Shows search results for each plugin
+- Lets you confirm before adding
+- Provides option to skip plugins
+- Displays plugin title and description
+
+**Wishlist file format:**
+
+```
+# Comments start with #
+# Empty lines are ignored
+
+# Essential plugins
+Vault
+EssentialsX
+
+# Building tools
+WorldEdit
+WorldGuard
+
+# Economy
+ChestShop
+```
+
+**Example output:**
+
+```
+[2024-12-04 10:00:00] === Plugin Discovery Mode ===
+[2024-12-04 10:00:00] Reading plugins from: plugins-wishlist.txt
+[2024-12-04 10:00:00] Found 3 plugin(s) in wishlist
+
+[2024-12-04 10:00:01] Processing: Vault
+✓ Found on Modrinth: Vault (project_id: 8VmXXGNc)
+✓ Added Vault to plugins.json
+
+[2024-12-04 10:00:02] Processing: TabList
+⚠ Plugin 'TabList' not found on Modrinth or GitHub
+
+[2024-12-04 10:00:03] Processing: ChestShop
+✓ Found on GitHub: ChestShop-Authors/ChestShop-3
+✓ Added ChestShop to plugins.json
+
+=== Discovery Summary ===
+✓ Found and added: 2
+⚠ Not found or failed: 1
+
+Run './install-plugins.sh' to install the discovered plugins
+```
+
+**Tips:**
+
+- Use exact plugin names for best results
+- Common plugins (LuckPerms, Vault, etc.) are usually found easily
+- If a plugin isn't found, add it manually to `plugins.json`
+- Discovery prefers Modrinth over GitHub (better metadata)
+- Use `--debug` to see detailed API search results
+
 ### Robustness Features
 
 The plugin installer includes several robustness features to ensure 100% success rate:
