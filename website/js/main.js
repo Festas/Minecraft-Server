@@ -83,11 +83,11 @@ function initCopyButton() {
             try {
                 // Modern Clipboard API
                 await navigator.clipboard.writeText(ipText);
-                showCopyFeedback(copyBtn, 'Copied!');
+                showCopyFeedback(copyBtn, 'Kopiert!');
             } catch (err) {
                 // Fallback for older browsers
                 fallbackCopyToClipboard(ipText);
-                showCopyFeedback(copyBtn, 'Copied!');
+                showCopyFeedback(copyBtn, 'Kopiert!');
             }
         });
     }
@@ -178,7 +178,7 @@ async function checkServerStatus() {
             if (serverUptime) {
                 // For now, show a placeholder
                 // In production, you would track server start time
-                serverUptime.textContent = 'Running';
+                serverUptime.textContent = 'Läuft';
             }
         } else {
             // Server is offline
@@ -199,7 +199,7 @@ async function checkServerStatus() {
         
         // Fallback to unknown status
         statusIndicator.style.background = '#ffaa00'; // Orange
-        statusText.textContent = 'Status Unknown';
+        statusText.textContent = 'Status Unbekannt';
         
         if (playerCount) {
             playerCount.textContent = '-/-';
