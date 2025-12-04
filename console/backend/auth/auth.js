@@ -13,12 +13,20 @@ async function loadUsers() {
         return JSON.parse(data);
     } catch (error) {
         console.error('Error loading users:', error);
+        
+        // Require ADMIN_PASSWORD to be set
+        if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'change-this-secure-password') {
+            console.error('ERROR: ADMIN_PASSWORD environment variable must be set to a secure password!');
+            console.error('Please set ADMIN_PASSWORD in your .env file before starting the console.');
+            throw new Error('ADMIN_PASSWORD not configured');
+        }
+        
         // Return default admin if file doesn't exist
         return {
             users: [
                 {
                     username: process.env.ADMIN_USERNAME || 'admin',
-                    password: await bcrypt.hash(process.env.ADMIN_PASSWORD || 'change-this-secure-password', 10)
+                    password: await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
                 }
             ]
         };
@@ -69,17 +77,25 @@ async function initializeUsers() {
     try {
         await fs.access(USERS_FILE);
     } catch {
-        // File doesn't exist, create it with default admin
+        // File doesn't exist, create it
+        
+        // Require ADMIN_PASSWORD to be set
+        if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'change-this-secure-password') {
+            console.error('ERROR: ADMIN_PASSWORD environment variable must be set to a secure password!');
+            console.error('Please set ADMIN_PASSWORD in your .env file before starting the console.');
+            throw new Error('ADMIN_PASSWORD not configured');
+        }
+        
         const defaultUsers = {
             users: [
                 {
                     username: process.env.ADMIN_USERNAME || 'admin',
-                    password: await bcrypt.hash(process.env.ADMIN_PASSWORD || 'change-this-secure-password', 10)
+                    password: await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
                 }
             ]
         };
         await saveUsers(defaultUsers);
-        console.log('Created default admin user. Please change the password!');
+        console.log('Created default admin user. Please keep your password secure!');
     }
 }
 

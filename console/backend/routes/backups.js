@@ -7,21 +7,22 @@ const path = require('path');
 // All backup routes require authentication
 router.use(requireAuth);
 
+// Get backups directory from environment or use default
+const BACKUPS_DIR = process.env.BACKUPS_DIR || path.join(process.cwd(), '../../backups');
+
 /**
  * GET /backups/list
  * Get list of available backups
  */
 router.get('/list', async (req, res) => {
     try {
-        const backupsDir = '/home/runner/work/Minecraft-Server/Minecraft-Server/backups';
-        
         try {
-            const files = await fs.readdir(backupsDir);
+            const files = await fs.readdir(BACKUPS_DIR);
             const backups = [];
             
             for (const file of files) {
                 if (file.endsWith('.tar.gz') || file.endsWith('.zip')) {
-                    const stats = await fs.stat(path.join(backupsDir, file));
+                    const stats = await fs.stat(path.join(BACKUPS_DIR, file));
                     backups.push({
                         filename: file,
                         size: stats.size,

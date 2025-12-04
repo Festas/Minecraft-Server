@@ -7,14 +7,17 @@ const path = require('path');
 // All file routes require authentication
 router.use(requireAuth);
 
+// Get base paths from environment or use defaults
+const SERVER_PROPS_PATH = process.env.SERVER_PROPS_PATH || path.join(process.cwd(), '../../server.properties');
+const LOGS_DIR = process.env.LOGS_DIR || '/data/logs';
+
 /**
  * GET /files/server-properties
  * Get server.properties content
  */
 router.get('/server-properties', async (req, res) => {
     try {
-        const serverPropsPath = '/home/runner/work/Minecraft-Server/Minecraft-Server/server.properties';
-        const content = await fs.readFile(serverPropsPath, 'utf8');
+        const content = await fs.readFile(SERVER_PROPS_PATH, 'utf8');
         res.json({ content });
     } catch (error) {
         console.error('Error reading server.properties:', error);
@@ -34,14 +37,12 @@ router.post('/server-properties', async (req, res) => {
     }
 
     try {
-        const serverPropsPath = '/home/runner/work/Minecraft-Server/Minecraft-Server/server.properties';
-        
         // Create backup
-        const backupPath = `${serverPropsPath}.backup.${Date.now()}`;
-        await fs.copyFile(serverPropsPath, backupPath);
+        const backupPath = `${SERVER_PROPS_PATH}.backup.${Date.now()}`;
+        await fs.copyFile(SERVER_PROPS_PATH, backupPath);
         
         // Write new content
-        await fs.writeFile(serverPropsPath, content);
+        await fs.writeFile(SERVER_PROPS_PATH, content);
         
         res.json({ success: true, message: 'server.properties updated successfully' });
     } catch (error) {
@@ -56,8 +57,7 @@ router.post('/server-properties', async (req, res) => {
  */
 router.get('/logs', async (req, res) => {
     try {
-        const logsDir = '/data/logs';
-        const files = await fs.readdir(logsDir);
+        const files = await fs.readdir(LOGS_DIR);
         
         const logFiles = files.filter(f => f.endsWith('.log') || f.endsWith('.log.gz'));
         
@@ -81,7 +81,7 @@ router.get('/logs/:filename', async (req, res) => {
     }
 
     try {
-        const logPath = path.join('/data/logs', filename);
+        const logPath = path.join(LOGS_DIR, filename);
         const content = await fs.readFile(logPath, 'utf8');
         res.json({ content });
     } catch (error) {

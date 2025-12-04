@@ -6,6 +6,7 @@ const rconService = require('../services/rcon');
 const statsService = require('../services/stats');
 const { exec } = require('child_process');
 const util = require('util');
+const path = require('path');
 const execPromise = util.promisify(exec);
 
 // All server routes require authentication
@@ -178,8 +179,8 @@ router.post('/backup', async (req, res) => {
         await rconService.saveOff();
         await rconService.saveAll();
         
-        // Run backup script
-        const backupScript = '/home/runner/work/Minecraft-Server/Minecraft-Server/backup.sh';
+        // Run backup script - use environment variable for path
+        const backupScript = process.env.BACKUP_SCRIPT_PATH || path.join(process.cwd(), '../../backup.sh');
         await execPromise(backupScript);
         
         // Re-enable auto-save

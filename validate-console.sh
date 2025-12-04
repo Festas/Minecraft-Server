@@ -23,18 +23,17 @@ echo "✓ Checking required files..."
 
 # Validate JavaScript syntax
 echo "✓ Validating JavaScript syntax..."
-for file in console/backend/**/*.js console/frontend/js/*.js; do
-    if [ -f "$file" ]; then
-        node -c "$file" || { echo "❌ Syntax error in $file"; exit 1; }
-    fi
+find console/backend -name "*.js" -type f | while read file; do
+    node -c "$file" || { echo "❌ Syntax error in $file"; exit 1; }
+done
+find console/frontend/js -name "*.js" -type f | while read file; do
+    node -c "$file" || { echo "❌ Syntax error in $file"; exit 1; }
 done
 
 # Validate JSON files
 echo "✓ Validating JSON files..."
-for file in console/backend/**/*.json console/backend/*.json; do
-    if [ -f "$file" ]; then
-        python3 -m json.tool "$file" > /dev/null || { echo "❌ Invalid JSON in $file"; exit 1; }
-    fi
+find console/backend -name "*.json" -type f | while read file; do
+    python3 -m json.tool "$file" > /dev/null || { echo "❌ Invalid JSON in $file"; exit 1; }
 done
 
 # Check docker-compose syntax

@@ -29,6 +29,12 @@ services:
       # Security
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
       - RATE_LIMIT_MAX_ATTEMPTS=${RATE_LIMIT_MAX_ATTEMPTS:-5}
+      
+      # Optional: Path overrides (defaults work in Docker, customize if needed)
+      # - SERVER_PROPS_PATH=/path/to/server.properties
+      # - LOGS_DIR=/data/logs
+      # - BACKUPS_DIR=/backups
+      # - BACKUP_SCRIPT_PATH=/app/backup.sh
     
     volumes:
       # Mount Docker socket to control containers
@@ -51,16 +57,17 @@ networks:
     driver: bridge
 
 # Notes:
-# 1. Make sure to set secure values for:
-#    - SESSION_SECRET
-#    - ADMIN_PASSWORD
-#    - RCON_PASSWORD
+# 1. REQUIRED: Set secure values in .env file for:
+#    - SESSION_SECRET (generate with: openssl rand -hex 32)
+#    - ADMIN_PASSWORD (generate with: openssl rand -base64 32)
+#    - RCON_PASSWORD (must match Minecraft server)
+#    The console will NOT start without ADMIN_PASSWORD set!
 #
 # 2. The console needs access to Docker socket to control the Minecraft container
 #
 # 3. To start the console:
-#    docker-compose -f docker-compose.console.yml up -d
+#    docker compose -f docker-compose.console.yml up -d
 #
 # 4. Access the console at http://your-server-ip:3001/console
 #
-# 5. For production, use Nginx reverse proxy with SSL
+# 5. For production, use Nginx reverse proxy with SSL (see nginx/console.conf)
