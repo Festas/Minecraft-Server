@@ -154,7 +154,7 @@ jobs:
       - name: Check if plugins were downloaded
         id: check_artifacts
         run: |
-          if [ -d "plugins" ] && [ "$(ls -A plugins/*.jar 2>/dev/null | wc -l)" -gt 0 ]; then
+          if [ -d "plugins" ] && ls plugins/*.jar 1> /dev/null 2>&1; then
             echo "has_plugins=true" >> $GITHUB_OUTPUT
             echo "✓ Plugins downloaded successfully"
           else
@@ -270,23 +270,30 @@ jobs:
             echo "Restarting Minecraft server..."
             sudo systemctl restart minecraft.service
             
-            # Wait for service to start
-            sleep 5
+            # Wait for service to start with retries
+            MAX_ATTEMPTS=6
+            ATTEMPT=1
+            while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+              sleep 5
+              if systemctl is-active --quiet minecraft.service; then
+                echo "✓ Minecraft server restarted successfully"
+                exit 0
+              fi
+              echo "Waiting for server to start (attempt $ATTEMPT/$MAX_ATTEMPTS)..."
+              ATTEMPT=$((ATTEMPT + 1))
+            done
             
-            # Verify server started
-            if systemctl is-active --quiet minecraft.service; then
-              echo "✓ Minecraft server restarted successfully"
-            else
-              echo "⚠ Warning: Server may not have started properly"
-              sudo systemctl status minecraft.service --no-pager || true
-              exit 1
-            fi
+            echo "⚠ Warning: Server may not have started properly"
+            sudo systemctl status minecraft.service --no-pager || true
+            exit 1
           EOF
       
       - name: Cleanup SSH key
         if: always()
         run: |
-          rm -f ~/.ssh/id_rsa
+          if [ -f ~/.ssh/id_rsa ]; then
+            rm -f ~/.ssh/id_rsa
+          fi
 
   summary:
     needs: [download-plugins, deploy-to-server]
@@ -331,7 +338,13 @@ jobs:
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| Download Plugins | ${{ needs.download-plugins.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Deploy to Server | ${{ needs.deploy-to-server.result }} |" >> $GITHUB_STEP_SUMMARY
+          
+          # Deploy job may be skipped, show appropriate status
+          DEPLOY_STATUS="${{ needs.deploy-to-server.result }}"
+          if [ -z "$DEPLOY_STATUS" ]; then
+            DEPLOY_STATUS="skipped"
+          fi
+          echo "| Deploy to Server | $DEPLOY_STATUS |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Installation log (last 30 lines)
