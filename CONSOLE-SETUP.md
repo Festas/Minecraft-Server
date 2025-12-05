@@ -16,12 +16,14 @@ Go to your repository → Settings → Secrets and variables → Actions → New
 
 Add these 4 secrets:
 
-| Secret Name | Description | Example |
-|-------------|-------------|---------|
-| `CONSOLE_ADMIN_USER` | Your console login username | `admin` |
-| `CONSOLE_ADMIN_PASSWORD` | Your console login password | `MySecurePassword123!` |
-| `RCON_PASSWORD` | Password for RCON connection | `randomSecureString` |
-| `SESSION_SECRET` | Random string for session encryption (32+ chars) | `a1b2c3d4e5f6g7h8i9j0...` |
+| Secret Name | Description | Maps to Env Var |
+|-------------|-------------|-----------------|
+| `CONSOLE_ADMIN_USER` | Your console login username | `ADMIN_USERNAME` |
+| `CONSOLE_ADMIN_PASSWORD` | Your console login password | `ADMIN_PASSWORD` |
+| `RCON_PASSWORD` | Password for RCON connection | `RCON_PASSWORD` |
+| `SESSION_SECRET` | Random string for session encryption (32+ chars) | `SESSION_SECRET` |
+
+**Note:** The GitHub secrets are automatically mapped to the correct environment variable names during deployment.
 
 **To generate a secure session secret:**
 ```bash
