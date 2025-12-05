@@ -16,7 +16,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Check authentication
 async function checkAuth() {
     try {
-        const response = await fetch('/api/session');
+        const response = await fetch('/api/session', {
+            credentials: 'same-origin'
+        });
         const data = await response.json();
         
         if (!data.authenticated) {
@@ -34,7 +36,9 @@ async function checkAuth() {
 // Fetch CSRF token
 async function fetchCsrfToken() {
     try {
-        const response = await fetch('/api/csrf-token');
+        const response = await fetch('/api/csrf-token', {
+            credentials: 'same-origin'
+        });
         const data = await response.json();
         csrfToken = data.csrfToken;
     } catch (error) {
@@ -77,7 +81,8 @@ async function logout() {
             headers: {
                 'Content-Type': 'application/json',
                 'CSRF-Token': csrfToken
-            }
+            },
+            credentials: 'same-origin'
         });
         window.location.href = '/console/login.html';
     } catch (error) {
@@ -91,7 +96,8 @@ async function loadPlugins() {
         const response = await fetch('/api/plugins', {
             headers: {
                 'CSRF-Token': csrfToken
-            }
+            },
+            credentials: 'same-origin'
         });
         const data = await response.json();
         
@@ -170,6 +176,7 @@ async function handleInstall() {
                 'Content-Type': 'application/json',
                 'CSRF-Token': csrfToken
             },
+            credentials: 'same-origin',
             body: JSON.stringify({ url, customName: customName || null })
         });
         
@@ -229,6 +236,7 @@ async function selectOption(originalUrl, selectedUrl) {
                 'Content-Type': 'application/json',
                 'CSRF-Token': csrfToken
             },
+            credentials: 'same-origin',
             body: JSON.stringify({ 
                 url: originalUrl,
                 selectedOption: selectedUrl 
@@ -295,6 +303,7 @@ async function proceedWithInstall(url, pluginName, action) {
                 'Content-Type': 'application/json',
                 'CSRF-Token': csrfToken
             },
+            credentials: 'same-origin',
             body: JSON.stringify({ url, pluginName, action })
         });
         
@@ -324,6 +333,7 @@ async function togglePlugin(pluginName, enabled) {
                 'Content-Type': 'application/json',
                 'CSRF-Token': csrfToken
             },
+            credentials: 'same-origin',
             body: JSON.stringify({ pluginName, enabled })
         });
         
@@ -373,6 +383,7 @@ async function uninstallPlugin(pluginName, deleteConfigs) {
                 'Content-Type': 'application/json',
                 'CSRF-Token': csrfToken
             },
+            credentials: 'same-origin',
             body: JSON.stringify({ pluginName, deleteConfigs })
         });
         
@@ -407,6 +418,7 @@ async function rollbackPlugin(pluginName) {
                         'Content-Type': 'application/json',
                         'CSRF-Token': csrfToken
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({ pluginName })
                 });
                 
@@ -433,7 +445,8 @@ async function loadHistory() {
         const response = await fetch('/api/plugins/history', {
             headers: {
                 'CSRF-Token': csrfToken
-            }
+            },
+            credentials: 'same-origin'
         });
         const data = await response.json();
         
@@ -563,6 +576,7 @@ async function handleBulkInstall() {
                     'Content-Type': 'application/json',
                     'CSRF-Token': csrfToken
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ url })
             });
             

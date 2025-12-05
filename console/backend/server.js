@@ -26,6 +26,7 @@ const pluginRoutes = require('./routes/plugins');
 
 // Initialize Express app
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Caddy)
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {

@@ -8,10 +8,11 @@ function configureSession() {
         secret: process.env.SESSION_SECRET || 'your-secure-random-session-secret',
         resave: false,
         saveUninitialized: false,
+        proxy: true, // Trust the reverse proxy
         cookie: {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-            sameSite: 'strict',
+            sameSite: 'lax', // More compatible with redirects
             maxAge: 24 * 60 * 60 * 1000 // 24 hours
         }
     });

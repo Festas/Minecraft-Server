@@ -6,7 +6,9 @@ let csrfToken = null;
 // Fetch CSRF token
 async function fetchCsrfToken() {
     try {
-        const response = await fetch('/api/csrf-token');
+        const response = await fetch('/api/csrf-token', {
+            credentials: 'same-origin'
+        });
         const data = await response.json();
         csrfToken = data.csrfToken;
         return csrfToken;
