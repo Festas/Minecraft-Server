@@ -35,7 +35,7 @@ const validations = {
             .trim()
             .isLength({ min: 1, max: 500 })
             .withMessage('Command must be between 1 and 500 characters')
-            .matches(/^[a-zA-Z0-9_\-\/\s\.\:\[\]\{\}\@\#\$\%\^\&\*\(\)\=\+\,\<\>\?\!]+$/)
+            .matches(/^[a-zA-Z0-9_\-/\s.:[\]{}@#$%^&*()=+,<>?!]+$/)
             .withMessage('Command contains invalid characters'),
         validate
     ],
@@ -57,7 +57,7 @@ const validations = {
             .trim()
             .notEmpty()
             .withMessage('Path is required')
-            .matches(/^[a-zA-Z0-9_\-\/\.]+$/)
+            .matches(/^[a-zA-Z0-9_\-/.]+$/)
             .withMessage('Path contains invalid characters')
             .custom((value) => {
                 // Prevent directory traversal
@@ -75,7 +75,7 @@ const validations = {
             .trim()
             .isLength({ min: 1, max: 100 })
             .withMessage('Plugin name must be between 1 and 100 characters')
-            .matches(/^[a-zA-Z0-9_\-\.]+$/)
+            .matches(/^[a-zA-Z0-9_\-.]+$/)
             .withMessage('Plugin name contains invalid characters'),
         validate
     ],
@@ -85,7 +85,7 @@ const validations = {
         param('name')
             .optional()
             .trim()
-            .matches(/^[a-zA-Z0-9_\-\.]+$/)
+            .matches(/^[a-zA-Z0-9_\-.]+$/)
             .withMessage('Backup name contains invalid characters'),
         validate
     ],

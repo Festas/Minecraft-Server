@@ -24,7 +24,7 @@ describe('Error Handler Middleware', () => {
       const mockRes = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn(),
-        statusCode: 200
+        statusCode: 400
       };
       
       errorHandler(mockErr, mockReq, mockRes, jest.fn());

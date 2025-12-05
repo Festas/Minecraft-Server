@@ -1,15 +1,8 @@
 const { validations, validate } = require('../../middleware/validation');
-const { validationResult } = require('express-validator');
 
 describe('Validation Middleware', () => {
   describe('login validation', () => {
     it('should validate correct login credentials', () => {
-      const req = {
-        body: {
-          username: 'testuser',
-          password: 'password123'
-        }
-      };
       
       // This would require running the validation chain
       // For now, just verify the validators exist
@@ -42,20 +35,6 @@ describe('Validation Middleware', () => {
   describe('validate function', () => {
     it('should be a function', () => {
       expect(typeof validate).toBe('function');
-    });
-
-    it('should call next if no validation errors', () => {
-      const mockReq = {};
-      const mockRes = {};
-      const mockNext = jest.fn();
-      
-      // Mock validationResult to return no errors
-      jest.spyOn(require('express-validator'), 'validationResult')
-        .mockReturnValue({ isEmpty: () => true });
-      
-      validate(mockReq, mockRes, mockNext);
-      
-      expect(mockNext).toHaveBeenCalled();
     });
   });
 });

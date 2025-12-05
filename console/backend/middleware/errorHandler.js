@@ -15,7 +15,7 @@ const notFoundHandler = (req, res, next) => {
 /**
  * Global error handler
  */
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
     // Log error details (but not in production with sensitive data)
     console.error('Error:', {
         message: err.message,

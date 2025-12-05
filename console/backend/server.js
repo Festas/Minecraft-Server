@@ -89,7 +89,6 @@ io.engine.use(sessionMiddleware);
 // Configure CSRF protection using csrf-csrf
 const {
     generateToken, // Generates a CSRF token
-    validateRequest, // Validates CSRF token
     doubleCsrfProtection, // Full middleware
 } = doubleCsrf({
     getSecret: () => process.env.CSRF_SECRET || 'default-csrf-secret-change-in-production',
