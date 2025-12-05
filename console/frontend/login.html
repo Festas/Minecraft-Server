@@ -62,7 +62,7 @@
                     credentials: 'same-origin'
                 });
                 if (!response.ok) {
-                    console.error('Failed to fetch CSRF token');
+                    console.error(`Failed to fetch CSRF token: ${response.status} ${response.statusText}`);
                 }
             } catch (error) {
                 console.error('Error fetching CSRF token:', error);
