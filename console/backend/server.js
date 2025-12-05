@@ -76,6 +76,8 @@ app.use((req, res, next) => {
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// Cookie parser is needed for CSRF protection (csrf-csrf library)
+// CSRF protection is applied below at line 128
 app.use(cookieParser());
 
 // Get session middleware (shared between Express and Socket.io)
