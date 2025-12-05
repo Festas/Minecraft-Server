@@ -21,6 +21,13 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// HTML escaping utility to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 function renderPlayersList(data) {
     const playersList = document.getElementById('playersList');
     
@@ -37,20 +44,28 @@ function renderPlayersList(data) {
         const playerItem = document.createElement('div');
         playerItem.className = 'player-item';
         
+        const escapedPlayer = escapeHtml(player);
+        
         playerItem.innerHTML = `
             <div class="player-info">
                 <img 
-                    src="https://crafatar.com/avatars/${player}?size=32" 
-                    alt="${player}" 
+                    src="https://crafatar.com/avatars/${escapedPlayer}?size=32" 
+                    alt="${escapedPlayer}" 
                     class="player-avatar"
-                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>'"
+                    data-fallback="true"
                 >
-                <span>${player}</span>
+                <span>${escapedPlayer}</span>
             </div>
             <div class="player-actions">
-                <button class="btn btn-sm player-kick-btn" data-player="${player}">Kick</button>
+                <button class="btn btn-sm player-kick-btn" data-player="${escapedPlayer}">Kick</button>
             </div>
         `;
+        
+        // Add error handler to image via JavaScript (CSP compliant)
+        const img = playerItem.querySelector('.player-avatar');
+        img.addEventListener('error', function() {
+            this.src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>';
+        });
         
         playersList.appendChild(playerItem);
     });
