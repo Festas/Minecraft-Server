@@ -20,12 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners
     setupEventListeners();
     
-    // Handle navigation links with data-href (CSP compliant)
-    document.querySelectorAll('[data-href]').forEach(function(el) {
-        el.addEventListener('click', function() {
-            window.location.href = this.dataset.href;
-        });
-    });
+    // Initialize data-href navigation (CSP compliant)
+    initializeDataHrefNavigation();
     
     // Start stats polling
     startStatsPolling();

@@ -38,3 +38,16 @@ async function apiRequest(url, options = {}) {
 // Export for use in other scripts
 window.apiRequest = apiRequest;
 window.fetchCsrfToken = fetchCsrfToken;
+
+// Initialize data-href navigation handlers (CSP compliant)
+// Call this function after DOM is loaded to enable navigation via data-href attributes
+function initializeDataHrefNavigation() {
+    document.querySelectorAll('[data-href]').forEach(function(el) {
+        el.addEventListener('click', function() {
+            window.location.href = this.dataset.href;
+        });
+    });
+}
+
+// Export navigation initializer
+window.initializeDataHrefNavigation = initializeDataHrefNavigation;

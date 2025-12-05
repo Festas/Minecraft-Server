@@ -48,12 +48,8 @@ async function fetchCsrfToken() {
 
 // Initialize event listeners
 function initializeEventListeners() {
-    // Handle navigation links with data-href (CSP compliant)
-    document.querySelectorAll('[data-href]').forEach(function(el) {
-        el.addEventListener('click', function() {
-            window.location.href = this.dataset.href;
-        });
-    });
+    // Initialize data-href navigation (CSP compliant)
+    initializeDataHrefNavigation();
     
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', logout);
@@ -81,15 +77,6 @@ function initializeEventListeners() {
     
     // Event delegation for plugin actions (CSP compliant)
     document.addEventListener('click', function(e) {
-        // Handle plugin toggle
-        if (e.target && e.target.matches('.plugin-toggle-input')) {
-            var pluginName = e.target.dataset.plugin;
-            var enabled = e.target.checked;
-            if (pluginName) {
-                togglePlugin(pluginName, enabled);
-            }
-        }
-        
         // Handle plugin rollback
         if (e.target && e.target.matches('.plugin-rollback-btn')) {
             var pluginName = e.target.dataset.plugin;
@@ -117,7 +104,7 @@ function initializeEventListeners() {
         }
     });
     
-    // Event delegation for change events
+    // Event delegation for change events (for checkboxes)
     document.addEventListener('change', function(e) {
         if (e.target && e.target.matches('.plugin-toggle-input')) {
             var pluginName = e.target.dataset.plugin;
