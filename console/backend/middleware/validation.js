@@ -35,7 +35,7 @@ const validations = {
             .trim()
             .isLength({ min: 1, max: 500 })
             .withMessage('Command must be between 1 and 500 characters')
-            .matches(/^[a-zA-Z0-9_\-/\s.:[\]{}@#$%^&*()=+,<>?!]+$/)
+            .matches(/^[a-zA-Z0-9_\-/\s.:[\]{}@=,]+$/)
             .withMessage('Command contains invalid characters'),
         validate
     ],
@@ -60,10 +60,25 @@ const validations = {
             .matches(/^[a-zA-Z0-9_\-/.]+$/)
             .withMessage('Path contains invalid characters')
             .custom((value) => {
-                // Prevent directory traversal
-                if (value.includes('..') || value.startsWith('/')) {
-                    throw new Error('Invalid path');
+                // Prevent directory traversal - check for various patterns
+                const normalizedPath = value.toLowerCase();
+                
+                // Check for .. patterns (including URL encoded)
+                if (value.includes('..') || normalizedPath.includes('%2e%2e') || 
+                    normalizedPath.includes('%252e%252e')) {
+                    throw new Error('Directory traversal attempt detected');
                 }
+                
+                // Check for absolute paths
+                if (value.startsWith('/') || value.startsWith('\\')) {
+                    throw new Error('Absolute paths are not allowed');
+                }
+                
+                // Check for backslashes (Windows path separator)
+                if (value.includes('\\')) {
+                    throw new Error('Backslashes are not allowed in paths');
+                }
+                
                 return true;
             }),
         validate

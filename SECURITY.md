@@ -16,9 +16,9 @@ We take the security of our Minecraft server project seriously. If you believe y
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to: festas_builds@example.com
+Instead, please report them by creating a private security advisory on GitHub or by contacting the repository maintainers directly.
 
-You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
+You should receive a response within 48 hours. If for some reason you do not, please follow up to ensure we received your original message.
 
 Please include the following information in your report:
 
@@ -65,4 +65,4 @@ When deploying this Minecraft server:
 
 ## Contact
 
-For security-related questions or concerns, contact: festas_builds@example.com
+For security-related questions or concerns, please use GitHub's security advisory feature or contact the repository maintainers.

@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser');
 const { doubleCsrf } = require('csrf-csrf');
 const path = require('path');
 const morgan = require('morgan');
+const crypto = require('crypto');
 
 // Import services
 const rconService = require('./services/rcon');
@@ -47,9 +48,9 @@ const PORT = process.env.CONSOLE_PORT || 3001;
 const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
 app.use(morgan(morganFormat));
 
-// Generate nonce for CSP
+// Generate nonce for CSP using cryptographically secure random
 app.use((req, res, next) => {
-    res.locals.nonce = Buffer.from(Math.random().toString()).toString('base64');
+    res.locals.nonce = crypto.randomBytes(16).toString('base64');
     next();
 });
 
@@ -87,11 +88,20 @@ app.use(sessionMiddleware);
 io.engine.use(sessionMiddleware);
 
 // Configure CSRF protection using csrf-csrf
+const csrfSecret = process.env.CSRF_SECRET;
+
+if (!csrfSecret) {
+    console.error('ERROR: CSRF_SECRET environment variable must be set!');
+    console.error('Generate a secure random secret and add it to your .env file:');
+    console.error('  CSRF_SECRET=$(openssl rand -base64 32)');
+    process.exit(1);
+}
+
 const {
     generateToken, // Generates a CSRF token
     doubleCsrfProtection, // Full middleware
 } = doubleCsrf({
-    getSecret: () => process.env.CSRF_SECRET || 'default-csrf-secret-change-in-production',
+    getSecret: () => csrfSecret,
     cookieName: '__Host-psifi.x-csrf-token',
     cookieOptions: {
         sameSite: 'strict',
