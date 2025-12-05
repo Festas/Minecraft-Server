@@ -4,17 +4,24 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
+# Copy package files from backend
 COPY package*.json ./
 
 # Install dependencies
 RUN npm ci --only=production
 
-# Copy application files
+# Copy backend application files
 COPY . .
 
-# Create config directory if it doesn't exist
-RUN mkdir -p config
+# Copy frontend files to parent directory location where server.js expects them
+# server.js serves from path.join(__dirname, '../frontend')
+COPY ../frontend /frontend
+
+# Create config and data directories if they don't exist
+RUN mkdir -p config data
 
 # Expose port
 EXPOSE 3001
