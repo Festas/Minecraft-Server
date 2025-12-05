@@ -8,5 +8,6 @@ module.exports = {
     'middleware/**/*.js'
   ],
   testMatch: ['**/__tests__/**/*.js', '**/*.test.js'],
-  verbose: true
+  verbose: true,
+  setupFiles: ['<rootDir>/jest.setup.js']
 };
