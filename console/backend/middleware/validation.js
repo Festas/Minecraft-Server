@@ -21,8 +21,8 @@ const validations = {
             .trim()
             .isLength({ min: 1, max: 50 })
             .withMessage('Username must be between 1 and 50 characters')
-            .matches(/^[a-zA-Z0-9_-]+$/)
-            .withMessage('Username can only contain letters, numbers, underscores, and hyphens'),
+            .matches(/^[a-zA-Z0-9_.\-@]+$/)
+            .withMessage('Username can only contain letters, numbers, underscores, hyphens, dots, and @ symbols'),
         body('password')
             .isLength({ min: 1 })
             .withMessage('Password is required'),

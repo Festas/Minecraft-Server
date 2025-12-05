@@ -26,7 +26,7 @@ async function apiRequest(url, options = {}) {
     
     // Add CSRF token to all non-GET requests
     if (csrfToken && options.method && options.method !== 'GET') {
-        options.headers['CSRF-Token'] = csrfToken;
+        options.headers['x-csrf-token'] = csrfToken;
     }
     
     // Ensure credentials are included

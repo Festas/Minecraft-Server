@@ -104,9 +104,9 @@ const {
     doubleCsrfProtection, // Full middleware
 } = doubleCsrf({
     getSecret: () => csrfSecret,
-    cookieName: '__Host-psifi.x-csrf-token',
+    cookieName: 'csrf-token',
     cookieOptions: {
-        sameSite: 'strict',
+        sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true

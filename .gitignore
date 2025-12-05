@@ -44,3 +44,4 @@ console/backend/coverage/
 # Build artifacts
 dist/
 build/
+console/backend/config/.password_hash
