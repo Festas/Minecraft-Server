@@ -8,16 +8,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+
     steps:
       - name: Validate required secrets
         run: |
           MISSING_SECRETS=()
-          
+
           if [ -z "${{ secrets.RCON_PASSWORD }}" ]; then
             MISSING_SECRETS+=("RCON_PASSWORD")
           fi
-          
+
           if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
             echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
             echo ""
@@ -29,7 +29,7 @@ jobs:
             done
             exit 1
           fi
-          
+
           echo "✓ All required secrets are configured"
 
       - name: Deploy Minecraft server
@@ -43,18 +43,18 @@ jobs:
           envs: RCON_PASSWORD
           script: |
             set -e
-            
+
             DEPLOY_DIR="/home/deploy/minecraft-server"
-            
+
             mkdir -p "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
-            
+
             # Create .env file from secret
             cat > .env <<EOF
             RCON_PASSWORD=${RCON_PASSWORD}
             EOF
             chmod 600 .env
-            
+
             # Create docker-compose.yml
             cat > docker-compose.yml <<'EOF'
             services:
@@ -102,13 +102,13 @@ jobs:
               caddy-network:
                 external: true
             EOF
-            
+
             # Create caddy-network if it doesn't exist
             docker network inspect caddy-network >/dev/null 2>&1 || docker network create caddy-network
-            
+
             # Deploy
             docker compose up -d
-            
+
             # Wait for healthy
             echo "Waiting for Minecraft server to become healthy (this may take up to 2 minutes)..."
             for i in {1..60}; do
@@ -120,10 +120,18 @@ jobs:
               echo "Health status: $HEALTH (attempt $i/60)"
               sleep 2
             done
-            
+
+            # Verify final health status
+            FINAL_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null || echo "unknown")
+            if [ "$FINAL_HEALTH" != "healthy" ]; then
+              echo "::error::Server did not become healthy after 2 minutes. Status: $FINAL_HEALTH"
+              docker logs minecraft-server --tail=50
+              exit 1
+            fi
+
             # Show final status
             docker ps | grep minecraft-server || true
-            
+
             echo "✓ Minecraft server deployed successfully!"
 
       - name: Handle deployment failure

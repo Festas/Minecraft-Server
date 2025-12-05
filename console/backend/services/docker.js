@@ -189,7 +189,8 @@ class DockerService {
         try {
             const container = await this.getContainer();
             if (!container) {
-                throw new Error('Minecraft container not found');
+                console.error('Cannot stream logs: Minecraft container not found');
+                return null;
             }
             const stream = await container.logs({
                 stdout: true,
@@ -205,7 +206,7 @@ class DockerService {
             return stream;
         } catch (error) {
             console.error('Error streaming logs:', error);
-            throw error;
+            return null;
         }
     }
 }

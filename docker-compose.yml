@@ -12,7 +12,7 @@ services:
       MEMORY: "4G"
       USE_AIKAR_FLAGS: "true"
       ENABLE_RCON: "true"
-      RCON_PASSWORD: "${RCON_PASSWORD}"
+      RCON_PASSWORD: "${RCON_PASSWORD:-changeme-set-via-secret}"
       RCON_PORT: 25575
       MOTD: "§6§l✦ §b§lFestas Builds §6§l✦ §r§f - Community Server"
       MAX_PLAYERS: 20

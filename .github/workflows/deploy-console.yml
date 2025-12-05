@@ -53,12 +53,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+
     steps:
       - name: Validate required secrets
         run: |
           MISSING_SECRETS=()
-          
+
           if [ -z "${{ secrets.GHCR_PAT }}" ]; then
             MISSING_SECRETS+=("GHCR_PAT")
           fi
@@ -77,7 +77,7 @@ jobs:
           if [ -z "${{ secrets.CSRF_SECRET }}" ]; then
             MISSING_SECRETS+=("CSRF_SECRET")
           fi
-          
+
           if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
             echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
             echo ""
@@ -91,7 +91,7 @@ jobs:
             echo "See CONSOLE-SETUP.md for detailed instructions."
             exit 1
           fi
-          
+
           echo "✓ All required secrets are configured"
 
       - name: Deploy to server
@@ -112,19 +112,19 @@ jobs:
           envs: IMAGE_SHA,GHCR_PAT,GHCR_ACTOR,CONSOLE_ADMIN_USER,CONSOLE_ADMIN_PASSWORD,RCON_PASSWORD,SESSION_SECRET,CSRF_SECRET
           script: |
             set -e
-            
+
             DEPLOY_DIR="/home/deploy/minecraft-console"
             MC_DIR="/home/deploy/minecraft-server"
-            
+
             mkdir -p "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
-            
+
             # Login to GHCR
             echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
-            
+
             # Pull image
             docker pull "ghcr.io/festas/minecraft-console:${IMAGE_SHA}"
-            
+
             # Create .env file from secrets
             cat > .env <<EOF
             ADMIN_USERNAME=${CONSOLE_ADMIN_USER}
@@ -140,7 +140,7 @@ jobs:
             NODE_ENV=production
             EOF
             chmod 600 .env
-            
+
             # Create docker-compose.yml
             cat > docker-compose.yml <<EOF
             services:
@@ -166,22 +166,22 @@ jobs:
                   timeout: 10s
                   retries: 3
                   start_period: 30s
-            
+
             volumes:
               console_data:
               console_config:
-            
+
             networks:
               caddy-network:
                 external: true
             EOF
-            
+
             # Create caddy-network if it doesn't exist
             docker network inspect caddy-network >/dev/null 2>&1 || docker network create caddy-network
-            
+
             # Deploy
             docker compose up -d
-            
+
             # Wait for healthy
             for i in {1..30}; do
               HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-console 2>/dev/null || echo "starting")
@@ -191,7 +191,7 @@ jobs:
               fi
               sleep 2
             done
-            
+
             echo "✓ Console deployed successfully!"
             echo "URL: https://mc.festas-builds.com/console"
 
