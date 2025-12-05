@@ -36,6 +36,7 @@ jobs:
       env:
         SERVER_HOST: ${{ secrets.SERVER_HOST }}
         SERVER_USER: ${{ secrets.SERVER_USER }}
+        RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
       run: |
         # Create server directory on remote server
         ssh ${SERVER_USER}@${SERVER_HOST} "mkdir -p /home/deploy/minecraft-server"
@@ -43,6 +44,10 @@ jobs:
         # Copy configuration files
         scp config.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         scp server.properties ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
+        
+        # Inject RCON password from secret (keeps sensitive data out of repo)
+        ssh ${SERVER_USER}@${SERVER_HOST} "sed -i 's/rcon\.password=.*/rcon.password=${RCON_PASSWORD}/' /home/deploy/minecraft-server/server.properties"
+        
         scp eula.txt ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         scp start.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         scp backup.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
