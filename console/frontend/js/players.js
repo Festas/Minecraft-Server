@@ -13,6 +13,14 @@ async function loadPlayers() {
     }
 }
 
+// Event delegation for player kick buttons
+document.addEventListener('click', function(e) {
+    if (e.target.matches('.player-kick-btn')) {
+        const player = e.target.dataset.player;
+        if (player) kickPlayer(player);
+    }
+});
+
 function renderPlayersList(data) {
     const playersList = document.getElementById('playersList');
     
@@ -40,7 +48,7 @@ function renderPlayersList(data) {
                 <span>${player}</span>
             </div>
             <div class="player-actions">
-                <button class="btn btn-sm" onclick="kickPlayer('${player}')">Kick</button>
+                <button class="btn btn-sm player-kick-btn" data-player="${player}">Kick</button>
             </div>
         `;
         

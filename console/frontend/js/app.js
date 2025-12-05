@@ -81,6 +81,13 @@ function setupEventListeners() {
         logoutBtn.addEventListener('click', logout);
     }
     
+    // Handle navigation links with data-href (CSP compliant)
+    document.querySelectorAll('[data-href]').forEach(function(el) {
+        el.addEventListener('click', function() {
+            window.location.href = this.dataset.href;
+        });
+    });
+    
     // Server controls
     const startBtn = document.getElementById('startBtn');
     if (startBtn) startBtn.addEventListener('click', () => controlServer('start'));

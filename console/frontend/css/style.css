@@ -5,6 +5,11 @@
     box-sizing: border-box;
 }
 
+/* Utility class for hiding elements (CSP compliant alternative to inline style) */
+.hidden {
+    display: none !important;
+}
+
 :root {
     --bg-primary: #1a1a1a;
     --bg-secondary: #2d2d2d;

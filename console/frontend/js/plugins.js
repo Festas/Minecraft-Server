@@ -51,6 +51,13 @@ function initializeEventListeners() {
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', logout);
     
+    // Handle navigation links with data-href (CSP compliant)
+    document.querySelectorAll('[data-href]').forEach(function(el) {
+        el.addEventListener('click', function() {
+            window.location.href = this.dataset.href;
+        });
+    });
+    
     // Install plugin
     document.getElementById('installBtn').addEventListener('click', handleInstall);
     document.getElementById('pluginUrl').addEventListener('keypress', (e) => {
@@ -220,7 +227,7 @@ function showOptionsModal(options, url) {
         </div>
     `).join('');
     
-    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
 }
 
 // Select option from multiple JARs
@@ -533,13 +540,13 @@ async function clearHistory() {
 
 // Bulk install modal
 function showBulkModal() {
-    document.getElementById('bulkModal').style.display = 'flex';
+    document.getElementById('bulkModal').classList.remove('hidden');
     document.getElementById('bulkUrls').value = '';
-    document.getElementById('bulkProgress').style.display = 'none';
+    document.getElementById('bulkProgress').classList.add('hidden');
 }
 
 function hideBulkModal() {
-    document.getElementById('bulkModal').style.display = 'none';
+    document.getElementById('bulkModal').classList.add('hidden');
 }
 
 // Handle bulk install
@@ -559,7 +566,7 @@ async function handleBulkInstall() {
     }
     
     const progressDiv = document.getElementById('bulkProgress');
-    progressDiv.style.display = 'block';
+    progressDiv.classList.remove('hidden');
     progressDiv.innerHTML = '';
     
     for (let i = 0; i < urls.length; i++) {
@@ -626,15 +633,15 @@ function showConfirmModal(title, message, callback, actions = null) {
         };
     }
     
-    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
 }
 
 function hideConfirmModal() {
-    document.getElementById('confirmModal').style.display = 'none';
+    document.getElementById('confirmModal').classList.add('hidden');
 }
 
 function hideOptionsModal() {
-    document.getElementById('optionsModal').style.display = 'none';
+    document.getElementById('optionsModal').classList.add('hidden');
 }
 
 function formatBytes(bytes) {
