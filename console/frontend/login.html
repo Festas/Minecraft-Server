@@ -76,7 +76,14 @@
                     // Redirect to console home (relative path)
                     window.location.href = 'index.html';
                 } else {
-                    showError(data.error || 'Login failed');
+                    // Handle both error formats
+                    let errorMsg = 'Login failed';
+                    if (data.error) {
+                        errorMsg = data.error;
+                    } else if (data.errors && Array.isArray(data.errors)) {
+                        errorMsg = data.errors.map(e => e.msg).join(', ');
+                    }
+                    showError(errorMsg);
                 }
             } catch (error) {
                 showError('Connection error. Please try again.');
