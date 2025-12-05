@@ -141,8 +141,9 @@ function renderPlugins() {
             <div class="plugin-info">
                 <div class="plugin-toggle">
                     <label class="toggle-switch">
-                        <input type="checkbox" ${plugin.enabled ? 'checked' : ''} 
-                               onchange="togglePlugin('${plugin.name}', this.checked)">
+                        <input type="checkbox" class="plugin-toggle-checkbox" 
+                               data-plugin="${escapeHtml(plugin.name)}"
+                               ${plugin.enabled ? 'checked' : ''}>
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -157,11 +158,30 @@ function renderPlugins() {
                 </div>
             </div>
             <div class="plugin-actions">
-                ${plugin.hasBackup ? `<button class="action-btn" onclick="rollbackPlugin('${plugin.name}')" title="Rollback to backup">↩️</button>` : ''}
-                <button class="action-btn danger" onclick="confirmUninstall('${plugin.name}')" title="Uninstall">🗑️</button>
+                ${plugin.hasBackup ? `<button class="action-btn plugin-rollback-btn" data-plugin="${escapeHtml(plugin.name)}" title="Rollback to backup">↩️</button>` : ''}
+                <button class="action-btn danger plugin-uninstall-btn" data-plugin="${escapeHtml(plugin.name)}" title="Uninstall">🗑️</button>
             </div>
         </div>
     `).join('');
+    
+    // Add event listeners using event delegation
+    container.querySelectorAll('.plugin-toggle-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            togglePlugin(this.dataset.plugin, this.checked);
+        });
+    });
+    
+    container.querySelectorAll('.plugin-rollback-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            rollbackPlugin(this.dataset.plugin);
+        });
+    });
+    
+    container.querySelectorAll('.plugin-uninstall-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            confirmUninstall(this.dataset.plugin);
+        });
+    });
 }
 
 // Handle plugin installation
@@ -221,11 +241,22 @@ function showOptionsModal(options, url) {
     const list = document.getElementById('optionsList');
     
     list.innerHTML = options.map((option, index) => `
-        <div class="option-item ${index === 0 ? 'recommended' : ''}" onclick="selectOption('${url}', '${option.downloadUrl}')">
+        <div class="option-item ${index === 0 ? 'recommended' : ''}" 
+             data-original-url="${escapeHtml(url)}" 
+             data-download-url="${escapeHtml(option.downloadUrl)}">
             <div class="option-name">${escapeHtml(option.filename)} ${index === 0 ? '← Recommended' : ''}</div>
             <div class="option-size">${formatBytes(option.size)}</div>
         </div>
     `).join('');
+    
+    // Add event listeners to option items
+    list.querySelectorAll('.option-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const originalUrl = this.dataset.originalUrl;
+            const downloadUrl = this.dataset.downloadUrl;
+            selectOption(originalUrl, downloadUrl);
+        });
+    });
     
     modal.classList.remove('hidden');
 }
@@ -627,10 +658,15 @@ function showConfirmModal(title, message, callback, actions = null) {
             });
         });
     } else {
-        document.getElementById('confirmYes').onclick = () => {
+        const confirmYesBtn = document.getElementById('confirmYes');
+        // Remove any existing listeners by cloning and replacing
+        const newConfirmYesBtn = confirmYesBtn.cloneNode(true);
+        confirmYesBtn.parentNode.replaceChild(newConfirmYesBtn, confirmYesBtn);
+        
+        newConfirmYesBtn.addEventListener('click', () => {
             hideConfirmModal();
             callback(true);
-        };
+        });
     }
     
     modal.classList.remove('hidden');
