@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugin Manager - Minecraft Server Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/minecraft-theme.css">
+    <link rel="stylesheet" href="css/plugins.css">
+</head>
+<body>
+    <div class="console-wrapper">
+        <!-- Header -->
+        <header class="console-header">
+            <div class="header-left">
+                <h1>🎮 Festas Builds - Plugin Manager</h1>
+            </div>
+            <div class="header-right">
+                <span id="currentUser" class="user-badge">Admin</span>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="console-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav>
+                    <button class="nav-item" data-section="dashboard" onclick="location.href='/console/'">
+                        <span>📊</span> Dashboard
+                    </button>
+                    <button class="nav-item" data-section="console" onclick="location.href='/console/'">
+                        <span>💻</span> Console
+                    </button>
+                    <button class="nav-item" data-section="players" onclick="location.href='/console/'">
+                        <span>👥</span> Players
+                    </button>
+                    <button class="nav-item" data-section="controls" onclick="location.href='/console/'">
+                        <span>⚙️</span> Controls
+                    </button>
+                    <button class="nav-item" data-section="backups" onclick="location.href='/console/'">
+                        <span>📦</span> Backups
+                    </button>
+                    <button class="nav-item active" data-section="plugins">
+                        <span>🔌</span> Plugins
+                    </button>
+                    <button class="nav-item" data-section="settings" onclick="location.href='/console/'">
+                        <span>🔧</span> Settings
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Plugin Manager Section -->
+                <section id="pluginManager" class="content-section active">
+                    <!-- Quick Install -->
+                    <div class="card plugin-install-card">
+                        <h3>📦 Quick Install</h3>
+                        <div class="install-form">
+                            <div class="form-group">
+                                <input 
+                                    type="text" 
+                                    id="pluginUrl" 
+                                    placeholder="Paste plugin URL here (Direct JAR, GitHub release, Modrinth)..." 
+                                    class="input url-input"
+                                >
+                            </div>
+                            <div class="form-group">
+                                <input 
+                                    type="text" 
+                                    id="customName" 
+                                    placeholder="Custom name (optional - auto-detected from plugin.yml)" 
+                                    class="input"
+                                >
+                            </div>
+                            <div class="form-actions">
+                                <button id="installBtn" class="btn btn-primary">
+                                    ⬇️ Install Plugin
+                                </button>
+                                <button id="bulkInstallBtn" class="btn btn-secondary">
+                                    📋 Bulk Install
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Installed Plugins -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🔌 Installed Plugins <span id="pluginCount" class="badge">0</span></h3>
+                            <div class="card-actions">
+                                <button id="refreshPluginsBtn" class="btn btn-sm">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div id="pluginsList" class="plugins-list">
+                            <div class="loading">Loading plugins...</div>
+                        </div>
+                    </div>
+
+                    <!-- Installation History -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📜 Installation History</h3>
+                            <div class="card-actions">
+                                <button id="clearHistoryBtn" class="btn btn-sm btn-danger">Clear</button>
+                            </div>
+                        </div>
+                        <div id="historyList" class="history-list">
+                            <div class="loading">Loading history...</div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3 id="confirmTitle">Confirm Action</h3>
+            <p id="confirmMessage">Are you sure?</p>
+            <div class="modal-actions">
+                <button id="confirmYes" class="btn btn-danger">Confirm</button>
+                <button id="confirmNo" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Option Modal (for GitHub releases with multiple JARs) -->
+    <div id="optionsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Select Plugin File</h3>
+            <p>Multiple JAR files found. Please select which one to download:</p>
+            <div id="optionsList" class="options-list"></div>
+            <div class="modal-actions">
+                <button id="optionsCancel" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Install Modal -->
+    <div id="bulkModal" class="modal" style="display: none;">
+        <div class="modal-content modal-large">
+            <h3>Bulk Install Plugins</h3>
+            <p>Enter one URL per line:</p>
+            <textarea id="bulkUrls" rows="10" class="textarea" placeholder="https://example.com/plugin1.jar
+https://example.com/plugin2.jar
+https://example.com/plugin3.jar"></textarea>
+            <div class="modal-actions">
+                <button id="bulkInstallStart" class="btn btn-primary">Install All</button>
+                <button id="bulkCancel" class="btn btn-secondary">Cancel</button>
+            </div>
+            <div id="bulkProgress" class="bulk-progress" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/plugins.js"></script>
+</body>
+</html>

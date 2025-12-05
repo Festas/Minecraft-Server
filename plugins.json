@@ -215,6 +215,14 @@
       "source": "manual",
       "download_url": "https://www.spigotmc.org/resources/advancedreplay.52849/",
       "description": "Record and replay gameplay - MANUAL DOWNLOAD from SpigotMC required"
+    },
+    {
+      "name": "PlugManX",
+      "enabled": true,
+      "category": "essential",
+      "source": "modrinth",
+      "project_id": "plugmanx",
+      "description": "Runtime plugin manager for hot-loading plugins without restart"
     }
   ]
 }

@@ -19,6 +19,7 @@ const playerRoutes = require('./routes/players');
 const serverRoutes = require('./routes/server');
 const fileRoutes = require('./routes/files');
 const backupRoutes = require('./routes/backups');
+const pluginRoutes = require('./routes/plugins');
 
 // Initialize Express app
 const app = express();
@@ -90,6 +91,7 @@ app.use('/api/players', csrfProtection, playerRoutes);
 app.use('/api/server', csrfProtection, serverRoutes);
 app.use('/api/files', csrfProtection, fileRoutes);
 app.use('/api/backups', csrfProtection, backupRoutes);
+app.use('/api/plugins', csrfProtection, pluginRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
