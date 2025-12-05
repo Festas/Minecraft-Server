@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../auth/auth');
-const rateLimit = require('express-rate-limit');
+const { serverControlLimiter, backupLimiter } = require('../middleware/rateLimiter');
 const dockerService = require('../services/docker');
 const rconService = require('../services/rcon');
 const statsService = require('../services/stats');
@@ -10,17 +10,11 @@ const util = require('util');
 const path = require('path');
 const execPromise = util.promisify(exec);
 
-// Rate limiter for server control operations
-const serverControlLimiter = rateLimit({
-    windowMs: 60000, // 1 minute
-    max: 20, // 20 requests per minute
-    message: 'Too many server control requests, please try again later',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
 // All server routes require authentication
 router.use(requireAuth);
+
+// Apply rate limiting to server control operations
+router.use(serverControlLimiter);
 
 /**
  * GET /server/status
@@ -179,20 +173,11 @@ router.post('/save-on', async (req, res) => {
     }
 });
 
-// Stricter rate limiter for backup operations (system commands)
-const backupLimiter = rateLimit({
-    windowMs: 300000, // 5 minutes
-    max: 2, // Only 2 backups per 5 minutes
-    message: 'Too many backup requests. Please wait before creating another backup.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
 /**
  * POST /server/backup
  * Trigger manual backup
  */
-router.post('/backup', backupLimiter, serverControlLimiter, async (req, res) => {
+router.post('/backup', backupLimiter, async (req, res) => {
     try {
         // Disable auto-save
         await rconService.saveOff();

@@ -36,6 +36,7 @@ id_rsa*
 # Console configuration
 console/backend/node_modules/
 console/backend/config/users.json
+console/backend/coverage/
 .env
 *.env
 !.env.example

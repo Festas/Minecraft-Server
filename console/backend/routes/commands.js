@@ -2,15 +2,20 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../auth/auth');
 const rconService = require('../services/rcon');
+const { commandLimiter } = require('../middleware/rateLimiter');
+const { validations } = require('../middleware/validation');
 
 // All command routes require authentication
 router.use(requireAuth);
+
+// Apply rate limiting to command execution
+router.use(commandLimiter);
 
 /**
  * POST /commands/execute
  * Execute a Minecraft command via RCON
  */
-router.post('/execute', async (req, res) => {
+router.post('/execute', validations.executeCommand, async (req, res) => {
     const { command } = req.body;
 
     if (!command) {
