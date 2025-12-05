@@ -283,15 +283,26 @@ async function loadServerStatus() {
         const response = await fetch('/api/server/status', {
             credentials: 'same-origin'
         });
-        const data = await response.json();
         
+        if (!response.ok) {
+            throw new Error('Failed to load server status');
+        }
+        
+        const data = await response.json();
         updateServerStatus(data);
     } catch (error) {
         console.error('Error loading server status:', error);
+        // Update with empty stats to show offline/default values
+        updateServerStatus({ status: 'offline' });
     }
 }
 
 function updateServerStatus(stats) {
+    // Handle missing stats object
+    if (!stats) {
+        stats = {};
+    }
+
     // Update status indicator
     const statusIndicator = document.getElementById('serverStatus');
     const statusText = document.getElementById('serverStatusText');
@@ -306,45 +317,54 @@ function updateServerStatus(stats) {
         }
     }
     
-    // Update player count
+    // Update player count with null checks
     if (stats.players) {
-        updatePlayerCount(stats.players.online, stats.players.max);
+        updatePlayerCount(
+            stats.players.online !== undefined ? stats.players.online : 0,
+            stats.players.max !== undefined ? stats.players.max : 20
+        );
+    } else {
+        updatePlayerCount(0, 20);
     }
     
-    // Update TPS
+    // Update TPS with null check
     const tpsEl = document.getElementById('tps');
-    if (tpsEl && stats.tps) {
-        tpsEl.textContent = stats.tps.toFixed(1);
+    if (tpsEl) {
+        tpsEl.textContent = stats.tps !== undefined ? stats.tps.toFixed(1) : '--';
     }
     
-    // Update uptime
+    // Update uptime with null check
     const uptimeEl = document.getElementById('uptime');
-    if (uptimeEl && stats.uptime) {
-        uptimeEl.textContent = formatUptime(stats.uptime);
+    if (uptimeEl) {
+        uptimeEl.textContent = stats.uptime ? formatUptime(stats.uptime) : '0m';
     }
     
-    // Update memory
+    // Update memory with null check
     const memoryEl = document.getElementById('memoryUsage');
-    if (memoryEl && stats.memory) {
-        memoryEl.textContent = `${stats.memory.used}GB / ${stats.memory.limit}GB`;
+    if (memoryEl) {
+        if (stats.memory && stats.memory.used && stats.memory.limit) {
+            memoryEl.textContent = `${stats.memory.used}GB / ${stats.memory.limit}GB`;
+        } else {
+            memoryEl.textContent = '-- / --';
+        }
     }
     
-    // Update CPU
+    // Update CPU with null check
     const cpuEl = document.getElementById('cpuUsage');
-    if (cpuEl && stats.cpu) {
-        cpuEl.textContent = `${stats.cpu}%`;
+    if (cpuEl) {
+        cpuEl.textContent = stats.cpu !== undefined ? `${stats.cpu}%` : '--';
     }
     
-    // Update version
+    // Update version with null check
     const versionEl = document.getElementById('mcVersion');
-    if (versionEl && stats.version) {
-        versionEl.textContent = stats.version;
+    if (versionEl) {
+        versionEl.textContent = stats.version || '--';
     }
     
-    // Update world size
+    // Update world size with null check
     const worldSizeEl = document.getElementById('worldSize');
-    if (worldSizeEl && stats.worldSize) {
-        worldSizeEl.textContent = stats.worldSize;
+    if (worldSizeEl) {
+        worldSizeEl.textContent = stats.worldSize || '--';
     }
 }
 

@@ -6,7 +6,8 @@ function initializeWebSocket() {
     // Connect to Socket.io
     socket = io({
         transports: ['websocket'],
-        upgrade: false
+        upgrade: false,
+        withCredentials: true  // Send cookies with WebSocket connection
     });
 
     socket.on('connect', () => {

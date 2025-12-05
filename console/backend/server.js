@@ -13,7 +13,7 @@ const path = require('path');
 const rconService = require('./services/rcon');
 const logsService = require('./services/logs');
 const { initializeUsers } = require('./auth/auth');
-const { configureSession } = require('./auth/session');
+const { getSessionMiddleware } = require('./auth/session');
 
 // Import routes
 const apiRoutes = require('./routes/api');
@@ -60,8 +60,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Session middleware
-app.use(configureSession());
+// Get session middleware (shared between Express and Socket.io)
+const sessionMiddleware = getSessionMiddleware();
+
+// Apply session middleware to Express
+app.use(sessionMiddleware);
+
+// Share session middleware with Socket.io
+io.engine.use(sessionMiddleware);
 
 // CSRF protection middleware (exclude WebSocket and static files)
 const csrfProtection = csrf({ cookie: false }); // Use session-based CSRF
