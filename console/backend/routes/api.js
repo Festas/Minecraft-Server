@@ -1,22 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { verifyCredentials } = require('../auth/auth');
-const rateLimit = require('express-rate-limit');
-
-// Rate limiter for login attempts
-const loginLimiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_ATTEMPTS || '5'),
-    message: 'Too many login attempts, please try again later',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
+const { loginLimiter } = require('../middleware/rateLimiter');
+const { validations } = require('../middleware/validation');
 
 /**
  * POST /api/login
  * Authenticate user
  */
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', loginLimiter, validations.login, async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {

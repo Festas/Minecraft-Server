@@ -17,6 +17,28 @@ services:
       # Bedrock Edition port (if using Geyser plugin)
       - "19132:19132/udp"
     
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    
+    # Networks
+    networks:
+      - minecraft-internal
+      - minecraft-external
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
     # Environment variables for server configuration
     environment:
       # Accept the Minecraft EULA (required to run the server)
@@ -101,6 +123,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+# Networks for service isolation
+networks:
+  minecraft-internal:
+    driver: bridge
+    internal: true
+  minecraft-external:
+    driver: bridge
 
 # Optional: Add a backup service using the same image
 # Uncomment this section to enable automated backups

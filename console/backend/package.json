@@ -5,7 +5,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "nodemon server.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "audit": "npm audit",
+    "audit:fix": "npm audit fix"
   },
   "keywords": [
     "minecraft",
@@ -26,11 +33,19 @@
     "cors": "^2.8.5",
     "rcon-client": "^4.2.3",
     "dockerode": "^4.0.2",
-    "csurf": "^1.11.0",
+    "csrf-csrf": "^3.0.4",
     "cookie-parser": "^1.4.6",
     "adm-zip": "^0.5.10",
     "js-yaml": "^4.1.0",
     "semver": "^7.5.4",
-    "axios": "^1.6.2"
+    "axios": "^1.6.2",
+    "express-validator": "^7.0.1",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "nodemon": "^3.0.2"
   }
 }
