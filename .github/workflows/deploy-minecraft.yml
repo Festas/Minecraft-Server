@@ -1,0 +1,172 @@
+name: Deploy Minecraft Server Container
+
+on:
+  workflow_dispatch:  # Manual trigger only for safety
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.RCON_PASSWORD }}" ]; then
+            MISSING_SECRETS+=("RCON_PASSWORD")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please add the following secrets to your repository:"
+            echo "Settings > Secrets and variables > Actions > New repository secret"
+            echo ""
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "- $secret"
+            done
+            exit 1
+          fi
+
+          echo "✓ All required secrets are configured"
+
+      - name: Deploy Minecraft server
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: RCON_PASSWORD
+          script: |
+            set -e
+
+            DEPLOY_DIR="/home/deploy/minecraft-server"
+
+            mkdir -p "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+
+            # Create .env file from secret
+            cat > .env <<EOF
+            RCON_PASSWORD="${RCON_PASSWORD}"
+            EOF
+            chmod 600 .env
+
+            # Create docker-compose.yml
+            cat > docker-compose.yml <<'EOF'
+            services:
+              minecraft-server:
+                image: itzg/minecraft-server:java21
+                container_name: minecraft-server
+                restart: unless-stopped
+                tty: true
+                stdin_open: true
+                environment:
+                  EULA: "TRUE"
+                  TYPE: "PAPER"
+                  VERSION: "1.20.4"
+                  MEMORY: "4G"
+                  USE_AIKAR_FLAGS: "true"
+                  ENABLE_RCON: "true"
+                  RCON_PASSWORD: "${RCON_PASSWORD}"
+                  RCON_PORT: 25575
+                  MOTD: "§6§l✦ §b§lFestas Builds §6§l✦ §r§f - Community Server"
+                  MAX_PLAYERS: 20
+                  DIFFICULTY: "normal"
+                  MODE: "survival"
+                  PVP: "true"
+                  ONLINE_MODE: "true"
+                  VIEW_DISTANCE: 10
+                  SPAWN_PROTECTION: 16
+                ports:
+                  - "25565:25565"
+                volumes:
+                  - minecraft_data:/data
+                networks:
+                  - caddy-network
+                healthcheck:
+                  test: mc-health
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 120s
+
+            volumes:
+              minecraft_data:
+                name: minecraft_data
+
+            networks:
+              caddy-network:
+                external: true
+            EOF
+
+            # Create caddy-network if it doesn't exist
+            docker network inspect caddy-network >/dev/null 2>&1 || docker network create caddy-network
+
+            # Deploy
+            docker compose up -d
+
+            # Wait for healthy
+            echo "Waiting for Minecraft server to become healthy (this may take up to 2 minutes)..."
+            for i in {1..60}; do
+              HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null || echo "starting")
+              if [ "$HEALTH" = "healthy" ]; then
+                echo "✓ Minecraft server is healthy"
+                break
+              fi
+              echo "Health status: $HEALTH (attempt $i/60)"
+              sleep 2
+            done
+
+            # Verify final health status
+            FINAL_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null || echo "unknown")
+            if [ "$FINAL_HEALTH" != "healthy" ]; then
+              echo "::error::Server did not become healthy after 2 minutes. Status: $FINAL_HEALTH"
+              docker logs minecraft-server --tail=50
+              exit 1
+            fi
+
+            # Show final status
+            docker ps | grep minecraft-server || true
+
+            echo "✓ Minecraft server deployed successfully!"
+
+      - name: Handle deployment failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Deployment Failed - Diagnostics ==="
+            echo ""
+            echo "=== Container Status ==="
+            docker ps -a | grep minecraft-server || echo "Container not found"
+            echo ""
+            echo "=== Container Logs ==="
+            docker logs minecraft-server --tail=100 2>&1 || echo "No logs available"
+            echo ""
+            echo "=== Recent Docker Events ==="
+            docker events --since 5m --until 1s 2>&1 | grep minecraft-server || echo "No recent events"
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          {
+            echo "## Minecraft Server Deployment Successful! 🚀"
+            echo ""
+            echo "The containerized Minecraft server has been deployed and is now running!"
+            echo ""
+            echo "**Image:** itzg/minecraft-server:java21"
+            echo "**Container:** minecraft-server"
+            echo "**Network:** caddy-network"
+            echo ""
+            echo "### Next Steps"
+            echo "1. Wait for server to be fully healthy (about 2 minutes)"
+            echo "2. Deploy the console using the Deploy Console workflow"
+            echo "3. Verify console connectivity at https://mc.festas-builds.com/console"
+          } >> "$GITHUB_STEP_SUMMARY"
