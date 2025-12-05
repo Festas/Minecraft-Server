@@ -170,7 +170,7 @@ jobs:
       
       - name: Upload plugins artifact
         if: steps.check_artifacts.outputs.has_plugins == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: minecraft-plugins
           path: plugins/*.jar
@@ -178,7 +178,7 @@ jobs:
       
       - name: Upload installation log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: installation-log
           path: plugin-install.log
