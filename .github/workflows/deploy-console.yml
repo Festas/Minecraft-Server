@@ -74,6 +74,9 @@ jobs:
           if [ -z "${{ secrets.SESSION_SECRET }}" ]; then
             MISSING_SECRETS+=("SESSION_SECRET")
           fi
+          if [ -z "${{ secrets.CSRF_SECRET }}" ]; then
+            MISSING_SECRETS+=("CSRF_SECRET")
+          fi
           
           if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
             echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
@@ -101,11 +104,12 @@ jobs:
           CONSOLE_ADMIN_PASSWORD: ${{ secrets.CONSOLE_ADMIN_PASSWORD }}
           RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          CSRF_SECRET: ${{ secrets.CSRF_SECRET }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: IMAGE_SHA,GHCR_PAT,GHCR_ACTOR,CONSOLE_ADMIN_USER,CONSOLE_ADMIN_PASSWORD,RCON_PASSWORD,SESSION_SECRET
+          envs: IMAGE_SHA,GHCR_PAT,GHCR_ACTOR,CONSOLE_ADMIN_USER,CONSOLE_ADMIN_PASSWORD,RCON_PASSWORD,SESSION_SECRET,CSRF_SECRET
           script: |
             set -e
             
@@ -129,6 +133,7 @@ jobs:
             RCON_PORT=25575
             RCON_PASSWORD=${RCON_PASSWORD}
             SESSION_SECRET=${SESSION_SECRET}
+            CSRF_SECRET=${CSRF_SECRET}
             MC_CONTAINER_NAME=minecraft-server
             MC_SERVER_DIR=/minecraft
             NODE_ENV=production
