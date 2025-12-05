@@ -47,8 +47,6 @@ jobs:
           tags: |
             ghcr.io/festas/minecraft-server-web:${{ steps.image_sha.outputs.sha }}
             ghcr.io/festas/minecraft-server-web:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
