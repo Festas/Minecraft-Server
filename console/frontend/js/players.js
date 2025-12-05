@@ -8,6 +8,8 @@ async function loadPlayers() {
         updatePlayerCount(data.online, data.max);
     } catch (error) {
         console.error('Error loading players:', error);
+        // Add fallback on error
+        updatePlayerCount(0, 20);
     }
 }
 
@@ -50,12 +52,16 @@ function updatePlayerCount(online, max) {
     const playerCount = document.getElementById('playerCount');
     const onlinePlayersCount = document.getElementById('onlinePlayersCount');
     
+    // Add null checks with fallback values
+    const onlineCount = online !== undefined && online !== null ? online : 0;
+    const maxCount = max !== undefined && max !== null ? max : 20;
+    
     if (playerCount) {
-        playerCount.textContent = `${online}/${max} Players`;
+        playerCount.textContent = `${onlineCount}/${maxCount} Players`;
     }
     
     if (onlinePlayersCount) {
-        onlinePlayersCount.textContent = `(${online})`;
+        onlinePlayersCount.textContent = `(${onlineCount})`;
     }
 }
 
