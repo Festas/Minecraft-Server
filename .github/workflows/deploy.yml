@@ -58,7 +58,7 @@ jobs:
         
         # Copy script and execute with password passed via stdin
         scp /tmp/inject-rcon.sh ${SERVER_USER}@${SERVER_HOST}:/tmp/inject-rcon.sh
-        echo "${RCON_PASSWORD}" | ssh ${SERVER_USER}@${SERVER_HOST} "bash /tmp/inject-rcon.sh && rm -f /tmp/inject-rcon.sh"
+        printf '%s\n' "${RCON_PASSWORD}" | ssh ${SERVER_USER}@${SERVER_HOST} "bash /tmp/inject-rcon.sh && rm -f /tmp/inject-rcon.sh"
         rm -f /tmp/inject-rcon.sh
         
         scp eula.txt ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
