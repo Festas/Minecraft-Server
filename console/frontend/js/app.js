@@ -30,7 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function checkAuth() {
     try {
-        const response = await fetch('/api/session');
+        const response = await fetch('/api/session', {
+            credentials: 'same-origin'
+        });
         const data = await response.json();
         
         if (!data.authenticated) {
@@ -278,7 +280,9 @@ async function controlServer(action) {
 
 async function loadServerStatus() {
     try {
-        const response = await fetch('/api/server/status');
+        const response = await fetch('/api/server/status', {
+            credentials: 'same-origin'
+        });
         const data = await response.json();
         
         updateServerStatus(data);
