@@ -24,7 +24,7 @@ describe('API Routes', () => {
     it('should return 400 if username has invalid characters', async () => {
       const response = await request(app)
         .post('/api/login')
-        .send({ username: 'test@user', password: 'password123' });
+        .send({ username: 'test$user!', password: 'password123' });
       
       expect(response.status).toBe(400);
     });

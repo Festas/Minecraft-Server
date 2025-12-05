@@ -27,10 +27,21 @@ describe('Login Error Handling', () => {
             expect(response.body.error).toBe('Invalid credentials');
         });
 
-        it('should reject usernames with invalid characters', async () => {
+        it('should accept usernames with @ and . characters', async () => {
             const response = await request(app)
                 .post('/api/login')
-                .send({ username: 'test@user', password: 'password123' });
+                .send({ username: 'test@user.com', password: 'password123' });
+            
+            // Will fail authentication but should pass validation
+            expect(response.status).toBe(401); // Authentication failed, not validation
+            expect(response.body).toHaveProperty('error');
+            expect(response.body.error).toBe('Invalid credentials');
+        });
+
+        it('should reject usernames with truly invalid characters', async () => {
+            const response = await request(app)
+                .post('/api/login')
+                .send({ username: 'test$user!', password: 'password123' });
             
             expect(response.status).toBe(400);
             expect(response.body).toHaveProperty('errors');
