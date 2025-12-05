@@ -51,7 +51,7 @@ jobs:
 
             # Create .env file from secret
             cat > .env <<EOF
-            RCON_PASSWORD=${RCON_PASSWORD}
+            RCON_PASSWORD="${RCON_PASSWORD}"
             EOF
             chmod 600 .env
 
