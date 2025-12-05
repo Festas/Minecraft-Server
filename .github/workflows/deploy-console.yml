@@ -1,0 +1,223 @@
+name: Deploy Console
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'console/**'
+      - '.github/workflows/deploy-console.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_sha: ${{ steps.image_sha.outputs.sha }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get short SHA
+        id: image_sha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./console
+          file: ./console/backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/festas/minecraft-console:${{ steps.image_sha.outputs.sha }}
+            ghcr.io/festas/minecraft-console:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+          
+          if [ -z "${{ secrets.GHCR_PAT }}" ]; then
+            MISSING_SECRETS+=("GHCR_PAT")
+          fi
+          if [ -z "${{ secrets.CONSOLE_ADMIN_USER }}" ]; then
+            MISSING_SECRETS+=("CONSOLE_ADMIN_USER")
+          fi
+          if [ -z "${{ secrets.CONSOLE_ADMIN_PASSWORD }}" ]; then
+            MISSING_SECRETS+=("CONSOLE_ADMIN_PASSWORD")
+          fi
+          if [ -z "${{ secrets.RCON_PASSWORD }}" ]; then
+            MISSING_SECRETS+=("RCON_PASSWORD")
+          fi
+          if [ -z "${{ secrets.SESSION_SECRET }}" ]; then
+            MISSING_SECRETS+=("SESSION_SECRET")
+          fi
+          
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please add the following secrets to your repository:"
+            echo "Settings > Secrets and variables > Actions > New repository secret"
+            echo ""
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "- $secret"
+            done
+            echo ""
+            echo "See CONSOLE-SETUP.md for detailed instructions."
+            exit 1
+          fi
+          
+          echo "✓ All required secrets are configured"
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          IMAGE_SHA: ${{ needs.build-and-push.outputs.image_sha }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_ACTOR: ${{ github.actor }}
+          CONSOLE_ADMIN_USER: ${{ secrets.CONSOLE_ADMIN_USER }}
+          CONSOLE_ADMIN_PASSWORD: ${{ secrets.CONSOLE_ADMIN_PASSWORD }}
+          RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE_SHA,GHCR_PAT,GHCR_ACTOR,CONSOLE_ADMIN_USER,CONSOLE_ADMIN_PASSWORD,RCON_PASSWORD,SESSION_SECRET
+          script: |
+            set -e
+            
+            DEPLOY_DIR="/home/deploy/minecraft-console"
+            MC_DIR="/home/deploy/minecraft-server"
+            
+            mkdir -p "$DEPLOY_DIR"
+            cd "$DEPLOY_DIR"
+            
+            # Login to GHCR
+            echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
+            
+            # Pull image
+            docker pull "ghcr.io/festas/minecraft-console:${IMAGE_SHA}"
+            
+            # Create .env file from secrets
+            cat > .env <<EOF
+            CONSOLE_ADMIN_USER=${CONSOLE_ADMIN_USER}
+            CONSOLE_ADMIN_PASSWORD=${CONSOLE_ADMIN_PASSWORD}
+            RCON_HOST=host.docker.internal
+            RCON_PORT=25575
+            RCON_PASSWORD=${RCON_PASSWORD}
+            SESSION_SECRET=${SESSION_SECRET}
+            MC_SERVER_DIR=/minecraft
+            NODE_ENV=production
+            EOF
+            chmod 600 .env
+            
+            # Create docker-compose.yml
+            cat > docker-compose.yml <<EOF
+            services:
+              minecraft-console:
+                image: ghcr.io/festas/minecraft-console:${IMAGE_SHA}
+                container_name: minecraft-console
+                restart: unless-stopped
+                extra_hosts:
+                  - "host.docker.internal:host-gateway"
+                volumes:
+                  - ./.env:/app/.env:ro
+                  - ${MC_DIR}:/minecraft:rw
+                  - /var/run/docker.sock:/var/run/docker.sock
+                  - console_data:/app/data
+                expose:
+                  - "3001"
+                networks:
+                  - caddy-network
+                healthcheck:
+                  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 30s
+            
+            volumes:
+              console_data:
+            
+            networks:
+              caddy-network:
+                external: true
+            EOF
+            
+            # Create caddy-network if it doesn't exist
+            docker network inspect caddy-network >/dev/null 2>&1 || docker network create caddy-network
+            
+            # Deploy
+            docker compose up -d
+            
+            # Wait for healthy
+            for i in {1..30}; do
+              HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-console 2>/dev/null || echo "starting")
+              if [ "$HEALTH" = "healthy" ]; then
+                echo "✓ Console is healthy"
+                break
+              fi
+              sleep 2
+            done
+            
+            echo "✓ Console deployed successfully!"
+            echo "URL: https://mc.festas-builds.com/console"
+
+      - name: Handle deployment failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Deployment Failed - Diagnostics ==="
+            echo ""
+            echo "=== Container Status ==="
+            docker ps -a | grep minecraft-console || echo "Container not found"
+            echo ""
+            echo "=== Container Logs ==="
+            docker logs minecraft-console --tail=100 2>&1 || echo "No logs available"
+            echo ""
+            echo "=== Recent Docker Events ==="
+            docker events --since 5m --until 1s 2>&1 | grep minecraft-console || echo "No recent events"
+
+      - name: Deployment summary
+        if: success()
+        run: |
+          {
+            echo "## Console Deployment Successful! 🚀"
+            echo ""
+            echo "The web console has been deployed and is now live!"
+            echo ""
+            echo "**Docker Image:** ghcr.io/festas/minecraft-console:${{ needs.build-and-push.outputs.image_sha }}"
+            echo "**Console URL:** https://mc.festas-builds.com/console"
+            echo ""
+            echo "### Next Steps"
+            echo "1. Ensure RCON is enabled in server.properties"
+            echo "2. Update Caddyfile in Link-in-Bio repository (one-time setup)"
+            echo "3. Access console at the URL above"
+          } >> "$GITHUB_STEP_SUMMARY"
