@@ -46,6 +46,14 @@ jobs:
         scp server.properties ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         
         # Inject RCON password from secret (keeps sensitive data out of repo)
+        # Step 1: Upload password securely to temp file via stdin
+        echo "${RCON_PASSWORD}" | ssh ${SERVER_USER}@${SERVER_HOST} 'cat > /tmp/.rcon_pwd && chmod 600 /tmp/.rcon_pwd'
+        
+        # Step 2: Inject password using perl (reads from file, handles special chars)
+        ssh ${SERVER_USER}@${SERVER_HOST} 'perl -i -pe '\''BEGIN { open(my $fh, "<", "/tmp/.rcon_pwd") or die "Cannot open temp password file: $!\n"; chomp($pass = <$fh>); close($fh); } s/^rcon\.password=.*/rcon.password=$pass/'\'' /home/deploy/minecraft-server/server.properties && rm -f /tmp/.rcon_pwd || { rm -f /tmp/.rcon_pwd; exit 1; }'
+        
+        # Step 3: Verify injection succeeded  
+        ssh ${SERVER_USER}@${SERVER_HOST} 'if grep -q "^rcon\.password=RCON_PASSWORD_PLACEHOLDER" /home/deploy/minecraft-server/server.properties; then echo "Error: Failed to inject RCON password"; exit 1; fi'
         # Create script to inject password (password passed via stdin for security)
         cat > /tmp/inject-rcon.sh << 'INJECT_SCRIPT'
         # Read password from stdin to avoid exposure in process list/command history
