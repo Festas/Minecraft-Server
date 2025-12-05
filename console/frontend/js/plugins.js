@@ -701,12 +701,6 @@ function formatTime(timestamp) {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 }
 
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 function showToast(message, type = 'info') {
     if (typeof window.showNotification === 'function') {
         window.showNotification(message, type);

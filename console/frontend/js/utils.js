@@ -3,6 +3,13 @@
 // CSRF token (fetched after login)
 let csrfToken = null;
 
+// HTML escaping utility to prevent XSS attacks
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Fetch CSRF token
 async function fetchCsrfToken() {
     try {
@@ -38,3 +45,4 @@ async function apiRequest(url, options = {}) {
 // Export for use in other scripts
 window.apiRequest = apiRequest;
 window.fetchCsrfToken = fetchCsrfToken;
+window.escapeHtml = escapeHtml;

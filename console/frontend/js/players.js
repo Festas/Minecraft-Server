@@ -1,4 +1,8 @@
 // Player management
+
+// Fallback avatar SVG for when Crafatar fails to load
+const FALLBACK_AVATAR_SVG = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>';
+
 async function loadPlayers() {
     try {
         const response = await apiRequest('/api/players/list');
@@ -20,13 +24,6 @@ document.addEventListener('click', function(e) {
         if (player) kickPlayer(player);
     }
 });
-
-// HTML escaping utility to prevent XSS
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
 
 function renderPlayersList(data) {
     const playersList = document.getElementById('playersList');
@@ -64,7 +61,7 @@ function renderPlayersList(data) {
         // Add error handler to image via JavaScript (CSP compliant)
         const img = playerItem.querySelector('.player-avatar');
         img.addEventListener('error', function() {
-            this.src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>';
+            this.src = FALLBACK_AVATAR_SVG;
         });
         
         playersList.appendChild(playerItem);
