@@ -352,7 +352,7 @@ function updateServerStatus(stats) {
     // Update CPU with null check
     const cpuEl = document.getElementById('cpuUsage');
     if (cpuEl) {
-        cpuEl.textContent = stats.cpu !== undefined ? `${stats.cpu}%` : '--%';
+        cpuEl.textContent = stats.cpu !== undefined ? `${stats.cpu}%` : '--';
     }
     
     // Update version with null check
