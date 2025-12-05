@@ -33,7 +33,7 @@
     "cors": "^2.8.5",
     "rcon-client": "^4.2.3",
     "dockerode": "^4.0.2",
-    "csrf-csrf": "^3.0.4",
+    "csrf-csrf": "^4.0.3",
     "cookie-parser": "^1.4.6",
     "adm-zip": "^0.5.10",
     "js-yaml": "^4.1.0",
