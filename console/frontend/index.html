@@ -41,7 +41,7 @@
                     <button class="nav-item" data-section="backups">
                         <span>📦</span> Backups
                     </button>
-                    <button class="nav-item" onclick="location.href='/console/plugins.html'">
+                    <button class="nav-item" data-href="/console/plugins.html">
                         <span>🔌</span> Plugins
                     </button>
                     <button class="nav-item" data-section="settings">
@@ -228,7 +228,7 @@
     </div>
 
     <!-- Confirmation Modal -->
-    <div id="confirmModal" class="modal" style="display: none;">
+    <div id="confirmModal" class="modal hidden">
         <div class="modal-content">
             <h3 id="confirmTitle">Confirm Action</h3>
             <p id="confirmMessage">Are you sure?</p>
