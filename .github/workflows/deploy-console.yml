@@ -129,7 +129,7 @@ jobs:
             cat > .env <<EOF
             ADMIN_USERNAME=${CONSOLE_ADMIN_USER}
             ADMIN_PASSWORD=${CONSOLE_ADMIN_PASSWORD}
-            RCON_HOST=host.docker.internal
+            RCON_HOST=minecraft-server
             RCON_PORT=25575
             RCON_PASSWORD=${RCON_PASSWORD}
             SESSION_SECRET=${SESSION_SECRET}

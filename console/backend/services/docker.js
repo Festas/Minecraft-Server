@@ -17,13 +17,13 @@ class DockerService {
             );
             
             if (!containerInfo) {
-                throw new Error('Minecraft container not found');
+                return null;
             }
             
             return this.docker.getContainer(containerInfo.Id);
         } catch (error) {
             console.error('Error getting container:', error);
-            throw error;
+            return null;
         }
     }
 
@@ -33,6 +33,9 @@ class DockerService {
     async startServer() {
         try {
             const container = await this.getContainer();
+            if (!container) {
+                return { success: false, error: 'Minecraft container not found' };
+            }
             await container.start();
             return { success: true, message: 'Server starting...' };
         } catch (error) {
@@ -47,6 +50,9 @@ class DockerService {
     async stopServer() {
         try {
             const container = await this.getContainer();
+            if (!container) {
+                return { success: false, error: 'Minecraft container not found' };
+            }
             await container.stop({ t: 30 }); // 30 second timeout
             return { success: true, message: 'Server stopped' };
         } catch (error) {
@@ -61,6 +67,9 @@ class DockerService {
     async killServer() {
         try {
             const container = await this.getContainer();
+            if (!container) {
+                return { success: false, error: 'Minecraft container not found' };
+            }
             await container.kill();
             return { success: true, message: 'Server killed' };
         } catch (error) {
@@ -75,6 +84,9 @@ class DockerService {
     async restartServer() {
         try {
             const container = await this.getContainer();
+            if (!container) {
+                return { success: false, error: 'Minecraft container not found' };
+            }
             await container.restart({ t: 30 });
             return { success: true, message: 'Server restarting...' };
         } catch (error) {
@@ -89,6 +101,10 @@ class DockerService {
     async getStats() {
         try {
             const container = await this.getContainer();
+            if (!container) {
+                return null;
+            }
+            
             const stats = await container.stats({ stream: false });
             
             // Calculate CPU usage
@@ -124,6 +140,10 @@ class DockerService {
     async getStatus() {
         try {
             const container = await this.getContainer();
+            if (!container) {
+                return { running: false, status: 'not found', uptime: 0 };
+            }
+            
             const info = await container.inspect();
             
             return {
@@ -145,6 +165,9 @@ class DockerService {
     async getLogs(tail = 100) {
         try {
             const container = await this.getContainer();
+            if (!container) {
+                return '';
+            }
             const logs = await container.logs({
                 stdout: true,
                 stderr: true,
@@ -165,6 +188,9 @@ class DockerService {
     async streamLogs(callback) {
         try {
             const container = await this.getContainer();
+            if (!container) {
+                throw new Error('Minecraft container not found');
+            }
             const stream = await container.logs({
                 stdout: true,
                 stderr: true,
