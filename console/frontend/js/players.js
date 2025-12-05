@@ -52,9 +52,9 @@ function updatePlayerCount(online, max) {
     const playerCount = document.getElementById('playerCount');
     const onlinePlayersCount = document.getElementById('onlinePlayersCount');
     
-    // Add null checks with fallback values
-    const onlineCount = online !== undefined && online !== null ? online : 0;
-    const maxCount = max !== undefined && max !== null ? max : 20;
+    // Add null checks with fallback values using nullish coalescing
+    const onlineCount = online ?? 0;
+    const maxCount = max ?? 20;
     
     if (playerCount) {
         playerCount.textContent = `${onlineCount}/${maxCount} Players`;

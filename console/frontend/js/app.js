@@ -330,7 +330,7 @@ function updateServerStatus(stats) {
     // Update TPS with null check
     const tpsEl = document.getElementById('tps');
     if (tpsEl) {
-        tpsEl.textContent = stats.tps !== undefined ? stats.tps.toFixed(1) : '20.0';
+        tpsEl.textContent = stats.tps !== undefined ? stats.tps.toFixed(1) : '--';
     }
     
     // Update uptime with null check
