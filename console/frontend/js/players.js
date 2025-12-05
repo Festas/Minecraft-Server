@@ -40,7 +40,7 @@ function renderPlayersList(data) {
                 <span>${player}</span>
             </div>
             <div class="player-actions">
-                <button class="btn btn-sm" onclick="kickPlayer('${player}')">Kick</button>
+                <button class="btn btn-sm player-kick-btn" data-player="${player}">Kick</button>
             </div>
         `;
         
@@ -180,3 +180,14 @@ async function changeGamemode(player, mode) {
         showNotification('Error changing gamemode', 'error');
     }
 }
+
+// Event delegation for player kick buttons (CSP compliant)
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.matches('.player-kick-btn')) {
+        var player = e.target.dataset.player;
+        if (player) {
+            kickPlayer(player);
+        }
+    }
+});
+

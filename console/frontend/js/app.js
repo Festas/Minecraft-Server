@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners
     setupEventListeners();
     
+    // Initialize data-href navigation (CSP compliant)
+    initializeDataHrefNavigation();
+    
     // Start stats polling
     startStatsPolling();
     

@@ -48,6 +48,9 @@ async function fetchCsrfToken() {
 
 // Initialize event listeners
 function initializeEventListeners() {
+    // Initialize data-href navigation (CSP compliant)
+    initializeDataHrefNavigation();
+    
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', logout);
     
@@ -71,6 +74,46 @@ function initializeEventListeners() {
     // Modal close
     document.getElementById('confirmNo').addEventListener('click', hideConfirmModal);
     document.getElementById('optionsCancel').addEventListener('click', hideOptionsModal);
+    
+    // Event delegation for plugin actions (CSP compliant)
+    document.addEventListener('click', function(e) {
+        // Handle plugin rollback
+        if (e.target && e.target.matches('.plugin-rollback-btn')) {
+            var pluginName = e.target.dataset.plugin;
+            if (pluginName) {
+                rollbackPlugin(pluginName);
+            }
+        }
+        
+        // Handle plugin uninstall
+        if (e.target && e.target.matches('.plugin-uninstall-btn')) {
+            var pluginName = e.target.dataset.plugin;
+            if (pluginName) {
+                confirmUninstall(pluginName);
+            }
+        }
+        
+        // Handle option item selection
+        if (e.target && (e.target.matches('.option-item') || e.target.closest('.option-item'))) {
+            var optionItem = e.target.matches('.option-item') ? e.target : e.target.closest('.option-item');
+            var url = optionItem.dataset.url;
+            var downloadUrl = optionItem.dataset.downloadUrl;
+            if (url && downloadUrl) {
+                selectOption(url, downloadUrl);
+            }
+        }
+    });
+    
+    // Event delegation for change events (for checkboxes)
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.matches('.plugin-toggle-input')) {
+            var pluginName = e.target.dataset.plugin;
+            var enabled = e.target.checked;
+            if (pluginName) {
+                togglePlugin(pluginName, enabled);
+            }
+        }
+    });
 }
 
 // Logout
@@ -135,7 +178,7 @@ function renderPlugins() {
                 <div class="plugin-toggle">
                     <label class="toggle-switch">
                         <input type="checkbox" ${plugin.enabled ? 'checked' : ''} 
-                               onchange="togglePlugin('${plugin.name}', this.checked)">
+                               class="plugin-toggle-input" data-plugin="${plugin.name}">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -150,8 +193,8 @@ function renderPlugins() {
                 </div>
             </div>
             <div class="plugin-actions">
-                ${plugin.hasBackup ? `<button class="action-btn" onclick="rollbackPlugin('${plugin.name}')" title="Rollback to backup">↩️</button>` : ''}
-                <button class="action-btn danger" onclick="confirmUninstall('${plugin.name}')" title="Uninstall">🗑️</button>
+                ${plugin.hasBackup ? `<button class="action-btn plugin-rollback-btn" data-plugin="${plugin.name}" title="Rollback to backup">↩️</button>` : ''}
+                <button class="action-btn danger plugin-uninstall-btn" data-plugin="${plugin.name}" title="Uninstall">🗑️</button>
             </div>
         </div>
     `).join('');
@@ -214,13 +257,13 @@ function showOptionsModal(options, url) {
     const list = document.getElementById('optionsList');
     
     list.innerHTML = options.map((option, index) => `
-        <div class="option-item ${index === 0 ? 'recommended' : ''}" onclick="selectOption('${url}', '${option.downloadUrl}')">
+        <div class="option-item ${index === 0 ? 'recommended' : ''}" data-url="${url}" data-download-url="${option.downloadUrl}">
             <div class="option-name">${escapeHtml(option.filename)} ${index === 0 ? '← Recommended' : ''}</div>
             <div class="option-size">${formatBytes(option.size)}</div>
         </div>
     `).join('');
     
-    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
 }
 
 // Select option from multiple JARs
@@ -533,13 +576,13 @@ async function clearHistory() {
 
 // Bulk install modal
 function showBulkModal() {
-    document.getElementById('bulkModal').style.display = 'flex';
+    document.getElementById('bulkModal').classList.remove('hidden');
     document.getElementById('bulkUrls').value = '';
-    document.getElementById('bulkProgress').style.display = 'none';
+    document.getElementById('bulkProgress').classList.add('hidden');
 }
 
 function hideBulkModal() {
-    document.getElementById('bulkModal').style.display = 'none';
+    document.getElementById('bulkModal').classList.add('hidden');
 }
 
 // Handle bulk install
@@ -559,7 +602,7 @@ async function handleBulkInstall() {
     }
     
     const progressDiv = document.getElementById('bulkProgress');
-    progressDiv.style.display = 'block';
+    progressDiv.classList.remove('hidden');
     progressDiv.innerHTML = '';
     
     for (let i = 0; i < urls.length; i++) {
@@ -626,15 +669,15 @@ function showConfirmModal(title, message, callback, actions = null) {
         };
     }
     
-    modal.style.display = 'flex';
+    modal.classList.remove('hidden');
 }
 
 function hideConfirmModal() {
-    document.getElementById('confirmModal').style.display = 'none';
+    document.getElementById('confirmModal').classList.add('hidden');
 }
 
 function hideOptionsModal() {
-    document.getElementById('optionsModal').style.display = 'none';
+    document.getElementById('optionsModal').classList.add('hidden');
 }
 
 function formatBytes(bytes) {

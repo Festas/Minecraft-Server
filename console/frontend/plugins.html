@@ -27,25 +27,25 @@
             <!-- Sidebar -->
             <aside class="sidebar">
                 <nav>
-                    <button class="nav-item" data-section="dashboard" onclick="location.href='/console/'">
+                    <button class="nav-item" data-section="dashboard" data-href="/console/">
                         <span>📊</span> Dashboard
                     </button>
-                    <button class="nav-item" data-section="console" onclick="location.href='/console/'">
+                    <button class="nav-item" data-section="console" data-href="/console/">
                         <span>💻</span> Console
                     </button>
-                    <button class="nav-item" data-section="players" onclick="location.href='/console/'">
+                    <button class="nav-item" data-section="players" data-href="/console/">
                         <span>👥</span> Players
                     </button>
-                    <button class="nav-item" data-section="controls" onclick="location.href='/console/'">
+                    <button class="nav-item" data-section="controls" data-href="/console/">
                         <span>⚙️</span> Controls
                     </button>
-                    <button class="nav-item" data-section="backups" onclick="location.href='/console/'">
+                    <button class="nav-item" data-section="backups" data-href="/console/">
                         <span>📦</span> Backups
                     </button>
                     <button class="nav-item active" data-section="plugins">
                         <span>🔌</span> Plugins
                     </button>
-                    <button class="nav-item" data-section="settings" onclick="location.href='/console/'">
+                    <button class="nav-item" data-section="settings" data-href="/console/">
                         <span>🔧</span> Settings
                     </button>
                 </nav>
@@ -117,7 +117,7 @@
     </div>
 
     <!-- Confirmation Modal -->
-    <div id="confirmModal" class="modal" style="display: none;">
+    <div id="confirmModal" class="modal hidden">
         <div class="modal-content">
             <h3 id="confirmTitle">Confirm Action</h3>
             <p id="confirmMessage">Are you sure?</p>
@@ -129,7 +129,7 @@
     </div>
 
     <!-- Multi-Option Modal (for GitHub releases with multiple JARs) -->
-    <div id="optionsModal" class="modal" style="display: none;">
+    <div id="optionsModal" class="modal hidden">
         <div class="modal-content">
             <h3>Select Plugin File</h3>
             <p>Multiple JAR files found. Please select which one to download:</p>
@@ -141,7 +141,7 @@
     </div>
 
     <!-- Bulk Install Modal -->
-    <div id="bulkModal" class="modal" style="display: none;">
+    <div id="bulkModal" class="modal hidden">
         <div class="modal-content modal-large">
             <h3>Bulk Install Plugins</h3>
             <p>Enter one URL per line:</p>
@@ -152,7 +152,7 @@ https://example.com/plugin3.jar"></textarea>
                 <button id="bulkInstallStart" class="btn btn-primary">Install All</button>
                 <button id="bulkCancel" class="btn btn-secondary">Cancel</button>
             </div>
-            <div id="bulkProgress" class="bulk-progress" style="display: none;"></div>
+            <div id="bulkProgress" class="bulk-progress hidden"></div>
         </div>
     </div>
 

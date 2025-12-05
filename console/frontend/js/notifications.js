@@ -29,7 +29,7 @@ function showConfirmation(title, message) {
         
         titleEl.textContent = title;
         messageEl.textContent = message;
-        modal.style.display = 'flex';
+        modal.classList.remove('hidden');
         
         const handleYes = () => {
             cleanup();
@@ -42,7 +42,7 @@ function showConfirmation(title, message) {
         };
         
         const cleanup = () => {
-            modal.style.display = 'none';
+            modal.classList.add('hidden');
             yesBtn.removeEventListener('click', handleYes);
             noBtn.removeEventListener('click', handleNo);
         };
