@@ -46,16 +46,20 @@ jobs:
         scp server.properties ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         
         # Inject RCON password from secret (keeps sensitive data out of repo)
-        # Using a temporary script to avoid exposing password in process list
+        # Create script to inject password (password passed via stdin for security)
         cat > /tmp/inject-rcon.sh << 'INJECT_SCRIPT'
+        # Read password from stdin to avoid exposure in process list/command history
+        read -r RCON_PASSWORD
         awk -v pwd="${RCON_PASSWORD}" \
           '/^rcon\.password=/ {print "rcon.password=" pwd; next} {print}' \
           /home/deploy/minecraft-server/server.properties > /tmp/server.properties.tmp
         mv /tmp/server.properties.tmp /home/deploy/minecraft-server/server.properties
         INJECT_SCRIPT
+        
+        # Copy script and execute with password passed via stdin
         scp /tmp/inject-rcon.sh ${SERVER_USER}@${SERVER_HOST}:/tmp/inject-rcon.sh
-        ssh ${SERVER_USER}@${SERVER_HOST} "RCON_PASSWORD='${RCON_PASSWORD}' bash /tmp/inject-rcon.sh && rm /tmp/inject-rcon.sh"
-        rm /tmp/inject-rcon.sh
+        echo "${RCON_PASSWORD}" | ssh ${SERVER_USER}@${SERVER_HOST} "bash /tmp/inject-rcon.sh && rm -f /tmp/inject-rcon.sh"
+        rm -f /tmp/inject-rcon.sh
         
         scp eula.txt ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
         scp start.sh ${SERVER_USER}@${SERVER_HOST}:/home/deploy/minecraft-server/
