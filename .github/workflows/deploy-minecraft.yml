@@ -367,8 +367,10 @@ jobs:
                       # Restart console container if running
                       if docker ps --format '{{.Names}}' | grep -q '^minecraft-console$'; then
                         echo "Restarting console container..."
-                        if docker compose up -d --force-recreate minecraft-console 2>/dev/null || docker restart minecraft-console 2>/dev/null; then
-                          echo "✓ Console container restarted"
+                        if docker compose up -d --force-recreate minecraft-console 2>&1; then
+                          echo "✓ Console container restarted with compose"
+                        elif docker restart minecraft-console 2>&1; then
+                          echo "✓ Console container restarted with docker restart (fallback)"
                         else
                           echo "✗ Failed to restart console container"
                         fi
