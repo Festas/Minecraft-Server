@@ -126,6 +126,32 @@ class RconService {
     }
 
     /**
+     * Check if RCON is connected
+     */
+    isConnected() {
+        try {
+            // Check if rcon exists and is authenticated
+            // The rcon-client library sets authenticated to true on successful connection
+            return this.rcon !== null && this.rcon.authenticated === true;
+        } catch (error) {
+            // If any error occurs checking the connection, assume disconnected
+            return false;
+        }
+    }
+
+    /**
+     * Get connection status details
+     */
+    getConnectionStatus() {
+        return {
+            connected: this.isConnected(),
+            host: this.config.host,
+            port: this.config.port,
+            reconnecting: this.reconnectInterval !== null
+        };
+    }
+
+    /**
      * Disconnect from RCON
      */
     async disconnect() {

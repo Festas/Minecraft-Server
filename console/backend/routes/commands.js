@@ -43,7 +43,19 @@ router.post('/execute', validations.executeCommand, async (req, res) => {
         res.json(result);
     } catch (error) {
         console.error('Error executing command:', error);
-        res.status(500).json({ error: 'Failed to execute command' });
+        
+        // Pass specific RCON connection errors to frontend
+        if (error.message === 'RCON not connected') {
+            res.status(503).json({ 
+                success: false,
+                error: 'RCON not connected' 
+            });
+        } else {
+            res.status(500).json({ 
+                success: false,
+                error: error.message || 'Failed to execute command' 
+            });
+        }
     }
 });
 

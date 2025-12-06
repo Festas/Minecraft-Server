@@ -306,6 +306,30 @@ function updateServerStatus(stats) {
         stats = {};
     }
 
+    // Update RCON warning banner
+    // Treat undefined/null as disconnected (safe default)
+    const rconWarning = document.getElementById('rconWarning');
+    if (rconWarning) {
+        if (!stats.rconConnected && stats.status === 'online') {
+            rconWarning.classList.remove('hidden');
+        } else {
+            rconWarning.classList.add('hidden');
+        }
+    }
+
+    // Disable command controls if RCON is not connected
+    // Treat undefined/null as disconnected (safe default)
+    const commandInput = document.getElementById('commandInput');
+    const sendCommandBtn = document.getElementById('sendCommandBtn');
+    
+    if (!stats.rconConnected) {
+        if (commandInput) commandInput.disabled = true;
+        if (sendCommandBtn) sendCommandBtn.disabled = true;
+    } else {
+        if (commandInput) commandInput.disabled = false;
+        if (sendCommandBtn) sendCommandBtn.disabled = false;
+    }
+
     // Update status indicator
     const statusIndicator = document.getElementById('serverStatus');
     const statusText = document.getElementById('serverStatusText');
