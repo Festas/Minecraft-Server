@@ -279,7 +279,7 @@ jobs:
               printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" >> .env.tmp
               mv .env.tmp .env
               chmod 600 .env
-              
+
               # Restart console container if running
               if docker ps --format '{{.Names}}' | grep -q '^minecraft-console$'; then
                 echo "Restarting console container..."
