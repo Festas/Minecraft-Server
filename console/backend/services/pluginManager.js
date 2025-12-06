@@ -39,11 +39,11 @@ async function downloadFile(url, outputPath, onProgress = null) {
         response.data.pipe(writer);
         
         return new Promise((resolve, reject) => {
-            // Add timeout for the write operation itself
+            // Add timeout for the write operation - same as HTTP timeout
             const writeTimeout = setTimeout(() => {
                 writer.destroy();
                 reject(new Error('Download write timeout - file writing took too long'));
-            }, 180000); // 3 minutes total timeout
+            }, 120000); // 2 minutes - same as HTTP timeout
             
             writer.on('finish', () => {
                 clearTimeout(writeTimeout);
@@ -86,10 +86,13 @@ async function getAllPlugins() {
         try {
             data = JSON.parse(content);
         } catch (parseError) {
+            // Sanitize content preview - only show first 100 chars and mask potential secrets
+            const preview = content.substring(0, 100).replace(/(['"])([^'"]{8,})(['"])/g, '$1***$3');
             console.error(`Failed to parse plugins.json: ${parseError.message}`, {
                 file: PLUGINS_JSON,
-                contentPreview: content.substring(0, 200),
-                error: parseError.stack
+                contentPreview: preview,
+                contentLength: content.length,
+                parseErrorLine: parseError.message
             });
             return [];
         }
