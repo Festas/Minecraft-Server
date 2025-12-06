@@ -282,7 +282,7 @@ jobs:
 
                 echo ""
                 echo "Step 3: Checking for other Java processes..."
-                ps aux | grep -E "java.*minecraft|java.*paper|java.*server.jar" | grep -v grep \
+                ps aux | grep -E "paper|server.jar|minecraft" | grep java | grep -v grep \
                   || echo "✓ No Java/Minecraft processes running"
 
                 echo ""
