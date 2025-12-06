@@ -204,19 +204,170 @@ Edit `plugins.json` to add plugins:
 
 ## Troubleshooting
 
-### Plugin installation fails
-- Check that the URL is accessible
-- Verify the file is a valid JAR with plugin.yml
-- Check console logs for detailed error messages
+### Plugin Manager Shows "Failed to load plugins"
+
+**Symptoms:**
+- Empty plugin list with error message
+- Console shows error about plugins.json
+
+**Common Causes & Solutions:**
+
+1. **Missing plugins.json file**
+   - Create an empty `plugins.json` in repository root:
+     ```json
+     {
+       "plugins": []
+     }
+     ```
+
+2. **Corrupt plugins.json (JSON parse error)**
+   - Check the file for syntax errors
+   - Validate JSON at https://jsonlint.com/
+   - Look for missing commas, brackets, or quotes
+   - Check backend logs for specific parse error location
+
+3. **Empty plugins.json**
+   - File exists but is empty or contains only whitespace
+   - Add proper structure: `{"plugins": []}`
+
+4. **Plugins directory not writable**
+   - Check directory permissions: `ls -la plugins/`
+   - Ensure the console process has write access
+   - Fix with: `chmod 755 plugins/`
+
+### Plugin Installation Hangs or Times Out
+
+**Symptoms:**
+- Installation appears stuck
+- No progress updates
+- Eventually fails with timeout error
+
+**Common Causes & Solutions:**
+
+1. **Slow or unresponsive remote server**
+   - Plugin files are downloaded with 2-minute timeout
+   - Large plugins may need more time
+   - Try downloading manually and using direct JAR URL
+
+2. **Network connectivity issues**
+   - Check internet connection
+   - Verify URL is accessible: `curl -I <url>`
+   - Check firewall settings
+
+3. **File size too large (>100MB)**
+   - Plugin exceeds maximum file size limit
+   - Download manually and place in `plugins/` folder
+   - Update plugins.json manually
+
+### Installation Fails
+
+**Symptoms:**
+- Error message: "Installation failed"
+- Plugin not added to list
+
+**Common Causes & Solutions:**
+
+1. **Invalid JAR file**
+   - File is not a valid JAR
+   - Missing plugin.yml inside JAR
+   - Corrupted download
+   - Solution: Download from official source
+
+2. **Plugins directory not accessible**
+   - Error: "Plugins directory not accessible or not writable"
+   - Check directory exists: `ls -la plugins/`
+   - Check permissions: should be readable and writable
+
+3. **Insufficient disk space**
+   - Check available space: `df -h`
+   - Free up space or expand volume
 
 ### GitHub API rate limiting
-- Set `GITHUB_TOKEN` environment variable
+
+**Symptoms:**
+- Error message about rate limiting
+- Cannot install from GitHub releases
+
+**Solution:**
+- Set `GITHUB_TOKEN` environment variable in `.env`
 - This increases rate limit from 60 to 5000 requests/hour
+- Get token from: https://github.com/settings/tokens
 
 ### Plugin doesn't load after installation
-- Check if PlugManX is installed
-- Try restarting the server
-- Verify plugin dependencies are met
+
+**Symptoms:**
+- Plugin installed successfully
+- Not appearing in server plugin list
+
+**Common Causes & Solutions:**
+
+1. **Server restart required**
+   - Check if PlugManX is installed
+   - Without PlugManX, restart server to load plugins
+   - With PlugManX: plugins load automatically
+
+2. **Plugin dependencies missing**
+   - Check plugin.yml for required dependencies
+   - Install dependencies first
+   - Restart server after all dependencies installed
+
+3. **Incompatible Minecraft version**
+   - Verify plugin supports your server version
+   - Check plugin description for compatibility
+   - Try different plugin version
+
+### Health Check Endpoint
+
+Check plugin manager status:
+```bash
+curl http://localhost:3001/api/plugins/health
+```
+
+**Healthy Response (200):**
+```json
+{
+  "status": "healthy",
+  "checks": {
+    "pluginsJson": {
+      "status": "ok",
+      "message": "Found 15 plugins"
+    },
+    "pluginsDir": {
+      "status": "ok",
+      "message": "Directory is writable"
+    }
+  }
+}
+```
+
+**Unhealthy Response (503):**
+```json
+{
+  "status": "unhealthy",
+  "checks": {
+    "pluginsJson": {
+      "status": "error",
+      "message": "JSON parse error: Unexpected token ..."
+    },
+    "pluginsDir": {
+      "status": "ok",
+      "message": "Directory is writable"
+    }
+  }
+}
+```
+
+### Frontend Shows Blank Screen
+
+**Symptoms:**
+- Plugin page doesn't load
+- JavaScript errors in console
+
+**Solution:**
+- Hard refresh browser (Ctrl+Shift+R)
+- Clear browser cache
+- Check browser console for specific errors
+- Verify authentication (may need to re-login)
 
 ## Examples
 

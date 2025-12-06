@@ -142,15 +142,35 @@ async function loadPlugins() {
             },
             credentials: 'same-origin'
         });
+        
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+        }
+        
         const data = await response.json();
         
+        // Always expect plugins array, even if empty
         if (data.plugins) {
             plugins = data.plugins;
             renderPlugins();
+            
+            // Show error toast if there was an error but we got data
+            if (data.error) {
+                showToast(data.error, 'warning');
+            }
+        } else {
+            // Unexpected response format
+            console.error('Unexpected response format:', data);
+            plugins = [];
+            renderPlugins();
+            showToast('Failed to load plugins: unexpected server response', 'error');
         }
     } catch (error) {
         console.error('Failed to load plugins:', error);
-        showToast('Failed to load plugins', 'error');
+        // Set empty array and render to show empty state
+        plugins = [];
+        renderPlugins();
+        showToast('Failed to load plugins. Please check your connection and try again.', 'error');
     }
 }
 
@@ -491,14 +511,26 @@ async function loadHistory() {
             },
             credentials: 'same-origin'
         });
+        
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+        }
+        
         const data = await response.json();
         
         if (data.history) {
             history = data.history;
             renderHistory();
+        } else {
+            console.warn('No history data received');
+            history = [];
+            renderHistory();
         }
     } catch (error) {
         console.error('Failed to load history:', error);
+        // Don't show error toast for history - it's not critical
+        history = [];
+        renderHistory();
     }
 }
 

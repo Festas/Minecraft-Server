@@ -11,57 +11,147 @@ const PLUGINS_JSON = process.env.PLUGINS_JSON || path.join(process.cwd(), '../..
 const HISTORY_FILE = path.join(__dirname, '../data/plugin-history.json');
 
 /**
- * Download a file from URL
+ * Download a file from URL with timeout protection
  */
 async function downloadFile(url, outputPath, onProgress = null) {
     const writer = fsSync.createWriteStream(outputPath);
     
-    const response = await axios({
-        url,
-        method: 'GET',
-        responseType: 'stream',
-        timeout: 300000, // 5 minutes
-        onDownloadProgress: (progressEvent) => {
-            if (onProgress && progressEvent.total) {
-                const progress = {
-                    loaded: progressEvent.loaded,
-                    total: progressEvent.total,
-                    percentage: Math.round((progressEvent.loaded / progressEvent.total) * 100)
-                };
-                onProgress(progress);
-            }
-        }
-    });
-    
-    response.data.pipe(writer);
-    
-    return new Promise((resolve, reject) => {
-        writer.on('finish', resolve);
-        writer.on('error', reject);
-    });
-}
-
-/**
- * Get all plugins from plugins.json
- */
-async function getAllPlugins() {
     try {
-        const content = await fs.readFile(PLUGINS_JSON, 'utf8');
-        const data = JSON.parse(content);
-        return data.plugins || [];
+        const response = await axios({
+            url,
+            method: 'GET',
+            responseType: 'stream',
+            timeout: 120000, // 2 minutes - reduced from 5 to prevent long freezes
+            maxContentLength: 100 * 1024 * 1024, // 100MB max file size
+            maxBodyLength: 100 * 1024 * 1024,
+            onDownloadProgress: (progressEvent) => {
+                if (onProgress && progressEvent.total) {
+                    const progress = {
+                        loaded: progressEvent.loaded,
+                        total: progressEvent.total,
+                        percentage: Math.round((progressEvent.loaded / progressEvent.total) * 100)
+                    };
+                    onProgress(progress);
+                }
+            }
+        });
+        
+        response.data.pipe(writer);
+        
+        return new Promise((resolve, reject) => {
+            // Add timeout for the write operation itself
+            const writeTimeout = setTimeout(() => {
+                writer.destroy();
+                reject(new Error('Download write timeout - file writing took too long'));
+            }, 180000); // 3 minutes total timeout
+            
+            writer.on('finish', () => {
+                clearTimeout(writeTimeout);
+                resolve();
+            });
+            writer.on('error', (err) => {
+                clearTimeout(writeTimeout);
+                reject(err);
+            });
+        });
     } catch (error) {
-        throw new Error(`Failed to read plugins.json: ${error.message}`);
+        writer.destroy();
+        throw error;
     }
 }
 
 /**
- * Update plugins.json
+ * Get all plugins from plugins.json
+ * Returns empty array on any error (missing file, parse error, etc.)
+ */
+async function getAllPlugins() {
+    try {
+        // Check if file exists
+        try {
+            await fs.access(PLUGINS_JSON);
+        } catch (accessError) {
+            console.warn(`plugins.json not found at ${PLUGINS_JSON}, returning empty plugin list`);
+            return [];
+        }
+        
+        const content = await fs.readFile(PLUGINS_JSON, 'utf8');
+        
+        // Validate content is not empty
+        if (!content || content.trim().length === 0) {
+            console.error(`plugins.json is empty at ${PLUGINS_JSON}`);
+            return [];
+        }
+        
+        let data;
+        try {
+            data = JSON.parse(content);
+        } catch (parseError) {
+            console.error(`Failed to parse plugins.json: ${parseError.message}`, {
+                file: PLUGINS_JSON,
+                contentPreview: content.substring(0, 200),
+                error: parseError.stack
+            });
+            return [];
+        }
+        
+        // Validate structure
+        if (!data || typeof data !== 'object') {
+            console.error('plugins.json does not contain a valid object');
+            return [];
+        }
+        
+        return Array.isArray(data.plugins) ? data.plugins : [];
+    } catch (error) {
+        console.error(`Unexpected error reading plugins.json: ${error.message}`, {
+            file: PLUGINS_JSON,
+            error: error.stack
+        });
+        return [];
+    }
+}
+
+/**
+ * Update plugins.json with proper error handling and validation
  */
 async function updatePluginsJson(plugins) {
     try {
+        // Ensure plugins directory exists
+        const pluginsDir = path.dirname(PLUGINS_JSON);
+        await fs.mkdir(pluginsDir, { recursive: true });
+        
+        // Check if directory is writable
+        try {
+            await fs.access(pluginsDir, fs.constants.W_OK);
+        } catch (accessError) {
+            throw new Error(`plugins directory is not writable: ${pluginsDir}`);
+        }
+        
         const data = { plugins };
-        await fs.writeFile(PLUGINS_JSON, JSON.stringify(data, null, 2), 'utf8');
+        const jsonContent = JSON.stringify(data, null, 2);
+        
+        // Write to temp file first for atomic operation
+        const tempFile = `${PLUGINS_JSON}.tmp`;
+        await fs.writeFile(tempFile, jsonContent, 'utf8');
+        
+        // Verify the temp file can be parsed
+        try {
+            const verifyContent = await fs.readFile(tempFile, 'utf8');
+            JSON.parse(verifyContent);
+        } catch (verifyError) {
+            await fs.unlink(tempFile).catch(() => {});
+            throw new Error(`Generated invalid JSON: ${verifyError.message}`);
+        }
+        
+        // Atomic rename
+        await fs.rename(tempFile, PLUGINS_JSON);
+        
+        console.log(`Successfully updated plugins.json with ${plugins.length} plugins`);
     } catch (error) {
+        console.error('Failed to update plugins.json:', {
+            error: error.message,
+            stack: error.stack,
+            file: PLUGINS_JSON
+        });
         throw new Error(`Failed to update plugins.json: ${error.message}`);
     }
 }
@@ -122,6 +212,14 @@ async function getHistory() {
  */
 async function installFromUrl(url, customName = null, onProgress = null) {
     try {
+        // Validate plugins directory first
+        try {
+            await fs.access(PLUGINS_DIR);
+            await fs.access(PLUGINS_DIR, fs.constants.W_OK);
+        } catch (accessError) {
+            throw new Error(`Plugins directory not accessible or not writable: ${PLUGINS_DIR}`);
+        }
+        
         // Parse URL
         const urlInfo = await parseUrl(url);
         
@@ -215,10 +313,17 @@ async function installFromUrl(url, customName = null, onProgress = null) {
             // Cleanup temp file
             try {
                 await fs.unlink(tempFile);
-            } catch (e) {}
+            } catch (e) {
+                console.warn(`Failed to cleanup temp file ${tempFile}:`, e.message);
+            }
             throw error;
         }
     } catch (error) {
+        console.error('Plugin installation failed:', {
+            url,
+            error: error.message,
+            stack: error.stack
+        });
         throw new Error(`Installation failed: ${error.message}`);
     }
 }
@@ -299,6 +404,14 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
  */
 async function uninstallPlugin(pluginName, deleteConfigs = false) {
     try {
+        // Validate plugins directory first
+        try {
+            await fs.access(PLUGINS_DIR);
+            await fs.access(PLUGINS_DIR, fs.constants.W_OK);
+        } catch (accessError) {
+            throw new Error(`Plugins directory not accessible or not writable: ${PLUGINS_DIR}`);
+        }
+        
         const plugin = await findPlugin(pluginName);
         
         if (!plugin) {
@@ -340,6 +453,12 @@ async function uninstallPlugin(pluginName, deleteConfigs = false) {
         
         return { status: 'success' };
     } catch (error) {
+        console.error('Plugin uninstall failed:', {
+            pluginName,
+            deleteConfigs,
+            error: error.message,
+            stack: error.stack
+        });
         throw new Error(`Uninstall failed: ${error.message}`);
     }
 }
@@ -457,6 +576,81 @@ function compareVersions(newVersion, currentVersion) {
     }
 }
 
+/**
+ * Check plugin manager health status
+ * Returns object with status and details
+ */
+async function checkHealth() {
+    const health = {
+        healthy: true,
+        checks: {
+            pluginsJson: { status: 'unknown', message: '' },
+            pluginsDir: { status: 'unknown', message: '' }
+        }
+    };
+    
+    // Check plugins.json exists and is parseable
+    try {
+        await fs.access(PLUGINS_JSON);
+        const content = await fs.readFile(PLUGINS_JSON, 'utf8');
+        
+        if (!content || content.trim().length === 0) {
+            health.checks.pluginsJson.status = 'error';
+            health.checks.pluginsJson.message = 'plugins.json is empty';
+            health.healthy = false;
+        } else {
+            try {
+                const data = JSON.parse(content);
+                if (!data || typeof data !== 'object' || !Array.isArray(data.plugins)) {
+                    health.checks.pluginsJson.status = 'error';
+                    health.checks.pluginsJson.message = 'plugins.json has invalid structure';
+                    health.healthy = false;
+                } else {
+                    health.checks.pluginsJson.status = 'ok';
+                    health.checks.pluginsJson.message = `Found ${data.plugins.length} plugins`;
+                }
+            } catch (parseError) {
+                health.checks.pluginsJson.status = 'error';
+                health.checks.pluginsJson.message = `JSON parse error: ${parseError.message}`;
+                health.healthy = false;
+            }
+        }
+    } catch (accessError) {
+        health.checks.pluginsJson.status = 'error';
+        health.checks.pluginsJson.message = `File not found: ${PLUGINS_JSON}`;
+        health.healthy = false;
+    }
+    
+    // Check plugins directory exists and is writable
+    try {
+        await fs.access(PLUGINS_DIR);
+        const stats = await fs.stat(PLUGINS_DIR);
+        
+        if (!stats.isDirectory()) {
+            health.checks.pluginsDir.status = 'error';
+            health.checks.pluginsDir.message = `${PLUGINS_DIR} is not a directory`;
+            health.healthy = false;
+        } else {
+            // Check if writable
+            try {
+                await fs.access(PLUGINS_DIR, fs.constants.W_OK);
+                health.checks.pluginsDir.status = 'ok';
+                health.checks.pluginsDir.message = 'Directory is writable';
+            } catch (writeError) {
+                health.checks.pluginsDir.status = 'error';
+                health.checks.pluginsDir.message = 'Directory is not writable';
+                health.healthy = false;
+            }
+        }
+    } catch (accessError) {
+        health.checks.pluginsDir.status = 'error';
+        health.checks.pluginsDir.message = `Directory not found: ${PLUGINS_DIR}`;
+        health.healthy = false;
+    }
+    
+    return health;
+}
+
 module.exports = {
     getAllPlugins,
     findPlugin,
@@ -467,5 +661,6 @@ module.exports = {
     togglePlugin,
     hasBackup,
     getHistory,
-    parseUrl
+    parseUrl,
+    checkHealth
 };

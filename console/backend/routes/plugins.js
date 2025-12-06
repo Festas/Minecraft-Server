@@ -20,6 +20,7 @@ router.use(pluginRateLimiter);
 /**
  * GET /api/plugins
  * Get list of all plugins from plugins.json
+ * Always returns {plugins: []} even on errors, with optional error field
  */
 router.get('/', async (req, res) => {
     try {
@@ -34,7 +35,11 @@ router.get('/', async (req, res) => {
         res.json({ plugins: pluginsWithBackup });
     } catch (error) {
         console.error('Error fetching plugins:', error);
-        res.status(500).json({ error: error.message });
+        // Always return plugins array, even if empty, with error message
+        res.json({ 
+            plugins: [], 
+            error: 'Failed to load plugins. Please check the server logs for details.' 
+        });
     }
 });
 
@@ -183,6 +188,35 @@ router.get('/history', async (req, res) => {
     } catch (error) {
         console.error('Error fetching history:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/plugins/health
+ * Health check for plugin manager
+ * Returns 200 if plugins.json is parseable and plugins folder is writable
+ */
+router.get('/health', async (req, res) => {
+    try {
+        const health = await pluginManager.checkHealth();
+        
+        if (health.healthy) {
+            res.status(200).json({
+                status: 'healthy',
+                checks: health.checks
+            });
+        } else {
+            res.status(503).json({
+                status: 'unhealthy',
+                checks: health.checks
+            });
+        }
+    } catch (error) {
+        console.error('Error checking plugin manager health:', error);
+        res.status(500).json({
+            status: 'error',
+            error: error.message
+        });
     }
 });
 
