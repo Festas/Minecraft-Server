@@ -161,31 +161,38 @@ jobs:
                 docker logs minecraft-server --tail=200
                 exit 0
                 ;;
+              *)
+                echo "::error::Invalid action: $ACTION"
+                echo "Valid actions: deploy, restart, stop, start, update, logs"
+                exit 1
+                ;;
             esac
 
             # Only check health for actions that start the server
-            if [ "$ACTION" = "deploy" ] || [ "$ACTION" = "start" ] || [ "$ACTION" = "update" ]; then
-              echo "Waiting for Minecraft server to become healthy (this may take up to 2 minutes)..."
-              for i in {1..60}; do
-                HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null \
-                  || echo "starting")
-                if [ "$HEALTH" = "healthy" ]; then
-                  echo "✓ Minecraft server is healthy"
-                  break
-                fi
-                echo "Health status: $HEALTH (attempt $i/60)"
-                sleep 2
-              done
+            case "$ACTION" in
+              deploy|start|update)
+                echo "Waiting for Minecraft server to become healthy (this may take up to 2 minutes)..."
+                for i in $(seq 1 60); do
+                  HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null \
+                    || echo "starting")
+                  if [ "$HEALTH" = "healthy" ]; then
+                    echo "✓ Minecraft server is healthy"
+                    break
+                  fi
+                  echo "Health status: $HEALTH (attempt $i/60)"
+                  sleep 2
+                done
 
-              # Verify final health
-              FINAL_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null \
-                || echo "unknown")
-              if [ "$FINAL_HEALTH" != "healthy" ]; then
-                echo "::error::Server did not become healthy. Status: $FINAL_HEALTH"
-                docker logs minecraft-server --tail=50
-                exit 1
-              fi
-            fi
+                # Verify final health
+                FINAL_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null \
+                  || echo "unknown")
+                if [ "$FINAL_HEALTH" != "healthy" ]; then
+                  echo "::error::Server did not become healthy. Status: $FINAL_HEALTH"
+                  docker logs minecraft-server --tail=50
+                  exit 1
+                fi
+                ;;
+            esac
 
             # Show final status (except for logs action)
             if [ "$ACTION" != "logs" ]; then
