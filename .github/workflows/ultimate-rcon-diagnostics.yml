@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      DEPLOY_DIR: /home/deploy/minecraft-server
 
     steps:
       - name: Checkout repository
@@ -62,7 +64,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>&1
 
       - name: Upload diagnostics script to remote host
         run: |
@@ -71,17 +73,17 @@ jobs:
           # Ensure remote directories exist
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "mkdir -p /home/deploy/minecraft-server/scripts"
+            "mkdir -p ${DEPLOY_DIR}/scripts"
 
           # Upload the diagnostics script
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             scripts/diagnose.sh \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/deploy/minecraft-server/scripts/diagnose.sh
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${DEPLOY_DIR}/scripts/diagnose.sh
 
           # Make the script executable
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "chmod +x /home/deploy/minecraft-server/scripts/diagnose.sh"
+            "chmod +x ${DEPLOY_DIR}/scripts/diagnose.sh"
 
           echo "✓ Diagnostics script uploaded successfully"
 
@@ -94,9 +96,25 @@ jobs:
           echo "Running diagnostics on remote host..."
           echo "Action: ${ACTION}"
 
+          # Write RCON_PASSWORD to a temporary file for secure transfer
+          echo "${RCON_PASSWORD}" > /tmp/rcon_password.tmp
+          chmod 600 /tmp/rcon_password.tmp
+
+          # Upload password file to remote host securely
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            /tmp/rcon_password.tmp \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/rcon_password.tmp
+
+          # Execute diagnostics script with password from file
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "cd /home/deploy/minecraft-server && RCON_PASSWORD='${RCON_PASSWORD}' bash scripts/diagnose.sh '${ACTION}'"
+            "cd ${DEPLOY_DIR} && \
+             RCON_PASSWORD=\$(cat /tmp/rcon_password.tmp) \
+             bash scripts/diagnose.sh '${ACTION}' && \
+             rm -f /tmp/rcon_password.tmp"
+
+          # Clean up local password file
+          rm -f /tmp/rcon_password.tmp
 
           echo "✓ Diagnostics completed"
 
