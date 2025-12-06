@@ -257,7 +257,7 @@ jobs:
                 echo ""
 
                 echo "Step 1: Looking for minecraft-related systemd units..."
-                MINECRAFT_SERVICES=$(systemctl list-unit-files | grep -i minecraft || true)
+                MINECRAFT_SERVICES=$(systemctl list-unit-files | grep -i minecraft | awk '{print $1}' || true)
 
                 if [ -z "$MINECRAFT_SERVICES" ]; then
                   echo "✓ No minecraft systemd services found"
@@ -267,7 +267,7 @@ jobs:
                   echo ""
 
                   echo "Step 2: Checking if any are enabled or active..."
-                  for service in $(systemctl list-unit-files | grep -i minecraft | awk '{print $1}'); do
+                  for service in $MINECRAFT_SERVICES; do
                     echo "--- $service ---"
                     systemctl status "$service" --no-pager || true
                     echo ""
