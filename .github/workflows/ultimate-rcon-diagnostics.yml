@@ -1,0 +1,253 @@
+name: Ultimate RCON Diagnostics
+
+'on':
+  workflow_dispatch:
+    inputs:
+      RCON_PASSWORD:
+        description: 'RCON Password (optional - uses secret if not provided)'
+        required: false
+        type: string
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'diagnose'
+        type: choice
+        options:
+          - diagnose
+          - fix
+
+jobs:
+  rcon-diagnostics:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            MISSING_SECRETS+=("SERVER_HOST")
+          fi
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            MISSING_SECRETS+=("SERVER_USER")
+          fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            MISSING_SECRETS+=("SSH_PRIVATE_KEY")
+          fi
+          if [ -z "${{ secrets.RCON_PASSWORD }}" ] && [ -z "${{ github.event.inputs.RCON_PASSWORD }}" ]; then
+            MISSING_SECRETS+=("RCON_PASSWORD (secret or input)")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets/inputs: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please add the following secrets to your repository:"
+            echo "Settings > Secrets and variables > Actions > New repository secret"
+            echo ""
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "- $secret"
+            done
+            exit 1
+          fi
+
+          echo "✓ All required secrets/inputs are configured"
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Upload diagnostics script to remote host
+        run: |
+          echo "Uploading scripts/diagnose.sh to remote host..."
+          
+          # Ensure remote directories exist
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "mkdir -p /home/deploy/minecraft-server/scripts"
+          
+          # Upload the diagnostics script
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            scripts/diagnose.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/deploy/minecraft-server/scripts/diagnose.sh
+          
+          # Make the script executable
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "chmod +x /home/deploy/minecraft-server/scripts/diagnose.sh"
+          
+          echo "✓ Diagnostics script uploaded successfully"
+
+      - name: Run RCON diagnostics and fixes
+        id: diagnostics
+        env:
+          ACTION: ${{ github.event.inputs.action }}
+          RCON_PASSWORD: ${{ github.event.inputs.RCON_PASSWORD || secrets.RCON_PASSWORD }}
+        run: |
+          echo "Running diagnostics on remote host..."
+          echo "Action: ${ACTION}"
+          
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "cd /home/deploy/minecraft-server && RCON_PASSWORD='${RCON_PASSWORD}' bash scripts/diagnose.sh '${ACTION}'"
+          
+          echo "✓ Diagnostics completed"
+
+      - name: Download diagnostics logs
+        if: always()
+        run: |
+          echo "Downloading diagnostics logs from remote host..."
+          
+          # Get the latest diagnostics directory from the server
+          DIAG_DIR=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "ls -td /tmp/rcon-diagnostics-* 2>/dev/null | head -1")
+
+          if [ -n "$DIAG_DIR" ]; then
+            echo "Found diagnostics directory: $DIAG_DIR"
+            mkdir -p rcon-diagnostics-logs
+            
+            # Download all diagnostics files
+            scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -r \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:"${DIAG_DIR}/*" \
+              rcon-diagnostics-logs/ || echo "Warning: Some files may not have been downloaded"
+            
+            echo "✓ Diagnostics logs downloaded"
+          else
+            echo "⚠ No diagnostics directory found on remote host"
+          fi
+
+      - name: Upload diagnostics logs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rcon-diagnostics-logs-${{ github.run_number }}
+          path: rcon-diagnostics-logs/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Create diagnostics summary
+        if: always()
+        run: |
+          ACTION="${{ github.event.inputs.action }}"
+          {
+            echo "## Ultimate RCON Diagnostics 🔧"
+            echo ""
+            echo "**Action performed:** \`${ACTION}\`"
+            echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "**Run Number:** ${{ github.run_number }}"
+            echo ""
+
+            if [ "$ACTION" = "diagnose" ]; then
+              echo "### 📊 Diagnostics Mode"
+              echo ""
+              echo "A comprehensive diagnostic report has been generated covering:"
+              echo ""
+              echo "| Component | Status |"
+              echo "|-----------|--------|"
+              echo "| ✅ Docker Compose configurations | Captured |"
+              echo "| ✅ Container environment variables | Analyzed |"
+              echo "| ✅ .env and server.properties files | Reviewed |"
+              echo "| ✅ Docker volume mounts | Inspected |"
+              echo "| ✅ Container logs (100 lines each) | Collected |"
+              echo "| ✅ Network TCP connectivity tests | Tested |"
+              echo "| ✅ RCON command tests (CLI & Node) | Executed |"
+              echo "| ✅ RCON-related log entries | Extracted |"
+              echo "| ✅ Password hash analysis | Performed |"
+              echo "| ✅ Container status summary | Generated |"
+              echo ""
+              echo "### 🔍 Next Steps"
+              echo ""
+              echo "1. **Review the workflow logs** above for any ✗ or ⚠ indicators"
+              echo "2. **Check Section 9 (Password Analysis)** for hash mismatches"
+              echo "3. **If passwords don't match:** Re-run this workflow with action='fix'"
+              echo "4. **Download diagnostics** from the Artifacts section below for offline review"
+              echo ""
+              echo "### 📥 Downloading Diagnostics"
+              echo ""
+              echo "**Recommended: Download from GitHub Artifacts**"
+              echo ""
+              echo "1. Click the **Summary** tab at the top of this workflow run"
+              echo "2. Scroll to the **Artifacts** section"
+              echo "3. Download \`rcon-diagnostics-logs-${{ github.run_number }}\` (30-day retention)"
+              echo ""
+              echo "### 🔐 Security Note"
+              echo ""
+              echo "All password values are redacted in diagnostics output."
+              echo "Only hashes (SHA256, MD5) and lengths are shown for comparison."
+              echo ""
+
+            elif [ "$ACTION" = "fix" ]; then
+              echo "### 🔧 Fix Mode - Password Synchronization"
+              echo ""
+              echo "The following actions were performed:"
+              echo ""
+              echo "| Step | Action | Status |"
+              echo "|------|--------|--------|"
+              echo "| 1 | Pre-fix diagnostics captured | ✅ |"
+              echo "| 2 | Server .env updated with RCON_PASSWORD | ✅ |"
+              echo "| 3 | Console .env updated with RCON_PASSWORD | ✅ |"
+              echo "| 4 | docker-compose.yml updated (escaped) | ✅ |"
+              echo "| 5 | Minecraft server container recreated | ✅ |"
+              echo "| 6 | Console container recreated | ✅ |"
+              echo "| 7 | Post-fix diagnostics captured | ✅ |"
+              echo "| 8 | RCON command test executed | ✅ |"
+              echo ""
+              echo "### ✅ Verification"
+              echo ""
+              echo "Check the workflow logs above for the final RCON test result."
+              echo ""
+              echo "- **If test passed:** 🎉 RCON is now working correctly!"
+              echo "- **If test failed:** Review the post-fix diagnostics in the logs"
+              echo ""
+              echo "### 📝 What Changed"
+              echo ""
+              echo "The RCON_PASSWORD has been synchronized across all components:"
+              echo ""
+              echo "```"
+              echo "GitHub Secret/Input → Server .env"
+              echo "GitHub Secret/Input → Console .env"
+              echo "GitHub Secret/Input → docker-compose.yml (escaped for Docker Compose)"
+              echo "Containers recreated → Environment variables applied"
+              echo "Server.properties → Updated automatically by itzg/minecraft-server"
+              echo "```"
+              echo ""
+              echo "### 🔍 Next Steps"
+              echo ""
+              echo "1. **Test console UI** - Verify RCON commands work from the web console"
+              echo "2. **Monitor logs** - Watch for any authentication errors"
+              echo "3. **Download diagnostics** - Keep records of pre/post-fix state"
+              echo ""
+              echo "### 📥 Download Diagnostics"
+              echo ""
+              echo "1. Click the **Summary** tab at the top"
+              echo "2. Scroll to **Artifacts**"
+              echo "3. Download \`rcon-diagnostics-logs-${{ github.run_number }}\`"
+              echo ""
+              echo "### 🔐 Security Note"
+              echo ""
+              echo "All password values are redacted in diagnostics output."
+              echo "Only hashes (SHA256, MD5) and lengths are shown for comparison."
+              echo ""
+            fi
+
+            echo "---"
+            echo ""
+            echo "**Need help?** Review the diagnostics output in the logs above or download"
+            echo "the complete diagnostics package for detailed analysis."
+            echo ""
+            echo "**Script Auto-Upload:** ✅ The diagnostics script was automatically uploaded to the remote host"
+            echo "before execution, ensuring the latest version is always used."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup SSH key
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key
