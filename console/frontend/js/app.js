@@ -307,6 +307,7 @@ function updateServerStatus(stats) {
     }
 
     // Update RCON warning banner
+    // Treat undefined/null as disconnected (safe default)
     const rconWarning = document.getElementById('rconWarning');
     if (rconWarning) {
         if (!stats.rconConnected && stats.status === 'online') {
@@ -317,6 +318,7 @@ function updateServerStatus(stats) {
     }
 
     // Disable command controls if RCON is not connected
+    // Treat undefined/null as disconnected (safe default)
     const commandInput = document.getElementById('commandInput');
     const sendCommandBtn = document.getElementById('sendCommandBtn');
     

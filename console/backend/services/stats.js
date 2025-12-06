@@ -125,8 +125,8 @@ class StatsService {
                         return;
                     }
                     
-                    // Parse output like "1.5G\t/minecraft/world"
-                    const size = output.split(/[\t\s]+/)[0].trim();
+                    // Parse output like "1.5G\t/minecraft/world" or "1.5G  /minecraft/world"
+                    const size = output.split(/\s+/)[0].trim();
                     resolve(size || 'Unknown');
                 });
                 
