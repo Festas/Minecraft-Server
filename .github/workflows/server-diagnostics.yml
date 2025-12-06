@@ -15,6 +15,8 @@ on:
           - list-processes
           - free-minecraft-port
           - cleanup-containers
+          - check-systemd-services
+          - test-dns-connectivity
 
 jobs:
   diagnostics:
@@ -179,7 +181,22 @@ jobs:
                 echo "$PORT_INFO"
                 echo ""
 
-                echo "Step 2: Looking for bare-metal Java/Minecraft processes..."
+                echo "Step 2: Checking for and disabling old systemd services..."
+                MINECRAFT_SERVICES=$(systemctl list-unit-files | grep -i minecraft | awk '{print $1}' || true)
+                if [ -n "$MINECRAFT_SERVICES" ]; then
+                  echo "Found systemd minecraft services:"
+                  echo "$MINECRAFT_SERVICES"
+                  for service in $MINECRAFT_SERVICES; do
+                    echo "Disabling and stopping $service..."
+                    sudo systemctl disable --now "$service" 2>/dev/null || true
+                  done
+                  sleep 2
+                else
+                  echo "No systemd minecraft services found"
+                fi
+                echo ""
+
+                echo "Step 3: Looking for bare-metal Java/Minecraft processes..."
                 JAVA_PROCS=$(ps aux | grep -E "paper|server.jar|minecraft" | grep java | grep -v grep)
                 if [ -n "$JAVA_PROCS" ]; then
                   echo "Found Java/Minecraft processes:"
@@ -191,7 +208,7 @@ jobs:
                   sleep 2
                 fi
 
-                echo "Step 3: Checking for stuck Docker containers..."
+                echo "Step 4: Checking for stuck Docker containers..."
                 STUCK_CONTAINER=$(docker ps -a --filter "name=minecraft-server" --format "{{.Names}}")
                 if [ -n "$STUCK_CONTAINER" ]; then
                   echo "Found container: $STUCK_CONTAINER"
@@ -201,7 +218,7 @@ jobs:
                   sleep 2
                 fi
 
-                echo "Step 4: Final check..."
+                echo "Step 5: Final check..."
                 if sudo ss -tlnp | grep 25565; then
                   echo "⚠ Warning: Port 25565 is still in use!"
                   echo "You may need to manually investigate."
@@ -233,6 +250,99 @@ jobs:
                 docker ps -a --format "table {{.Names}}\t{{.Status}}"
                 echo ""
                 echo "✓ Cleanup complete!"
+                ;;
+
+              check-systemd-services)
+                echo "=== Checking for Old Systemd Minecraft Services ==="
+                echo ""
+
+                echo "Step 1: Looking for minecraft-related systemd units..."
+                MINECRAFT_SERVICES=$(systemctl list-unit-files | grep -i minecraft | awk '{print $1}' || true)
+
+                if [ -z "$MINECRAFT_SERVICES" ]; then
+                  echo "✓ No minecraft systemd services found"
+                else
+                  echo "Found minecraft systemd services:"
+                  echo "$MINECRAFT_SERVICES"
+                  echo ""
+
+                  echo "Step 2: Checking if any are enabled or active..."
+                  for service in $MINECRAFT_SERVICES; do
+                    echo "--- $service ---"
+                    systemctl status "$service" --no-pager || true
+                    echo ""
+                  done
+
+                  echo "⚠ WARNING: Old systemd minecraft services detected!"
+                  echo "These should be disabled to prevent port conflicts on reboot."
+                  echo ""
+                  echo "To disable them, run this workflow with the action: free-minecraft-port"
+                  echo "Or manually run: sudo systemctl disable --now minecraft.service"
+                fi
+
+                echo ""
+                echo "Step 3: Checking for other Java processes..."
+                ps aux | grep -E "paper|server.jar|minecraft" | grep java | grep -v grep \
+                  || echo "✓ No Java/Minecraft processes running"
+
+                echo ""
+                echo "Step 4: Checking systemd timers..."
+                systemctl list-timers | grep -i minecraft || echo "✓ No minecraft timers found"
+                ;;
+
+              test-dns-connectivity)
+                echo "=== Testing DNS Connectivity ==="
+                echo ""
+
+                echo "Step 1: Check system DNS configuration..."
+                echo "--- /etc/resolv.conf ---"
+                cat /etc/resolv.conf
+                echo ""
+
+                echo "Step 2: Test DNS resolution from host..."
+                echo "Testing fill.papermc.io..."
+                if dig fill.papermc.io +short; then
+                  echo "✓ Host can resolve fill.papermc.io"
+                else
+                  echo "⚠ Host cannot resolve fill.papermc.io"
+                fi
+                echo ""
+
+                echo "Step 3: Test DNS resolution with Google DNS..."
+                echo "Testing fill.papermc.io using 8.8.8.8..."
+                if dig @8.8.8.8 fill.papermc.io +short; then
+                  echo "✓ Google DNS (8.8.8.8) can resolve fill.papermc.io"
+                else
+                  echo "⚠ Google DNS cannot resolve fill.papermc.io"
+                fi
+                echo ""
+
+                echo "Step 4: Test DNS resolution with Cloudflare DNS..."
+                echo "Testing fill.papermc.io using 1.1.1.1..."
+                if dig @1.1.1.1 fill.papermc.io +short; then
+                  echo "✓ Cloudflare DNS (1.1.1.1) can resolve fill.papermc.io"
+                else
+                  echo "⚠ Cloudflare DNS cannot resolve fill.papermc.io"
+                fi
+                echo ""
+
+                echo "Step 5: Test connectivity to PaperMC..."
+                echo "Testing HTTPS connection to fill.papermc.io..."
+                if curl -I https://fill.papermc.io --connect-timeout 5 --max-time 10; then
+                  echo "✓ Can connect to fill.papermc.io"
+                else
+                  echo "⚠ Cannot connect to fill.papermc.io"
+                fi
+                echo ""
+
+                echo "Step 6: Check if systemd-resolved is being used..."
+                if systemctl is-active systemd-resolved >/dev/null 2>&1; then
+                  echo "✓ systemd-resolved is active"
+                  echo "Note: Docker containers cannot use 127.0.0.53 directly"
+                  echo "This is why we configure explicit DNS servers in docker-compose.yml"
+                else
+                  echo "systemd-resolved is not active"
+                fi
                 ;;
 
               *)

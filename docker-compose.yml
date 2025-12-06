@@ -22,6 +22,14 @@ services:
     restart: unless-stopped
     tty: true
     stdin_open: true
+    # DNS servers to avoid 127.0.0.53 resolution issues in containers
+    # Required for downloading Paper MC and plugins
+    # These public DNS servers are used when systemd-resolved (127.0.0.53)
+    # is not accessible from within the container's network namespace
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
     environment:
       EULA: "TRUE"
       TYPE: "PAPER"
