@@ -1,0 +1,260 @@
+name: Server Diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Diagnostic action to perform'
+        required: true
+        default: 'full-diagnostics'
+        type: choice
+        options:
+          - full-diagnostics
+          - check-ports
+          - list-containers
+          - list-processes
+          - free-minecraft-port
+          - cleanup-containers
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            MISSING_SECRETS+=("SERVER_HOST")
+          fi
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            MISSING_SECRETS+=("SERVER_USER")
+          fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            MISSING_SECRETS+=("SSH_PRIVATE_KEY")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
+            exit 1
+          fi
+
+          echo "✓ All required secrets are configured"
+
+      - name: Run diagnostics
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ACTION: ${{ github.event.inputs.action }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: ACTION
+          command_timeout: 10m
+          script: |
+            # Define deployment directory
+            DEPLOY_DIR="/home/deploy/minecraft-server"
+
+            echo "=============================================="
+            echo "Server Diagnostics - $(date)"
+            echo "Action: ${ACTION}"
+            echo "=============================================="
+            echo ""
+
+            case "${ACTION}" in
+              full-diagnostics)
+                echo "=== System Information ==="
+                uname -a
+                echo ""
+
+                echo "=== Disk Space ==="
+                df -h /home /home/deploy 2>/dev/null
+                echo ""
+
+                echo "=== Memory Usage ==="
+                free -h
+                echo ""
+
+                echo "=== Docker Version ==="
+                docker --version
+                docker compose version
+                echo ""
+
+                echo "=== All Docker Containers ==="
+                docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}\t{{.Image}}"
+                echo ""
+
+                echo "=== Docker Networks ==="
+                docker network ls
+                echo ""
+
+                echo "=== Docker Volumes ==="
+                docker volume ls
+                echo ""
+
+                echo "=== Port 25565 Usage ==="
+                echo "Checking what's using port 25565..."
+                sudo ss -tlnp | grep 25565 || echo "Port 25565 is FREE"
+                echo ""
+
+                echo "=== Port 25575 (RCON) Usage ==="
+                sudo ss -tlnp | grep 25575 || echo "Port 25575 is FREE"
+                echo ""
+
+                echo "=== Java/Minecraft Processes ==="
+                ps aux | grep -E "java|minecraft|paper" | grep -v grep || echo "No Java/Minecraft processes found"
+                echo ""
+
+                echo "=== Minecraft Server Directory ==="
+                ls -la "$DEPLOY_DIR" 2>/dev/null || echo "Directory does not exist"
+                echo ""
+
+                echo "=== Docker Compose File (if exists) ==="
+                cat "$DEPLOY_DIR/docker-compose.yml" 2>/dev/null || echo "No docker-compose.yml found"
+                echo ""
+
+                echo "=== Minecraft Container Logs (last 50 lines) ==="
+                docker logs minecraft-server --tail=50 2>&1 || echo "No minecraft-server container logs available"
+                echo ""
+
+                echo "=============================================="
+                echo "Diagnostics complete!"
+                echo "=============================================="
+                ;;
+
+              check-ports)
+                echo "=== Checking All Relevant Ports ==="
+                echo ""
+                echo "Port 25565 (Minecraft Game):"
+                sudo ss -tlnp | grep 25565 || echo "  → FREE"
+                echo ""
+                echo "Port 25575 (RCON):"
+                sudo ss -tlnp | grep 25575 || echo "  → FREE"
+                echo ""
+                echo "Port 80 (HTTP):"
+                sudo ss -tlnp | grep :80 | head -5 || echo "  → FREE"
+                echo ""
+                echo "Port 443 (HTTPS):"
+                sudo ss -tlnp | grep :443 | head -5 || echo "  → FREE"
+                echo ""
+                echo "=== All Listening Ports ==="
+                sudo ss -tlnp | head -30
+                ;;
+
+              list-containers)
+                echo "=== All Docker Containers ==="
+                docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}\t{{.Image}}"
+                echo ""
+                echo "=== Container Details ==="
+                for container in $(docker ps -a --format "{{.Names}}"); do
+                  echo "--- $container ---"
+                  docker inspect "$container" --format \
+                    'Status: {{.State.Status}}, Health: {{.State.Health.Status}}'
+                  echo "Ports:"
+                  docker port "$container" 2>/dev/null || echo "  No ports exposed"
+                done
+                ;;
+
+              list-processes)
+                echo "=== Java Processes ==="
+                ps aux | grep java | grep -v grep || echo "No Java processes"
+                echo ""
+                echo "=== All User Processes ==="
+                ps aux --sort=-%mem | head -20
+                ;;
+
+              free-minecraft-port)
+                echo "=== Freeing Port 25565 ==="
+                echo ""
+
+                echo "Step 1: Checking what's using port 25565..."
+                PORT_INFO=$(sudo ss -tlnp | grep 25565)
+                if [ -z "$PORT_INFO" ]; then
+                  echo "✓ Port 25565 is already free!"
+                  exit 0
+                fi
+                echo "$PORT_INFO"
+                echo ""
+
+                echo "Step 2: Looking for bare-metal Java/Minecraft processes..."
+                JAVA_PROCS=$(ps aux | grep -E "paper|server.jar|minecraft" | grep java | grep -v grep)
+                if [ -n "$JAVA_PROCS" ]; then
+                  echo "Found Java/Minecraft processes:"
+                  echo "$JAVA_PROCS"
+                  echo ""
+                  echo "Killing Java/Minecraft processes..."
+                  sudo pkill -f "paper" || true
+                  sudo pkill -f "server.jar" || true
+                  sleep 2
+                fi
+
+                echo "Step 3: Checking for stuck Docker containers..."
+                STUCK_CONTAINER=$(docker ps -a --filter "name=minecraft-server" --format "{{.Names}}")
+                if [ -n "$STUCK_CONTAINER" ]; then
+                  echo "Found container: $STUCK_CONTAINER"
+                  echo "Stopping and removing..."
+                  docker stop minecraft-server 2>/dev/null || true
+                  docker rm -f minecraft-server 2>/dev/null || true
+                  sleep 2
+                fi
+
+                echo "Step 4: Final check..."
+                if sudo ss -tlnp | grep 25565; then
+                  echo "⚠ Warning: Port 25565 is still in use!"
+                  echo "You may need to manually investigate."
+                  exit 1
+                else
+                  echo "✓ Port 25565 is now FREE!"
+                fi
+                ;;
+
+              cleanup-containers)
+                echo "=== Cleaning Up Docker Resources ==="
+                echo ""
+
+                echo "Step 1: Stopping minecraft-server container..."
+                docker stop minecraft-server 2>/dev/null || echo "Container not running"
+
+                echo "Step 2: Removing minecraft-server container..."
+                docker rm -f minecraft-server 2>/dev/null || echo "Container not found"
+
+                echo "Step 3: Removing any dangling containers..."
+                docker container prune -f
+
+                echo "Step 4: Removing unused images..."
+                docker image prune -f
+
+                echo "Step 5: Final status..."
+                echo ""
+                echo "Remaining containers:"
+                docker ps -a --format "table {{.Names}}\t{{.Status}}"
+                echo ""
+                echo "✓ Cleanup complete!"
+                ;;
+
+              *)
+                echo "Unknown action: ${ACTION}"
+                exit 1
+                ;;
+            esac
+
+      - name: Summary
+        if: always()
+        run: |
+          ACTION="${{ github.event.inputs.action }}"
+          {
+            echo "## Server Diagnostics Complete 🔍"
+            echo ""
+            echo "**Action performed:** \`${ACTION}\`"
+            echo ""
+            echo "Check the workflow logs above for detailed output."
+            echo ""
+            if [ "$ACTION" = "free-minecraft-port" ]; then
+              echo "### Next Steps"
+              echo "If the port was freed successfully, you can now run the"
+              echo "**Deploy Minecraft Server Container** workflow."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
