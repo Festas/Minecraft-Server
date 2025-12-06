@@ -122,8 +122,9 @@ jobs:
                 echo "Step 4: Compare RCON passwords..."
                 cd "$DEPLOY_DIR"
                 if [ -f .env ]; then
-                  MC_RCON_HASH=$(grep RCON_PASSWORD .env 2>/dev/null | md5sum | cut -d' ' -f1)
-                  if [ -z "$MC_RCON_HASH" ]; then
+                  MC_RCON_VALUE=$(grep "^RCON_PASSWORD=" .env 2>/dev/null | cut -d'=' -f2- | sed 's/^"\(.*\)"$/\1/' | tr -d '\r\n')
+                  MC_RCON_HASH=$(echo -n "$MC_RCON_VALUE" | md5sum | cut -d' ' -f1)
+                  if [ -z "$MC_RCON_HASH" ] || [ -z "$MC_RCON_VALUE" ]; then
                     MC_RCON_HASH="not-found"
                     echo "⚠ RCON_PASSWORD not found in Minecraft server .env"
                   else
@@ -136,8 +137,9 @@ jobs:
 
                 cd "$CONSOLE_DIR"
                 if [ -f .env ]; then
-                  CONSOLE_RCON_HASH=$(grep RCON_PASSWORD .env 2>/dev/null | md5sum | cut -d' ' -f1)
-                  if [ -z "$CONSOLE_RCON_HASH" ]; then
+                  CONSOLE_RCON_VALUE=$(grep "^RCON_PASSWORD=" .env 2>/dev/null | cut -d'=' -f2- | sed 's/^"\(.*\)"$/\1/' | tr -d '\r\n')
+                  CONSOLE_RCON_HASH=$(echo -n "$CONSOLE_RCON_VALUE" | md5sum | cut -d' ' -f1)
+                  if [ -z "$CONSOLE_RCON_HASH" ] || [ -z "$CONSOLE_RCON_VALUE" ]; then
                     CONSOLE_RCON_HASH="not-found"
                     echo "⚠ RCON_PASSWORD not found in Console .env"
                   else
@@ -148,7 +150,7 @@ jobs:
                   CONSOLE_RCON_HASH="missing"
                 fi
 
-                SECRET_RCON_HASH=$(echo "RCON_PASSWORD=${RCON_PASSWORD}" | md5sum | cut -d' ' -f1)
+                SECRET_RCON_HASH=$(echo -n "${RCON_PASSWORD}" | md5sum | cut -d' ' -f1)
                 echo "GitHub secret RCON_PASSWORD hash: $SECRET_RCON_HASH"
 
                 if [ "$MC_RCON_HASH" = "$CONSOLE_RCON_HASH" ] && [ "$MC_RCON_HASH" = "$SECRET_RCON_HASH" ]; then
@@ -294,7 +296,7 @@ jobs:
                 # Get console .env hash
                 cd "$CONSOLE_DIR"
                 if [ -f .env ]; then
-                  CONSOLE_VALUE=$(grep "^RCON_PASSWORD=" .env | cut -d'=' -f2- | tr -d '\r\n')
+                  CONSOLE_VALUE=$(grep "^RCON_PASSWORD=" .env | cut -d'=' -f2- | sed 's/^"\(.*\)"$/\1/' | tr -d '\r\n')
                   CONSOLE_HASH=$(echo -n "$CONSOLE_VALUE" | md5sum | cut -d' ' -f1)
                   echo "Console .env RCON_PASSWORD hash: $CONSOLE_HASH"
 
@@ -438,7 +440,7 @@ jobs:
 
                 cd "$CONSOLE_DIR"
                 if [ -f .env ]; then
-                  CONSOLE_VALUE=$(grep "^RCON_PASSWORD=" .env | cut -d'=' -f2- | tr -d '\r\n')
+                  CONSOLE_VALUE=$(grep "^RCON_PASSWORD=" .env | cut -d'=' -f2- | sed 's/^"\(.*\)"$/\1/' | tr -d '\r\n')
                   CONSOLE_HASH=$(echo -n "$CONSOLE_VALUE" | md5sum | cut -d' ' -f1)
                 else
                   CONSOLE_HASH="missing"

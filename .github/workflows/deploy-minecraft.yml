@@ -81,10 +81,8 @@ jobs:
             mkdir -p "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
 
-            # Create .env file from secret
-            cat > .env <<EOF
-            RCON_PASSWORD="${RCON_PASSWORD}"
-            EOF
+            # Create .env file from secret (no quotes, no whitespace)
+            printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" > .env
             chmod 600 .env
 
             # Combine OP settings
@@ -266,6 +264,45 @@ jobs:
                   echo "::error::Server did not become healthy. Status: $FINAL_HEALTH"
                   docker logs minecraft-server --tail=50
                   exit 1
+                fi
+                ;;
+            esac
+
+            # Sync RCON password to console if console is deployed (only for deploy/update actions)
+            case "$ACTION" in
+              deploy|update)
+                CONSOLE_DIR="/home/deploy/minecraft-console"
+                if [ -f "$CONSOLE_DIR/.env" ]; then
+                  echo ""
+                  echo "Syncing RCON password to console..."
+                  cd "$CONSOLE_DIR"
+
+                  # Verify .env file exists and is readable
+                  if [ ! -r .env ]; then
+                    echo "⚠ Console .env file is not readable, skipping sync"
+                  else
+                    # Update RCON_PASSWORD in console .env
+                    grep -v "^RCON_PASSWORD=" .env > .env.tmp || true
+
+                    # Verify we preserved other environment variables
+                    if [ -s .env.tmp ] || [ ! -s .env ]; then
+                      printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" >> .env.tmp
+                      mv .env.tmp .env
+                      chmod 600 .env
+
+                      # Restart console container if running
+                      if docker ps --format '{{.Names}}' | grep -q '^minecraft-console$'; then
+                        echo "Restarting console container..."
+                        docker compose restart minecraft-console 2>/dev/null || docker restart minecraft-console 2>/dev/null || true
+                        echo "✓ Console RCON password synced and container restarted"
+                      else
+                        echo "✓ Console RCON password synced (container not running)"
+                      fi
+                    else
+                      echo "⚠ Failed to update console .env safely, .env.tmp appears empty"
+                      rm -f .env.tmp
+                    fi
+                  fi
                 fi
                 ;;
             esac
