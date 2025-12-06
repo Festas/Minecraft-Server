@@ -1,3 +1,20 @@
+# ============================================================
+# LOCAL DEVELOPMENT / REFERENCE ONLY
+# ============================================================
+# This file is provided for local development and as a reference.
+#
+# PRODUCTION DEPLOYMENT:
+# The deploy-minecraft.yml GitHub Actions workflow generates
+# its own docker-compose.yml on the server during deployment.
+#
+# To deploy to production:
+#   GitHub Actions > Deploy Minecraft Server Container > Run workflow
+#
+# To test locally:
+#   1. Create a .env file with RCON_PASSWORD=your_password
+#   2. Run: docker compose up -d
+# ============================================================
+
 services:
   minecraft-server:
     image: itzg/minecraft-server:java21
