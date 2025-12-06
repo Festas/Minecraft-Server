@@ -394,7 +394,9 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
         } catch (error) {
             try {
                 await fs.unlink(tempFile);
-            } catch (e) {}
+            } catch (e) {
+                // Ignore cleanup errors
+            }
             throw error;
         }
     } catch (error) {
