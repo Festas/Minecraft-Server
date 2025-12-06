@@ -2,7 +2,6 @@ const dockerService = require('./docker');
 const rconService = require('./rcon');
 const fs = require('fs').promises;
 const path = require('path');
-const { execSync } = require('child_process');
 
 class StatsService {
     constructor() {
@@ -84,22 +83,50 @@ class StatsService {
         try {
             const worldPath = process.env.MC_SERVER_DIR || '/minecraft';
             
-            // Validate path to prevent command injection
-            // Only allow alphanumeric, forward slashes, hyphens, and underscores
-            if (!/^[a-zA-Z0-9/_-]+$/.test(worldPath)) {
+            // Validate and resolve path to prevent traversal and injection attacks
+            const resolvedPath = path.resolve(worldPath);
+            
+            // Ensure path doesn't contain suspicious patterns
+            // Allow absolute paths starting with / or relative paths
+            if (!/^(?:\/)?[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*$/.test(worldPath)) {
                 console.error('Invalid world path format:', worldPath);
                 return 'Unknown';
             }
             
-            // Use du command to get actual directory size
-            const result = execSync(`du -sh "${worldPath}/world" 2>/dev/null || echo "0 Unknown"`, {
-                encoding: 'utf8',
-                timeout: 5000
-            });
+            // Use spawn instead of execSync for better security
+            const { spawn } = require('child_process');
             
-            // Parse output like "1.5G /minecraft/world"
-            const size = result.split('\t')[0].trim();
-            return size || 'Unknown';
+            return new Promise((resolve) => {
+                const worldDir = path.join(resolvedPath, 'world');
+                const du = spawn('du', ['-sh', worldDir]);
+                let output = '';
+                let errorOccurred = false;
+                
+                du.stdout.on('data', (data) => {
+                    output += data.toString();
+                });
+                
+                du.stderr.on('data', () => {
+                    errorOccurred = true;
+                });
+                
+                du.on('close', (code) => {
+                    if (code !== 0 || errorOccurred || !output) {
+                        resolve('Unknown');
+                        return;
+                    }
+                    
+                    // Parse output like "1.5G\t/minecraft/world"
+                    const size = output.split(/[\t\s]+/)[0].trim();
+                    resolve(size || 'Unknown');
+                });
+                
+                // Timeout after 5 seconds
+                setTimeout(() => {
+                    du.kill();
+                    resolve('Unknown');
+                }, 5000);
+            });
         } catch (error) {
             console.error('Error getting world size:', error.message);
             return 'Unknown';
