@@ -88,13 +88,28 @@ See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
 
 ## 📚 Documentation
 
+### Server Management
+
+- **[SERVER-MANAGEMENT.md](SERVER-MANAGEMENT.md)** - **Complete server management guide** ⭐
+  - [Configuration via GitHub Secrets](SERVER-MANAGEMENT.md#github-secrets-configuration)
+  - [Deployment Workflows](SERVER-MANAGEMENT.md#deployment-workflows)
+  - [Automated Backups](SERVER-MANAGEMENT.md#backup-and-restore)
+  - [Plugin Management](SERVER-MANAGEMENT.md#plugin-management)
+  - [Player Management](SERVER-MANAGEMENT.md#player-management)
+  - [Troubleshooting](SERVER-MANAGEMENT.md#troubleshooting)
+
+### Setup Guides
+
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Initial deployment and server setup
 - **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** - Web console setup and management guide
 - **[PLUGINS.md](PLUGINS.md)** - Comprehensive plugin guide with installation instructions
 - **[BEDROCK-SETUP.md](BEDROCK-SETUP.md)** - Cross-platform play setup guide (Geyser + Floodgate)
 - **[WEBSITE.md](WEBSITE.md)** - Website deployment and customization guide
-- **[ROADMAP.md](ROADMAP.md)** - Server growth roadmap and future plans
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide
 - **[server-icon-instructions.md](server-icon-instructions.md)** - Custom server icon setup
+
+### Planning & Features
+
+- **[ROADMAP.md](ROADMAP.md)** - Server growth roadmap and future plans
 
 ---
 
@@ -210,6 +225,7 @@ environment:
   
 - **Automation**
   - `.github/workflows/deploy-minecraft.yml` - Server deployment workflow
+  - `.github/workflows/backup-minecraft.yml` - Automated backup workflow (daily at 4 AM UTC)
   - `.github/workflows/deploy-console.yml` - Console deployment workflow
   - `.github/workflows/deploy-website.yml` - Website deployment workflow
   
@@ -221,8 +237,24 @@ environment:
 
 ## 🎯 Quick Deployment Overview
 
+### Required GitHub Secrets
+
+Before deploying, configure these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
+
+| Secret | Description |
+|--------|-------------|
+| `SERVER_HOST` | Your server's IP address |
+| `SERVER_USER` | SSH username (e.g., `deploy`) |
+| `SSH_PRIVATE_KEY` | Private SSH key for authentication |
+| `RCON_PASSWORD` | Password for server console access |
+
+**Optional secrets** for customization: `MINECRAFT_VERSION`, `WORLD_SEED`, `OP_OWNER`, `WHITELIST_ENABLED`, and more.  
+See **[SERVER-MANAGEMENT.md](SERVER-MANAGEMENT.md#github-secrets-configuration)** for all options.
+
+### Deployment Steps
+
 1. **Prepare your server** - Install Docker and Docker Compose
-2. **Setup GitHub secrets** - Add SSH keys and server details
+2. **Setup GitHub secrets** - Add the 4 required secrets above
 3. **Configure environment** - Set RCON password and other variables in docker-compose.yml
 4. **Deploy** - Push to main branch or trigger `deploy-minecraft.yml` workflow manually
 5. **Verify** - Check container health and logs

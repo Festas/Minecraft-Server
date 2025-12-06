@@ -1,0 +1,241 @@
+name: Backup Minecraft Server
+
+on:
+  schedule:
+    # Daily at 4 AM UTC
+    - cron: '0 4 * * *'
+  workflow_dispatch:  # Manual trigger
+    inputs:
+      backup_name:
+        description: 'Custom backup name (optional, defaults to timestamp)'
+        required: false
+        type: string
+      skip_save_commands:
+        description: 'Skip RCON save commands (use if server is stopped)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            MISSING_SECRETS+=("SERVER_HOST")
+          fi
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            MISSING_SECRETS+=("SERVER_USER")
+          fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            MISSING_SECRETS+=("SSH_PRIVATE_KEY")
+          fi
+          if [ -z "${{ secrets.RCON_PASSWORD }}" ]; then
+            MISSING_SECRETS+=("RCON_PASSWORD")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please add the following secrets to your repository:"
+            echo "Settings > Secrets and variables > Actions > New repository secret"
+            echo ""
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "- $secret"
+            done
+            exit 1
+          fi
+
+          echo "✓ All required secrets are configured"
+
+      - name: Create backup
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
+          CUSTOM_BACKUP_NAME: ${{ github.event.inputs.backup_name }}
+          SKIP_SAVE_COMMANDS: ${{ github.event.inputs.skip_save_commands }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: RCON_PASSWORD,CUSTOM_BACKUP_NAME,SKIP_SAVE_COMMANDS
+          script: |
+            set -e
+
+            BACKUP_DIR="/home/deploy/minecraft-backups"
+            DEPLOY_DIR="/home/deploy/minecraft-server"
+
+            # Create backup directory
+            mkdir -p "$BACKUP_DIR"
+
+            # Check if server container is running
+            SERVER_RUNNING=false
+            if docker ps --format '{{.Names}}' | grep -q '^minecraft-server$'; then
+              SERVER_RUNNING=true
+              echo "✓ Server container is running"
+            else
+              echo "⚠ Server container is not running"
+            fi
+
+            # Perform RCON save commands unless skipped
+            SAVE_RECOVERY_NEEDED=false
+            if [ "$SKIP_SAVE_COMMANDS" != "true" ] && [ "$SERVER_RUNNING" = true ]; then
+              echo "=== Preparing world for backup ==="
+
+              # Create .env file with RCON password for docker exec
+              cd "$DEPLOY_DIR"
+              cat > .env <<EOF
+            RCON_PASSWORD="${RCON_PASSWORD}"
+            EOF
+              chmod 600 .env
+
+              # Disable world auto-saving
+              echo "Disabling auto-save..."
+              if docker exec minecraft-server rcon-cli save-off 2>&1; then
+                echo "✓ Auto-save disabled"
+                SAVE_RECOVERY_NEEDED=true
+
+                # Force save current state
+                echo "Forcing save of current world state..."
+                if docker exec minecraft-server rcon-cli save-all flush 2>&1; then
+                  echo "✓ World saved"
+                  # Wait a moment for save to complete
+                  sleep 3
+                else
+                  echo "⚠ Warning: save-all command failed"
+                fi
+              else
+                echo "⚠ Warning: save-off command failed, continuing anyway"
+              fi
+            else
+              if [ "$SKIP_SAVE_COMMANDS" = "true" ]; then
+                echo "Skipping RCON save commands as requested"
+              else
+                echo "Skipping RCON save commands (server not running)"
+              fi
+            fi
+
+            # Generate backup filename
+            if [ -n "$CUSTOM_BACKUP_NAME" ]; then
+              BACKUP_FILE="${BACKUP_DIR}/minecraft-backup-${CUSTOM_BACKUP_NAME}-$(date +%Y%m%d-%H%M%S).tar.gz"
+            else
+              BACKUP_FILE="${BACKUP_DIR}/minecraft-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+            fi
+
+            echo "=== Creating backup ==="
+            echo "Backup file: $(basename "$BACKUP_FILE")"
+
+            # Create backup using docker volume
+            # This backs up: worlds, plugins, ops.json, whitelist.json, banned-players.json, banned-ips.json
+            if docker run --rm \
+              -v minecraft_data:/data:ro \
+              -v "$BACKUP_DIR":/backup \
+              alpine sh -c "cd /data && tar czf /backup/$(basename "$BACKUP_FILE") \
+                world world_nether world_the_end \
+                plugins \
+                ops.json whitelist.json banned-players.json banned-ips.json \
+                server.properties \
+                2>/dev/null || tar czf /backup/$(basename "$BACKUP_FILE") \
+                world* plugins* *.json server.properties \
+                2>/dev/null || true"; then
+
+              # Verify backup was created
+              if [ -f "$BACKUP_FILE" ]; then
+                BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
+                echo "✓ Backup created successfully: $BACKUP_SIZE"
+              else
+                echo "::error::Backup file was not created"
+                exit 1
+              fi
+            else
+              echo "::error::Backup creation failed"
+              exit 1
+            fi
+
+            # Re-enable auto-save if it was disabled
+            if [ "$SAVE_RECOVERY_NEEDED" = true ]; then
+              echo "=== Re-enabling auto-save ==="
+              if docker exec minecraft-server rcon-cli save-on 2>&1; then
+                echo "✓ Auto-save re-enabled"
+              else
+                echo "::error::Failed to re-enable auto-save! Manual intervention needed."
+                echo "Run manually: docker exec minecraft-server rcon-cli save-on"
+                # Don't exit 1 here as backup was successful, just warn
+              fi
+            fi
+
+            # Clean up old backups (keep last 7)
+            echo "=== Cleaning old backups ==="
+            cd "$BACKUP_DIR"
+            BACKUP_COUNT=$(ls -1 minecraft-backup-*.tar.gz 2>/dev/null | wc -l)
+            echo "Total backups: $BACKUP_COUNT"
+
+            if [ "$BACKUP_COUNT" -gt 7 ]; then
+              OLD_BACKUPS=$(ls -t minecraft-backup-*.tar.gz | tail -n +8)
+              echo "Removing old backups:"
+              echo "$OLD_BACKUPS"
+              echo "$OLD_BACKUPS" | xargs rm -f
+              echo "✓ Cleanup complete"
+            else
+              echo "No cleanup needed (7 or fewer backups)"
+            fi
+
+            # List current backups
+            echo ""
+            echo "=== Current backups ==="
+            ls -lh minecraft-backup-*.tar.gz 2>/dev/null | tail -n 7 || echo "No backups found"
+
+            echo ""
+            echo "✓ Backup operation completed successfully!"
+
+      - name: Handle backup failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Backup Failed - Diagnostics ==="
+            echo ""
+            echo "=== Server Container Status ==="
+            docker ps -a | grep minecraft-server || echo "Container not found"
+            echo ""
+            echo "=== Backup Directory ==="
+            ls -lh /home/deploy/minecraft-backups/ 2>/dev/null || echo "Backup directory not found"
+            echo ""
+            echo "=== Disk Space ==="
+            df -h /home/deploy
+            echo ""
+            echo "=== Docker Volume Status ==="
+            docker volume ls | grep minecraft_data || echo "Volume not found"
+
+      - name: Backup summary
+        if: success()
+        run: |
+          CUSTOM_NAME="${{ github.event.inputs.backup_name }}"
+          {
+            echo "## Minecraft Server Backup Complete! 💾"
+            echo ""
+            echo "A backup of the Minecraft server has been created successfully."
+            echo ""
+            if [ -n "$CUSTOM_NAME" ]; then
+              echo "**Custom Name:** $CUSTOM_NAME"
+            fi
+            echo "**Location:** /home/deploy/minecraft-backups/"
+            echo "**Retention:** Last 7 backups are kept"
+            echo ""
+            echo "### What's Backed Up"
+            echo "- All worlds (Overworld, Nether, End)"
+            echo "- Plugins and configurations"
+            echo "- Operator list (ops.json)"
+            echo "- Whitelist (whitelist.json)"
+            echo "- Banned players and IPs"
+            echo "- Server properties"
+          } >> "$GITHUB_STEP_SUMMARY"
