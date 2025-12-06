@@ -95,8 +95,11 @@ jobs:
               OPS="$OP_ADDITIONAL"
             fi
 
-            # Escape $ as $$ for docker-compose YAML to prevent variable interpolation
-            ESCAPED_RCON_PASSWORD=$(printf '%s' "${RCON_PASSWORD}" | sed 's/\$/\$\$/g')
+            # Escape special characters for YAML double-quoted strings
+            # 1. Escape backslashes first (to avoid double-escaping)
+            # 2. Escape double quotes (required for YAML double-quoted strings)
+            # 3. Escape $ as $$ for Docker Compose (prevents variable interpolation)
+            ESCAPED_RCON_PASSWORD=$(printf '%s' "${RCON_PASSWORD}" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\$\$/g')
 
             # Create docker-compose.yml with base configuration
             cat > docker-compose.yml <<EOF
@@ -204,35 +207,98 @@ jobs:
                 external: true
             EOF
 
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Validating docker-compose.yml with 'docker compose config'"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            if docker compose config >/dev/null 2>&1; then
+              echo "✓ YAML validation passed - docker-compose.yml is valid"
+            else
+              echo "✗ YAML validation FAILED!"
+              echo ""
+              echo "docker compose config output:"
+              docker compose config 2>&1 || true
+              echo ""
+              echo "✗ Deployment aborted due to invalid YAML"
+              echo "Please check the configuration for special characters that may need escaping."
+              exit 1
+            fi
+            echo ""
+
             # Create caddy-network if it doesn't exist
             docker network inspect caddy-network >/dev/null 2>&1 || docker network create caddy-network
 
             # Perform action based on input
             ACTION="${ACTION:-deploy}"
 
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Executing action: ${ACTION}"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+
             case "${ACTION}" in
               deploy)
                 echo "=== Deploying Minecraft Server ==="
-                docker compose pull
-                docker compose up -d
+                echo "Pulling latest image..."
+                if docker compose pull; then
+                  echo "✓ Image pull successful"
+                else
+                  echo "✗ Image pull failed"
+                  exit 1
+                fi
+                echo ""
+                echo "Starting containers..."
+                if docker compose up -d; then
+                  echo "✓ Containers started"
+                else
+                  echo "✗ Failed to start containers"
+                  exit 1
+                fi
                 ;;
               restart)
                 echo "=== Restarting Minecraft Server ==="
-                docker compose restart
+                if docker compose restart; then
+                  echo "✓ Server restarted"
+                else
+                  echo "✗ Restart failed"
+                  exit 1
+                fi
                 ;;
               stop)
                 echo "=== Stopping Minecraft Server ==="
-                docker compose stop
-                echo "✓ Server stopped"
+                if docker compose stop; then
+                  echo "✓ Server stopped"
+                else
+                  echo "✗ Stop failed"
+                  exit 1
+                fi
                 ;;
               start)
                 echo "=== Starting Minecraft Server ==="
-                docker compose start
+                if docker compose start; then
+                  echo "✓ Server started"
+                else
+                  echo "✗ Start failed"
+                  exit 1
+                fi
                 ;;
               update)
                 echo "=== Updating Minecraft Server ==="
-                docker compose pull
-                docker compose up -d --force-recreate
+                echo "Pulling latest image..."
+                if docker compose pull; then
+                  echo "✓ Image pull successful"
+                else
+                  echo "✗ Image pull failed"
+                  exit 1
+                fi
+                echo ""
+                echo "Recreating containers..."
+                if docker compose up -d --force-recreate; then
+                  echo "✓ Containers recreated"
+                else
+                  echo "✗ Failed to recreate containers"
+                  exit 1
+                fi
                 ;;
               logs)
                 echo "=== Recent Minecraft Server Logs ==="
@@ -245,6 +311,7 @@ jobs:
                 exit 1
                 ;;
             esac
+            echo ""
 
             # Only check health for actions that start the server
             case "$ACTION" in
@@ -278,12 +345,14 @@ jobs:
                 CONSOLE_DIR="/home/deploy/minecraft-console"
                 if [ -f "$CONSOLE_DIR/.env" ]; then
                   echo ""
-                  echo "Syncing RCON password to console..."
+                  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                  echo "Syncing RCON password to console"
+                  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
                   cd "$CONSOLE_DIR"
 
                   # Verify .env file exists and is readable
                   if [ ! -r .env ]; then
-                    echo "⚠ Console .env file is not readable, skipping sync"
+                    echo "✗ Console .env file is not readable, skipping sync"
                   else
                     # Update RCON_PASSWORD in console .env
                     grep -v "^RCON_PASSWORD=" .env > .env.tmp || true
@@ -293,20 +362,27 @@ jobs:
                       printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" >> .env.tmp
                       mv .env.tmp .env
                       chmod 600 .env
+                      echo "✓ Console .env updated"
 
                       # Restart console container if running
                       if docker ps --format '{{.Names}}' | grep -q '^minecraft-console$'; then
                         echo "Restarting console container..."
-                        docker compose up -d --force-recreate minecraft-console 2>/dev/null || docker restart minecraft-console 2>/dev/null || true
-                        echo "✓ Console RCON password synced and container restarted"
+                        if docker compose up -d --force-recreate minecraft-console 2>&1; then
+                          echo "✓ Console container restarted with compose"
+                        elif docker restart minecraft-console 2>&1; then
+                          echo "✓ Console container restarted with docker restart (fallback)"
+                        else
+                          echo "✗ Failed to restart console container"
+                        fi
                       else
-                        echo "✓ Console RCON password synced (container not running)"
+                        echo "⊘ Console container not running (sync applied for next start)"
                       fi
                     else
-                      echo "⚠ Failed to update console .env safely, .env.tmp appears empty"
+                      echo "✗ Failed to update console .env safely, .env.tmp appears empty"
                       rm -f .env.tmp
                     fi
                   fi
+                  echo ""
                 fi
                 ;;
             esac
