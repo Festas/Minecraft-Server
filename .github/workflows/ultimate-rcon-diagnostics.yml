@@ -1,6 +1,6 @@
 name: Ultimate RCON Diagnostics
 
-'on':
+on:
   workflow_dispatch:
     inputs:
       RCON_PASSWORD:
@@ -64,7 +64,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>&1
+          ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Upload diagnostics script to remote host
         run: |
@@ -109,7 +109,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "cd ${DEPLOY_DIR} && \
-             RCON_PASSWORD=\$(cat /tmp/rcon_password.tmp) \
+             export RCON_PASSWORD=\$(cat /tmp/rcon_password.tmp) && \
              bash scripts/diagnose.sh '${ACTION}' && \
              rm -f /tmp/rcon_password.tmp"
 
