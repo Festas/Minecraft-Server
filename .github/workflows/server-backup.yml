@@ -238,6 +238,13 @@ jobs:
               cleanup-old-backups)
                 echo "=== Cleaning Up Old Backups ==="
                 echo ""
+
+                # Validate retention days is a number
+                if ! [ "$RETENTION_DAYS" -eq "$RETENTION_DAYS" ] 2>/dev/null; then
+                  echo "::error::Invalid retention_days value: $RETENTION_DAYS (must be a number)"
+                  exit 1
+                fi
+
                 echo "Retention policy: Keep last $RETENTION_DAYS backups"
                 echo ""
 

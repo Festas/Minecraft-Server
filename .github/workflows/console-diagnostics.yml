@@ -473,10 +473,10 @@ jobs:
                 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
                 echo "DIAGNOSTICS SUMMARY"
                 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                echo -e "$RESULTS"
+                printf '%b\n' "$RESULTS"
                 echo ""
 
-                if echo -e "$RESULTS" | grep -q "✗"; then
+                if printf '%b\n' "$RESULTS" | grep -q "✗"; then
                   echo "⚠ Issues detected. Review the results above."
                   echo "Consider running specific diagnostic actions for more details."
                 else
@@ -493,6 +493,7 @@ jobs:
                 # Update Minecraft server
                 echo "Step 1: Updating Minecraft server .env..."
                 cd "$DEPLOY_DIR"
+                # Note: Minecraft server .env only contains RCON_PASSWORD, so overwriting is safe
                 printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" > .env
                 chmod 600 .env
                 echo "✓ Minecraft server .env updated"

@@ -122,10 +122,11 @@ jobs:
               fi
               echo ""
 
-              # Show log statistics (using tail for performance)
+              # Show log statistics (using tail for performance, cache output)
               echo "Log Statistics:"
-              ERROR_COUNT=$(docker logs "${container}" --tail=1000 2>&1 | grep -icE "error|exception|fail|fatal" || echo "0")
-              WARN_COUNT=$(docker logs "${container}" --tail=1000 2>&1 | grep -ic "warn" || echo "0")
+              RECENT_LOGS=$(docker logs "${container}" --tail=1000 2>&1)
+              ERROR_COUNT=$(echo "$RECENT_LOGS" | grep -icE "error|exception|fail|fatal" || echo "0")
+              WARN_COUNT=$(echo "$RECENT_LOGS" | grep -ic "warn" || echo "0")
               echo "  Errors: $ERROR_COUNT (last 1000 lines)"
               echo "  Warnings: $WARN_COUNT (last 1000 lines)"
               echo ""
