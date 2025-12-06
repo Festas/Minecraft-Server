@@ -126,6 +126,25 @@ class RconService {
     }
 
     /**
+     * Check if RCON is connected
+     */
+    isConnected() {
+        return this.rcon !== null && this.rcon.authenticated;
+    }
+
+    /**
+     * Get connection status details
+     */
+    getConnectionStatus() {
+        return {
+            connected: this.isConnected(),
+            host: this.config.host,
+            port: this.config.port,
+            reconnecting: this.reconnectInterval !== null
+        };
+    }
+
+    /**
      * Disconnect from RCON
      */
     async disconnect() {

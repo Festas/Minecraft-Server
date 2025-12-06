@@ -55,7 +55,11 @@ async function executeCommand(command, skipConfirmation = false) {
                 });
             }
         } else {
-            showNotification(data.error || 'Command failed', 'error');
+            if (data.error === 'RCON not connected') {
+                showNotification('RCON disconnected - cannot execute commands. Check server diagnostics.', 'error');
+            } else {
+                showNotification(data.error || 'Command failed', 'error');
+            }
         }
     } catch (error) {
         showNotification('Error executing command', 'error');
