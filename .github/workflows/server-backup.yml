@@ -110,9 +110,7 @@ jobs:
 
                   # Create .env file with RCON password for docker exec
                   cd "$DEPLOY_DIR"
-                  cat > .env <<EOF
-            RCON_PASSWORD="${RCON_PASSWORD}"
-            EOF
+                  printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" > .env
                   chmod 600 .env
 
                   # Disable world auto-saving

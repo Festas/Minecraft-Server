@@ -99,34 +99,35 @@ jobs:
               if [ -z "$filter" ]; then
                 docker logs "${container}" --tail="${lines}" 2>&1
               else
-                # Apply filter
+                # Apply filter - use --tail with a larger window then grep for better performance
+                TAIL_WINDOW=$((lines * 3))
                 case "$filter" in
                   error)
                     echo "Filtering for: ERRORS only"
-                    docker logs "${container}" 2>&1 | grep -iE "error|exception|fail|fatal" | tail -n "${lines}"
+                    docker logs "${container}" --tail="${TAIL_WINDOW}" 2>&1 | grep -iE "error|exception|fail|fatal" | tail -n "${lines}"
                     ;;
                   warn)
                     echo "Filtering for: WARNINGS only"
-                    docker logs "${container}" 2>&1 | grep -i "warn" | tail -n "${lines}"
+                    docker logs "${container}" --tail="${TAIL_WINDOW}" 2>&1 | grep -i "warn" | tail -n "${lines}"
                     ;;
                   info)
                     echo "Filtering for: INFO messages"
-                    docker logs "${container}" 2>&1 | grep -i "info" | tail -n "${lines}"
+                    docker logs "${container}" --tail="${TAIL_WINDOW}" 2>&1 | grep -i "info" | tail -n "${lines}"
                     ;;
                   *)
                     echo "Searching for: ${filter}"
-                    docker logs "${container}" 2>&1 | grep -i "${filter}" | tail -n "${lines}"
+                    docker logs "${container}" --tail="${TAIL_WINDOW}" 2>&1 | grep -i "${filter}" | tail -n "${lines}"
                     ;;
                 esac
               fi
               echo ""
 
-              # Show log statistics
+              # Show log statistics (using tail for performance)
               echo "Log Statistics:"
-              ERROR_COUNT=$(docker logs "${container}" 2>&1 | grep -icE "error|exception|fail|fatal" || echo "0")
-              WARN_COUNT=$(docker logs "${container}" 2>&1 | grep -ic "warn" || echo "0")
-              echo "  Errors: $ERROR_COUNT"
-              echo "  Warnings: $WARN_COUNT"
+              ERROR_COUNT=$(docker logs "${container}" --tail=1000 2>&1 | grep -icE "error|exception|fail|fatal" || echo "0")
+              WARN_COUNT=$(docker logs "${container}" --tail=1000 2>&1 | grep -ic "warn" || echo "0")
+              echo "  Errors: $ERROR_COUNT (last 1000 lines)"
+              echo "  Warnings: $WARN_COUNT (last 1000 lines)"
               echo ""
             }
 

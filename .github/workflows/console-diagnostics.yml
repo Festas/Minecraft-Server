@@ -493,9 +493,7 @@ jobs:
                 # Update Minecraft server
                 echo "Step 1: Updating Minecraft server .env..."
                 cd "$DEPLOY_DIR"
-                cat > .env <<EOF
-            RCON_PASSWORD="${RCON_PASSWORD}"
-            EOF
+                printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" > .env
                 chmod 600 .env
                 echo "✓ Minecraft server .env updated"
                 echo ""
@@ -508,7 +506,7 @@ jobs:
                 if [ -f .env ]; then
                   # Create temp file with updated password
                   grep -v "^RCON_PASSWORD=" .env > .env.tmp || true
-                  echo "RCON_PASSWORD=${RCON_PASSWORD}" >> .env.tmp
+                  printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" >> .env.tmp
                   mv .env.tmp .env
                   chmod 600 .env
                   echo "✓ Console .env updated"
