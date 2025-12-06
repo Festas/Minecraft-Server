@@ -129,7 +129,14 @@ class RconService {
      * Check if RCON is connected
      */
     isConnected() {
-        return this.rcon !== null && this.rcon.authenticated;
+        try {
+            // Check if rcon exists and is authenticated
+            // The rcon-client library sets authenticated to true on successful connection
+            return this.rcon !== null && this.rcon.authenticated === true;
+        } catch (error) {
+            // If any error occurs checking the connection, assume disconnected
+            return false;
+        }
     }
 
     /**

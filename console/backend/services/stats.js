@@ -90,9 +90,15 @@ class StatsService {
             
             // Validate that the path doesn't try to escape expected directories
             // Check original path for .. before normalization removes it
-            // Reject paths with .. or suspicious characters
-            if (worldPath.includes('..') || /[;&|`$(){}]/.test(worldPath)) {
+            // Also check for suspicious shell characters including backslash
+            if (worldPath.includes('..') || /[;&|\\`$(){}]/.test(worldPath)) {
                 console.error('Invalid world path format:', worldPath);
+                return 'Unknown';
+            }
+            
+            // Additional validation: ensure resolved path doesn't contain .. after normalization
+            if (resolvedPath.includes('..')) {
+                console.error('Path traversal detected after resolution:', resolvedPath);
                 return 'Unknown';
             }
             
