@@ -2,6 +2,19 @@ name: Deploy Minecraft Server Container
 
 on:
   workflow_dispatch:  # Manual trigger only for safety
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - restart
+          - stop
+          - start
+          - update
+          - logs
 
 jobs:
   deploy:
@@ -14,6 +27,15 @@ jobs:
         run: |
           MISSING_SECRETS=()
 
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            MISSING_SECRETS+=("SERVER_HOST")
+          fi
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            MISSING_SECRETS+=("SERVER_USER")
+          fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            MISSING_SECRETS+=("SSH_PRIVATE_KEY")
+          fi
           if [ -z "${{ secrets.RCON_PASSWORD }}" ]; then
             MISSING_SECRETS+=("RCON_PASSWORD")
           fi
@@ -36,11 +58,12 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
+          ACTION: ${{ github.event.inputs.action || 'deploy' }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: RCON_PASSWORD
+          envs: RCON_PASSWORD,ACTION
           script: |
             set -e
 
@@ -106,33 +129,69 @@ jobs:
             # Create caddy-network if it doesn't exist
             docker network inspect caddy-network >/dev/null 2>&1 || docker network create caddy-network
 
-            # Deploy
-            docker compose up -d
+            # Perform action based on input
+            ACTION="${ACTION:-deploy}"
 
-            # Wait for healthy
-            echo "Waiting for Minecraft server to become healthy (this may take up to 2 minutes)..."
-            for i in {1..60}; do
-              HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null || echo "starting")
-              if [ "$HEALTH" = "healthy" ]; then
-                echo "✓ Minecraft server is healthy"
-                break
+            case "${ACTION}" in
+              deploy)
+                echo "=== Deploying Minecraft Server ==="
+                docker compose pull
+                docker compose up -d
+                ;;
+              restart)
+                echo "=== Restarting Minecraft Server ==="
+                docker compose restart
+                ;;
+              stop)
+                echo "=== Stopping Minecraft Server ==="
+                docker compose stop
+                echo "✓ Server stopped"
+                ;;
+              start)
+                echo "=== Starting Minecraft Server ==="
+                docker compose start
+                ;;
+              update)
+                echo "=== Updating Minecraft Server ==="
+                docker compose pull
+                docker compose up -d --force-recreate
+                ;;
+              logs)
+                echo "=== Recent Minecraft Server Logs ==="
+                docker logs minecraft-server --tail=200
+                exit 0
+                ;;
+            esac
+
+            # Only check health for actions that start the server
+            if [ "$ACTION" = "deploy" ] || [ "$ACTION" = "start" ] || [ "$ACTION" = "update" ]; then
+              echo "Waiting for Minecraft server to become healthy (this may take up to 2 minutes)..."
+              for i in {1..60}; do
+                HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null \
+                  || echo "starting")
+                if [ "$HEALTH" = "healthy" ]; then
+                  echo "✓ Minecraft server is healthy"
+                  break
+                fi
+                echo "Health status: $HEALTH (attempt $i/60)"
+                sleep 2
+              done
+
+              # Verify final health
+              FINAL_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null \
+                || echo "unknown")
+              if [ "$FINAL_HEALTH" != "healthy" ]; then
+                echo "::error::Server did not become healthy. Status: $FINAL_HEALTH"
+                docker logs minecraft-server --tail=50
+                exit 1
               fi
-              echo "Health status: $HEALTH (attempt $i/60)"
-              sleep 2
-            done
-
-            # Verify final health status
-            FINAL_HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null || echo "unknown")
-            if [ "$FINAL_HEALTH" != "healthy" ]; then
-              echo "::error::Server did not become healthy after 2 minutes. Status: $FINAL_HEALTH"
-              docker logs minecraft-server --tail=50
-              exit 1
             fi
 
-            # Show final status
-            docker ps | grep minecraft-server || true
-
-            echo "✓ Minecraft server deployed successfully!"
+            # Show final status (except for logs action)
+            if [ "$ACTION" != "logs" ]; then
+              docker ps | grep minecraft-server || true
+              echo "✓ Minecraft server operation completed successfully!"
+            fi
 
       - name: Handle deployment failure
         if: failure()
@@ -156,17 +215,36 @@ jobs:
       - name: Deployment summary
         if: success()
         run: |
+          ACTION="${{ github.event.inputs.action || 'deploy' }}"
           {
-            echo "## Minecraft Server Deployment Successful! 🚀"
+            case "$ACTION" in
+              deploy|update)
+                echo "## Minecraft Server Deployed! 🚀"
+                echo ""
+                echo "The Minecraft server has been deployed and is running."
+                ;;
+              restart)
+                echo "## Minecraft Server Restarted! 🔄"
+                echo ""
+                echo "The server has been restarted."
+                ;;
+              stop)
+                echo "## Minecraft Server Stopped! ⏹️"
+                echo ""
+                echo "The server has been stopped. Use 'start' action to bring it back up."
+                ;;
+              start)
+                echo "## Minecraft Server Started! ▶️"
+                echo ""
+                echo "The server has been started."
+                ;;
+              logs)
+                echo "## Minecraft Server Logs Retrieved! 📋"
+                echo ""
+                echo "Check the workflow output for recent logs."
+                ;;
+            esac
             echo ""
-            echo "The containerized Minecraft server has been deployed and is now running!"
-            echo ""
-            echo "**Image:** itzg/minecraft-server:java21"
             echo "**Container:** minecraft-server"
             echo "**Network:** caddy-network"
-            echo ""
-            echo "### Next Steps"
-            echo "1. Wait for server to be fully healthy (about 2 minutes)"
-            echo "2. Deploy the console using the Deploy Console workflow"
-            echo "3. Verify console connectivity at https://mc.festas-builds.com/console"
           } >> "$GITHUB_STEP_SUMMARY"
