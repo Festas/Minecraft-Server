@@ -125,20 +125,26 @@ jobs:
             # Pull image
             docker pull "ghcr.io/festas/minecraft-console:${IMAGE_SHA}"
 
-            # Create .env file from secrets
-            cat > .env <<EOF
-            ADMIN_USERNAME=${CONSOLE_ADMIN_USER}
-            ADMIN_PASSWORD=${CONSOLE_ADMIN_PASSWORD}
-            RCON_HOST=minecraft-server
-            RCON_PORT=25575
-            RCON_PASSWORD=${RCON_PASSWORD}
-            SESSION_SECRET=${SESSION_SECRET}
-            CSRF_SECRET=${CSRF_SECRET}
-            CONSOLE_PORT=3001
-            MC_CONTAINER_NAME=minecraft-server
-            MC_SERVER_DIR=/minecraft
-            NODE_ENV=production
-            EOF
+            # Create .env file from secrets (no leading whitespace)
+            cat > .env <<'EOF'
+ADMIN_USERNAME=${CONSOLE_ADMIN_USER}
+ADMIN_PASSWORD=${CONSOLE_ADMIN_PASSWORD}
+RCON_HOST=minecraft-server
+RCON_PORT=25575
+RCON_PASSWORD=${RCON_PASSWORD}
+SESSION_SECRET=${SESSION_SECRET}
+CSRF_SECRET=${CSRF_SECRET}
+CONSOLE_PORT=3001
+MC_CONTAINER_NAME=minecraft-server
+MC_SERVER_DIR=/minecraft
+NODE_ENV=production
+EOF
+            # Substitute variables
+            sed -i "s/\${CONSOLE_ADMIN_USER}/${CONSOLE_ADMIN_USER}/g" .env
+            sed -i "s/\${CONSOLE_ADMIN_PASSWORD}/${CONSOLE_ADMIN_PASSWORD}/g" .env
+            sed -i "s/\${RCON_PASSWORD}/${RCON_PASSWORD}/g" .env
+            sed -i "s/\${SESSION_SECRET}/${SESSION_SECRET}/g" .env
+            sed -i "s/\${CSRF_SECRET}/${CSRF_SECRET}/g" .env
             chmod 600 .env
 
             # Create docker-compose.yml

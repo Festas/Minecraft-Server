@@ -81,10 +81,8 @@ jobs:
             mkdir -p "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
 
-            # Create .env file from secret
-            cat > .env <<EOF
-            RCON_PASSWORD="${RCON_PASSWORD}"
-            EOF
+            # Create .env file from secret (no quotes, no whitespace)
+            printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" > .env
             chmod 600 .env
 
             # Combine OP settings
@@ -269,6 +267,28 @@ jobs:
                 fi
                 ;;
             esac
+
+            # Sync RCON password to console if console is deployed
+            CONSOLE_DIR="/home/deploy/minecraft-console"
+            if [ -f "$CONSOLE_DIR/.env" ]; then
+              echo ""
+              echo "Syncing RCON password to console..."
+              cd "$CONSOLE_DIR"
+              # Update RCON_PASSWORD in console .env
+              grep -v "^RCON_PASSWORD=" .env > .env.tmp || true
+              printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" >> .env.tmp
+              mv .env.tmp .env
+              chmod 600 .env
+              
+              # Restart console container if running
+              if docker ps --format '{{.Names}}' | grep -q '^minecraft-console$'; then
+                echo "Restarting console container..."
+                docker compose restart minecraft-console 2>/dev/null || docker restart minecraft-console 2>/dev/null || true
+                echo "✓ Console RCON password synced and container restarted"
+              else
+                echo "✓ Console RCON password synced (container not running)"
+              fi
+            fi
 
             # Show final status (except for logs action)
             if [ "$ACTION" != "logs" ]; then
