@@ -55,6 +55,9 @@ jobs:
           envs: ACTION
           command_timeout: 10m
           script: |
+            # Define deployment directory
+            DEPLOY_DIR="/home/deploy/minecraft-server"
+
             echo "=============================================="
             echo "Server Diagnostics - $(date)"
             echo "Action: ${ACTION}"
@@ -68,7 +71,7 @@ jobs:
                 echo ""
 
                 echo "=== Disk Space ==="
-                df -h /home
+                df -h /home /home/deploy 2>/dev/null
                 echo ""
 
                 echo "=== Memory Usage ==="
@@ -106,11 +109,11 @@ jobs:
                 echo ""
 
                 echo "=== Minecraft Server Directory ==="
-                ls -la /home/deploy/minecraft-server/ 2>/dev/null || echo "Directory does not exist"
+                ls -la "$DEPLOY_DIR" 2>/dev/null || echo "Directory does not exist"
                 echo ""
 
                 echo "=== Docker Compose File (if exists) ==="
-                cat /home/deploy/minecraft-server/docker-compose.yml 2>/dev/null || echo "No docker-compose.yml found"
+                cat "$DEPLOY_DIR/docker-compose.yml" 2>/dev/null || echo "No docker-compose.yml found"
                 echo ""
 
                 echo "=== Minecraft Container Logs (last 50 lines) ==="
