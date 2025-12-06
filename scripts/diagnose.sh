@@ -559,14 +559,22 @@ sync_passwords() {
     echo "✓ Backup created"
     echo ""
 
-    # Escape $ as $$ for Docker Compose (prevents variable interpolation)
-    ESCAPED_RCON_PASSWORD=$(printf '%s' "${RCON_PASSWORD}" | sed 's/\$/\$\$/g')
+    # Escape special characters for YAML double-quoted strings:
+    # Step 1: Escape for YAML (what we want in final file)
+    #   - \ -> \\ (backslash)
+    #   - " -> \" (double quote)
+    #   - $ -> $$ (dollar sign for Docker Compose variable prevention)
+    YAML_ESCAPED=$(printf '%s' "${RCON_PASSWORD}" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\$\$/g')
+    
+    # Step 2: Escape for use in sed command with double quotes
+    #   - Double backslashes again so bash doesn't interpret them
+    SED_ESCAPED=$(printf '%s' "$YAML_ESCAPED" | sed 's/\\/\\\\/g')
     echo "Password escaped for Docker Compose YAML"
 
     # Update RCON_PASSWORD line using sed with proper double-quoting
-    # This handles special YAML characters: $, #, :, !
+    # This handles all special YAML characters: $, #, :, !, ", \, '
     echo "Updating RCON_PASSWORD in docker-compose.yml..."
-    sed -i "s|RCON_PASSWORD:.*|RCON_PASSWORD: \"$ESCAPED_RCON_PASSWORD\"|g" docker-compose.yml
+    sed -i "s|RCON_PASSWORD:.*|RCON_PASSWORD: \"$SED_ESCAPED\"|g" docker-compose.yml
     echo "✓ docker-compose.yml updated with double-quoted password"
     echo ""
 

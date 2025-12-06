@@ -95,8 +95,11 @@ jobs:
               OPS="$OP_ADDITIONAL"
             fi
 
-            # Escape $ as $$ for docker-compose YAML to prevent variable interpolation
-            ESCAPED_RCON_PASSWORD=$(printf '%s' "${RCON_PASSWORD}" | sed 's/\$/\$\$/g')
+            # Escape special characters for YAML double-quoted strings
+            # 1. Escape backslashes first (to avoid double-escaping)
+            # 2. Escape double quotes (required for YAML double-quoted strings)
+            # 3. Escape $ as $$ for Docker Compose (prevents variable interpolation)
+            ESCAPED_RCON_PASSWORD=$(printf '%s' "${RCON_PASSWORD}" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\$\$/g')
 
             # Create docker-compose.yml with base configuration
             cat > docker-compose.yml <<EOF
