@@ -59,11 +59,20 @@ jobs:
         env:
           RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
           ACTION: ${{ github.event.inputs.action || 'deploy' }}
+          WORLD_SEED: ${{ secrets.WORLD_SEED }}
+          OP_OWNER: ${{ secrets.OP_OWNER }}
+          OP_ADDITIONAL: ${{ secrets.OP_ADDITIONAL }}
+          MINECRAFT_VERSION: ${{ secrets.MINECRAFT_VERSION }}
+          WHITELIST_ENABLED: ${{ secrets.WHITELIST_ENABLED }}
+          WHITELIST_USERS: ${{ secrets.WHITELIST_USERS }}
+          PLUGINS_URLS: ${{ secrets.PLUGINS_URLS }}
+          SPIGET_RESOURCES: ${{ secrets.SPIGET_RESOURCES }}
+          SERVER_ICON_URL: ${{ secrets.SERVER_ICON_URL }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: RCON_PASSWORD,ACTION
+          envs: RCON_PASSWORD,ACTION,WORLD_SEED,OP_OWNER,OP_ADDITIONAL,MINECRAFT_VERSION,WHITELIST_ENABLED,WHITELIST_USERS,PLUGINS_URLS,SPIGET_RESOURCES,SERVER_ICON_URL
           script: |
             set -e
 
@@ -78,8 +87,18 @@ jobs:
             EOF
             chmod 600 .env
 
-            # Create docker-compose.yml
-            cat > docker-compose.yml <<'EOF'
+            # Combine OP settings
+            OPS=""
+            if [ -n "$OP_OWNER" ] && [ -n "$OP_ADDITIONAL" ]; then
+              OPS="$OP_OWNER,$OP_ADDITIONAL"
+            elif [ -n "$OP_OWNER" ]; then
+              OPS="$OP_OWNER"
+            elif [ -n "$OP_ADDITIONAL" ]; then
+              OPS="$OP_ADDITIONAL"
+            fi
+
+            # Create docker-compose.yml with base configuration
+            cat > docker-compose.yml <<EOF
             services:
               minecraft-server:
                 image: itzg/minecraft-server:java21
@@ -90,7 +109,7 @@ jobs:
                 environment:
                   EULA: "TRUE"
                   TYPE: "PAPER"
-                  VERSION: "1.20.4"
+                  VERSION: "${MINECRAFT_VERSION:-1.20.4}"
                   MEMORY: "4G"
                   USE_AIKAR_FLAGS: "true"
                   ENABLE_RCON: "true"
@@ -104,6 +123,57 @@ jobs:
                   ONLINE_MODE: "true"
                   VIEW_DISTANCE: 10
                   SPAWN_PROTECTION: 16
+            EOF
+
+            # Add optional SEED if provided
+            if [ -n "$WORLD_SEED" ]; then
+              cat >> docker-compose.yml <<EOF
+                  SEED: "$WORLD_SEED"
+            EOF
+            fi
+
+            # Add OPS if provided
+            if [ -n "$OPS" ]; then
+              cat >> docker-compose.yml <<EOF
+                  OPS: "$OPS"
+            EOF
+            fi
+
+            # Add whitelist settings if enabled
+            if [ "$WHITELIST_ENABLED" = "true" ] && [ -n "$WHITELIST_USERS" ]; then
+              cat >> docker-compose.yml <<EOF
+                  WHITELIST: "$WHITELIST_USERS"
+                  ENABLE_WHITELIST: "TRUE"
+                  ENFORCE_WHITELIST: "TRUE"
+            EOF
+            fi
+
+            # Add plugin URLs if provided
+            if [ -n "$PLUGINS_URLS" ]; then
+              # Convert comma-separated list to multi-line format
+              PLUGINS_FORMATTED=$(echo "$PLUGINS_URLS" | tr ',' '\n' | sed 's/^/                    /')
+              cat >> docker-compose.yml <<EOF
+                  PLUGINS: |
+            $PLUGINS_FORMATTED
+            EOF
+            fi
+
+            # Add Spiget resources if provided
+            if [ -n "$SPIGET_RESOURCES" ]; then
+              cat >> docker-compose.yml <<EOF
+                  SPIGET_RESOURCES: "$SPIGET_RESOURCES"
+            EOF
+            fi
+
+            # Add server icon URL if provided
+            if [ -n "$SERVER_ICON_URL" ]; then
+              cat >> docker-compose.yml <<EOF
+                  ICON: "$SERVER_ICON_URL"
+            EOF
+            fi
+
+            # Complete the docker-compose.yml file
+            cat >> docker-compose.yml <<'EOF'
                 ports:
                   - "25565:25565"
                 volumes:
