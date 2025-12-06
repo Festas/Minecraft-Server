@@ -566,8 +566,11 @@ jobs:
                 # Escape $ as $$ for Docker Compose
                 ESCAPED_RCON_PASSWORD=$(printf '%s' "${RCON_PASSWORD}" | sed 's/\$/\$\$/g')
 
-                # Update RCON_PASSWORD line in docker-compose.yml
-                sed -i "s|RCON_PASSWORD:.*|RCON_PASSWORD: \"${ESCAPED_RCON_PASSWORD}\"|" docker-compose.yml
+                # Update RCON_PASSWORD line in docker-compose.yml using awk for safer handling
+                awk -v pwd="${ESCAPED_RCON_PASSWORD}" '
+                  /RCON_PASSWORD:/ { print "                  RCON_PASSWORD: \"" pwd "\""; next }
+                  { print }
+                ' docker-compose.yml > docker-compose.yml.tmp && mv docker-compose.yml.tmp docker-compose.yml
                 echo "✓ docker-compose.yml updated with escaped password"
               else
                 echo "⚠ docker-compose.yml not found at $DEPLOY_DIR"
