@@ -1,0 +1,353 @@
+name: Server Backup Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Backup action to perform'
+        required: true
+        default: 'create-backup'
+        type: choice
+        options:
+          - create-backup
+          - list-backups
+          - cleanup-old-backups
+      backup_name:
+        description: 'Custom backup name (optional, for create-backup)'
+        required: false
+        type: string
+      retention_days:
+        description: 'Number of backups to keep (for cleanup-old-backups)'
+        required: false
+        default: '7'
+        type: string
+
+jobs:
+  backup-management:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            MISSING_SECRETS+=("SERVER_HOST")
+          fi
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            MISSING_SECRETS+=("SERVER_USER")
+          fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            MISSING_SECRETS+=("SSH_PRIVATE_KEY")
+          fi
+          if [ -z "${{ secrets.RCON_PASSWORD }}" ]; then
+            MISSING_SECRETS+=("RCON_PASSWORD")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please add the following secrets to your repository:"
+            echo "Settings > Secrets and variables > Actions > New repository secret"
+            echo ""
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "- $secret"
+            done
+            exit 1
+          fi
+
+          echo "✓ All required secrets are configured"
+
+      - name: Execute backup action
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ACTION: ${{ github.event.inputs.action }}
+          RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
+          CUSTOM_BACKUP_NAME: ${{ github.event.inputs.backup_name }}
+          RETENTION_DAYS: ${{ github.event.inputs.retention_days || '7' }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: ACTION,RCON_PASSWORD,CUSTOM_BACKUP_NAME,RETENTION_DAYS
+          command_timeout: 15m
+          script: |
+            set -e
+
+            BACKUP_DIR="/home/deploy/minecraft-backups"
+            DEPLOY_DIR="/home/deploy/minecraft-server"
+
+            echo "=============================================="
+            echo "Server Backup Management - $(date)"
+            echo "Action: ${ACTION}"
+            echo "=============================================="
+            echo ""
+
+            case "${ACTION}" in
+              create-backup)
+                echo "=== Creating Minecraft Server Backup ==="
+                echo ""
+
+                # Create backup directory
+                mkdir -p "$BACKUP_DIR"
+
+                # Check if server container is running
+                SERVER_RUNNING=false
+                if docker ps --format '{{.Names}}' | grep -q '^minecraft-server$'; then
+                  SERVER_RUNNING=true
+                  echo "✓ Server container is running"
+                else
+                  echo "⚠ Server container is not running"
+                fi
+                echo ""
+
+                # Perform RCON save commands if server is running
+                SAVE_RECOVERY_NEEDED=false
+                if [ "$SERVER_RUNNING" = true ]; then
+                  echo "Step 1: Preparing world for backup..."
+
+                  # Create .env file with RCON password for docker exec
+                  cd "$DEPLOY_DIR"
+                  cat > .env <<EOF
+            RCON_PASSWORD="${RCON_PASSWORD}"
+            EOF
+                  chmod 600 .env
+
+                  # Disable world auto-saving
+                  echo "Disabling auto-save..."
+                  if docker exec minecraft-server rcon-cli save-off 2>&1; then
+                    echo "✓ Auto-save disabled"
+                    SAVE_RECOVERY_NEEDED=true
+
+                    # Force save current state
+                    echo "Forcing save of current world state..."
+                    if docker exec minecraft-server rcon-cli save-all flush 2>&1; then
+                      echo "✓ World saved"
+                      # Wait a moment for save to complete
+                      sleep 3
+                    else
+                      echo "⚠ Warning: save-all command failed"
+                    fi
+                  else
+                    echo "⚠ Warning: save-off command failed, continuing anyway"
+                  fi
+                else
+                  echo "Skipping RCON save commands (server not running)"
+                fi
+                echo ""
+
+                # Generate backup filename
+                if [ -n "$CUSTOM_BACKUP_NAME" ]; then
+                  BACKUP_FILE="${BACKUP_DIR}/minecraft-backup-${CUSTOM_BACKUP_NAME}-$(date +%Y%m%d-%H%M%S).tar.gz"
+                else
+                  BACKUP_FILE="${BACKUP_DIR}/minecraft-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+                fi
+
+                echo "Step 2: Creating backup archive..."
+                echo "Backup file: $(basename "$BACKUP_FILE")"
+
+                # Create backup using docker volume
+                if docker run --rm \
+                  -v minecraft_data:/data:ro \
+                  -v "$BACKUP_DIR":/backup \
+                  alpine sh -c "cd /data && tar czf /backup/$(basename "$BACKUP_FILE") \
+                    world world_nether world_the_end \
+                    plugins \
+                    ops.json whitelist.json banned-players.json banned-ips.json \
+                    server.properties \
+                    2>/dev/null || tar czf /backup/$(basename "$BACKUP_FILE") \
+                    world* plugins* *.json server.properties \
+                    2>/dev/null || true"; then
+
+                  # Verify backup was created
+                  if [ -f "$BACKUP_FILE" ]; then
+                    BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
+                    echo "✓ Backup created successfully: $BACKUP_SIZE"
+                  else
+                    echo "::error::Backup file was not created"
+                    exit 1
+                  fi
+                else
+                  echo "::error::Backup creation failed"
+                  exit 1
+                fi
+                echo ""
+
+                # Re-enable auto-save if it was disabled
+                if [ "$SAVE_RECOVERY_NEEDED" = true ]; then
+                  echo "Step 3: Re-enabling auto-save..."
+                  if docker exec minecraft-server rcon-cli save-on 2>&1; then
+                    echo "✓ Auto-save re-enabled"
+                  else
+                    echo "::error::Failed to re-enable auto-save! Manual intervention needed."
+                    echo "Run manually: docker exec minecraft-server rcon-cli save-on"
+                  fi
+                  echo ""
+                fi
+
+                echo "=== Backup Summary ==="
+                echo "Backup created: $(basename "$BACKUP_FILE")"
+                echo "Size: $(du -h "$BACKUP_FILE" | cut -f1)"
+                echo "Location: $BACKUP_DIR"
+                echo ""
+                echo "✓ Backup operation completed successfully!"
+                ;;
+
+              list-backups)
+                echo "=== Listing Server Backups ==="
+                echo ""
+
+                if [ ! -d "$BACKUP_DIR" ]; then
+                  echo "⚠ Backup directory does not exist: $BACKUP_DIR"
+                  exit 0
+                fi
+
+                cd "$BACKUP_DIR"
+                BACKUP_COUNT=$(ls -1 minecraft-backup-*.tar.gz 2>/dev/null | wc -l)
+
+                if [ "$BACKUP_COUNT" -eq 0 ]; then
+                  echo "No backups found in $BACKUP_DIR"
+                  exit 0
+                fi
+
+                echo "Total backups: $BACKUP_COUNT"
+                echo "Location: $BACKUP_DIR"
+                echo ""
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo "Backup files (newest first):"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                ls -lht minecraft-backup-*.tar.gz 2>/dev/null | awk '{
+                  size = $5;
+                  date = $6 " " $7 " " $8;
+                  file = $9;
+                  printf "%-60s %8s  %s\n", file, size, date;
+                }'
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo ""
+
+                # Calculate total size
+                TOTAL_SIZE=$(du -sh . 2>/dev/null | cut -f1)
+                echo "Total size of all backups: $TOTAL_SIZE"
+                echo ""
+
+                # Show disk space
+                echo "Disk space usage:"
+                df -h "$BACKUP_DIR" | tail -1 | awk '{print "  Available: " $4 " / " $2 " (" $5 " used)"}'
+                ;;
+
+              cleanup-old-backups)
+                echo "=== Cleaning Up Old Backups ==="
+                echo ""
+                echo "Retention policy: Keep last $RETENTION_DAYS backups"
+                echo ""
+
+                if [ ! -d "$BACKUP_DIR" ]; then
+                  echo "⚠ Backup directory does not exist: $BACKUP_DIR"
+                  exit 0
+                fi
+
+                cd "$BACKUP_DIR"
+                BACKUP_COUNT=$(ls -1 minecraft-backup-*.tar.gz 2>/dev/null | wc -l)
+
+                if [ "$BACKUP_COUNT" -eq 0 ]; then
+                  echo "No backups found to clean up"
+                  exit 0
+                fi
+
+                echo "Current backup count: $BACKUP_COUNT"
+
+                if [ "$BACKUP_COUNT" -le "$RETENTION_DAYS" ]; then
+                  echo "✓ No cleanup needed (have $BACKUP_COUNT, keeping $RETENTION_DAYS)"
+                  exit 0
+                fi
+
+                # Calculate how many to delete
+                TO_DELETE=$((BACKUP_COUNT - RETENTION_DAYS))
+                echo "Backups to delete: $TO_DELETE"
+                echo ""
+
+                # Show which backups will be deleted
+                echo "Backups to be removed:"
+                OLD_BACKUPS=$(ls -t minecraft-backup-*.tar.gz | tail -n "+$((RETENTION_DAYS + 1))")
+                echo "$OLD_BACKUPS" | while read -r backup; do
+                  SIZE=$(du -h "$backup" 2>/dev/null | cut -f1)
+                  echo "  - $backup ($SIZE)"
+                done
+                echo ""
+
+                # Calculate space to be freed
+                SPACE_TO_FREE=$(echo "$OLD_BACKUPS" | xargs du -ch 2>/dev/null | tail -1 | cut -f1)
+                echo "Space to be freed: $SPACE_TO_FREE"
+                echo ""
+
+                # Perform deletion
+                echo "Deleting old backups..."
+                echo "$OLD_BACKUPS" | xargs rm -f
+                echo "✓ Cleanup complete"
+                echo ""
+
+                # Show remaining backups
+                REMAINING=$(ls -1 minecraft-backup-*.tar.gz 2>/dev/null | wc -l)
+                echo "Remaining backups: $REMAINING"
+                echo ""
+                echo "Current backups (newest first):"
+                ls -lht minecraft-backup-*.tar.gz 2>/dev/null | head -10 | awk '{print "  " $9 " (" $5 ")"}'
+                ;;
+
+              *)
+                echo "Unknown action: ${ACTION}"
+                exit 1
+                ;;
+            esac
+
+      - name: Summary
+        if: always()
+        run: |
+          ACTION="${{ github.event.inputs.action }}"
+          {
+            echo "## Server Backup Management Complete 💾"
+            echo ""
+            echo "**Action performed:** \`${ACTION}\`"
+            echo ""
+
+            case "$ACTION" in
+              create-backup)
+                CUSTOM_NAME="${{ github.event.inputs.backup_name }}"
+                echo "### Backup Created"
+                echo "A new backup has been created successfully."
+                if [ -n "$CUSTOM_NAME" ]; then
+                  echo "**Custom name:** $CUSTOM_NAME"
+                fi
+                echo ""
+                echo "**What's Backed Up:**"
+                echo "- All worlds (Overworld, Nether, End)"
+                echo "- Plugins and configurations"
+                echo "- Operator list, whitelist, bans"
+                echo "- Server properties"
+                echo ""
+                echo "### Next Steps"
+                echo "- Use \`list-backups\` to see all backups"
+                echo "- Use \`cleanup-old-backups\` to manage storage"
+                ;;
+              list-backups)
+                echo "### Backup Listing"
+                echo "See the workflow logs above for the complete list of backups."
+                echo ""
+                echo "### Next Steps"
+                echo "- Use \`create-backup\` to create a new backup"
+                echo "- Use \`cleanup-old-backups\` if running low on space"
+                ;;
+              cleanup-old-backups)
+                RETENTION="${{ github.event.inputs.retention_days }}"
+                echo "### Cleanup Complete"
+                echo "Old backups have been removed."
+                echo "**Retention:** Last ${RETENTION} backups kept"
+                echo ""
+                echo "### Next Steps"
+                echo "- Use \`list-backups\` to verify remaining backups"
+                echo "- Adjust retention_days parameter if needed"
+                ;;
+            esac
+          } >> "$GITHUB_STEP_SUMMARY"

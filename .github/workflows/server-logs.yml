@@ -1,0 +1,321 @@
+name: Server Logs Viewer
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Log action to perform'
+        required: true
+        default: 'all-logs'
+        type: choice
+        options:
+          - minecraft-logs
+          - console-logs
+          - caddy-logs
+          - all-logs
+      lines:
+        description: 'Number of lines to show'
+        required: false
+        default: '200'
+        type: string
+      filter:
+        description: 'Filter by log level (optional: error, warn, info, or search term)'
+        required: false
+        type: string
+
+jobs:
+  view-logs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            MISSING_SECRETS+=("SERVER_HOST")
+          fi
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            MISSING_SECRETS+=("SERVER_USER")
+          fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            MISSING_SECRETS+=("SSH_PRIVATE_KEY")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please add the following secrets to your repository:"
+            echo "Settings > Secrets and variables > Actions > New repository secret"
+            echo ""
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "- $secret"
+            done
+            exit 1
+          fi
+
+          echo "✓ All required secrets are configured"
+
+      - name: Retrieve logs
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ACTION: ${{ github.event.inputs.action }}
+          LINES: ${{ github.event.inputs.lines || '200' }}
+          FILTER: ${{ github.event.inputs.filter }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: ACTION,LINES,FILTER
+          command_timeout: 5m
+          script: |
+            echo "=============================================="
+            echo "Server Logs Viewer - $(date)"
+            echo "Action: ${ACTION}"
+            echo "Lines: ${LINES}"
+            if [ -n "$FILTER" ]; then
+              echo "Filter: ${FILTER}"
+            fi
+            echo "=============================================="
+            echo ""
+
+            # Function to display logs with optional filtering
+            show_logs() {
+              local container=$1
+              local lines=$2
+              local filter=$3
+
+              if ! docker ps --format '{{.Names}}' | grep -q "^${container}$"; then
+                echo "⚠ ${container} container is not running"
+                return 1
+              fi
+
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              echo "Container: ${container}"
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+              if [ -z "$filter" ]; then
+                docker logs "${container}" --tail="${lines}" 2>&1
+              else
+                # Apply filter
+                case "$filter" in
+                  error)
+                    echo "Filtering for: ERRORS only"
+                    docker logs "${container}" 2>&1 | grep -iE "error|exception|fail|fatal" | tail -n "${lines}"
+                    ;;
+                  warn)
+                    echo "Filtering for: WARNINGS only"
+                    docker logs "${container}" 2>&1 | grep -i "warn" | tail -n "${lines}"
+                    ;;
+                  info)
+                    echo "Filtering for: INFO messages"
+                    docker logs "${container}" 2>&1 | grep -i "info" | tail -n "${lines}"
+                    ;;
+                  *)
+                    echo "Searching for: ${filter}"
+                    docker logs "${container}" 2>&1 | grep -i "${filter}" | tail -n "${lines}"
+                    ;;
+                esac
+              fi
+              echo ""
+
+              # Show log statistics
+              echo "Log Statistics:"
+              ERROR_COUNT=$(docker logs "${container}" 2>&1 | grep -icE "error|exception|fail|fatal" || echo "0")
+              WARN_COUNT=$(docker logs "${container}" 2>&1 | grep -ic "warn" || echo "0")
+              echo "  Errors: $ERROR_COUNT"
+              echo "  Warnings: $WARN_COUNT"
+              echo ""
+            }
+
+            case "${ACTION}" in
+              minecraft-logs)
+                echo "=== Minecraft Server Logs ==="
+                echo ""
+                show_logs "minecraft-server" "${LINES}" "${FILTER}"
+
+                # Additional Minecraft-specific info
+                if docker ps --format '{{.Names}}' | grep -q "^minecraft-server$"; then
+                  echo "=== Server Status ==="
+                  STATUS=$(docker inspect --format='{{.State.Status}}' minecraft-server 2>/dev/null)
+                  UPTIME=$(docker inspect --format='{{.State.StartedAt}}' minecraft-server 2>/dev/null)
+                  echo "Status: $STATUS"
+                  echo "Started: $UPTIME"
+                  echo ""
+
+                  # Check for common issues in logs
+                  echo "=== Common Issues Check ==="
+                  if docker logs minecraft-server 2>&1 | grep -iq "out of memory"; then
+                    echo "⚠ Out of Memory errors detected"
+                  fi
+                  if docker logs minecraft-server 2>&1 | grep -iq "connection timed out"; then
+                    echo "⚠ Connection timeout errors detected"
+                  fi
+                  if docker logs minecraft-server 2>&1 | grep -iq "error loading plugin"; then
+                    echo "⚠ Plugin loading errors detected"
+                  fi
+                  ISSUES_FOUND=false
+                  if ! docker logs minecraft-server 2>&1 | grep -iqE "out of memory|connection timed out|error loading plugin"; then
+                    echo "✓ No common issues detected in recent logs"
+                  fi
+                fi
+                ;;
+
+              console-logs)
+                echo "=== Console Container Logs ==="
+                echo ""
+                show_logs "minecraft-console" "${LINES}" "${FILTER}"
+
+                # Additional Console-specific info
+                if docker ps --format '{{.Names}}' | grep -q "^minecraft-console$"; then
+                  echo "=== Console Status ==="
+                  STATUS=$(docker inspect --format='{{.State.Status}}' minecraft-console 2>/dev/null)
+                  HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-console 2>/dev/null || echo "no-healthcheck")
+                  UPTIME=$(docker inspect --format='{{.State.StartedAt}}' minecraft-console 2>/dev/null)
+                  echo "Status: $STATUS"
+                  echo "Health: $HEALTH"
+                  echo "Started: $UPTIME"
+                  echo ""
+
+                  # Check for RCON connection issues
+                  echo "=== RCON Connection Check ==="
+                  if docker logs minecraft-console 2>&1 | grep -iq "rcon.*error\|rcon.*fail\|connection.*refused"; then
+                    echo "⚠ RCON connection issues detected"
+                    echo "Recent RCON errors:"
+                    docker logs minecraft-console 2>&1 | grep -iE "rcon.*error|rcon.*fail|connection.*refused" | tail -5
+                  else
+                    echo "✓ No RCON connection issues in recent logs"
+                  fi
+                fi
+                ;;
+
+              caddy-logs)
+                echo "=== Caddy Proxy Logs ==="
+                echo ""
+
+                # Check if Caddy is running
+                if docker ps --format '{{.Names}}' | grep -q "caddy"; then
+                  CADDY_CONTAINER=$(docker ps --format '{{.Names}}' | grep "caddy" | head -1)
+                  show_logs "${CADDY_CONTAINER}" "${LINES}" "${FILTER}"
+
+                  echo "=== Caddy Status ==="
+                  STATUS=$(docker inspect --format='{{.State.Status}}' "${CADDY_CONTAINER}" 2>/dev/null)
+                  UPTIME=$(docker inspect --format='{{.State.StartedAt}}' "${CADDY_CONTAINER}" 2>/dev/null)
+                  echo "Status: $STATUS"
+                  echo "Started: $UPTIME"
+                else
+                  echo "⚠ No Caddy container found"
+                  echo ""
+                  echo "Available containers:"
+                  docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+                fi
+                ;;
+
+              all-logs)
+                echo "=== All Container Logs ==="
+                echo ""
+                echo "Retrieving logs from all relevant containers..."
+                echo ""
+
+                # Minecraft Server
+                echo "╔════════════════════════════════════════════════════════════════╗"
+                echo "║                    MINECRAFT SERVER LOGS                       ║"
+                echo "╚════════════════════════════════════════════════════════════════╝"
+                echo ""
+                show_logs "minecraft-server" "${LINES}" "${FILTER}" || echo "Skipped (not running)"
+                echo ""
+
+                # Console
+                echo "╔════════════════════════════════════════════════════════════════╗"
+                echo "║                    CONSOLE CONTAINER LOGS                      ║"
+                echo "╚════════════════════════════════════════════════════════════════╝"
+                echo ""
+                show_logs "minecraft-console" "${LINES}" "${FILTER}" || echo "Skipped (not running)"
+                echo ""
+
+                # Caddy
+                echo "╔════════════════════════════════════════════════════════════════╗"
+                echo "║                      CADDY PROXY LOGS                          ║"
+                echo "╚════════════════════════════════════════════════════════════════╝"
+                echo ""
+                if docker ps --format '{{.Names}}' | grep -q "caddy"; then
+                  CADDY_CONTAINER=$(docker ps --format '{{.Names}}' | grep "caddy" | head -1)
+                  show_logs "${CADDY_CONTAINER}" "${LINES}" "${FILTER}" || echo "Skipped (not running)"
+                else
+                  echo "⚠ No Caddy container found"
+                fi
+                echo ""
+
+                # Summary
+                echo "╔════════════════════════════════════════════════════════════════╗"
+                echo "║                         SUMMARY                                ║"
+                echo "╚════════════════════════════════════════════════════════════════╝"
+                echo ""
+                echo "All available container logs have been displayed above."
+                echo ""
+                echo "Running containers:"
+                docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+                ;;
+
+              *)
+                echo "Unknown action: ${ACTION}"
+                exit 1
+                ;;
+            esac
+
+      - name: Summary
+        if: always()
+        run: |
+          ACTION="${{ github.event.inputs.action }}"
+          LINES="${{ github.event.inputs.lines || '200' }}"
+          FILTER="${{ github.event.inputs.filter }}"
+
+          {
+            echo "## Server Logs Viewer Complete 📋"
+            echo ""
+            echo "**Action:** \`${ACTION}\`"
+            echo "**Lines shown:** ${LINES}"
+            if [ -n "$FILTER" ]; then
+              echo "**Filter applied:** ${FILTER}"
+            fi
+            echo ""
+            echo "### What Was Displayed"
+
+            case "$ACTION" in
+              minecraft-logs)
+                echo "- Minecraft server container logs"
+                echo "- Server status and uptime"
+                echo "- Common issues check"
+                ;;
+              console-logs)
+                echo "- Console container logs"
+                echo "- Console health status"
+                echo "- RCON connection check"
+                ;;
+              caddy-logs)
+                echo "- Caddy proxy container logs"
+                echo "- Proxy status and uptime"
+                ;;
+              all-logs)
+                echo "- Minecraft server logs"
+                echo "- Console container logs"
+                echo "- Caddy proxy logs"
+                echo "- Container status summary"
+                ;;
+            esac
+
+            echo ""
+            echo "### Available Filters"
+            echo "You can filter logs by:"
+            echo "- \`error\` - Show only errors and exceptions"
+            echo "- \`warn\` - Show only warnings"
+            echo "- \`info\` - Show only info messages"
+            echo "- Any search term - Custom text search"
+            echo ""
+            echo "### Tips"
+            echo "- Increase 'lines' parameter to see more history"
+            echo "- Use specific filters to troubleshoot issues"
+            echo "- Check error counts in log statistics"
+          } >> "$GITHUB_STEP_SUMMARY"

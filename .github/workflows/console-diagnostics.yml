@@ -1,0 +1,666 @@
+name: Console & RCON Diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Diagnostic action to perform'
+        required: true
+        default: 'full-diagnostics'
+        type: choice
+        options:
+          - rcon-test
+          - console-health
+          - network-check
+          - password-audit
+          - full-diagnostics
+          - fix-rcon-password
+          - restart-console
+          - view-console-logs
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            MISSING_SECRETS+=("SERVER_HOST")
+          fi
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            MISSING_SECRETS+=("SERVER_USER")
+          fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            MISSING_SECRETS+=("SSH_PRIVATE_KEY")
+          fi
+          if [ -z "${{ secrets.RCON_PASSWORD }}" ]; then
+            MISSING_SECRETS+=("RCON_PASSWORD")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please add the following secrets to your repository:"
+            echo "Settings > Secrets and variables > Actions > New repository secret"
+            echo ""
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "- $secret"
+            done
+            exit 1
+          fi
+
+          echo "✓ All required secrets are configured"
+
+      - name: Run diagnostics
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ACTION: ${{ github.event.inputs.action }}
+          RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: ACTION,RCON_PASSWORD
+          command_timeout: 10m
+          script: |
+            # Define deployment directories
+            DEPLOY_DIR="/home/deploy/minecraft-server"
+            CONSOLE_DIR="/home/deploy/minecraft-console"
+
+            echo "=============================================="
+            echo "Console & RCON Diagnostics - $(date)"
+            echo "Action: ${ACTION}"
+            echo "=============================================="
+            echo ""
+
+            case "${ACTION}" in
+              rcon-test)
+                echo "=== RCON Connectivity Test ==="
+                echo ""
+
+                echo "Step 1: Check if minecraft-server container is running..."
+                if docker ps --format '{{.Names}}' | grep -q '^minecraft-server$'; then
+                  echo "✓ minecraft-server container is running"
+                  docker ps --filter "name=minecraft-server" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+                else
+                  echo "✗ minecraft-server container is NOT running"
+                  echo "Please start the server first."
+                  exit 1
+                fi
+                echo ""
+
+                echo "Step 2: Check if RCON port 25575 is listening inside container..."
+                if docker exec minecraft-server netstat -tlnp 2>/dev/null | grep -q 25575; then
+                  echo "✓ RCON port 25575 is listening inside container"
+                  docker exec minecraft-server netstat -tlnp 2>/dev/null | grep 25575 || true
+                else
+                  echo "⚠ RCON port 25575 may not be listening"
+                  echo "Checking process list inside container..."
+                  docker exec minecraft-server ps aux | grep -i java || true
+                fi
+                echo ""
+
+                echo "Step 3: Test network connectivity from console to minecraft-server:25575..."
+                if docker ps --format '{{.Names}}' | grep -q '^minecraft-console$'; then
+                  echo "Testing from console container..."
+                  if docker exec minecraft-console nc -zv minecraft-server 25575 2>&1; then
+                    echo "✓ Console can reach minecraft-server:25575"
+                  else
+                    echo "✗ Console CANNOT reach minecraft-server:25575"
+                    echo "This may indicate a network configuration issue."
+                  fi
+                else
+                  echo "⚠ Console container is not running, skipping connectivity test"
+                fi
+                echo ""
+
+                echo "Step 4: Compare RCON passwords..."
+                cd "$DEPLOY_DIR"
+                if [ -f .env ]; then
+                  MC_RCON_HASH=$(grep RCON_PASSWORD .env | md5sum | cut -d' ' -f1)
+                  echo "Minecraft server .env RCON_PASSWORD hash: $MC_RCON_HASH"
+                else
+                  echo "⚠ Minecraft server .env file not found"
+                  MC_RCON_HASH="missing"
+                fi
+
+                cd "$CONSOLE_DIR"
+                if [ -f .env ]; then
+                  CONSOLE_RCON_HASH=$(grep RCON_PASSWORD .env | md5sum | cut -d' ' -f1)
+                  echo "Console .env RCON_PASSWORD hash: $CONSOLE_RCON_HASH"
+                else
+                  echo "⚠ Console .env file not found"
+                  CONSOLE_RCON_HASH="missing"
+                fi
+
+                SECRET_RCON_HASH=$(echo "RCON_PASSWORD=${RCON_PASSWORD}" | md5sum | cut -d' ' -f1)
+                echo "GitHub secret RCON_PASSWORD hash: $SECRET_RCON_HASH"
+
+                if [ "$MC_RCON_HASH" = "$CONSOLE_RCON_HASH" ] && [ "$MC_RCON_HASH" = "$SECRET_RCON_HASH" ]; then
+                  echo "✓ All RCON passwords match!"
+                else
+                  echo "✗ RCON password mismatch detected!"
+                  echo "  Run the 'fix-rcon-password' action to sync passwords."
+                fi
+                echo ""
+
+                echo "Step 5: Test RCON command execution..."
+                cd "$DEPLOY_DIR"
+                if docker exec minecraft-server rcon-cli list 2>&1; then
+                  echo "✓ RCON command executed successfully"
+                else
+                  echo "✗ RCON command failed"
+                  echo "Check RCON_PASSWORD configuration in server .env file"
+                fi
+                echo ""
+
+                echo "Step 6: Show RCON-related log entries..."
+                echo "--- Minecraft Server Logs (RCON mentions) ---"
+                docker logs minecraft-server 2>&1 | grep -i rcon | tail -20 || echo "No RCON entries found"
+                echo ""
+
+                if docker ps --format '{{.Names}}' | grep -q '^minecraft-console$'; then
+                  echo "--- Console Logs (RCON/connection mentions) ---"
+                  docker logs minecraft-console 2>&1 | grep -iE "rcon|connection|error" | tail -20 || echo "No relevant entries found"
+                fi
+                ;;
+
+              console-health)
+                echo "=== Console Container Health Check ==="
+                echo ""
+
+                echo "Step 1: Show console container status..."
+                if docker ps -a --format '{{.Names}}' | grep -q '^minecraft-console$'; then
+                  docker ps -a --filter "name=minecraft-console" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+                  echo ""
+                  HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-console 2>/dev/null || echo "no-healthcheck")
+                  echo "Health status: $HEALTH"
+                else
+                  echo "✗ minecraft-console container not found"
+                  exit 1
+                fi
+                echo ""
+
+                echo "Step 2: Display console container logs (last 100 lines)..."
+                docker logs minecraft-console --tail=100 2>&1
+                echo ""
+
+                echo "Step 3: Check DNS resolution to minecraft-server..."
+                if docker exec minecraft-console nslookup minecraft-server 2>&1; then
+                  echo "✓ DNS resolution successful"
+                else
+                  echo "⚠ DNS resolution may have issues"
+                fi
+                echo ""
+
+                echo "Step 4: Show console environment variables (redacted)..."
+                docker exec minecraft-console env | grep -v PASSWORD | grep -v SECRET | sort
+                echo ""
+                echo "(Sensitive values filtered out)"
+                echo ""
+
+                echo "Step 5: Check mounted volumes..."
+                docker inspect minecraft-console --format '{{range .Mounts}}{{.Type}}: {{.Source}} -> {{.Destination}} ({{.Mode}}){{"\n"}}{{end}}'
+                echo ""
+
+                echo "Step 6: Verify .env file exists with required variables..."
+                cd "$CONSOLE_DIR"
+                if [ -f .env ]; then
+                  echo "✓ .env file exists"
+                  echo "Required variables check:"
+                  for var in ADMIN_USERNAME ADMIN_PASSWORD RCON_HOST RCON_PORT RCON_PASSWORD SESSION_SECRET CSRF_SECRET; do
+                    if grep -q "^${var}=" .env; then
+                      echo "  ✓ $var is set"
+                    else
+                      echo "  ✗ $var is MISSING"
+                    fi
+                  done
+                else
+                  echo "✗ .env file not found at $CONSOLE_DIR/.env"
+                fi
+                ;;
+
+              network-check)
+                echo "=== Docker Network Diagnostics ==="
+                echo ""
+
+                echo "Step 1: List all Docker networks..."
+                docker network ls
+                echo ""
+
+                echo "Step 2: Show detailed info about caddy-network..."
+                if docker network inspect caddy-network >/dev/null 2>&1; then
+                  docker network inspect caddy-network --format '{{range .Containers}}{{.Name}}: {{.IPv4Address}}{{"\n"}}{{end}}'
+                else
+                  echo "✗ caddy-network does not exist"
+                  echo "This is required for console-server communication"
+                fi
+                echo ""
+
+                echo "Step 3: List all containers on caddy-network with IPs..."
+                echo "Containers on caddy-network:"
+                docker network inspect caddy-network --format '{{range .Containers}}{{.Name}}: {{.IPv4Address}}{{"\n"}}{{end}}' 2>/dev/null || echo "Network not found"
+                echo ""
+
+                echo "Step 4: Check if minecraft-server and minecraft-console are on same network..."
+                MC_ON_CADDY=$(docker inspect minecraft-server --format '{{range $net,$v := .NetworkSettings.Networks}}{{$net}}{{"\n"}}{{end}}' 2>/dev/null | grep -c caddy-network || echo "0")
+                CONSOLE_ON_CADDY=$(docker inspect minecraft-console --format '{{range $net,$v := .NetworkSettings.Networks}}{{$net}}{{"\n"}}{{end}}' 2>/dev/null | grep -c caddy-network || echo "0")
+
+                if [ "$MC_ON_CADDY" -gt 0 ] && [ "$CONSOLE_ON_CADDY" -gt 0 ]; then
+                  echo "✓ Both containers are on caddy-network"
+                else
+                  echo "✗ Network configuration issue detected:"
+                  echo "  minecraft-server on caddy-network: $MC_ON_CADDY"
+                  echo "  minecraft-console on caddy-network: $CONSOLE_ON_CADDY"
+                fi
+                echo ""
+
+                echo "Step 5: Test connectivity between containers..."
+                if [ "$MC_ON_CADDY" -gt 0 ] && [ "$CONSOLE_ON_CADDY" -gt 0 ]; then
+                  echo "Testing ping from console to minecraft-server..."
+                  docker exec minecraft-console ping -c 3 minecraft-server 2>&1 || echo "Ping failed"
+                else
+                  echo "Skipping connectivity test (containers not on same network)"
+                fi
+                ;;
+
+              password-audit)
+                echo "=== RCON Password Verification ==="
+                echo ""
+
+                echo "Comparing RCON_PASSWORD from multiple sources..."
+                echo "(Passwords are never displayed, only hashes are compared)"
+                echo ""
+
+                # Get GitHub secret hash
+                SECRET_HASH=$(echo -n "${RCON_PASSWORD}" | md5sum | cut -d' ' -f1)
+                echo "GitHub secret RCON_PASSWORD hash: $SECRET_HASH"
+
+                # Get console .env hash
+                cd "$CONSOLE_DIR"
+                if [ -f .env ]; then
+                  CONSOLE_VALUE=$(grep "^RCON_PASSWORD=" .env | cut -d'=' -f2- | tr -d '\r\n')
+                  CONSOLE_HASH=$(echo -n "$CONSOLE_VALUE" | md5sum | cut -d' ' -f1)
+                  echo "Console .env RCON_PASSWORD hash: $CONSOLE_HASH"
+
+                  # Check for whitespace issues
+                  CONSOLE_LENGTH=${#CONSOLE_VALUE}
+                  SECRET_LENGTH=${#RCON_PASSWORD}
+                  echo "Console password length: $CONSOLE_LENGTH characters"
+                  echo "Secret password length: $SECRET_LENGTH characters"
+                else
+                  echo "✗ Console .env not found"
+                  CONSOLE_HASH="missing"
+                fi
+
+                # Get minecraft server env hash
+                MC_VALUE=$(docker exec minecraft-server printenv RCON_PASSWORD 2>/dev/null || echo "")
+                if [ -n "$MC_VALUE" ]; then
+                  MC_HASH=$(echo -n "$MC_VALUE" | md5sum | cut -d' ' -f1)
+                  echo "Minecraft server env RCON_PASSWORD hash: $MC_HASH"
+                  MC_LENGTH=${#MC_VALUE}
+                  echo "Server password length: $MC_LENGTH characters"
+                else
+                  echo "✗ Could not retrieve RCON_PASSWORD from minecraft-server container"
+                  MC_HASH="missing"
+                fi
+                echo ""
+
+                # Check for matches
+                echo "=== Verification Results ==="
+                ALL_MATCH=true
+
+                if [ "$SECRET_HASH" = "$CONSOLE_HASH" ]; then
+                  echo "✓ GitHub secret matches Console .env"
+                else
+                  echo "✗ GitHub secret does NOT match Console .env"
+                  ALL_MATCH=false
+                fi
+
+                if [ "$SECRET_HASH" = "$MC_HASH" ]; then
+                  echo "✓ GitHub secret matches Minecraft server"
+                else
+                  echo "✗ GitHub secret does NOT match Minecraft server"
+                  ALL_MATCH=false
+                fi
+
+                if [ "$CONSOLE_HASH" = "$MC_HASH" ]; then
+                  echo "✓ Console .env matches Minecraft server"
+                else
+                  echo "✗ Console .env does NOT match Minecraft server"
+                  ALL_MATCH=false
+                fi
+                echo ""
+
+                if [ "$ALL_MATCH" = true ]; then
+                  echo "🎉 SUCCESS: All RCON passwords match!"
+                else
+                  echo "⚠ ISSUE DETECTED: RCON passwords do not match across all sources"
+                  echo ""
+                  echo "Common issues to check:"
+                  echo "1. Trailing whitespace or newlines"
+                  echo "2. Special character escaping"
+                  echo "3. Quote handling in .env files"
+                  echo ""
+                  echo "To fix: Run the 'fix-rcon-password' action"
+                fi
+                ;;
+
+              full-diagnostics)
+                echo "=== Running Full Diagnostics Suite ==="
+                echo ""
+
+                RESULTS=""
+
+                # Test 1: Container Status
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo "TEST 1: Container Status"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                MC_RUNNING=$(docker ps --format '{{.Names}}' | grep -c '^minecraft-server$' || echo "0")
+                CONSOLE_RUNNING=$(docker ps --format '{{.Names}}' | grep -c '^minecraft-console$' || echo "0")
+
+                if [ "$MC_RUNNING" -gt 0 ]; then
+                  echo "✓ minecraft-server is running"
+                  RESULTS="${RESULTS}✓ Container Status (Server)\n"
+                else
+                  echo "✗ minecraft-server is NOT running"
+                  RESULTS="${RESULTS}✗ Container Status (Server)\n"
+                fi
+
+                if [ "$CONSOLE_RUNNING" -gt 0 ]; then
+                  echo "✓ minecraft-console is running"
+                  RESULTS="${RESULTS}✓ Container Status (Console)\n"
+                else
+                  echo "✗ minecraft-console is NOT running"
+                  RESULTS="${RESULTS}✗ Container Status (Console)\n"
+                fi
+                echo ""
+
+                # Test 2: Network Configuration
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo "TEST 2: Network Configuration"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                if [ "$MC_RUNNING" -gt 0 ] && [ "$CONSOLE_RUNNING" -gt 0 ]; then
+                  MC_ON_CADDY=$(docker inspect minecraft-server --format '{{range $net,$v := .NetworkSettings.Networks}}{{$net}}{{"\n"}}{{end}}' | grep -c caddy-network || echo "0")
+                  CONSOLE_ON_CADDY=$(docker inspect minecraft-console --format '{{range $net,$v := .NetworkSettings.Networks}}{{$net}}{{"\n"}}{{end}}' | grep -c caddy-network || echo "0")
+
+                  if [ "$MC_ON_CADDY" -gt 0 ] && [ "$CONSOLE_ON_CADDY" -gt 0 ]; then
+                    echo "✓ Both containers on caddy-network"
+                    RESULTS="${RESULTS}✓ Network Configuration\n"
+                  else
+                    echo "✗ Network configuration issue"
+                    RESULTS="${RESULTS}✗ Network Configuration\n"
+                  fi
+                else
+                  echo "⊘ Skipped (containers not running)"
+                  RESULTS="${RESULTS}⊘ Network Configuration (skipped)\n"
+                fi
+                echo ""
+
+                # Test 3: RCON Port
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo "TEST 3: RCON Port Listening"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                if [ "$MC_RUNNING" -gt 0 ]; then
+                  if docker exec minecraft-server netstat -tlnp 2>/dev/null | grep -q 25575; then
+                    echo "✓ RCON port 25575 is listening"
+                    RESULTS="${RESULTS}✓ RCON Port Listening\n"
+                  else
+                    echo "✗ RCON port 25575 is NOT listening"
+                    RESULTS="${RESULTS}✗ RCON Port Listening\n"
+                  fi
+                else
+                  echo "⊘ Skipped (server not running)"
+                  RESULTS="${RESULTS}⊘ RCON Port (skipped)\n"
+                fi
+                echo ""
+
+                # Test 4: Password Consistency
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo "TEST 4: Password Consistency"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                SECRET_HASH=$(echo -n "${RCON_PASSWORD}" | md5sum | cut -d' ' -f1)
+
+                cd "$CONSOLE_DIR"
+                if [ -f .env ]; then
+                  CONSOLE_VALUE=$(grep "^RCON_PASSWORD=" .env | cut -d'=' -f2- | tr -d '\r\n')
+                  CONSOLE_HASH=$(echo -n "$CONSOLE_VALUE" | md5sum | cut -d' ' -f1)
+                else
+                  CONSOLE_HASH="missing"
+                fi
+
+                if [ "$MC_RUNNING" -gt 0 ]; then
+                  MC_VALUE=$(docker exec minecraft-server printenv RCON_PASSWORD 2>/dev/null || echo "")
+                  MC_HASH=$(echo -n "$MC_VALUE" | md5sum | cut -d' ' -f1)
+                else
+                  MC_HASH="skipped"
+                fi
+
+                if [ "$SECRET_HASH" = "$CONSOLE_HASH" ] && [ "$SECRET_HASH" = "$MC_HASH" ]; then
+                  echo "✓ All passwords match"
+                  RESULTS="${RESULTS}✓ Password Consistency\n"
+                else
+                  echo "✗ Password mismatch detected"
+                  RESULTS="${RESULTS}✗ Password Consistency\n"
+                fi
+                echo ""
+
+                # Test 5: RCON Command Execution
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo "TEST 5: RCON Command Execution"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                if [ "$MC_RUNNING" -gt 0 ]; then
+                  cd "$DEPLOY_DIR"
+                  if docker exec minecraft-server rcon-cli list >/dev/null 2>&1; then
+                    echo "✓ RCON commands work"
+                    RESULTS="${RESULTS}✓ RCON Command Execution\n"
+                  else
+                    echo "✗ RCON commands fail"
+                    RESULTS="${RESULTS}✗ RCON Command Execution\n"
+                  fi
+                else
+                  echo "⊘ Skipped (server not running)"
+                  RESULTS="${RESULTS}⊘ RCON Commands (skipped)\n"
+                fi
+                echo ""
+
+                # Summary
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo "DIAGNOSTICS SUMMARY"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo -e "$RESULTS"
+                echo ""
+
+                if echo -e "$RESULTS" | grep -q "✗"; then
+                  echo "⚠ Issues detected. Review the results above."
+                  echo "Consider running specific diagnostic actions for more details."
+                else
+                  echo "🎉 All checks passed!"
+                fi
+                ;;
+
+              fix-rcon-password)
+                echo "=== Syncing RCON Password from GitHub Secrets ==="
+                echo ""
+                echo "This will update the RCON password in both containers to match the GitHub secret."
+                echo ""
+
+                # Update Minecraft server
+                echo "Step 1: Updating Minecraft server .env..."
+                cd "$DEPLOY_DIR"
+                cat > .env <<EOF
+            RCON_PASSWORD="${RCON_PASSWORD}"
+            EOF
+                chmod 600 .env
+                echo "✓ Minecraft server .env updated"
+                echo ""
+
+                # Update Console
+                echo "Step 2: Updating Console .env..."
+                cd "$CONSOLE_DIR"
+
+                # Read existing .env and update RCON_PASSWORD line
+                if [ -f .env ]; then
+                  # Create temp file with updated password
+                  grep -v "^RCON_PASSWORD=" .env > .env.tmp || true
+                  echo "RCON_PASSWORD=${RCON_PASSWORD}" >> .env.tmp
+                  mv .env.tmp .env
+                  chmod 600 .env
+                  echo "✓ Console .env updated"
+                else
+                  echo "✗ Console .env not found"
+                  exit 1
+                fi
+                echo ""
+
+                # Restart containers
+                echo "Step 3: Restarting console container..."
+                docker compose restart minecraft-console
+                echo ""
+
+                echo "Step 4: Waiting for console to be healthy..."
+                for i in $(seq 1 30); do
+                  HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-console 2>/dev/null || echo "starting")
+                  if [ "$HEALTH" = "healthy" ]; then
+                    echo "✓ Console is healthy"
+                    break
+                  fi
+                  echo "  Status: $HEALTH (attempt $i/30)"
+                  sleep 2
+                done
+                echo ""
+
+                # Verify
+                echo "Step 5: Verifying RCON connectivity..."
+                cd "$DEPLOY_DIR"
+                if docker exec minecraft-server rcon-cli list 2>&1; then
+                  echo "✓ RCON password sync successful!"
+                else
+                  echo "⚠ RCON test failed. Check server logs."
+                fi
+                ;;
+
+              restart-console)
+                echo "=== Restarting Console Container ==="
+                echo ""
+
+                cd "$CONSOLE_DIR"
+
+                echo "Step 1: Restarting container..."
+                docker compose restart minecraft-console
+                echo ""
+
+                echo "Step 2: Waiting for container to be healthy..."
+                for i in $(seq 1 30); do
+                  HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-console 2>/dev/null || echo "starting")
+                  if [ "$HEALTH" = "healthy" ]; then
+                    echo "✓ Console is healthy after restart"
+                    break
+                  fi
+                  echo "  Status: $HEALTH (attempt $i/30)"
+                  sleep 2
+                done
+                echo ""
+
+                echo "Step 3: Showing logs after restart..."
+                docker logs minecraft-console --tail=50 2>&1
+                echo ""
+                echo "✓ Console restarted successfully!"
+                ;;
+
+              view-console-logs)
+                echo "=== Console Container Logs ==="
+                echo ""
+
+                if docker ps --format '{{.Names}}' | grep -q '^minecraft-console$'; then
+                  echo "Showing last 200 lines of console logs..."
+                  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                  docker logs minecraft-console --tail=200 2>&1
+                  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                  echo ""
+                  echo "Filtering for errors and warnings..."
+                  ERROR_COUNT=$(docker logs minecraft-console 2>&1 | grep -icE "error|fail|exception" || echo "0")
+                  WARN_COUNT=$(docker logs minecraft-console 2>&1 | grep -ic "warn" || echo "0")
+                  echo "Errors found: $ERROR_COUNT"
+                  echo "Warnings found: $WARN_COUNT"
+
+                  if [ "$ERROR_COUNT" -gt 0 ] || [ "$WARN_COUNT" -gt 0 ]; then
+                    echo ""
+                    echo "Recent errors/warnings:"
+                    docker logs minecraft-console 2>&1 | grep -iE "error|fail|exception|warn" | tail -20
+                  fi
+                else
+                  echo "✗ minecraft-console container is not running"
+                  exit 1
+                fi
+                ;;
+
+              *)
+                echo "Unknown action: ${ACTION}"
+                exit 1
+                ;;
+            esac
+
+      - name: Summary
+        if: always()
+        run: |
+          ACTION="${{ github.event.inputs.action }}"
+          {
+            echo "## Console & RCON Diagnostics Complete 🔍"
+            echo ""
+            echo "**Action performed:** \`${ACTION}\`"
+            echo ""
+            echo "Check the workflow logs above for detailed output."
+            echo ""
+
+            case "$ACTION" in
+              rcon-test)
+                echo "### Next Steps"
+                echo "If RCON test failed:"
+                echo "- Verify RCON is enabled in server.properties"
+                echo "- Check if passwords match using \`password-audit\`"
+                echo "- Use \`fix-rcon-password\` to sync passwords"
+                ;;
+              console-health)
+                echo "### Next Steps"
+                echo "If console is unhealthy:"
+                echo "- Check the logs for specific errors"
+                echo "- Verify .env file has all required variables"
+                echo "- Try \`restart-console\` action"
+                ;;
+              network-check)
+                echo "### Next Steps"
+                echo "If network issues found:"
+                echo "- Ensure both containers are on caddy-network"
+                echo "- Redeploy containers if needed"
+                ;;
+              password-audit)
+                echo "### Next Steps"
+                echo "If passwords don't match:"
+                echo "- Use \`fix-rcon-password\` to sync from GitHub secrets"
+                echo "- Update the RCON_PASSWORD secret if needed"
+                ;;
+              full-diagnostics)
+                echo "### Next Steps"
+                echo "Review the summary above for any ✗ failures."
+                echo "Run specific diagnostic actions for detailed troubleshooting."
+                ;;
+              fix-rcon-password)
+                echo "### Verification"
+                echo "Run \`password-audit\` to verify all passwords now match."
+                ;;
+              restart-console)
+                echo "### Status"
+                echo "Console has been restarted. Check logs above for any errors."
+                ;;
+              view-console-logs)
+                echo "### Analysis"
+                echo "Review the logs above for errors or issues."
+                ;;
+            esac
+          } >> "$GITHUB_STEP_SUMMARY"
