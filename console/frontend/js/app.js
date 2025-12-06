@@ -309,7 +309,7 @@ function updateServerStatus(stats) {
     // Update RCON warning banner
     const rconWarning = document.getElementById('rconWarning');
     if (rconWarning) {
-        if (stats.rconConnected === false && stats.status === 'online') {
+        if (!stats.rconConnected && stats.status === 'online') {
             rconWarning.classList.remove('hidden');
         } else {
             rconWarning.classList.add('hidden');
@@ -320,7 +320,7 @@ function updateServerStatus(stats) {
     const commandInput = document.getElementById('commandInput');
     const sendCommandBtn = document.getElementById('sendCommandBtn');
     
-    if (stats.rconConnected === false) {
+    if (!stats.rconConnected) {
         if (commandInput) commandInput.disabled = true;
         if (sendCommandBtn) sendCommandBtn.disabled = true;
     } else {

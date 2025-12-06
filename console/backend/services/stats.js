@@ -12,6 +12,7 @@ class StatsService {
         };
         this.cacheTimeout = 5000; // 5 seconds
         this.MAX_VERSION_LENGTH = 50; // Maximum length for version string
+        this.DU_COMMAND_TIMEOUT = 5000; // Timeout for du command in milliseconds
     }
 
     /**
@@ -83,12 +84,14 @@ class StatsService {
         try {
             const worldPath = process.env.MC_SERVER_DIR || '/minecraft';
             
-            // Validate and resolve path to prevent traversal and injection attacks
-            const resolvedPath = path.resolve(worldPath);
+            // Normalize and resolve path to prevent traversal attacks
+            const normalizedPath = path.normalize(worldPath);
+            const resolvedPath = path.resolve(normalizedPath);
             
-            // Ensure path doesn't contain suspicious patterns
-            // Allow absolute paths starting with / or relative paths
-            if (!/^(?:\/)?[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*$/.test(worldPath)) {
+            // Validate that the path doesn't try to escape expected directories
+            // Check original path for .. before normalization removes it
+            // Reject paths with .. or suspicious characters
+            if (worldPath.includes('..') || /[;&|`$(){}]/.test(worldPath)) {
                 console.error('Invalid world path format:', worldPath);
                 return 'Unknown';
             }
@@ -121,11 +124,11 @@ class StatsService {
                     resolve(size || 'Unknown');
                 });
                 
-                // Timeout after 5 seconds
+                // Timeout after configured time
                 setTimeout(() => {
                     du.kill();
                     resolve('Unknown');
-                }, 5000);
+                }, this.DU_COMMAND_TIMEOUT);
             });
         } catch (error) {
             console.error('Error getting world size:', error.message);
