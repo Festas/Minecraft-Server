@@ -242,8 +242,8 @@ jobs:
                 echo "║                      CADDY PROXY LOGS                          ║"
                 echo "╚════════════════════════════════════════════════════════════════╝"
                 echo ""
-                if docker ps --format '{{.Names}}' | grep -q "caddy"; then
-                  CADDY_CONTAINER=$(docker ps --format '{{.Names}}' | grep "caddy" | head -1)
+                CADDY_CONTAINER=$(docker ps --format '{{.Names}}' | grep "caddy" | head -1 || true)
+                if [ -n "$CADDY_CONTAINER" ]; then
                   show_logs "${CADDY_CONTAINER}" "${LINES}" "${FILTER}" || echo "Skipped (not running)"
                 else
                   echo "⚠ No Caddy container found"

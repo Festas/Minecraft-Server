@@ -275,15 +275,23 @@ jobs:
 
                 # Show which backups will be deleted
                 echo "Backups to be removed:"
-                OLD_BACKUPS=$(ls -t minecraft-backup-*.tar.gz | tail -n "+$((RETENTION_DAYS + 1))")
-                echo "$OLD_BACKUPS" | while read -r backup; do
-                  SIZE=$(du -h "$backup" 2>/dev/null | cut -f1)
-                  echo "  - $backup ($SIZE)"
-                done
+                OLD_BACKUPS=$(ls -t minecraft-backup-*.tar.gz 2>/dev/null | tail -n "+$((RETENTION_DAYS + 1))" || true)
+                if [ -z "$OLD_BACKUPS" ]; then
+                  echo "  (none - error or no old backups)"
+                else
+                  echo "$OLD_BACKUPS" | while read -r backup; do
+                    SIZE=$(du -h "$backup" 2>/dev/null | cut -f1)
+                    echo "  - $backup ($SIZE)"
+                  done
+                fi
                 echo ""
 
                 # Calculate space to be freed
-                SPACE_TO_FREE=$(echo "$OLD_BACKUPS" | xargs du -ch 2>/dev/null | tail -1 | cut -f1)
+                if [ -n "$OLD_BACKUPS" ]; then
+                  SPACE_TO_FREE=$(echo "$OLD_BACKUPS" | xargs du -ch 2>/dev/null | tail -1 | cut -f1)
+                else
+                  SPACE_TO_FREE="0"
+                fi
                 echo "Space to be freed: $SPACE_TO_FREE"
                 echo ""
 
