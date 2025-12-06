@@ -519,7 +519,9 @@ sync_passwords() {
   echo ""
 
   # Step 1: Update Minecraft server .env
-  echo "Step 1: Updating Minecraft server .env..."
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Step 1: Updating Minecraft server .env"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   cd "$DEPLOY_DIR"
   printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}" > .env
   chmod 600 .env
@@ -527,7 +529,9 @@ sync_passwords() {
   echo ""
 
   # Step 2: Update Console .env
-  echo "Step 2: Updating Console .env..."
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Step 2: Updating Console .env"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   cd "$CONSOLE_DIR"
   if [ -f .env ]; then
     # Preserve other variables, update only RCON_PASSWORD
@@ -543,28 +547,70 @@ sync_passwords() {
   fi
   echo ""
 
-  # Step 3: Update docker-compose.yml with escaped password
-  echo "Step 3: Updating docker-compose.yml with escaped password..."
+  # Step 3: Update docker-compose.yml with escaped password and validate
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Step 3: Updating docker-compose.yml with escaped password"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   cd "$DEPLOY_DIR"
   if [ -f docker-compose.yml ]; then
-    # Escape $ as $$ for Docker Compose
-    ESCAPED_RCON_PASSWORD=$(printf '%s' "${RCON_PASSWORD}" | sed 's/\$/\$\$/g')
+    # Create backup of original file for rollback
+    echo "Creating backup: docker-compose.yml.backup"
+    cp docker-compose.yml docker-compose.yml.backup
+    echo "✓ Backup created"
+    echo ""
 
-    # Update RCON_PASSWORD line in docker-compose.yml using awk for safer handling
-    awk -v pwd="${ESCAPED_RCON_PASSWORD}" '
-      /RCON_PASSWORD:/ { print "                  RCON_PASSWORD: \"" pwd "\""; next }
-      { print }
-    ' docker-compose.yml > docker-compose.yml.tmp && mv docker-compose.yml.tmp docker-compose.yml
-    echo "✓ docker-compose.yml updated with escaped password"
+    # Escape $ as $$ for Docker Compose (prevents variable interpolation)
+    ESCAPED_RCON_PASSWORD=$(printf '%s' "${RCON_PASSWORD}" | sed 's/\$/\$\$/g')
+    echo "Password escaped for Docker Compose YAML"
+
+    # Update RCON_PASSWORD line using sed with proper double-quoting
+    # This handles special YAML characters: $, #, :, !
+    echo "Updating RCON_PASSWORD in docker-compose.yml..."
+    sed -i "s|RCON_PASSWORD:.*|RCON_PASSWORD: \"$ESCAPED_RCON_PASSWORD\"|g" docker-compose.yml
+    echo "✓ docker-compose.yml updated with double-quoted password"
+    echo ""
+
+    # Validate YAML syntax with docker compose config
+    echo "Validating YAML with 'docker compose config'..."
+    if docker compose config >/dev/null 2>&1; then
+      echo "✓ YAML validation passed - docker-compose.yml is valid"
+      # Clean up backup on success
+      rm -f docker-compose.yml.backup
+      echo "✓ Backup removed (validation successful)"
+    else
+      echo "✗ YAML validation FAILED!"
+      echo ""
+      echo "docker compose config output:"
+      docker compose config 2>&1 || true
+      echo ""
+      echo "Rolling back to previous version..."
+      mv docker-compose.yml.backup docker-compose.yml
+      echo "✗ Rollback complete - docker-compose.yml restored from backup"
+      echo "✗ Fix aborted due to invalid YAML"
+      echo ""
+      echo "Please check the RCON_PASSWORD for special characters that may need escaping."
+      exit 1
+    fi
   else
-    echo "⚠ docker-compose.yml not found at $DEPLOY_DIR"
+    echo "✗ docker-compose.yml not found at $DEPLOY_DIR"
+    echo "✗ Cannot update docker-compose.yml - file does not exist"
+    exit 1
   fi
   echo ""
 
   # Step 4: Force recreate Minecraft server container
-  echo "Step 4: Recreating Minecraft server container to apply new password..."
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Step 4: Recreating Minecraft server container"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   cd "$DEPLOY_DIR"
-  docker compose up -d --force-recreate minecraft-server
+  echo "Running: docker compose up -d --force-recreate minecraft-server"
+  if docker compose up -d --force-recreate minecraft-server 2>&1; then
+    echo "✓ Container recreation initiated"
+  else
+    echo "✗ Failed to recreate minecraft-server container"
+    exit 1
+  fi
+  echo ""
 
   echo "Waiting for Minecraft server to become healthy..."
   for i in $(seq 1 60); do
@@ -579,9 +625,18 @@ sync_passwords() {
   echo ""
 
   # Step 5: Force recreate Console container
-  echo "Step 5: Recreating Console container to apply new password..."
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "Step 5: Recreating Console container"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   cd "$CONSOLE_DIR"
-  docker compose up -d --force-recreate minecraft-console
+  echo "Running: docker compose up -d --force-recreate minecraft-console"
+  if docker compose up -d --force-recreate minecraft-console 2>&1; then
+    echo "✓ Container recreation initiated"
+  else
+    echo "✗ Failed to recreate minecraft-console container"
+    exit 1
+  fi
+  echo ""
 
   echo "Waiting for console to become healthy..."
   for i in $(seq 1 30); do
