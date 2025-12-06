@@ -106,6 +106,12 @@ jobs:
                 restart: unless-stopped
                 tty: true
                 stdin_open: true
+                # DNS servers to avoid 127.0.0.53 resolution issues in containers
+                # Required for downloading Paper MC and plugins
+                dns:
+                  - 8.8.8.8
+                  - 8.8.4.4
+                  - 1.1.1.1
                 environment:
                   EULA: "TRUE"
                   TYPE: "PAPER"
@@ -125,10 +131,10 @@ jobs:
                   SPAWN_PROTECTION: 16
             EOF
 
-            # Add optional SEED if provided
+            # Add optional SEED if provided (use single quotes to handle negative numbers)
             if [ -n "$WORLD_SEED" ]; then
               cat >> docker-compose.yml <<EOF
-                  SEED: "$WORLD_SEED"
+                  SEED: '${WORLD_SEED}'
             EOF
             fi
 
