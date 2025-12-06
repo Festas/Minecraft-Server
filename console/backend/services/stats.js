@@ -12,6 +12,7 @@ class StatsService {
             lastUpdate: 0
         };
         this.cacheTimeout = 5000; // 5 seconds
+        this.MAX_VERSION_LENGTH = 50; // Maximum length for version string
     }
 
     /**
@@ -83,6 +84,13 @@ class StatsService {
         try {
             const worldPath = process.env.MC_SERVER_DIR || '/minecraft';
             
+            // Validate path to prevent command injection
+            // Only allow alphanumeric, forward slashes, hyphens, and underscores
+            if (!/^[a-zA-Z0-9/_-]+$/.test(worldPath)) {
+                console.error('Invalid world path format:', worldPath);
+                return 'Unknown';
+            }
+            
             // Use du command to get actual directory size
             const result = execSync(`du -sh "${worldPath}/world" 2>/dev/null || echo "0 Unknown"`, {
                 encoding: 'utf8',
@@ -123,7 +131,7 @@ class StatsService {
                 }
                 
                 // Return first line if parsing fails
-                return response.split('\n')[0].substring(0, 50);
+                return response.split('\n')[0].substring(0, this.MAX_VERSION_LENGTH);
             }
         } catch (error) {
             console.error('Error getting Minecraft version via RCON:', error.message);
