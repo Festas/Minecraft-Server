@@ -2,7 +2,7 @@
 
 Welcome to the **festas_builds community server** - a scalable, well-moderated Minecraft community built on high-performance Paper server software.
 
-This repository provides everything needed to deploy and manage the festas_builds Minecraft server on Hetzner (or any Linux server) with automated deployments via GitHub Actions.
+This repository provides everything needed to deploy and manage the festas_builds Minecraft server using Docker containers with automated deployments via GitHub Actions.
 
 ---
 
@@ -77,15 +77,14 @@ See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
 
 ## 📋 Technical Features
 
+- ✅ **Docker Containerization** - Runs in isolated containers using `itzg/minecraft-server:java21`
 - ✅ **Paper Server** - High-performance Spigot fork with plugin support
-- ✅ **Optimized Performance** - Aikar's JVM flags for better garbage collection
-- ✅ **Auto Plugin Installation** - Automated system to download and install plugins
-- ✅ Automated deployment via GitHub Actions
-- ✅ Systemd service for automatic server management
-- ✅ Easy configuration management
-- ✅ Backup scripts included
-- ✅ Update scripts for version upgrades
-- ✅ Comprehensive documentation
+- ✅ **Optimized Performance** - Aikar's JVM flags built into container
+- ✅ **Automated Deployment** - GitHub Actions workflows for continuous deployment
+- ✅ **Easy Configuration** - Environment variables in docker-compose.yml
+- ✅ **Built-in Health Checks** - Container includes mc-health monitoring
+- ✅ **Volume Management** - Persistent data with Docker volumes
+- ✅ **Comprehensive Documentation** - Full guides for setup and management
 
 ## 📚 Documentation
 
@@ -115,230 +114,296 @@ See **[WEBSITE.md](WEBSITE.md)** for deployment instructions and customization g
 
 ---
 
-## 🎮 Plugin Auto-Installation
+---
 
-The server includes an automated plugin installation system that downloads and installs all recommended plugins with a single command:
+## 🐳 Quick Start with Docker
 
-```bash
-# Install all enabled plugins
-./install-plugins.sh
-
-# Auto-discover and add plugins from wishlist
-./install-plugins.sh --discover
-
-# Update plugins to latest versions
-./update-plugins.sh
-```
-
-### Quick Start
-
-1. SSH to your server: `ssh deploy@your-server-ip`
-2. Navigate to server directory: `cd /home/deploy/minecraft-server`
-3. Install plugins: `./install-plugins.sh`
-4. Restart server: `sudo systemctl restart minecraft.service`
-
-The system automatically:
-- Downloads plugins from GitHub Releases and Modrinth
-- Selects the correct JAR files (Bukkit/Paper versions)
-- Tracks versions for smart updates
-- Backs up old plugins before updating
-
-### Plugin Discovery
-
-Easily add new plugins without manually searching for repository paths or project IDs:
+Get your server running in minutes:
 
 ```bash
-# Create a wishlist of plugin names
-cat > plugins-wishlist.txt << 'EOF'
-Vault
-PlaceholderAPI
-ChestShop
-EOF
+# 1. Clone the repository
+git clone https://github.com/Festas/Minecraft-Server.git
+cd Minecraft-Server
 
-# Discover and add to plugins.json
-./install-plugins.sh --discover
+# 2. Configure environment (optional - has defaults)
+cp .env.example .env
+# Edit .env with your RCON password and other settings
 
-# Interactive mode (confirm each plugin)
-./install-plugins.sh --discover --interactive
+# 3. Create external network for services
+docker network create caddy-network
 
-# Discover and install in one step
-./install-plugins.sh --discover --install
+# 4. Start the Minecraft server
+docker compose up -d
+
+# 5. View logs
+docker compose logs -f minecraft-server
 ```
 
-The discovery feature searches Modrinth and GitHub, automatically extracting the correct source information and adding it to your `plugins.json`.
+The server will be available at `your-server-ip:25565` once started.
 
-### Customization
+For production deployment with automated GitHub Actions, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
-Edit `plugins.json` to enable/disable specific plugins:
+---
 
-```json
-{
-  "name": "LuckPerms",
-  "enabled": true,  // Change to false to disable
-  "category": "essential",
-  ...
-}
+## 🎮 Plugin Management
+
+## 🎮 Plugin Management
+
+The server uses the `itzg/minecraft-server` container which supports multiple plugin installation methods:
+
+### Method 1: Auto-Download from URLs (Recommended)
+
+Set environment variables in `docker-compose.yml`:
+
+```yaml
+environment:
+  PLUGINS: |
+    https://github.com/LuckPerms/LuckPerms/releases/download/v5.4.102/LuckPerms-Bukkit-5.4.102.jar
+    https://github.com/EssentialsX/Essentials/releases/download/2.20.1/EssentialsX-2.20.1.jar
 ```
 
-**For complete documentation**, see [PLUGINS.md](PLUGINS.md) - includes:
-- How to add new plugins
-- Troubleshooting guide
-- Advanced configuration
-- Cron automation for updates
+### Method 2: Manual Installation
+
+Copy plugin JARs to the data volume:
+
+```bash
+# Copy a plugin to the server
+docker cp MyPlugin.jar minecraft-server:/data/plugins/
+
+# Restart to load the plugin
+docker compose restart minecraft-server
+```
+
+### Method 3: Using Modrinth/CurseForge
+
+```yaml
+environment:
+  MODRINTH_PROJECTS: "luckperms,essentialsx,coreprotect"
+  MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
+```
+
+**For complete plugin documentation**, see [PLUGINS.md](PLUGINS.md) - includes:
+- Recommended plugins list
+- Configuration guides
+- Troubleshooting tips
 
 ---
 
 ## 🛠️ What's Included
 
-- **Server Configuration Files**
-  - `config.sh` - Centralized configuration (Minecraft version, RAM settings)
-  - `server.properties` - Minecraft server configuration with festas_builds branding
-  - `eula.txt` - Minecraft EULA acceptance
-  - `start.sh` - Paper server startup script with optimized JVM flags
+- **Docker Configuration**
+  - `docker-compose.yml` - Main Minecraft server container setup
+  - `docker-compose.console.yml` - Web console container reference
+  - `docker-compose.web.yml` - Website container reference
+  - `.env.example` - Environment variable template
   
 - **Plugin Management**
-  - `plugins.json` - Plugin configuration (enable/disable, sources)
-  - `install-plugins.sh` - Automated plugin installation script
-  - `update-plugins.sh` - Plugin update script with backup support
+  - `plugins.json` - Plugin definitions (reference)
+  - `plugins/` - Plugin configuration files
+  - `config/` - Plugin configs
   
-- **System Integration**
-  - `minecraft.service` - Systemd service file with Aikar's flags
+- **Web Console**
+  - `console/` - Full-featured web management interface
+  
+- **Website**
+  - `website/` - Static server website
   
 - **Automation**
-  - `.github/workflows/deploy.yml` - GitHub Actions workflow for automated deployment
-  
-- **Utilities**
-  - `backup.sh` - Automated backup script
-  - `update.sh` - Server version update script
+  - `.github/workflows/deploy-minecraft.yml` - Server deployment workflow
+  - `.github/workflows/deploy-console.yml` - Console deployment workflow
+  - `.github/workflows/deploy-website.yml` - Website deployment workflow
   
 - **Documentation**
-  - `DEPLOYMENT.md` - Complete step-by-step deployment guide
-  - `PLUGINS.md` - Plugin recommendations and setup instructions
-  - `ROADMAP.md` - Community server growth roadmap
-  - `server-icon-instructions.md` - Custom branding guide
+  - Complete guides for deployment, plugins, and features
+  - Setup instructions for console, website, and Bedrock Edition
 
 ---
 
 ## 🎯 Quick Deployment Overview
 
-1. **Prepare your server** - Install Java 17+, configure firewall
+1. **Prepare your server** - Install Docker and Docker Compose
 2. **Setup GitHub secrets** - Add SSH keys and server details
-3. **Accept EULA** - Edit `eula.txt` and set `eula=true`
-4. **Configure** - Update `config.sh` with your preferences
-5. **Deploy** - Push to main branch or trigger workflow manually
-6. **Enable service** - SSH to server and enable the systemd service
-7. **Add branding** - Upload custom `server-icon.png` (see [guide](server-icon-instructions.md))
-8. **Install plugins** - Follow [PLUGINS.md](PLUGINS.md) for recommended setup
-9. **Play!** - Connect with your Minecraft client
+3. **Configure environment** - Set RCON password and other variables in docker-compose.yml
+4. **Deploy** - Push to main branch or trigger `deploy-minecraft.yml` workflow manually
+5. **Verify** - Check container health and logs
+6. **Install plugins** - Use container's built-in plugin support or manual installation
+7. **Play!** - Connect with your Minecraft client
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete step-by-step guide.
 
 ---
 
 ## 📊 Server Requirements
 
-- **OS**: Ubuntu 20.04+, Debian 11+, or similar Linux distribution
-- **RAM**: Minimum 2GB (4GB+ recommended, 6GB+ for Bedrock support)
+- **OS**: Any Linux distribution with Docker support (Ubuntu 20.04+, Debian 11+ recommended)
+- **RAM**: Minimum 4GB (6GB+ recommended for plugins and Bedrock support)
 - **Disk**: At least 10GB free space
-- **Java**: OpenJDK 17 or higher
-- **Network**: Port 25565 (TCP/UDP) open for Java Edition
-- **Network (Bedrock)**: Port 19132 (UDP) open for Bedrock Edition cross-play
+- **Docker**: Docker Engine 20.10+ and Docker Compose v2+
+- **Network**: Ports 25565 (TCP/UDP) for Java Edition
+- **Network (Bedrock)**: Port 19132 (UDP) for Bedrock Edition cross-play
 
 ## 🔧 Configuration
 
 ### Server Properties
-Edit `server.properties` to customize your server:
 
-```properties
-# Server branding (with Minecraft color codes)
-motd=§6§l✦ §b§lfestas_builds §6§l✦ §r§f\\n§7Community Server §a§l[1.20.4]
+Edit environment variables in `docker-compose.yml`:
 
-# Maximum players
-max-players=20
-
-# Difficulty
-difficulty=normal
-
-# Game mode
-gamemode=survival
-
-# Enable PvP
-pvp=true
+```yaml
+environment:
+  VERSION: "1.20.4"              # Minecraft version
+  MEMORY: "4G"                   # RAM allocation
+  MOTD: "My Server"              # Server description
+  MAX_PLAYERS: 20                # Maximum players
+  DIFFICULTY: "normal"           # Difficulty level
+  MODE: "survival"               # Game mode
+  PVP: "true"                    # Enable PvP
+  VIEW_DISTANCE: 10              # Render distance
 ```
 
-### Server Configuration
-Edit `config.sh` to change server version and resources:
+After editing, redeploy:
 
 ```bash
-# Minecraft version (Paper will auto-download latest build)
-MINECRAFT_VERSION="1.20.4"
-
-# Memory allocation
-MIN_RAM="2G"
-MAX_RAM="4G"
+docker compose up -d
 ```
 
-After editing, commit and push to automatically deploy changes.
+Or push changes to trigger GitHub Actions deployment.
 
 ---
 
 ## 📝 Server Management
 
+### Using Docker Compose
+
 ```bash
 # Start server
-sudo systemctl start minecraft.service
+docker compose up -d
 
 # Stop server
-sudo systemctl stop minecraft.service
+docker compose down
 
 # Restart server
-sudo systemctl restart minecraft.service
-
-# Check status
-sudo systemctl status minecraft.service
+docker compose restart minecraft-server
 
 # View logs
-sudo journalctl -u minecraft.service -f
+docker compose logs -f minecraft-server
+
+# Execute console commands
+docker exec -i minecraft-server rcon-cli
+
+# Access container shell
+docker exec -it minecraft-server bash
 ```
+
+### Using the Web Console
+
+Access the web console at `http://your-server:3001/console` for:
+- Real-time server monitoring
+- Execute commands via RCON
+- Player management
+- Server start/stop/restart
+- Backup management
+
+See [CONSOLE-SETUP.md](CONSOLE-SETUP.md) for setup instructions.
 
 ## 🔄 Automated Deployment
 
-Every push to the `main` branch automatically:
-1. Copies configuration files to your server
-2. Updates the systemd service
-3. Downloads the latest Paper server JAR for your Minecraft version (if missing)
-4. Restarts the service
+The repository includes GitHub Actions workflows for automated deployment:
 
-You can also manually trigger deployment from the GitHub Actions tab.
+- **deploy-minecraft.yml** - Deploys the Minecraft server container
+- **deploy-console.yml** - Deploys the web console
+- **deploy-website.yml** - Deploys the server website
+
+Every push to the `main` branch or manual workflow trigger will:
+1. Connect to your server via SSH
+2. Pull the latest configuration
+3. Update the Docker containers
+4. Restart services with zero downtime
+
+You can manually trigger deployments from the GitHub Actions tab.
 
 ---
 
 ## 💾 Backups
 
-Run the backup script on your server:
+### Using Docker Volumes
+
+Backup the Minecraft data volume:
 
 ```bash
-/home/deploy/minecraft-server/backup.sh
+# Create backup directory
+mkdir -p ~/minecraft-backups
+
+# Backup the volume
+docker run --rm \
+  -v minecraft_data:/data \
+  -v ~/minecraft-backups:/backup \
+  alpine tar czf /backup/minecraft-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /data .
+
+# List backups
+ls -lh ~/minecraft-backups/
 ```
 
-Or set up automated daily backups via cron:
+### Automated Backups with Cron
 
 ```bash
-crontab -e
-# Add: 0 3 * * * /home/deploy/minecraft-server/backup.sh
+# Create backup script
+cat > ~/backup-minecraft.sh << 'EOF'
+#!/bin/bash
+BACKUP_DIR="$HOME/minecraft-backups"
+mkdir -p "$BACKUP_DIR"
+docker run --rm \
+  -v minecraft_data:/data \
+  -v "$BACKUP_DIR":/backup \
+  alpine tar czf /backup/minecraft-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /data .
+# Keep only last 7 backups
+cd "$BACKUP_DIR" && ls -t minecraft-backup-*.tar.gz | tail -n +8 | xargs -r rm
+EOF
+
+chmod +x ~/backup-minecraft.sh
+
+# Add to crontab (daily at 3 AM)
+(crontab -l 2>/dev/null; echo "0 3 * * * $HOME/backup-minecraft.sh") | crontab -
+```
+
+### Restore from Backup
+
+```bash
+# Stop the server
+docker compose down
+
+# Restore the backup
+docker run --rm \
+  -v minecraft_data:/data \
+  -v ~/minecraft-backups:/backup \
+  alpine sh -c "cd /data && tar xzf /backup/minecraft-backup-YYYYMMDD-HHMMSS.tar.gz"
+
+# Start the server
+docker compose up -d
 ```
 
 ## 🔄 Updating Minecraft Version
 
-### Method 1: Using config.sh (Recommended)
-1. Edit `config.sh` and change `MINECRAFT_VERSION`
-2. Delete the old `server.jar` on your server
-3. Commit and push - Paper will auto-download the new version
+Edit `docker-compose.yml` and change the VERSION:
 
-### Method 2: Using update script
-```bash
-/home/deploy/minecraft-server/update.sh
+```yaml
+environment:
+  VERSION: "1.21.0"  # Update to new version
 ```
 
-**Note:** Always backup your world before updating! See [DEPLOYMENT.md](DEPLOYMENT.md) for backup procedures.
+Then redeploy:
+
+```bash
+# Pull new server version
+docker compose pull
+
+# Restart with new version (backs up old world automatically)
+docker compose up -d
+
+# Monitor startup
+docker compose logs -f minecraft-server
+```
+
+**Note:** The container automatically backs up the world before major updates!
 
 ---
 
@@ -390,10 +455,11 @@ See [ROADMAP.md](ROADMAP.md) for the complete growth plan.
 See the [Troubleshooting section](DEPLOYMENT.md#troubleshooting) in DEPLOYMENT.md for common issues and solutions.
 
 **Quick checks:**
-- Ensure EULA is accepted (`eula=true` in `eula.txt`)
-- Verify Java is installed: `java -version`
-- Check firewall allows port 25565
-- Review logs: `sudo journalctl -u minecraft.service -n 100`
+- Verify Docker is running: `docker ps`
+- Check container status: `docker compose ps`
+- View container logs: `docker compose logs minecraft-server`
+- Check port availability: `netstat -tulpn | grep 25565`
+- Verify network connectivity: `docker network ls`
 
 ## 📚 Additional Resources
 
