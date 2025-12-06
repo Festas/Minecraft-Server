@@ -59,7 +59,7 @@ These secrets enable additional server features and customization:
 
 | Secret | Description | Example | Default |
 |--------|-------------|---------|---------|
-| `MINECRAFT_VERSION` | Minecraft server version | `1.21.0` | `1.20.4` |
+| `MINECRAFT_VERSION` | Minecraft server version | `1.21.1` | `1.20.4` |
 | `WORLD_SEED` | World generation seed | `1234567890` | Random |
 | `OP_OWNER` | Primary server operator | `YourUsername` | None |
 | `OP_ADDITIONAL` | Additional operators (comma-separated) | `Friend1,Friend2` | None |
@@ -95,11 +95,11 @@ Only whitelisted players can join, and Friend1 is an operator.
 #### Custom Version with World Seed
 
 ```
-MINECRAFT_VERSION=1.21.0
+MINECRAFT_VERSION=1.21.1
 WORLD_SEED=8675309
 ```
 
-Runs Minecraft 1.21.0 with a specific world seed.
+Runs Minecraft 1.21.1 with a specific world seed.
 
 #### Auto-Install Plugins
 
