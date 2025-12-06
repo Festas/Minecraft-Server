@@ -95,6 +95,9 @@ jobs:
               OPS="$OP_ADDITIONAL"
             fi
 
+            # Escape $ as $$ for docker-compose YAML to prevent variable interpolation
+            ESCAPED_RCON_PASSWORD=$(printf '%s' "${RCON_PASSWORD}" | sed 's/\$/\$\$/g')
+
             # Create docker-compose.yml with base configuration
             cat > docker-compose.yml <<EOF
             services:
@@ -117,7 +120,7 @@ jobs:
                   MEMORY: "4G"
                   USE_AIKAR_FLAGS: "true"
                   ENABLE_RCON: "true"
-                  RCON_PASSWORD: "${RCON_PASSWORD}"
+                  RCON_PASSWORD: "${ESCAPED_RCON_PASSWORD}"
                   RCON_PORT: 25575
                   OVERRIDE_SERVER_PROPERTIES: "true"
                   MOTD: "§6§l✦ §b§lFestas Builds §6§l✦ §r§f - Community Server"
@@ -294,7 +297,7 @@ jobs:
                       # Restart console container if running
                       if docker ps --format '{{.Names}}' | grep -q '^minecraft-console$'; then
                         echo "Restarting console container..."
-                        docker compose restart minecraft-console 2>/dev/null || docker restart minecraft-console 2>/dev/null || true
+                        docker compose up -d --force-recreate minecraft-console 2>/dev/null || docker restart minecraft-console 2>/dev/null || true
                         echo "✓ Console RCON password synced and container restarted"
                       else
                         echo "✓ Console RCON password synced (container not running)"

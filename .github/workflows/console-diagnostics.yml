@@ -548,7 +548,7 @@ jobs:
 
                 # Restart containers
                 echo "Step 3: Restarting console container..."
-                docker compose restart minecraft-console
+                docker compose up -d --force-recreate minecraft-console
                 echo ""
 
                 echo "Step 4: Waiting for console to be healthy..."
@@ -580,7 +580,7 @@ jobs:
                 cd "$CONSOLE_DIR"
 
                 echo "Step 1: Restarting container..."
-                docker compose restart minecraft-console
+                docker compose up -d --force-recreate minecraft-console
                 echo ""
 
                 echo "Step 2: Waiting for container to be healthy..."
