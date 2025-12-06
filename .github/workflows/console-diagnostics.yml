@@ -511,6 +511,23 @@ jobs:
                 echo "✓ Minecraft server .env updated"
                 echo ""
 
+                # Force the Minecraft container to apply the new password
+                echo "Step 1b: Forcing Minecraft server to apply new password..."
+                cd "$DEPLOY_DIR"
+                docker compose up -d --force-recreate minecraft-server
+
+                echo "Waiting for Minecraft server to become healthy..."
+                for i in $(seq 1 60); do
+                  HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-server 2>/dev/null || echo "starting")
+                  if [ "$HEALTH" = "healthy" ]; then
+                    echo "✓ Minecraft server is healthy"
+                    break
+                  fi
+                  echo "  Status: $HEALTH (attempt $i/60)"
+                  sleep 2
+                done
+                echo ""
+
                 # Update Console
                 echo "Step 2: Updating Console .env..."
                 cd "$CONSOLE_DIR"
