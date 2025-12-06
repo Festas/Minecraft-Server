@@ -67,22 +67,22 @@ jobs:
       - name: Upload diagnostics script to remote host
         run: |
           echo "Uploading scripts/diagnose.sh to remote host..."
-          
+
           # Ensure remote directories exist
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "mkdir -p /home/deploy/minecraft-server/scripts"
-          
+
           # Upload the diagnostics script
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             scripts/diagnose.sh \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/deploy/minecraft-server/scripts/diagnose.sh
-          
+
           # Make the script executable
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "chmod +x /home/deploy/minecraft-server/scripts/diagnose.sh"
-          
+
           echo "✓ Diagnostics script uploaded successfully"
 
       - name: Run RCON diagnostics and fixes
@@ -93,18 +93,18 @@ jobs:
         run: |
           echo "Running diagnostics on remote host..."
           echo "Action: ${ACTION}"
-          
+
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "cd /home/deploy/minecraft-server && RCON_PASSWORD='${RCON_PASSWORD}' bash scripts/diagnose.sh '${ACTION}'"
-          
+
           echo "✓ Diagnostics completed"
 
       - name: Download diagnostics logs
         if: always()
         run: |
           echo "Downloading diagnostics logs from remote host..."
-          
+
           # Get the latest diagnostics directory from the server
           DIAG_DIR=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
@@ -113,12 +113,12 @@ jobs:
           if [ -n "$DIAG_DIR" ]; then
             echo "Found diagnostics directory: $DIAG_DIR"
             mkdir -p rcon-diagnostics-logs
-            
+
             # Download all diagnostics files
             scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -r \
               ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:"${DIAG_DIR}/*" \
               rcon-diagnostics-logs/ || echo "Warning: Some files may not have been downloaded"
-            
+
             echo "✓ Diagnostics logs downloaded"
           else
             echo "⚠ No diagnostics directory found on remote host"
