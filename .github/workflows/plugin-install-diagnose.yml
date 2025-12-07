@@ -530,7 +530,17 @@ jobs:
             docker logs minecraft-console --tail 100 2>&1 | tail -50
             echo ""
 
-            echo "## 6. Comparing before/after state"
+            echo "## 6. Backend API debug logs (session, cookies, CSRF)"
+            echo "------------------------------------------------"
+            if docker exec minecraft-console test -f /app/logs/api-debug.log 2>/dev/null; then
+              echo "✓ api-debug.log exists, showing last 50 lines:"
+              docker exec minecraft-console tail -50 /app/logs/api-debug.log 2>/dev/null || echo "Could not read debug logs"
+            else
+              echo "ℹ api-debug.log not found (debug logging may not be enabled)"
+            fi
+            echo ""
+
+            echo "## 7. Comparing before/after state"
             echo "------------------------------------------------"
             if [ -f /tmp/plugins-before.json ] && [ -f /tmp/plugins-after.json ]; then
               PLUGINS_BEFORE_COUNT=$(jq '.plugins | length' /tmp/plugins-before.json 2>/dev/null || echo "0")
@@ -591,6 +601,9 @@ jobs:
             # Get full backend logs
             docker logs minecraft-console > "$DIAG_DIR/backend-logs.txt" 2>&1
 
+            # Get debug logs from backend (session, cookie, CSRF debugging)
+            docker exec minecraft-console cat /app/logs/api-debug.log > "$DIAG_DIR/api-debug.log" 2>/dev/null || echo "No API debug logs available" > "$DIAG_DIR/api-debug.log"
+
             # Get container info
             docker inspect minecraft-console > "$DIAG_DIR/container-inspect.json" 2>/dev/null || echo "Could not inspect container"
 
@@ -620,6 +633,7 @@ jobs:
               echo "- install-errors.log: Plugin install error log from backend"
               echo "- plugin-history.json: Plugin operation history"
               echo "- backend-logs.txt: Full backend container logs"
+              echo "- api-debug.log: Detailed API request debug logs (session, cookies, CSRF)"
               echo "- container-inspect.json: Docker container inspection"
               echo "- docker-compose-config.yml: Docker Compose configuration"
               echo ""

@@ -65,9 +65,27 @@ async function verifyCredentials(username, password) {
  * Authentication middleware
  */
 function requireAuth(req, res, next) {
+    console.log('[AUTH] Authentication check:', {
+        path: req.path,
+        method: req.method,
+        sessionID: req.sessionID,
+        hasSession: !!req.session,
+        authenticated: req.session?.authenticated || false,
+        username: req.session?.username || 'NOT_SET',
+        hasCookies: !!req.headers.cookie,
+        timestamp: new Date().toISOString()
+    });
+    
     if (req.session && req.session.authenticated) {
+        console.log('[AUTH] Authentication successful for:', req.session.username);
         return next();
     }
+    
+    console.log('[AUTH] Authentication failed:', {
+        reason: !req.session ? 'NO_SESSION' : 'NOT_AUTHENTICATED',
+        sessionID: req.sessionID,
+        sessionData: req.session
+    });
     
     res.status(401).json({ error: 'Authentication required' });
 }
