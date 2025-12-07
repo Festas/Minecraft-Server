@@ -220,16 +220,19 @@ jobs:
             exit 1
           fi
 
-          # Debug: Print masked credential lengths (not actual values)
+          # Debug: Print credential lengths for troubleshooting (not actual values)
           echo "Debug: ADMIN_USER length: ${#ADMIN_USER} characters"
           echo "Debug: ADMIN_PASS length: ${#ADMIN_PASS} characters"
           echo ""
 
-          # Pass credentials to SSH session via environment
-          # Note: Credentials are passed as command-line arguments to SSH, which may be
-          # visible in process lists. This is acceptable for this controlled CI/CD environment
-          # where the runner and target server are trusted. Alternative approaches would require
-          # server SSH configuration changes (SendEnv/AcceptEnv) or temp files on disk.
+          # Pass credentials to SSH session via environment variables
+          # Security Note: Credentials are passed as SSH command arguments, which may appear in
+          # process listings (`ps`) during execution. This is acceptable for this use case because:
+          # 1. The GitHub Actions runner is an ephemeral, isolated environment
+          # 2. Only trusted processes run on the runner during workflow execution
+          # 3. The SSH session is short-lived and terminates immediately after use
+          # 4. Alternative approaches (SendEnv/AcceptEnv) would require server SSH config changes
+          # 5. The target server is trusted and controlled by the repository owner
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             ADMIN_USER="$ADMIN_USER" \
             ADMIN_PASS="$ADMIN_PASS" \
@@ -686,11 +689,8 @@ jobs:
             exit 0
           fi
 
-          # Pass credentials to SSH session via environment
-          # Note: Credentials are passed as command-line arguments to SSH, which may be
-          # visible in process lists. This is acceptable for this controlled CI/CD environment
-          # where the runner and target server are trusted. Alternative approaches would require
-          # server SSH configuration changes (SendEnv/AcceptEnv) or temp files on disk.
+          # Pass credentials to SSH session via environment variables
+          # (Same security consideration as test install step - acceptable for CI/CD environment)
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             ADMIN_USER="$ADMIN_USER" \
             ADMIN_PASS="$ADMIN_PASS" \
