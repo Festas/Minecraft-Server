@@ -57,8 +57,10 @@ Updated `auth/session.js` with:
 - No domain setting (lets browser default to current domain)
 - `sameSite: 'lax'` (compatible with API calls and redirects)
 - `httpOnly: true` (prevents XSS attacks)
-- `secure: true` in production (HTTPS only)
+- **`secure: false` in development/test/CI (allows HTTP), `true` in production (HTTPS only)**
+- **Override with `COOKIE_SECURE` environment variable for testing**
 - `maxAge: 24h` (24-hour session lifetime)
+- Comprehensive logging of cookie configuration on startup
 
 ### 3. Enhanced CSRF Configuration
 
@@ -66,7 +68,9 @@ Updated CSRF configuration in `server.js`:
 - Added custom `getTokenFromRequest` function
 - Checks both `csrf-token` and `x-csrf-token` headers
 - Cookie name: `csrf-token`
-- Cookie settings match session (sameSite: lax, httpOnly, secure in production)
+- **Cookie settings match session (sameSite: lax, httpOnly, secure based on environment)**
+- **Override with `COOKIE_SECURE` environment variable for testing**
+- Comprehensive logging of CSRF cookie configuration on startup
 - Skips CSRF check for: `/api/login`, `/api/session`, `/api/csrf-token`, `/api/debug/logs`
 
 ### 4. Enhanced Logging Throughout Backend
@@ -297,6 +301,51 @@ Each log entry is a single-line JSON object with:
 2. Verify cookie is set in response
 3. Check cookie path and domain settings
 4. Verify sameSite setting compatible with request origin
+5. **Check if secure cookie is blocking HTTP requests (see Cookie Security section below)**
+
+### Cookie Security and HTTP/HTTPS Issues
+
+**Problem:** Session cookies with `secure: true` are ONLY sent over HTTPS. When testing with HTTP (localhost, CI, diagnostics), browsers/curl will NOT send the cookie back to the server, causing:
+- Session ID changes on every request
+- Authentication always fails (authenticated: false)
+- CSRF tokens never match (different sessions)
+- All authenticated API calls return 401 or "invalid csrf token"
+
+**Solution:** The backend now automatically configures cookie security based on environment:
+
+**Production (NODE_ENV=production):**
+- `secure: true` - Requires HTTPS/SSL
+- Session cookies only sent over encrypted connections
+- Safe for production deployment with reverse proxy (Nginx/Caddy with SSL)
+
+**Development/Test (NODE_ENV=development or NODE_ENV=test):**
+- `secure: false` - Allows HTTP
+- Session cookies work over plain HTTP
+- Required for local development and testing
+
+**Override for Testing:**
+- Set `COOKIE_SECURE=false` environment variable to force non-secure cookies
+- Useful for CI/CD workflows that test via HTTP
+- Example in `.env`:
+  ```
+  NODE_ENV=production
+  COOKIE_SECURE=false  # Allow HTTP testing even in production mode
+  ```
+
+**Verification:**
+- Check backend startup logs for `[Session] Cookie configuration` and `[CSRF] Cookie configuration`
+- Both should show `secure: false` for HTTP testing
+- Both should show `warning: 'HTTP allowed - cookies work without SSL'`
+
+**Configuration Files:**
+- `console/backend/auth/session.js` - Session cookie configuration
+- `console/backend/server.js` - CSRF cookie configuration
+- `docker-compose.console.yml` - Environment variables
+- `.env.example` - Documentation and examples
+
+**Tests:**
+- `console/backend/__tests__/auth/session.test.js` - Verifies cookie security based on environment
+
 
 ## Testing Checklist
 

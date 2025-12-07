@@ -1,4 +1,10 @@
 const session = require('express-session');
+const { shouldUseSecureCookies, logCookieConfiguration } = require('../utils/cookieSecurity');
+
+const useSecureCookies = shouldUseSecureCookies();
+
+// Log cookie security configuration on startup
+logCookieConfiguration('Session', useSecureCookies);
 
 // Create session middleware instance (singleton for sharing with Socket.io)
 const sessionMiddleware = session({
@@ -9,7 +15,7 @@ const sessionMiddleware = session({
     name: 'console.sid', // Custom session cookie name to avoid conflicts
     cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        secure: useSecureCookies, // HTTPS only in production, HTTP allowed in dev/test/CI
         sameSite: 'lax', // More compatible with redirects and API calls
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
         path: '/', // Ensure cookie is available for all paths

@@ -11,6 +11,9 @@ const path = require('path');
 const morgan = require('morgan');
 const crypto = require('crypto');
 
+// Import utilities
+const { shouldUseSecureCookies, logCookieConfiguration } = require('./utils/cookieSecurity');
+
 // Import services
 const rconService = require('./services/rcon');
 const logsService = require('./services/logs');
@@ -100,6 +103,10 @@ if (!csrfSecret) {
     process.exit(1);
 }
 
+// Use the same cookie security configuration as session cookies
+const useSecureCsrfCookies = shouldUseSecureCookies();
+logCookieConfiguration('CSRF', useSecureCsrfCookies);
+
 const {
     generateToken, // Generates a CSRF token
     doubleCsrfProtection, // Full middleware
@@ -109,7 +116,7 @@ const {
     cookieOptions: {
         sameSite: 'lax', // Must match session cookie for consistency
         path: '/', // Ensure cookie is available for all paths
-        secure: process.env.NODE_ENV === 'production',
+        secure: useSecureCsrfCookies, // HTTPS only in production, HTTP allowed in dev/test/CI
         httpOnly: true // Prevent XSS attacks
     },
     size: 64,
