@@ -84,19 +84,18 @@ app.use(express.urlencoded({ extended: true }));
 // ============================================================================
 // MIDDLEWARE ORDER AUDIT (for CSRF protection)
 // ============================================================================
-// 1. cookie-parser MUST come before CSRF middleware (line 85)
+// 1. cookie-parser MUST come before CSRF middleware (below)
 //    - CSRF double-submit pattern requires reading cookies
 //    - Applied globally to all routes
-// 2. Session middleware comes after cookie-parser (line 91)
+// 2. Session middleware comes after cookie-parser
 //    - Session also needs cookies
-// 3. CSRF middleware applied to /api routes (line 173-227)
+// 3. CSRF middleware applied to /api routes (search for "doubleCsrfProtection")
 //    - Validates CSRF token from both cookie AND header
 //    - No duplicate CSRF middleware found
 //    - Cookie name: 'csrf-token' (consistent throughout)
 // ============================================================================
 
 // Cookie parser is needed for CSRF protection (csrf-csrf library)
-// CSRF protection is applied below at line 173
 app.use(cookieParser());
 
 // Get session middleware (shared between Express and Socket.io)
