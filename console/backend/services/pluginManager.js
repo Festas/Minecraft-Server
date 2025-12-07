@@ -365,7 +365,7 @@ async function installFromUrl(url, customName = null, onProgress = null) {
                 });
                 
                 return {
-                    status: 'exists',
+                    status: 'conflict',
                     pluginName,
                     currentVersion,
                     newVersion,
