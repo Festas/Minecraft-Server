@@ -166,6 +166,14 @@ function getSessionStoreStatus() {
 /**
  * Wait for Redis initialization to complete (if needed)
  * This can be called during server startup to ensure Redis is initialized
+ * before handling requests. However, this is optional - the server can start
+ * immediately with memory store and upgrade to Redis when ready.
+ * 
+ * @example
+ * // Optional: Wait for Redis before starting server
+ * const { waitForRedisInit } = require('./auth/session');
+ * await waitForRedisInit();
+ * server.listen(PORT);
  */
 async function waitForRedisInit() {
     if (redisInitialized) {
