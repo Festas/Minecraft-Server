@@ -1,6 +1,6 @@
 const session = require('express-session');
 const { createClient } = require('redis');
-const RedisStore = require('connect-redis').default;
+const { RedisStore } = require('connect-redis');
 const { shouldUseSecureCookies, logCookieConfiguration } = require('../utils/cookieSecurity');
 
 const useSecureCookies = shouldUseSecureCookies();

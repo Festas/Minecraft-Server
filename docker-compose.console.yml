@@ -19,8 +19,8 @@ services:
 
   console:
     build:
-      context: ./console/backend
-      dockerfile: Dockerfile
+      context: ./console
+      dockerfile: backend/Dockerfile
     container_name: minecraft-console
     restart: unless-stopped
     ports:
