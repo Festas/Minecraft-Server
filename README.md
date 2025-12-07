@@ -103,9 +103,18 @@ See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Initial deployment and server setup
 - **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** - Web console setup and management guide
 - **[PLUGINS.md](PLUGINS.md)** - Comprehensive plugin guide with installation instructions
+- **[PLUGIN-MANAGER.md](PLUGIN-MANAGER.md)** - Web-based plugin manager with diagnostics ⭐
 - **[BEDROCK-SETUP.md](BEDROCK-SETUP.md)** - Cross-platform play setup guide (Geyser + Floodgate)
 - **[WEBSITE.md](WEBSITE.md)** - Website deployment and customization guide
 - **[server-icon-instructions.md](server-icon-instructions.md)** - Custom server icon setup
+
+### Troubleshooting & Diagnostics
+
+- **[PLUGIN-MANAGER.md#diagnostic-tools](PLUGIN-MANAGER.md#diagnostic-tools)** - Plugin manager diagnostics and auto-fix
+  - Basic diagnostics: `./scripts/diagnose-plugins.sh diagnose`
+  - Auto-fix mode: `./scripts/diagnose-plugins.sh fix`
+  - Advanced diagnostics: `./scripts/diagnose-plugins-advanced.sh`
+  - GitHub Actions workflow: `.github/workflows/plugins-manager-diagnose.yml`
 
 ### Planning & Features
 

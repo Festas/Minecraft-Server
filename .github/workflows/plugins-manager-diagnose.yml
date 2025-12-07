@@ -1,0 +1,273 @@
+name: Plugin Manager Diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Diagnostic mode'
+        required: true
+        type: choice
+        options:
+          - diagnose
+          - fix
+        default: diagnose
+      run_advanced:
+        description: 'Run advanced diagnostics'
+        required: true
+        type: boolean
+        default: true
+      restart_backend:
+        description: 'Restart backend if repairs are made'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  plugin-diagnostics:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read  # Required for actions/checkout
+      actions: write  # Required for actions/upload-artifact
+    
+    env:
+      DEPLOY_DIR: /home/deploy/minecraft-server
+      CONSOLE_DIR: /home/deploy/minecraft-console
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+      
+      - name: Upload diagnostic scripts to server
+        run: |
+          echo "Uploading diagnostic scripts..."
+          scp -i ~/.ssh/id_rsa \
+            scripts/diagnose-plugins.sh \
+            scripts/diagnose-plugins-advanced.sh \
+            ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ env.DEPLOY_DIR }}/scripts/
+          
+          echo "Setting executable permissions..."
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins.sh
+            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins-advanced.sh
+          EOF
+      
+      - name: Run basic plugin diagnostics
+        id: basic_diagnostics
+        run: |
+          echo "Running basic plugin diagnostics in ${{ github.event.inputs.mode }} mode..."
+          
+          # Run diagnostics and capture fix count
+          FIX_COUNT=$(ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ${{ env.DEPLOY_DIR }}
+            
+            # Run basic diagnostics
+            ./scripts/diagnose-plugins.sh ${{ github.event.inputs.mode }} || true
+            
+            # Find the most recent diagnostics directory and count fixes
+            DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | grep -v advanced | head -1)
+            
+            if [ -n "$DIAG_DIR" ] && [ -f "$DIAG_DIR/fixes.log" ]; then
+              wc -l < "$DIAG_DIR/fixes.log"
+            else
+              echo "0"
+            fi
+          EOF
+          )
+          
+          echo "fixes_applied=$FIX_COUNT" >> $GITHUB_OUTPUT
+          echo "Fixes applied: $FIX_COUNT"
+      
+      - name: Run advanced diagnostics
+        if: github.event.inputs.run_advanced == 'true'
+        run: |
+          echo "Running advanced plugin diagnostics..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ${{ env.DEPLOY_DIR }}
+            
+            # Run advanced diagnostics
+            ./scripts/diagnose-plugins-advanced.sh || true
+            
+            # Find the most recent advanced diagnostics directory
+            ADV_DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-advanced-* 2>/dev/null | head -1)
+            
+            if [ -n "$ADV_DIAG_DIR" ]; then
+              echo "ADV_DIAG_DIR=$ADV_DIAG_DIR" >> $GITHUB_ENV
+            fi
+          EOF
+      
+      - name: Download basic diagnostic reports
+        run: |
+          echo "Downloading basic diagnostic reports..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            # Find most recent basic diagnostics directory
+            DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | grep -v "advanced" | head -1)
+            
+            if [ -n "$DIAG_DIR" ]; then
+              # Create tarball of diagnostics
+              tar -czf /tmp/plugin-diagnostics-basic.tar.gz -C "$(dirname "$DIAG_DIR")" "$(basename "$DIAG_DIR")"
+              echo "Created diagnostics archive"
+            else
+              echo "No diagnostics directory found"
+            fi
+          EOF
+          
+          # Download the tarball
+          scp -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/tmp/plugin-diagnostics-basic.tar.gz \
+            ./plugin-diagnostics-basic.tar.gz || echo "Failed to download basic diagnostics"
+          
+          # Extract for artifact upload
+          if [ -f ./plugin-diagnostics-basic.tar.gz ]; then
+            mkdir -p ./diagnostics-basic
+            tar -xzf ./plugin-diagnostics-basic.tar.gz -C ./diagnostics-basic
+          fi
+      
+      - name: Download advanced diagnostic reports
+        if: github.event.inputs.run_advanced == 'true'
+        run: |
+          echo "Downloading advanced diagnostic reports..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            # Find most recent advanced diagnostics directory
+            ADV_DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-advanced-* 2>/dev/null | head -1)
+            
+            if [ -n "$ADV_DIAG_DIR" ]; then
+              # Create tarball of diagnostics
+              tar -czf /tmp/plugin-diagnostics-advanced.tar.gz -C "$(dirname "$ADV_DIAG_DIR")" "$(basename "$ADV_DIAG_DIR")"
+              echo "Created advanced diagnostics archive"
+            else
+              echo "No advanced diagnostics directory found"
+            fi
+          EOF
+          
+          # Download the tarball
+          scp -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/tmp/plugin-diagnostics-advanced.tar.gz \
+            ./plugin-diagnostics-advanced.tar.gz || echo "Failed to download advanced diagnostics"
+          
+          # Extract for artifact upload
+          if [ -f ./plugin-diagnostics-advanced.tar.gz ]; then
+            mkdir -p ./diagnostics-advanced
+            tar -xzf ./plugin-diagnostics-advanced.tar.gz -C ./diagnostics-advanced
+          fi
+      
+      - name: Upload basic diagnostic artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plugin-diagnostics-basic-${{ github.run_number }}
+          path: diagnostics-basic/
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Upload advanced diagnostic artifacts
+        uses: actions/upload-artifact@v4
+        if: always() && github.event.inputs.run_advanced == 'true'
+        with:
+          name: plugin-diagnostics-advanced-${{ github.run_number }}
+          path: diagnostics-advanced/
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Display summary
+        if: always()
+        run: |
+          echo "## Plugin Manager Diagnostics Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Mode:** ${{ github.event.inputs.mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Advanced diagnostics:** ${{ github.event.inputs.run_advanced }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Display basic diagnostics summary if available
+          if [ -d ./diagnostics-basic ]; then
+            SUMMARY_FILE=$(find ./diagnostics-basic -name "summary.log" | head -1)
+            if [ -f "$SUMMARY_FILE" ]; then
+              echo "### Basic Diagnostics Results" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              cat "$SUMMARY_FILE" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Show issues if any
+            ISSUES_FILE=$(find ./diagnostics-basic -name "issues.log" | head -1)
+            if [ -f "$ISSUES_FILE" ]; then
+              echo "### Issues Found" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              cat "$ISSUES_FILE" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Show fixes if any
+            FIXES_FILE=$(find ./diagnostics-basic -name "fixes.log" | head -1)
+            if [ -f "$FIXES_FILE" ]; then
+              echo "### Auto-Fixes Applied" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              cat "$FIXES_FILE" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          # Display advanced diagnostics summary if available
+          if [ -d ./diagnostics-advanced ]; then
+            ADV_SUMMARY_FILE=$(find ./diagnostics-advanced -name "summary.log" | head -1)
+            if [ -f "$ADV_SUMMARY_FILE" ]; then
+              echo "### Advanced Diagnostics Results" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              cat "$ADV_SUMMARY_FILE" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+      
+      - name: Restart backend if repairs were made
+        if: github.event.inputs.restart_backend == 'true' && github.event.inputs.mode == 'fix' && steps.basic_diagnostics.outputs.fixes_applied != '0'
+        run: |
+          echo "Fixes were applied, restarting backend..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd ${{ env.CONSOLE_DIR }}
+            
+            # Check if running in Docker
+            if docker ps --filter "name=minecraft-console" --format "{{.Names}}" | grep -q "minecraft-console"; then
+              echo "Restarting console container..."
+              docker compose restart minecraft-console
+              
+              # Wait for container to be healthy
+              echo "Waiting for backend to be ready..."
+              sleep 5
+              
+              # Check health
+              docker ps --filter "name=minecraft-console"
+            else
+              echo "Not running in Docker, skipping restart"
+              echo "Manual restart may be required"
+            fi
+          EOF
+      
+      - name: Cleanup temporary files
+        if: always()
+        run: |
+          echo "Cleaning up temporary files on server..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            # Remove diagnostic tarballs
+            rm -f /tmp/plugin-diagnostics-basic.tar.gz
+            rm -f /tmp/plugin-diagnostics-advanced.tar.gz
+            
+            # Keep diagnostic directories for 7 days, clean up older ones
+            find /tmp -maxdepth 1 -name "plugin-diagnostics-*" -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+            
+            echo "Cleanup complete"
+          EOF

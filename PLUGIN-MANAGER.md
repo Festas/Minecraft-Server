@@ -369,6 +369,196 @@ curl http://localhost:3001/api/plugins/health
 - Check browser console for specific errors
 - Verify authentication (may need to re-login)
 
+## Diagnostic Tools
+
+The plugin manager includes comprehensive diagnostic scripts to help troubleshoot issues.
+
+### Basic Diagnostics (`diagnose-plugins.sh`)
+
+This script performs basic health checks and can automatically fix common issues.
+
+**Features:**
+- Checks `plugins.json` existence and validity
+- Validates JSON syntax
+- Checks plugins directory presence and permissions
+- Validates `plugin-history.json`
+- Tests API backend reachability
+- Auto-fixes missing or corrupt files
+- Fixes directory permission problems
+
+**Usage:**
+
+**Diagnose mode** (check only):
+```bash
+./scripts/diagnose-plugins.sh diagnose
+```
+
+**Fix mode** (check and auto-repair):
+```bash
+./scripts/diagnose-plugins.sh fix
+```
+
+**What gets auto-fixed:**
+- Missing `plugins.json` - creates with empty structure
+- Empty `plugins.json` - initializes with proper structure
+- Corrupt `plugins.json` - backs up and recreates (backup saved)
+- Missing plugins directory - creates with correct permissions
+- Incorrect directory permissions - fixes read/write/execute permissions
+- Missing `plugin-history.json` - creates with empty array
+- Corrupt `plugin-history.json` - backs up and recreates
+
+**Output:**
+- Creates timestamped directory: `/tmp/plugin-diagnostics-YYYYMMDD-HHMMSS/`
+- Contains detailed logs for each diagnostic section
+- Summary report with issues found and fixes applied
+- Lists manual actions needed (if any)
+
+### Advanced Diagnostics (`diagnose-plugins-advanced.sh`)
+
+This script performs deep diagnostics that go beyond basic file checks.
+
+**Features:**
+- Analyzes backend logs for errors
+- Validates API schema and responses
+- Tests authentication mechanisms
+- Checks Docker container mounts and volumes
+- Validates backend dependencies
+- Deep file system analysis
+- Identifies issues not auto-fixable
+
+**Usage:**
+```bash
+./scripts/diagnose-plugins-advanced.sh
+```
+
+**What it checks:**
+- Backend container logs for plugin-related errors
+- JSON parsing errors in logs
+- File access errors (ENOENT, EACCES)
+- API endpoint health and schema validation
+- Authentication and session handling
+- CSRF protection
+- Docker volume mounts (read-write status)
+- Container environment variables
+- Node.js and npm versions
+- Required npm dependencies installation
+- Disk space availability
+- Orphaned backup files
+- Duplicate plugin installations
+
+**Output:**
+- Creates timestamped directory: `/tmp/plugin-diagnostics-advanced-YYYYMMDD-HHMMSS/`
+- Detailed section logs for each diagnostic area
+- Container inspection data (if using Docker)
+- Backend log excerpts
+- Summary with warnings, errors, and recommendations
+
+### GitHub Actions Workflow
+
+Automated diagnostics can be run via GitHub Actions.
+
+**Workflow:** `.github/workflows/plugins-manager-diagnose.yml`
+
+**Trigger:** Manual (workflow_dispatch)
+
+**Options:**
+- **Mode:** `diagnose` or `fix`
+- **Run advanced diagnostics:** `true` or `false`
+- **Restart backend if repairs made:** `true` or `false`
+
+**What it does:**
+1. Uploads diagnostic scripts to the server
+2. Runs basic diagnostics (optionally with auto-fix)
+3. Runs advanced diagnostics (if enabled)
+4. Downloads diagnostic reports
+5. Uploads reports as GitHub Artifacts (30-day retention)
+6. Displays summary in workflow output
+7. Optionally restarts backend if fixes were applied
+
+**Artifacts:**
+- `plugin-diagnostics-basic-{run_number}` - Basic diagnostic logs
+- `plugin-diagnostics-advanced-{run_number}` - Advanced diagnostic logs
+
+### Troubleshooting with Diagnostics
+
+**Quick Check:**
+```bash
+# Run basic diagnostics
+./scripts/diagnose-plugins.sh diagnose
+
+# Review summary
+cat /tmp/plugin-diagnostics-*/summary.log
+```
+
+**Auto-Fix Common Issues:**
+```bash
+# Run with auto-fix
+./scripts/diagnose-plugins.sh fix
+
+# Review what was fixed
+cat /tmp/plugin-diagnostics-*/fixes.log
+```
+
+**Deep Analysis:**
+```bash
+# Run advanced diagnostics
+./scripts/diagnose-plugins-advanced.sh
+
+# Review all findings
+ls /tmp/plugin-diagnostics-advanced-*/
+cat /tmp/plugin-diagnostics-advanced-*/summary.log
+```
+
+**Review Individual Sections:**
+```bash
+# Basic diagnostics sections
+cat /tmp/plugin-diagnostics-*/01-plugins-json.log
+cat /tmp/plugin-diagnostics-*/02-plugins-directory.log
+cat /tmp/plugin-diagnostics-*/03-plugin-history.log
+cat /tmp/plugin-diagnostics-*/04-api-backend.log
+cat /tmp/plugin-diagnostics-*/05-backend-process.log
+
+# Advanced diagnostics sections
+cat /tmp/plugin-diagnostics-advanced-*/01-log-analysis.log
+cat /tmp/plugin-diagnostics-advanced-*/02-api-schema.log
+cat /tmp/plugin-diagnostics-advanced-*/03-auth-session.log
+cat /tmp/plugin-diagnostics-advanced-*/04-docker-analysis.log
+cat /tmp/plugin-diagnostics-advanced-*/05-dependencies.log
+cat /tmp/plugin-diagnostics-advanced-*/06-filesystem.log
+```
+
+### Common Issues Detected by Diagnostics
+
+**Basic Script Detects:**
+- Missing or corrupt `plugins.json`
+- Invalid JSON syntax
+- Missing plugins directory
+- Permission issues (not readable/writable)
+- Missing `plugin-history.json`
+- Backend not responding
+- Backend process not running
+
+**Advanced Script Detects:**
+- Backend log errors (JSON parsing, file access)
+- API schema violations
+- Authentication/session issues
+- Docker mount problems (read-only mounts)
+- Missing npm dependencies
+- Incompatible Node.js version
+- Low disk space
+- Orphaned backup files
+- Duplicate plugin installations
+
+### Exit Codes
+
+**Basic Script:**
+- `0` - No issues or all issues fixed
+- `1` - Issues found that require manual intervention
+
+**Advanced Script:**
+- `0` - No errors (warnings are OK)
+- `1` - Errors found requiring attention
+
 ## Examples
 
 ### Install from Direct URL
