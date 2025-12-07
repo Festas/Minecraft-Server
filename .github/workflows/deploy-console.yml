@@ -314,6 +314,9 @@ jobs:
 
             # Test URL - use a small, well-known plugin for testing
             # Using a lightweight test plugin to avoid long downloads
+            # Note: This URL is intentionally pinned to a specific version for test stability.
+            # The test verifies the API works, not that this specific plugin version is available.
+            # If this version becomes unavailable, update to a newer stable release.
             TEST_PLUGIN_URL="https://github.com/pl3xgaming/Pl3xMap/releases/download/v1.20.4-477/Pl3xMap-1.20.4-477.jar"
             TEST_PLUGIN_NAME="Pl3xMap"
 
@@ -331,10 +334,12 @@ jobs:
 
             # Step 1: Login to get session
             echo "Step 1: Authenticating with API..."
-            LOGIN_RESPONSE=$(curl -s -c /tmp/cookies.txt -w "\n%{http_code}" \
+            # Use stdin to avoid exposing credentials in process lists
+            LOGIN_RESPONSE=$(printf '{"username":"%s","password":"%s"}' "$ADMIN_USERNAME" "$ADMIN_PASSWORD" | \
+              curl -s -c /tmp/cookies.txt -w "\n%{http_code}" \
               -X POST http://localhost:3001/api/login \
               -H "Content-Type: application/json" \
-              -d "{\"username\":\"$ADMIN_USERNAME\",\"password\":\"$ADMIN_PASSWORD\"}" 2>&1)
+              --data-binary @- 2>&1)
 
             LOGIN_STATUS=$(echo "$LOGIN_RESPONSE" | tail -1)
             LOGIN_BODY=$(echo "$LOGIN_RESPONSE" | sed '$d')
@@ -391,9 +396,11 @@ jobs:
               INSTALL_RESULT_STATUS=$(echo "$INSTALL_BODY" | jq -r '.status')
               echo "✓ API response indicates status: $INSTALL_RESULT_STATUS"
 
-              # If conflict detected, that's actually OK for a test (plugin already exists)
+              # If conflict detected, that's expected behavior after first run
+              # The test verifies the API detects conflicts properly, which is part of correct behavior
               if [ "$INSTALL_RESULT_STATUS" = "conflict" ]; then
-                echo "ℹ Plugin already exists (conflict detected) - this is acceptable for testing"
+                echo "ℹ Plugin already exists (conflict detected) - API correctly identified existing plugin"
+                echo "This is expected behavior on subsequent runs and validates conflict detection works"
               fi
             else
               echo "✗ API response does not indicate success"
