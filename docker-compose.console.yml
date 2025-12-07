@@ -27,6 +27,7 @@ services:
       - MC_SERVER_DIR=/data
       
       # Security
+      - CSRF_SECRET=${CSRF_SECRET:-change-this-to-a-secure-csrf-secret}
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
       - RATE_LIMIT_MAX_ATTEMPTS=${RATE_LIMIT_MAX_ATTEMPTS:-5}
       
@@ -59,9 +60,10 @@ networks:
 # Notes:
 # 1. REQUIRED: Set secure values in .env file for:
 #    - SESSION_SECRET (generate with: openssl rand -hex 32)
+#    - CSRF_SECRET (generate with: openssl rand -base64 32)
 #    - ADMIN_PASSWORD (generate with: openssl rand -base64 32)
 #    - RCON_PASSWORD (must match Minecraft server)
-#    The console will NOT start without ADMIN_PASSWORD set!
+#    The console will NOT start without ADMIN_PASSWORD and CSRF_SECRET set!
 #
 # 2. The console needs access to Docker socket to control the Minecraft container
 #
@@ -69,5 +71,9 @@ networks:
 #    docker compose -f docker-compose.console.yml up -d
 #
 # 4. Access the console at http://your-server-ip:3001/console
+#    API available at: http://your-server-ip:3001/api/plugins
 #
 # 5. For production, use Nginx reverse proxy with SSL (see nginx/console.conf)
+#
+# 6. The server binds to 0.0.0.0:3001 inside the container to accept connections
+#    from all interfaces. Port 3001 is exposed and mapped for external access.
