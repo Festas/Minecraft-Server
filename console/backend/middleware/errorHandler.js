@@ -16,10 +16,22 @@ const notFoundHandler = (req, res, next) => {
  * Global error handler
  */
 const errorHandler = (err, req, res, _next) => {
+    // Determine the appropriate status code
+    // Priority: err.status > err.statusCode > existing res.statusCode (if not 200) > 500
+    let statusCode = 500;
+    
+    if (err.status) {
+        statusCode = err.status;
+    } else if (err.statusCode) {
+        statusCode = err.statusCode;
+    } else if (res.statusCode && res.statusCode !== 200) {
+        statusCode = res.statusCode;
+    }
+    
     // Log error details (but not in production with sensitive data)
-    console.error('Error:', {
+    console.error('Error Handler:', {
         message: err.message,
-        status: err.status || 500,
+        statusCode: statusCode,
         path: req.path,
         method: req.method,
         // Only log stack in development
@@ -27,7 +39,6 @@ const errorHandler = (err, req, res, _next) => {
     });
 
     // Set status code
-    const statusCode = err.status || res.statusCode !== 200 ? res.statusCode : 500;
     res.status(statusCode);
 
     // Send error response
