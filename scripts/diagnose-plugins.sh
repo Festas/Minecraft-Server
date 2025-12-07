@@ -29,7 +29,7 @@
 #
 ################################################################################
 
-set -e
+set +e  # Disable exit on error for diagnostics
 
 # Determine paths based on environment
 if [ -d "/home/deploy/minecraft-server" ]; then
@@ -174,7 +174,8 @@ EOF
             # Validate JSON syntax
             echo "Validating JSON syntax..."
             ERROR_OUTPUT=$(validate_json "$PLUGINS_JSON" 2>&1)
-            if [ $? -ne 0 ]; then
+            VALIDATION_EXIT_CODE=$?
+            if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
                 log_issue "ERROR" "plugins.json has invalid JSON syntax"
                 echo "Parse error: $ERROR_OUTPUT"
                 
@@ -386,7 +387,8 @@ echo ""
             # Validate JSON syntax
             echo "Validating JSON syntax..."
             ERROR_OUTPUT=$(validate_json "$HISTORY_FILE" 2>&1)
-            if [ $? -ne 0 ]; then
+            VALIDATION_EXIT_CODE=$?
+            if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
                 log_issue "ERROR" "plugin-history.json has invalid JSON syntax"
                 echo "Parse error: $ERROR_OUTPUT"
                 

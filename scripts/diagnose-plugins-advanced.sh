@@ -24,7 +24,7 @@
 #
 ################################################################################
 
-set -e
+set +e  # Disable exit on error for diagnostics
 
 # Determine paths based on environment
 if [ -d "/home/deploy/minecraft-server" ]; then
