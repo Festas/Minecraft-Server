@@ -97,6 +97,36 @@ The health endpoint response includes session store status:
 }
 ```
 
+### Step 2.5: Environment Variables Summary
+
+The console requires the following environment variables to function properly:
+
+#### Required Variables (Must be set or deployment fails)
+
+| Variable | Purpose | Set via Secret | Notes |
+|----------|---------|----------------|-------|
+| `ADMIN_PASSWORD` | Console login password | `CONSOLE_ADMIN_PASSWORD` | Server exits if not set or set to default value |
+| `CSRF_SECRET` | CSRF token encryption | `CSRF_SECRET` | Server exits if not set |
+| `SESSION_SECRET` | Session encryption | `SESSION_SECRET` | Required for secure sessions |
+| `REDIS_HOST` | Redis server location | `REDIS_HOST` | Typically 'redis' for Docker |
+| `REDIS_PORT` | Redis server port | `REDIS_PORT` | Typically 6379 |
+| `RCON_PASSWORD` | RCON authentication | `RCON_PASSWORD` | Must match server.properties |
+
+#### Optional Variables (Have sensible defaults)
+
+| Variable | Purpose | Default | Notes |
+|----------|---------|---------|-------|
+| `ADMIN_USERNAME` | Console login username | `admin` | Can customize if needed |
+| `RCON_HOST` | RCON server location | `minecraft-server` | Container name in Docker |
+| `RCON_PORT` | RCON server port | `25575` | Standard RCON port |
+| `MC_CONTAINER_NAME` | Minecraft container name | `minecraft-server` | For Docker control features |
+| `MC_SERVER_DIR` | Server directory path | `/minecraft` | Inside container |
+| `CONSOLE_PORT` | Console listen port | `3001` | HTTP port for console |
+| `NODE_ENV` | Runtime environment | `production` | Controls cookie security |
+| `COOKIE_SECURE` | Override cookie security | (from NODE_ENV) | Set to 'false' for HTTP testing |
+
+**Note:** All required secrets are validated during deployment. If any are missing, the workflow will fail with a clear error message listing which secrets need to be added.
+
 ### Step 3: Enable RCON on Minecraft Server
 
 SSH into your server and edit the Minecraft server.properties:
