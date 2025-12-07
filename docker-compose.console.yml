@@ -11,7 +11,12 @@ services:
       # Console Configuration
       - CONSOLE_PORT=3001
       - API_PORT=3001
-      - NODE_ENV=production
+      # NODE_ENV controls cookie security:
+      # - production: secure cookies (HTTPS/SSL required)
+      # - development/test: non-secure cookies (HTTP allowed)
+      # Override with COOKIE_SECURE=false for HTTP testing in any environment
+      - NODE_ENV=${NODE_ENV:-production}
+      - COOKIE_SECURE=${COOKIE_SECURE:-}
       - SESSION_SECRET=${SESSION_SECRET:-change-this-to-a-secure-random-string}
 
       # Admin Account
@@ -85,3 +90,9 @@ networks:
 #
 # 6. The server binds to 0.0.0.0:3001 inside the container to accept connections
 #    from all interfaces. Port 3001 is exposed and mapped for external access.
+#
+# 7. Cookie Security Configuration:
+#    - Production (NODE_ENV=production): secure cookies enabled (HTTPS/SSL required)
+#    - Development/Test: Set NODE_ENV=development or COOKIE_SECURE=false for HTTP testing
+#    - CI/Diagnostics: Use COOKIE_SECURE=false to allow plain HTTP authentication
+#    - Without proper configuration, session cookies won't be sent over HTTP, breaking authentication
