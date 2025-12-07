@@ -246,7 +246,25 @@ async function handleInstall() {
         const result = await response.json();
         
         if (!response.ok) {
-            throw new Error(result.error || 'Installation failed');
+            // Enhanced error display with details from backend
+            let errorMessage = result.error || 'Installation failed';
+            
+            // Add additional details if available
+            if (result.details) {
+                errorMessage += `\n${result.details}`;
+            }
+            
+            // Add timestamp info if available
+            if (result.timestamp) {
+                console.error('Error timestamp:', result.timestamp);
+            }
+            
+            // Log original error for debugging
+            if (result.originalError && result.originalError !== result.error) {
+                console.error('Backend error details:', result.originalError);
+            }
+            
+            throw new Error(errorMessage);
         }
         
         handleInstallResult(result, url);
@@ -309,7 +327,20 @@ async function selectOption(originalUrl, selectedUrl) {
         const result = await response.json();
         
         if (!response.ok) {
-            throw new Error(result.error || 'Installation failed');
+            // Enhanced error display with details from backend
+            let errorMessage = result.error || 'Installation failed';
+            
+            // Add additional details if available
+            if (result.details) {
+                errorMessage += `\n${result.details}`;
+            }
+            
+            // Log backend error details for debugging
+            if (result.originalError && result.originalError !== result.error) {
+                console.error('Backend error details:', result.originalError);
+            }
+            
+            throw new Error(errorMessage);
         }
         
         handleInstallResult(result, originalUrl);
@@ -373,7 +404,20 @@ async function proceedWithInstall(url, pluginName, action) {
         const result = await response.json();
         
         if (!response.ok) {
-            throw new Error(result.error || 'Installation failed');
+            // Enhanced error display with details from backend
+            let errorMessage = result.error || 'Installation failed';
+            
+            // Add additional details if available
+            if (result.details) {
+                errorMessage += `\n${result.details}`;
+            }
+            
+            // Log backend error details for debugging
+            if (result.originalError && result.originalError !== result.error) {
+                console.error('Backend error details:', result.originalError);
+            }
+            
+            throw new Error(errorMessage);
         }
         
         showToast(`✅ Successfully ${action === 'update' ? 'updated' : action === 'downgrade' ? 'downgraded' : 'reinstalled'} ${result.pluginName} to v${result.version}`, 'success');
