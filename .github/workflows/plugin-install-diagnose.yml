@@ -223,10 +223,13 @@ jobs:
           # Debug: Print masked credential lengths (not actual values)
           echo "Debug: ADMIN_USER length: ${#ADMIN_USER} characters"
           echo "Debug: ADMIN_PASS length: ${#ADMIN_PASS} characters"
-          echo "Debug: ADMIN_USER (masked): ${ADMIN_USER:0:2}***"
           echo ""
 
           # Pass credentials to SSH session via environment
+          # Note: Credentials are passed as command-line arguments to SSH, which may be
+          # visible in process lists. This is acceptable for this controlled CI/CD environment
+          # where the runner and target server are trusted. Alternative approaches would require
+          # server SSH configuration changes (SendEnv/AcceptEnv) or temp files on disk.
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             ADMIN_USER="$ADMIN_USER" \
             ADMIN_PASS="$ADMIN_PASS" \
@@ -684,6 +687,10 @@ jobs:
           fi
 
           # Pass credentials to SSH session via environment
+          # Note: Credentials are passed as command-line arguments to SSH, which may be
+          # visible in process lists. This is acceptable for this controlled CI/CD environment
+          # where the runner and target server are trusted. Alternative approaches would require
+          # server SSH configuration changes (SendEnv/AcceptEnv) or temp files on disk.
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             ADMIN_USER="$ADMIN_USER" \
             ADMIN_PASS="$ADMIN_PASS" \
