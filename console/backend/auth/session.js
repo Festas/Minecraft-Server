@@ -42,6 +42,14 @@ function createSessionMiddleware(store) {
 
 // Initialize Redis client and session store
 (async function initializeRedisClient() {
+    // Skip Redis in test environment - use memory store for tests
+    if (process.env.NODE_ENV === 'test') {
+        console.log('[Session] Test environment detected - using memory store');
+        useRedisStore = false;
+        sessionMiddleware = createSessionMiddleware(null);
+        return;
+    }
+
     try {
         // Create Redis client with configuration
         const clientConfig = REDIS_URL 

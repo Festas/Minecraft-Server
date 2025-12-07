@@ -30,7 +30,59 @@ Add these 4 secrets:
 openssl rand -hex 32
 ```
 
-### Step 2: Enable RCON on Minecraft Server
+### Step 2: Redis Session Store (Included)
+
+The console uses **Redis** for persistent session storage. This ensures:
+- Sessions survive server restarts
+- CSRF tokens remain valid across deployments
+- Plugin installations work reliably in CI/Docker
+
+**Redis is automatically configured** when you use `docker-compose.console.yml`:
+- Redis service starts automatically
+- Console connects to Redis at `redis:6379`
+- Sessions persist in a Docker volume (`redis-data`)
+
+**No manual configuration needed** - Redis is included and configured by default.
+
+**Optional Redis Configuration:**
+
+If you need to customize Redis (e.g., for external Redis):
+
+```bash
+# In .env file (optional)
+REDIS_HOST=redis        # Default: redis (Docker service name)
+REDIS_PORT=6379         # Default: 6379
+REDIS_PASSWORD=         # Default: none (optional)
+# Or use a connection URL:
+# REDIS_URL=redis://user:password@host:port/db
+```
+
+**Verify Redis is running:**
+```bash
+# Check Redis container
+docker ps | grep redis
+
+# Check Redis connection in console logs
+docker logs minecraft-console | grep "Redis"
+
+# Check health endpoint
+curl http://localhost:3001/health
+```
+
+The health endpoint response includes session store status:
+```json
+{
+  "status": "ok",
+  "session": {
+    "usingRedis": true,
+    "redisConnected": true,
+    "storeType": "redis",
+    "warning": null
+  }
+}
+```
+
+### Step 3: Enable RCON on Minecraft Server
 
 SSH into your server and edit the Minecraft server.properties:
 
@@ -54,7 +106,7 @@ Restart the Minecraft server:
 sudo systemctl restart minecraft.service
 ```
 
-### Step 3: Update Caddyfile (One-Time)
+### Step 4: Update Caddyfile (One-Time)
 
 In your **Link-in-Bio** repository, update the Caddyfile to add console routing:
 
@@ -80,7 +132,7 @@ mc.festas-builds.com {
 
 Commit and push the change. Caddy will auto-reload.
 
-### Step 4: Deploy
+### Step 5: Deploy
 
 Push any change to the `console/` directory, or manually trigger the workflow:
 
@@ -88,7 +140,7 @@ Push any change to the `console/` directory, or manually trigger the workflow:
 2. Click "Run workflow"
 3. Wait for deployment to complete
 
-### Step 5: Access Console
+### Step 6: Access Console
 
 Open `https://mc.festas-builds.com/console` and login with your credentials.
 
@@ -108,17 +160,112 @@ Open `https://mc.festas-builds.com/console` and login with your credentials.
 - Ensure Caddyfile has `/socket.io*` route
 - Check browser console for errors
 
+### Redis connection issues
+
+**Symptoms:**
+- Console logs show "WARNING: Falling back to memory store"
+- Plugin installs fail with "invalid csrf token"
+- Sessions don't persist after console restart
+- Health endpoint shows `"usingRedis": false`
+
+**Diagnosis:**
+```bash
+# Check if Redis container is running
+docker ps | grep redis
+
+# Check Redis logs
+docker logs minecraft-console-redis
+
+# Check console logs for Redis errors
+docker logs minecraft-console | grep Redis
+
+# Test Redis connectivity from console container
+docker exec -it minecraft-console sh -c 'nc -zv redis 6379'
+
+# Check health endpoint
+curl http://localhost:3001/health
+```
+
+**Common solutions:**
+
+1. **Redis container not running:**
+   ```bash
+   # Check docker-compose.console.yml includes Redis service
+   # Restart the stack
+   cd /home/deploy/minecraft-console
+   docker compose down
+   docker compose up -d
+   ```
+
+2. **Network connectivity issues:**
+   ```bash
+   # Verify both containers are on same network
+   docker network inspect minecraft-network
+   
+   # Both minecraft-console and minecraft-console-redis should be listed
+   ```
+
+3. **Redis data corruption:**
+   ```bash
+   # Stop containers
+   docker compose down
+   
+   # Remove Redis data volume (will clear all sessions)
+   docker volume rm minecraft-console_redis-data
+   
+   # Start fresh
+   docker compose up -d
+   ```
+
+4. **Check environment variables:**
+   ```bash
+   # Verify Redis configuration in .env
+   cat .env | grep REDIS
+   
+   # Should show:
+   # REDIS_HOST=redis
+   # REDIS_PORT=6379
+   ```
+
+**Verification:**
+
+After fixing, verify Redis is working:
+```bash
+# Console logs should show:
+docker logs minecraft-console 2>&1 | grep "Redis"
+# Expected output:
+# [Session] Redis client connected
+# [Session] Redis client ready
+# [Session] ✓ Using Redis store for session persistence
+
+# Health check should show:
+curl http://localhost:3001/health | jq '.session'
+# Expected output:
+# {
+#   "usingRedis": true,
+#   "redisConnected": true,
+#   "storeType": "redis",
+#   "warning": null
+# }
+```
+
 ## Architecture
 
 ```
-Browser → Caddy (443) → minecraft-console:3001
+Browser → Caddy (443) → minecraft-console:3001 ←→ Redis (session storage)
                       → minecraft-web:80
 
 Console Container:
   - Connects to RCON via host.docker.internal:25575
   - Mounts /home/deploy/minecraft-server for file access
   - Mounts Docker socket for container control
+  - Stores sessions in Redis for persistence
   - Stores data in console_data volume
+
+Redis Container:
+  - Stores sessions with 24h TTL
+  - Persists data in redis-data volume
+  - Enables session recovery after restarts
 ```
 
 ## Security Notes
