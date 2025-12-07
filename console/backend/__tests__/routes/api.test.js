@@ -49,5 +49,24 @@ describe('API Routes', () => {
       expect(response.body).toHaveProperty('csrfToken');
       expect(typeof response.body.csrfToken).toBe('string');
     });
+
+    it('should set a CSRF cookie in the response', async () => {
+      const response = await request(app)
+        .get('/api/csrf-token');
+      
+      expect(response.status).toBe(200);
+      expect(response.headers['set-cookie']).toBeDefined();
+      
+      // Check that csrf-token cookie is present
+      const csrfCookie = response.headers['set-cookie'].find(cookie => 
+        cookie.startsWith('csrf-token=')
+      );
+      expect(csrfCookie).toBeDefined();
+      
+      // Verify cookie attributes
+      expect(csrfCookie).toMatch(/HttpOnly/);
+      expect(csrfCookie).toMatch(/Path=\//);
+      expect(csrfCookie).toMatch(/SameSite=Lax/i);
+    });
   });
 });

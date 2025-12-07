@@ -53,7 +53,7 @@ echo ""
 # Step 2: Get CSRF token
 echo "Step 2: Get CSRF token"
 echo "------------------------------------------------"
-CSRF_RESPONSE=$(curl -s -b "$COOKIE_FILE" -w "\n%{http_code}" \
+CSRF_RESPONSE=$(curl -s -b "$COOKIE_FILE" -c "$COOKIE_FILE" -w "\n%{http_code}" \
   -X GET "$API_BASE/api/csrf-token" 2>&1)
 
 CSRF_STATUS=$(echo "$CSRF_RESPONSE" | tail -1)
@@ -69,6 +69,10 @@ fi
 
 CSRF_TOKEN=$(echo "$CSRF_BODY" | jq -r '.csrfToken')
 echo "✓ CSRF token obtained: ${CSRF_TOKEN:0:20}..."
+
+# Check if CSRF cookie was saved
+echo "CSRF cookie:"
+cat "$COOKIE_FILE" | grep -v '^#' | grep csrf-token || echo "⚠ No csrf-token cookie found"
 echo ""
 
 # Step 3: Test authenticated endpoint (GET /api/plugins)
