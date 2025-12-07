@@ -210,10 +210,45 @@ jobs:
           echo "Test plugin name: ${{ env.TEST_PLUGIN_NAME }}"
           echo ""
 
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          # Validate credentials before proceeding
+          if [ -z "$ADMIN_USER" ]; then
+            echo "::error::ADMIN_USER is empty or not set. Check CONSOLE_ADMIN_USER secret."
+            exit 1
+          fi
+          if [ -z "$ADMIN_PASS" ]; then
+            echo "::error::ADMIN_PASS is empty or not set. Check CONSOLE_ADMIN_PASSWORD secret."
+            exit 1
+          fi
+
+          # Debug: Print masked credential lengths (not actual values)
+          echo "Debug: ADMIN_USER length: ${#ADMIN_USER} characters"
+          echo "Debug: ADMIN_PASS length: ${#ADMIN_PASS} characters"
+          echo "Debug: ADMIN_USER (masked): ${ADMIN_USER:0:2}***"
+          echo ""
+
+          # Pass credentials to SSH session via environment
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            ADMIN_USER="$ADMIN_USER" \
+            ADMIN_PASS="$ADMIN_PASS" \
+            TEST_PLUGIN_URL="${{ env.TEST_PLUGIN_URL }}" \
+            bash << 'EOF'
             set +e  # Continue on errors to collect diagnostics
 
             INSTALL_SUCCESS=0
+
+            # Validate credentials are available in SSH session
+            if [ -z "$ADMIN_USER" ] || [ -z "$ADMIN_PASS" ]; then
+              echo "::error::Credentials not available in SSH session"
+              echo "ADMIN_USER length: ${#ADMIN_USER}"
+              echo "ADMIN_PASS length: ${#ADMIN_PASS}"
+              echo "INSTALL_SUCCESS=0" > /tmp/install-result.txt
+              exit 1
+            fi
+
+            echo "Debug: Credentials received in SSH session"
+            echo "Debug: ADMIN_USER length: ${#ADMIN_USER} characters"
+            echo "Debug: ADMIN_PASS length: ${#ADMIN_PASS} characters"
+            echo ""
 
             # Wait for backend to be ready
             echo "Waiting for backend to be ready..."
@@ -229,7 +264,7 @@ jobs:
 
             # Step 1: Authenticate
             echo "Step 1: Authenticating with admin credentials..."
-            LOGIN_RESPONSE=$(jq -n --arg user "${ADMIN_USER}" --arg pass "${ADMIN_PASS}" \
+            LOGIN_RESPONSE=$(jq -n --arg user "$ADMIN_USER" --arg pass "$ADMIN_PASS" \
               '{username: $user, password: $pass}' | \
               curl -s -c /tmp/cookies.txt -w "\n%{http_code}" \
               -X POST http://localhost:3001/api/login \
@@ -264,7 +299,7 @@ jobs:
             INSTALL_RESPONSE=$(curl -s -b /tmp/cookies.txt -w "\n%{http_code}" \
               -X POST http://localhost:3001/api/plugins/install \
               -H "Content-Type: application/json" \
-              -d "{\"url\":\"${{ env.TEST_PLUGIN_URL }}\"}" 2>&1)
+              -d "{\"url\":\"$TEST_PLUGIN_URL\"}" 2>&1)
 
             INSTALL_STATUS=$(echo "$INSTALL_RESPONSE" | tail -1)
             INSTALL_BODY=$(echo "$INSTALL_RESPONSE" | sed '$d')
@@ -642,11 +677,29 @@ jobs:
           echo "=== CLEANING UP TEST PLUGIN ==="
           echo ""
 
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          # Validate credentials before proceeding
+          if [ -z "$ADMIN_USER" ] || [ -z "$ADMIN_PASS" ]; then
+            echo "::warning::Credentials not available for cleanup. Skipping cleanup."
+            exit 0
+          fi
+
+          # Pass credentials to SSH session via environment
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            ADMIN_USER="$ADMIN_USER" \
+            ADMIN_PASS="$ADMIN_PASS" \
+            TEST_PLUGIN_NAME="${{ env.TEST_PLUGIN_NAME }}" \
+            GITHUB_RUN_NUMBER="${{ github.run_number }}" \
+            bash << 'EOF'
             set +e
 
+            # Validate credentials are available in SSH session
+            if [ -z "$ADMIN_USER" ] || [ -z "$ADMIN_PASS" ]; then
+              echo "::warning::Credentials not available in SSH session. Skipping cleanup."
+              exit 0
+            fi
+
             echo "Authenticating for cleanup..."
-            LOGIN_RESPONSE=$(jq -n --arg user "${ADMIN_USER}" --arg pass "${ADMIN_PASS}" \
+            LOGIN_RESPONSE=$(jq -n --arg user "$ADMIN_USER" --arg pass "$ADMIN_PASS" \
               '{username: $user, password: $pass}' | \
               curl -s -c /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
               -X POST http://localhost:3001/api/login \
@@ -659,11 +712,11 @@ jobs:
               echo "✓ Authenticated"
 
               # Attempt to uninstall test plugin
-              echo "Uninstalling test plugin '${{ env.TEST_PLUGIN_NAME }}'..."
+              echo "Uninstalling test plugin '$TEST_PLUGIN_NAME'..."
               UNINSTALL_RESPONSE=$(curl -s -b /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
                 -X POST http://localhost:3001/api/plugins/uninstall \
                 -H "Content-Type: application/json" \
-                -d "{\"pluginName\":\"${{ env.TEST_PLUGIN_NAME }}\",\"deleteConfigs\":false}" 2>&1)
+                -d "{\"pluginName\":\"$TEST_PLUGIN_NAME\",\"deleteConfigs\":false}" 2>&1)
 
               UNINSTALL_STATUS=$(echo "$UNINSTALL_RESPONSE" | tail -1)
               UNINSTALL_BODY=$(echo "$UNINSTALL_RESPONSE" | sed '$d')
@@ -686,7 +739,7 @@ jobs:
             rm -f /tmp/api-plugins-before.json /tmp/api-plugins-after.json
             rm -f /tmp/install-response.json /tmp/install-result.txt
             rm -f /tmp/plugins-dir-before.txt /tmp/plugins-dir-after.txt
-            rm -rf /tmp/plugin-install-diagnostics-${{ github.run_number }}
+            rm -rf /tmp/plugin-install-diagnostics-$GITHUB_RUN_NUMBER
             rm -f /tmp/plugin-install-diagnostics.tar.gz
 
             echo "✓ Temporary files cleaned up"
