@@ -650,6 +650,253 @@ echo ""
 } | tee "$DIAGNOSTICS_DIR/06-network-binding.log"
 
 echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "SECTION 7: Docker Port Mapping Validation"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+{
+    if command -v docker &> /dev/null; then
+        CONSOLE_CONTAINER=$(docker ps --filter "name=minecraft-console" --format "{{.Names}}" 2>/dev/null || echo "")
+        
+        if [ -n "$CONSOLE_CONTAINER" ]; then
+            echo "Inspecting Docker container: $CONSOLE_CONTAINER"
+            echo ""
+            
+            # Use docker inspect to check port mappings
+            echo "Checking port mappings with docker inspect..."
+            INSPECT_PORTS=$(docker inspect "$CONSOLE_CONTAINER" --format='{{json .NetworkSettings.Ports}}' 2>/dev/null || echo "{}")
+            
+            if [ "$INSPECT_PORTS" != "{}" ] && [ "$INSPECT_PORTS" != "null" ]; then
+                echo "Port mappings from docker inspect:"
+                echo "$INSPECT_PORTS" | python3 -m json.tool 2>/dev/null || echo "$INSPECT_PORTS"
+                
+                # Check if port 3001 is mapped
+                if echo "$INSPECT_PORTS" | grep -q "3001/tcp"; then
+                    echo "✓ Port 3001/tcp mapping found"
+                    
+                    # Extract the host port
+                    HOST_PORT=$(docker port "$CONSOLE_CONTAINER" 3001 2>/dev/null | head -1 | cut -d':' -f2)
+                    if [ -n "$HOST_PORT" ]; then
+                        echo "✓ Port 3001 is mapped to host port: $HOST_PORT"
+                    fi
+                else
+                    log_issue "ERROR" "Port 3001/tcp is not mapped in container"
+                    
+                    if [ "$ACTION" = "fix" ]; then
+                        echo "Generating docker-compose.console.yml patch..."
+                        cat > "$DIAGNOSTICS_DIR/docker-compose-port-fix.patch" <<PATCH_EOF
+# Add this to your docker-compose.console.yml under the console service:
+    ports:
+      - "${API_PORT}:${API_PORT}"
+PATCH_EOF
+                        log_manual "Apply the patch in $DIAGNOSTICS_DIR/docker-compose-port-fix.patch"
+                        log_manual "Then run: docker compose -f docker-compose.console.yml up -d --force-recreate"
+                    fi
+                fi
+            else
+                echo "  No port mappings found"
+                log_issue "ERROR" "Container has no port mappings configured"
+            fi
+            
+            echo ""
+            echo "Checking container network binding inside container..."
+            # Run netstat inside the container
+            CONTAINER_NETSTAT=$(docker exec "$CONSOLE_CONTAINER" sh -c "netstat -tuln 2>/dev/null | grep ':${API_PORT}' || ss -tuln 2>/dev/null | grep ':${API_PORT}' || echo 'netstat/ss not available'" 2>/dev/null || echo "Cannot execute in container")
+            
+            if [ "$CONTAINER_NETSTAT" != "Cannot execute in container" ] && [ "$CONTAINER_NETSTAT" != "netstat/ss not available" ]; then
+                echo "Port binding inside container:"
+                echo "$CONTAINER_NETSTAT"
+                
+                # Check if bound to 0.0.0.0 or * (all interfaces)
+                if echo "$CONTAINER_NETSTAT" | grep -qE "0\.0\.0\.0:${API_PORT}|\*:${API_PORT}"; then
+                    echo "✓ Container binds to all interfaces (0.0.0.0 or *)"
+                elif echo "$CONTAINER_NETSTAT" | grep -qE "127\.0\.0\.1:${API_PORT}"; then
+                    log_issue "ERROR" "Container binds to localhost only (127.0.0.1)"
+                    log_manual "Update server.js to bind to '0.0.0.0' instead of 'localhost' or '127.0.0.1'"
+                else
+                    echo "  Port binding: $CONTAINER_NETSTAT"
+                fi
+            else
+                echo "  $CONTAINER_NETSTAT"
+            fi
+            
+        else
+            echo "No minecraft-console container is currently running"
+            echo "This is normal if the console is not deployed yet"
+        fi
+    else
+        echo "Docker is not available, skipping container diagnostics"
+    fi
+} | tee "$DIAGNOSTICS_DIR/07-docker-port-mapping.log"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "SECTION 8: Docker Compose Configuration Check"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+{
+    COMPOSE_FILE="$BASE_DIR/docker-compose.console.yml"
+    
+    if [ -f "$COMPOSE_FILE" ]; then
+        echo "Checking docker-compose.console.yml at: $COMPOSE_FILE"
+        echo ""
+        
+        # Check if ports section exists
+        if grep -q "ports:" "$COMPOSE_FILE"; then
+            echo "✓ ports section found in compose file"
+            
+            # Check if 3001:3001 mapping exists
+            if grep -A 5 "ports:" "$COMPOSE_FILE" | grep -q "3001:3001"; then
+                echo "✓ Port mapping 3001:3001 configured"
+            else
+                log_issue "ERROR" "Port mapping 3001:3001 not found in compose file"
+                
+                if [ "$ACTION" = "fix" ]; then
+                    echo "Creating backup of docker-compose.console.yml..."
+                    cp "$COMPOSE_FILE" "$COMPOSE_FILE.backup-$(date +%Y%m%d-%H%M%S)"
+                    
+                    # This is a complex fix, we'll just report it
+                    log_manual "Manually add 'ports: - \"3001:3001\"' to docker-compose.console.yml"
+                    log_manual "See $DIAGNOSTICS_DIR/docker-compose-port-fix.patch for guidance"
+                fi
+            fi
+        else
+            log_issue "ERROR" "No ports section found in compose file"
+            log_manual "Add ports section with 3001:3001 mapping to docker-compose.console.yml"
+        fi
+        
+        echo ""
+        echo "Checking healthcheck configuration..."
+        if grep -q "healthcheck:" "$COMPOSE_FILE"; then
+            echo "✓ healthcheck section found"
+            
+            # Check if it references /health endpoint
+            if grep -A 10 "healthcheck:" "$COMPOSE_FILE" | grep -q "/health"; then
+                echo "✓ healthcheck uses /health endpoint"
+            else
+                log_issue "WARNING" "healthcheck may not be using /health endpoint"
+                log_manual "Update healthcheck to use: http://localhost:3001/health"
+            fi
+        else
+            log_issue "WARNING" "No healthcheck configured in compose file"
+            
+            if [ "$ACTION" = "fix" ]; then
+                log_manual "Add healthcheck section to docker-compose.console.yml"
+                cat > "$DIAGNOSTICS_DIR/healthcheck-addition.yml" <<'HEALTHCHECK_EOF'
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+HEALTHCHECK_EOF
+                echo "Healthcheck configuration saved to: $DIAGNOSTICS_DIR/healthcheck-addition.yml"
+            fi
+        fi
+        
+        echo ""
+        echo "Checking environment variables..."
+        if grep -q "API_PORT\|CONSOLE_PORT" "$COMPOSE_FILE"; then
+            echo "✓ Port environment variables found"
+            
+            # Display the port configuration
+            grep -E "API_PORT|CONSOLE_PORT" "$COMPOSE_FILE" | sed 's/^/  /'
+        else
+            log_issue "WARNING" "API_PORT or CONSOLE_PORT environment variable not set"
+            log_manual "Add 'API_PORT=3001' to environment section in docker-compose.console.yml"
+        fi
+    else
+        log_issue "WARNING" "docker-compose.console.yml not found at $COMPOSE_FILE"
+        echo "This is normal for development environments"
+    fi
+} | tee "$DIAGNOSTICS_DIR/08-compose-config.log"
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "SECTION 9: Auto-Restart and Redeploy (if fixes applied)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+{
+    # Check if we're in fix mode and if any fixes were applied
+    if [ "$ACTION" = "fix" ] && [ $ISSUES_FIXED -gt 0 ]; then
+        echo "Fixes were applied ($ISSUES_FIXED total)"
+        echo ""
+        
+        # Check if auto-restart is requested (via environment variable)
+        AUTO_RESTART="${AUTO_RESTART:-false}"
+        
+        if [ "$AUTO_RESTART" = "true" ] && command -v docker &> /dev/null; then
+            CONSOLE_CONTAINER=$(docker ps --filter "name=minecraft-console" --format "{{.Names}}" 2>/dev/null || echo "")
+            
+            if [ -n "$CONSOLE_CONTAINER" ]; then
+                echo "AUTO_RESTART is enabled, restarting container..."
+                
+                # Check if we have docker-compose
+                COMPOSE_FILE="$BASE_DIR/docker-compose.console.yml"
+                DEPLOY_COMPOSE_FILE="/home/deploy/minecraft-console/docker-compose.yml"
+                
+                if [ -f "$COMPOSE_FILE" ]; then
+                    echo "Restarting with docker compose..."
+                    docker compose -f "$COMPOSE_FILE" restart console 2>&1 | tee "$DIAGNOSTICS_DIR/restart.log" || {
+                        echo "Failed to restart with compose, trying direct container restart..."
+                        docker restart "$CONSOLE_CONTAINER" 2>&1 | tee -a "$DIAGNOSTICS_DIR/restart.log"
+                    }
+                    log_fix "Restarted console container"
+                elif [ -f "$DEPLOY_COMPOSE_FILE" ]; then
+                    echo "Restarting with deployment compose file..."
+                    cd "$(dirname "$DEPLOY_COMPOSE_FILE")"
+                    docker compose restart 2>&1 | tee "$DIAGNOSTICS_DIR/restart.log"
+                    log_fix "Restarted console container with deployment compose"
+                else
+                    echo "No compose file found, restarting container directly..."
+                    docker restart "$CONSOLE_CONTAINER" 2>&1 | tee "$DIAGNOSTICS_DIR/restart.log"
+                    log_fix "Restarted console container directly"
+                fi
+                
+                echo ""
+                echo "Waiting for container to be healthy..."
+                sleep 5
+                
+                # Check health
+                for i in {1..12}; do
+                    HEALTH=$(docker inspect --format='{{.State.Health.Status}}' "$CONSOLE_CONTAINER" 2>/dev/null || echo "unknown")
+                    echo "  Health check attempt $i/12: $HEALTH"
+                    
+                    if [ "$HEALTH" = "healthy" ]; then
+                        echo "✓ Container is healthy after restart"
+                        break
+                    fi
+                    
+                    sleep 5
+                done
+                
+                if [ "$HEALTH" != "healthy" ]; then
+                    log_issue "WARNING" "Container did not become healthy after restart"
+                    log_manual "Check container logs: docker logs $CONSOLE_CONTAINER"
+                fi
+            else
+                echo "No console container running, skipping auto-restart"
+                log_manual "Start the console container to apply fixes"
+            fi
+        else
+            if [ "$AUTO_RESTART" != "true" ]; then
+                echo "Auto-restart is disabled (set AUTO_RESTART=true to enable)"
+            fi
+            log_manual "Restart the backend to apply fixes: docker compose -f docker-compose.console.yml restart"
+        fi
+    else
+        if [ "$ACTION" = "fix" ]; then
+            echo "No fixes were applied, restart not needed"
+        else
+            echo "Running in diagnose-only mode, no restart performed"
+        fi
+    fi
+} | tee "$DIAGNOSTICS_DIR/09-auto-restart.log"
+
+echo ""
 echo "============================================================"
 echo "DIAGNOSTIC SUMMARY"
 echo "============================================================"
@@ -658,6 +905,7 @@ echo ""
 {
     echo "Timestamp: $(date)"
     echo "Mode: $ACTION"
+    echo "Auto-restart: ${AUTO_RESTART:-false}"
     echo ""
     echo "Results:"
     echo "  Issues found: $ISSUES_FOUND"
@@ -703,6 +951,106 @@ echo ""
         echo ""
     fi
 } | tee "$DIAGNOSTICS_DIR/summary.log"
+
+# Create deployment summary artifact
+{
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║           PLUGIN MANAGER DEPLOYMENT SUMMARY                   ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo ""
+    echo "Diagnostic Run Information:"
+    echo "  Date/Time:          $(date)"
+    echo "  Mode:               $ACTION"
+    echo "  Auto-restart:       ${AUTO_RESTART:-false}"
+    echo "  Diagnostics Dir:    $DIAGNOSTICS_DIR"
+    echo ""
+    echo "System Information:"
+    echo "  Base Directory:     $BASE_DIR"
+    echo "  Console Directory:  $CONSOLE_DIR"
+    echo "  API Endpoint:       http://${API_HOST}:${API_PORT}/api/plugins"
+    echo ""
+    echo "Results Summary:"
+    echo "  Issues Found:       $ISSUES_FOUND"
+    
+    if [ "$ACTION" = "fix" ]; then
+        echo "  Issues Fixed:       $ISSUES_FIXED"
+    fi
+    
+    echo "  Manual Actions:     $ISSUES_MANUAL"
+    echo ""
+    
+    # Container status
+    if command -v docker &> /dev/null; then
+        CONSOLE_CONTAINER=$(docker ps --filter "name=minecraft-console" --format "{{.Names}}" 2>/dev/null || echo "")
+        if [ -n "$CONSOLE_CONTAINER" ]; then
+            echo "Container Status:"
+            docker ps --filter "name=minecraft-console" --format "  Name:    {{.Names}}\n  Status:  {{.Status}}\n  Health:  {{.State}}\n  Ports:   {{.Ports}}"
+            echo ""
+        fi
+    fi
+    
+    # Health status
+    echo "Component Health:"
+    echo "  plugins.json:       $([ -f "$PLUGINS_JSON" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
+    echo "  plugins directory:  $([ -d "$PLUGINS_DIR" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
+    echo "  plugin-history:     $([ -f "$HISTORY_FILE" ] && echo "✓ EXISTS" || echo "○ NOT YET CREATED")"
+    
+    # API health check
+    if command -v curl &> /dev/null; then
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://${API_HOST}:${API_PORT}/health" 2>/dev/null || echo "000")
+        if [ "$HTTP_CODE" = "200" ]; then
+            echo "  API backend:        ✓ HEALTHY (HTTP $HTTP_CODE)"
+        elif [ "$HTTP_CODE" = "000" ] || [ "$HTTP_CODE" = "000000" ]; then
+            echo "  API backend:        ✗ NOT REACHABLE"
+        else
+            echo "  API backend:        ⚠ UNHEALTHY (HTTP $HTTP_CODE)"
+        fi
+    fi
+    
+    echo ""
+    
+    # List all log files created
+    echo "Diagnostic Logs Created:"
+    ls -1 "$DIAGNOSTICS_DIR"/*.log 2>/dev/null | while read -r logfile; do
+        echo "  - $(basename "$logfile")"
+    done
+    echo ""
+    
+    # Recommendations
+    if [ $ISSUES_FOUND -gt 0 ]; then
+        echo "═══════════════════════════════════════════════════════════════"
+        echo "RECOMMENDATIONS:"
+        echo "═══════════════════════════════════════════════════════════════"
+        
+        if [ "$ACTION" = "diagnose" ]; then
+            echo "1. Run '$0 fix' to automatically resolve fixable issues"
+        fi
+        
+        if [ $ISSUES_MANUAL -gt 0 ]; then
+            echo "2. Review manual actions in: $DIAGNOSTICS_DIR/manual-actions.log"
+        fi
+        
+        if [ "$ACTION" = "fix" ] && [ $ISSUES_FIXED -gt 0 ]; then
+            echo "3. Restart the backend to apply fixes (if not auto-restarted)"
+        fi
+        
+        echo "4. Review detailed logs in: $DIAGNOSTICS_DIR/"
+        echo ""
+    else
+        echo "═══════════════════════════════════════════════════════════════"
+        echo "✓ ALL CHECKS PASSED - PLUGIN MANAGER IS HEALTHY!"
+        echo "═══════════════════════════════════════════════════════════════"
+        echo ""
+    fi
+    
+    echo "End of deployment summary"
+    echo "Generated: $(date)"
+} | tee "$DIAGNOSTICS_DIR/deployment-summary.txt"
+
+echo ""
+echo "═══════════════════════════════════════════════════════════════"
+echo "Deployment summary saved to: $DIAGNOSTICS_DIR/deployment-summary.txt"
+echo "═══════════════════════════════════════════════════════════════"
 
 echo "============================================================"
 echo "DIAGNOSTICS COMPLETE"

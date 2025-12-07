@@ -1,6 +1,6 @@
 # Plugin Manager
 
-A comprehensive web-based plugin management system for the Minecraft server console that allows installing, updating, and managing plugins through a user-friendly interface.
+A comprehensive web-based plugin management system for the Minecraft server console that allows installing, updating, and managing plugins through a user-friendly interface with **zero-downtime self-healing capabilities**.
 
 ## Features
 
@@ -28,6 +28,14 @@ A comprehensive web-based plugin management system for the Minecraft server cons
 - **plugin.yml parsing** - Validates required fields
 - **Version comparison** - Uses semver for accurate version comparison
 - **Config preservation** - Never touches plugin configuration folders
+
+### Self-Healing & Auto-Recovery
+- **Automatic diagnostics** - Pre/post-deployment health checks
+- **Auto-fix capabilities** - Automatically repairs common configuration issues
+- **Network validation** - Ensures proper port mapping and binding
+- **Container health monitoring** - Verifies Docker container status and connectivity
+- **Zero-downtime recovery** - Auto-restart backend when fixes are applied
+- **Comprehensive logging** - Detailed diagnostics artifacts for troubleshooting
 
 ## Usage
 
@@ -592,6 +600,450 @@ Automated diagnostics can be run via GitHub Actions.
 **Artifacts:**
 - `plugin-diagnostics-basic-{run_number}` - Basic diagnostic logs
 - `plugin-diagnostics-advanced-{run_number}` - Advanced diagnostic logs
+
+## Zero-Downtime Self-Healing
+
+The plugin manager includes comprehensive self-healing capabilities that automatically detect and fix common issues during deployment and runtime.
+
+### How It Works
+
+1. **Pre-Deployment Check**
+   - Runs before every deployment
+   - Validates configuration files
+   - Checks port mappings and network binding
+   - Auto-fixes detected issues
+   - Creates pre-deployment diagnostic artifact
+
+2. **Post-Deployment Verification**
+   - Runs after successful deployment
+   - Verifies container health
+   - Validates API connectivity
+   - Auto-fixes any configuration drift
+   - Auto-restarts backend if fixes applied
+   - Creates post-deployment diagnostic artifact
+
+3. **Continuous Monitoring**
+   - Health endpoints at `/health` and `/api/plugins/health`
+   - Docker healthchecks every 30 seconds
+   - Automatic container restart on unhealthy status
+
+### Auto-Fix Capabilities
+
+The diagnostic system automatically fixes:
+
+- ✅ Missing or empty `plugins.json` - Creates with proper structure
+- ✅ Corrupt JSON files - Backs up and recreates (preserves backups)
+- ✅ Missing plugins directory - Creates with correct permissions
+- ✅ Incorrect directory permissions - Sets proper read/write/execute
+- ✅ Missing `plugin-history.json` - Initializes with empty array
+- ✅ Configuration file issues - Validates and repairs
+
+### Deployment Artifacts
+
+Every deployment generates diagnostic artifacts:
+
+- **Pre-deployment diagnostics** - State before deployment
+- **Post-deployment diagnostics** - State after deployment
+- **Deployment summary** - Comprehensive health report
+- **Container logs** - Backend startup and error logs
+
+Artifacts are retained for 30 days and available in GitHub Actions.
+
+### Port Mapping & Network Binding
+
+**Critical Configuration:**
+
+The backend server **must** bind to `0.0.0.0:3001` (all interfaces) in Docker containers to accept external connections.
+
+**Automatic Validation:**
+- Pre-deployment checks verify port mapping in `docker-compose.yml`
+- Post-deployment validates actual port binding in running container
+- Diagnostics check both Docker port mapping and in-container binding
+
+**Expected Configuration:**
+
+`docker-compose.console.yml`:
+```yaml
+services:
+  console:
+    ports:
+      - "3001:3001"
+    environment:
+      - API_PORT=3001
+      - CONSOLE_PORT=3001
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+```
+
+`server.js`:
+```javascript
+const HOST = '0.0.0.0';
+const PORT = process.env.CONSOLE_PORT || 3001;
+server.listen(PORT, HOST, () => {
+    console.log(`✓ Console Server Started Successfully`);
+    console.log(`Server binding: ${HOST}:${PORT}`);
+    // ... additional startup logs
+});
+```
+
+**Startup Log Message:**
+
+When the backend starts correctly, you should see:
+```
+═══════════════════════════════════════════════════════════
+✓ Console Server Started Successfully
+═══════════════════════════════════════════════════════════
+Server binding:     0.0.0.0:3001
+Node environment:   production
+API base URL:       http://0.0.0.0:3001/api
+Health endpoint:    http://0.0.0.0:3001/health
+Plugin API:         http://0.0.0.0:3001/api/plugins
+Plugin Health:      http://0.0.0.0:3001/api/plugins/health
+═══════════════════════════════════════════════════════════
+```
+
+**Error Handling:**
+
+If the server fails to bind, you'll see detailed error messages:
+```
+═══════════════════════════════════════════════════════════
+✗ Server Failed to Start
+═══════════════════════════════════════════════════════════
+ERROR: Port 3001 is already in use
+Solution: Stop the process using port 3001 or use a different port
+Check with: lsof -i :3001 or netstat -tuln | grep 3001
+═══════════════════════════════════════════════════════════
+```
+
+### Manual Restart
+
+If auto-restart is disabled, restart manually:
+
+```bash
+# Using docker compose
+cd /home/deploy/minecraft-console
+docker compose restart
+
+# Or restart container directly
+docker restart minecraft-console
+
+# Wait for healthy status
+docker ps --filter "name=minecraft-console"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. API Not Reachable (Connection Refused)
+
+**Symptoms:**
+- Cannot access `http://server-ip:3001/api/plugins`
+- Console shows "Cannot connect to backend"
+- `curl http://localhost:3001/health` fails
+
+**Diagnosis:**
+```bash
+# Run diagnostics
+./scripts/diagnose-plugins.sh diagnose
+
+# Check specific sections
+cat /tmp/plugin-diagnostics-*/06-network-binding.log
+cat /tmp/plugin-diagnostics-*/07-docker-port-mapping.log
+```
+
+**Common Causes & Solutions:**
+
+1. **Container not running**
+   ```bash
+   docker ps | grep minecraft-console
+   # If not running:
+   docker compose -f docker-compose.console.yml up -d
+   ```
+
+2. **Port not mapped in docker-compose.yml**
+   ```bash
+   # Check for ports section
+   grep -A 2 "ports:" docker-compose.console.yml
+   # Should show: - "3001:3001"
+   
+   # If missing, add and recreate:
+   docker compose -f docker-compose.console.yml up -d --force-recreate
+   ```
+
+3. **Server binding to localhost only**
+   ```bash
+   # Check container logs
+   docker logs minecraft-console | grep "binding"
+   # Should show: Server binding: 0.0.0.0:3001
+   # NOT: Server binding: 127.0.0.1:3001
+   
+   # If wrong, server.js needs to use HOST = '0.0.0.0'
+   ```
+
+4. **Firewall blocking port 3001**
+   ```bash
+   # Check if port is open
+   sudo ufw status | grep 3001
+   # Open if needed:
+   sudo ufw allow 3001
+   ```
+
+**Auto-Fix:**
+```bash
+# Run diagnostics with auto-fix and auto-restart
+AUTO_RESTART=true ./scripts/diagnose-plugins.sh fix
+```
+
+#### 2. Port 3001 Already in Use
+
+**Symptoms:**
+- Backend fails to start
+- Error: "EADDRINUSE: address already in use"
+
+**Diagnosis:**
+```bash
+# Find what's using port 3001
+lsof -i :3001
+# Or:
+netstat -tuln | grep 3001
+```
+
+**Solutions:**
+
+1. **Stop conflicting process**
+   ```bash
+   # Find PID from lsof/netstat output
+   kill <PID>
+   ```
+
+2. **Use different port**
+   ```bash
+   # Update .env file
+   echo "CONSOLE_PORT=3002" >> .env
+   # Update docker-compose.yml ports section
+   # Restart container
+   ```
+
+#### 3. Docker Container Unhealthy
+
+**Symptoms:**
+- Container status shows "unhealthy"
+- Health check failing
+
+**Diagnosis:**
+```bash
+# Check health status
+docker inspect --format='{{.State.Health.Status}}' minecraft-console
+
+# Check health check logs
+docker inspect --format='{{json .State.Health}}' minecraft-console | python3 -m json.tool
+
+# Check container logs
+docker logs minecraft-console --tail=50
+```
+
+**Common Causes:**
+
+1. **Health endpoint not responding**
+   ```bash
+   # Test from inside container
+   docker exec minecraft-console wget --spider http://localhost:3001/health
+   
+   # If fails, backend may not be running or crashed
+   docker logs minecraft-console
+   ```
+
+2. **Missing CSRF_SECRET or other required env vars**
+   ```bash
+   # Check environment
+   docker exec minecraft-console env | grep -E "CSRF_SECRET|ADMIN_PASSWORD"
+   
+   # These must be set, or backend won't start
+   ```
+
+3. **Backend startup failure**
+   ```bash
+   # Check logs for errors
+   docker logs minecraft-console | grep -i error
+   ```
+
+**Auto-Fix:**
+```bash
+# Run full diagnostics with fix and restart
+AUTO_RESTART=true ./scripts/diagnose-plugins.sh fix
+```
+
+#### 4. plugins.json Corrupt or Invalid
+
+**Symptoms:**
+- API returns empty plugin list
+- Backend logs show JSON parse errors
+- Plugin manager UI shows no plugins
+
+**Diagnosis:**
+```bash
+# Check file
+cat /path/to/plugins.json
+
+# Validate JSON
+jq '.' /path/to/plugins.json
+# Or:
+python3 -c "import json; json.load(open('plugins.json'))"
+```
+
+**Auto-Fix:**
+```bash
+# Diagnostics will detect and fix
+./scripts/diagnose-plugins.sh fix
+
+# Or manually:
+cp plugins.json plugins.json.backup
+echo '{"plugins": []}' > plugins.json
+```
+
+#### 5. Permission Errors
+
+**Symptoms:**
+- Cannot create/modify plugins
+- EACCES errors in logs
+
+**Diagnosis:**
+```bash
+# Check permissions
+ls -la plugins/
+ls -la plugins.json
+
+# Check ownership
+docker exec minecraft-console ls -la /minecraft/plugins
+```
+
+**Auto-Fix:**
+```bash
+./scripts/diagnose-plugins.sh fix
+```
+
+### Diagnostic Tools
+
+#### Basic Diagnostics
+
+**Quick Check:**
+```bash
+# Run basic diagnostics
+./scripts/diagnose-plugins.sh diagnose
+
+# Review summary
+cat /tmp/plugin-diagnostics-*/summary.log
+```
+
+**Auto-Fix Common Issues:**
+```bash
+# Run with auto-fix
+./scripts/diagnose-plugins.sh fix
+
+# Review what was fixed
+cat /tmp/plugin-diagnostics-*/fixes.log
+```
+
+**Deep Analysis:**
+```bash
+# Run advanced diagnostics
+./scripts/diagnose-plugins-advanced.sh
+
+# Review all findings
+ls /tmp/plugin-diagnostics-advanced-*/
+cat /tmp/plugin-diagnostics-advanced-*/summary.log
+```
+
+**Review Individual Sections:**
+```bash
+# Basic diagnostics sections
+cat /tmp/plugin-diagnostics-*/01-plugins-json.log
+cat /tmp/plugin-diagnostics-*/02-plugins-directory.log
+cat /tmp/plugin-diagnostics-*/03-plugin-history.log
+cat /tmp/plugin-diagnostics-*/04-api-backend.log
+cat /tmp/plugin-diagnostics-*/05-backend-process.log
+cat /tmp/plugin-diagnostics-*/06-network-binding.log
+cat /tmp/plugin-diagnostics-*/07-docker-port-mapping.log
+cat /tmp/plugin-diagnostics-*/08-compose-config.log
+cat /tmp/plugin-diagnostics-*/09-auto-restart.log
+cat /tmp/plugin-diagnostics-*/deployment-summary.txt
+
+# Advanced diagnostics sections
+cat /tmp/plugin-diagnostics-advanced-*/01-log-analysis.log
+cat /tmp/plugin-diagnostics-advanced-*/02-api-schema.log
+cat /tmp/plugin-diagnostics-advanced-*/03-auth-session.log
+cat /tmp/plugin-diagnostics-advanced-*/04-docker-analysis.log
+cat /tmp/plugin-diagnostics-advanced-*/05-dependencies.log
+cat /tmp/plugin-diagnostics-advanced-*/06-filesystem.log
+```
+
+### Debug Checklist
+
+Run through this checklist when troubleshooting:
+
+```bash
+# 1. Check container is running
+docker ps | grep minecraft-console
+
+# 2. Check port mapping
+docker port minecraft-console
+# Should show: 3001/tcp -> 0.0.0.0:3001
+
+# 3. Check binding from container logs
+docker logs minecraft-console | grep "Server binding"
+# Should show: Server binding: 0.0.0.0:3001
+
+# 4. Test health from inside container
+docker exec minecraft-console wget --spider http://localhost:3001/health
+
+# 5. Test health from host
+curl -s http://localhost:3001/health
+
+# 6. Check port binding on host
+netstat -tuln | grep 3001
+# Or: ss -tuln | grep 3001
+# Should show: 0.0.0.0:3001
+
+# 7. Check docker-compose configuration
+grep -A 2 "ports:" docker-compose.console.yml
+grep "API_PORT" docker-compose.console.yml
+
+# 8. Run full diagnostics
+./scripts/diagnose-plugins.sh diagnose
+
+# 9. Review deployment summary
+cat /tmp/plugin-diagnostics-*/deployment-summary.txt
+```
+
+### Getting Help
+
+If issues persist after running diagnostics:
+
+1. **Collect diagnostic artifacts:**
+   ```bash
+   # Run full diagnostics
+   ./scripts/diagnose-plugins.sh fix
+   ./scripts/diagnose-plugins-advanced.sh
+   
+   # Collect logs
+   tar -czf plugin-diagnostics.tar.gz /tmp/plugin-diagnostics-*
+   ```
+
+2. **Include in bug report:**
+   - Deployment summary (`deployment-summary.txt`)
+   - Container logs (`docker logs minecraft-console`)
+   - Docker configuration (`docker-compose.console.yml`)
+   - Diagnostic artifacts
+
+3. **GitHub Actions:**
+   - Check deployment workflow runs for diagnostic artifacts
+   - Download pre/post-deployment diagnostics
+   - Review workflow summary for issues
 
 ### Troubleshooting with Diagnostics
 

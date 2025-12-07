@@ -10,48 +10,56 @@ services:
     environment:
       # Console Configuration
       - CONSOLE_PORT=3001
+      - API_PORT=3001
       - NODE_ENV=production
       - SESSION_SECRET=${SESSION_SECRET:-change-this-to-a-secure-random-string}
-      
+
       # Admin Account
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-change-this-secure-password}
-      
+
       # RCON Configuration
       - RCON_HOST=${RCON_HOST:-minecraft-server}
       - RCON_PORT=${RCON_PORT:-25575}
       - RCON_PASSWORD=${RCON_PASSWORD:-your-secure-rcon-password}
-      
+
       # Minecraft Server
       - MC_CONTAINER_NAME=${MC_CONTAINER_NAME:-minecraft-server}
       - MC_SERVER_DIR=/data
-      
+
       # Security
       - CSRF_SECRET=${CSRF_SECRET:-change-this-to-a-secure-csrf-secret}
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
       - RATE_LIMIT_MAX_ATTEMPTS=${RATE_LIMIT_MAX_ATTEMPTS:-5}
-      
+
       # Optional: Path overrides (defaults work in Docker, customize if needed)
       # - SERVER_PROPS_PATH=/path/to/server.properties
       # - LOGS_DIR=/data/logs
       # - BACKUPS_DIR=/backups
       # - BACKUP_SCRIPT_PATH=/app/backup.sh
-    
+
     volumes:
       # Mount Docker socket to control containers
       - /var/run/docker.sock:/var/run/docker.sock
-      
+
       # Mount console config
       - ./console/backend/config:/app/config
-      
+
       # Mount server data for file access
       - ./data:/data:ro
-      
+
       # Mount backup script
       - ./backup.sh:/app/backup.sh:ro
-    
+
     networks:
       - minecraft-network
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   minecraft-network:
