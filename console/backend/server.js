@@ -211,8 +211,18 @@ app.use('/api', (req, res, next) => {
                 csrfCookie: req.cookies['csrf-token'] ? 'PRESENT' : 'MISSING',
                 sessionID: req.sessionID
             });
+            // Return 403 Forbidden for CSRF validation failures
+            return res.status(403).json({ 
+                error: 'invalid csrf token',
+                message: 'CSRF token validation failed. Please refresh and try again.'
+            });
         }
-        next(err);
+        console.log('[CSRF] CSRF validation passed:', {
+            path: req.path,
+            method: req.method,
+            sessionID: req.sessionID
+        });
+        next();
     });
 });
 
