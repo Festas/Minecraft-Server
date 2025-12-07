@@ -39,7 +39,7 @@ router.post('/login', loginLimiter, validations.login, async (req, res) => {
                 
                 console.log('[LOGIN] Login successful:', {
                     username,
-                    sessionID: req.sessionID,
+                    sessionID: process.env.NODE_ENV === 'development' ? req.sessionID : '[REDACTED]',
                     authenticated: req.session.authenticated,
                     cookieMaxAge: req.session.cookie.maxAge,
                     cookieExpires: req.session.cookie.expires
@@ -47,8 +47,8 @@ router.post('/login', loginLimiter, validations.login, async (req, res) => {
                 
                 res.json({ 
                     success: true, 
-                    message: 'Login successful',
-                    sessionID: req.sessionID // Return session ID for debugging
+                    message: 'Login successful'
+                    // sessionID removed for security - only logged server-side
                 });
             });
         } else {

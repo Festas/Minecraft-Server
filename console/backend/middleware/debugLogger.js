@@ -27,7 +27,8 @@ ensureLogDirectory();
  */
 function formatLogEntry(data) {
     const timestamp = new Date().toISOString();
-    return `[${timestamp}] ${JSON.stringify(data, null, 2)}\n${'='.repeat(80)}\n`;
+    // Use single-line JSON for better performance and storage efficiency
+    return `[${timestamp}] ${JSON.stringify(data)}\n`;
 }
 
 /**
@@ -89,9 +90,14 @@ function debugLogger(options = {}) {
 
         // Extract headers (filter out potentially sensitive data)
         const headers = { ...req.headers };
-        // Don't log authorization headers in production
-        if (process.env.NODE_ENV === 'production' && headers.authorization) {
-            headers.authorization = '[REDACTED]';
+        // Redact sensitive headers in production
+        if (process.env.NODE_ENV === 'production') {
+            if (headers.authorization) {
+                headers.authorization = '[REDACTED]';
+            }
+            if (headers.cookie) {
+                headers.cookie = '[REDACTED]';
+            }
         }
 
         // Build debug log entry
@@ -112,11 +118,14 @@ function debugLogger(options = {}) {
 
         // Optionally log request body (be careful with sensitive data)
         if (logBody && req.body && Object.keys(req.body).length > 0) {
-            // Redact password fields
+            // Redact sensitive fields
             const sanitizedBody = { ...req.body };
-            if (sanitizedBody.password) {
-                sanitizedBody.password = '[REDACTED]';
-            }
+            const sensitiveFields = ['password', 'token', 'secret', 'key', 'credentials', 'apiKey', 'accessToken'];
+            sensitiveFields.forEach(field => {
+                if (sanitizedBody[field]) {
+                    sanitizedBody[field] = '[REDACTED]';
+                }
+            });
             debugEntry.requestBody = sanitizedBody;
         }
 
@@ -173,15 +182,26 @@ function debugLogger(options = {}) {
 
 /**
  * Get the contents of the debug log file
+ * Uses tail command for better performance with large files
  */
 async function getDebugLogs(lines = 500) {
     try {
-        const content = await fs.readFile(DEBUG_LOG_PATH, 'utf8');
-        const allLines = content.split('\n');
-        // Return last N lines
-        return allLines.slice(-lines).join('\n');
+        // Use tail command for better performance with large log files
+        const { exec } = require('child_process');
+        const { promisify } = require('util');
+        const execAsync = promisify(exec);
+        
+        const { stdout } = await execAsync(`tail -n ${lines} "${DEBUG_LOG_PATH}"`);
+        return stdout;
     } catch (error) {
-        return `Error reading debug log: ${error.message}`;
+        // Fallback to reading file if tail fails
+        try {
+            const content = await fs.readFile(DEBUG_LOG_PATH, 'utf8');
+            const allLines = content.split('\n');
+            return allLines.slice(-lines).join('\n');
+        } catch (readError) {
+            return `Error reading debug log: ${readError.message}`;
+        }
     }
 }
 
