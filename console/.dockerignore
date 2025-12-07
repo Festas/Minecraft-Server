@@ -1,0 +1,31 @@
+# Backend-specific ignores
+backend/node_modules
+backend/npm-debug.log
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/config/users.json
+backend/__tests__
+backend/jest.config.js
+backend/jest.setup.js
+backend/.eslintrc.json
+
+# Frontend development files (we copy dist/production builds)
+frontend/node_modules
+frontend/src
+frontend/.git*
+frontend/package*.json
+frontend/vite.config.js
+frontend/tsconfig.json
+frontend/.eslintrc.cjs
+
+# Git and documentation
+.git
+.gitignore
+*.md
+README.md
+
+# Logs and temp files
+*.log
+.DS_Store
+Thumbs.db
