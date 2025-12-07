@@ -820,19 +820,20 @@ jobs:
               # Attempt to uninstall test plugin
               echo "Uninstalling test plugin '$TEST_PLUGIN_NAME'..."
 
-              # Build curl command with conditional CSRF header
-              CSRF_HEADER_ARG=""
+              # Make uninstall request with or without CSRF token
               if [ -n "$CSRF_TOKEN" ]; then
-                CSRF_HEADER_ARG="-H CSRF-Token: $CSRF_TOKEN"
+                UNINSTALL_RESPONSE=$(curl -s -b /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
+                  -X POST http://localhost:3001/api/plugins/uninstall \
+                  -H "Content-Type: application/json" \
+                  -H "CSRF-Token: $CSRF_TOKEN" \
+                  -d "{\"pluginName\":\"$TEST_PLUGIN_NAME\",\"deleteConfigs\":false}" 2>&1)
               else
                 echo "⚠ No CSRF token available, attempting without it (will likely fail)"
+                UNINSTALL_RESPONSE=$(curl -s -b /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
+                  -X POST http://localhost:3001/api/plugins/uninstall \
+                  -H "Content-Type: application/json" \
+                  -d "{\"pluginName\":\"$TEST_PLUGIN_NAME\",\"deleteConfigs\":false}" 2>&1)
               fi
-
-              UNINSTALL_RESPONSE=$(curl -s -b /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
-                -X POST http://localhost:3001/api/plugins/uninstall \
-                -H "Content-Type: application/json" \
-                $CSRF_HEADER_ARG \
-                -d "{\"pluginName\":\"$TEST_PLUGIN_NAME\",\"deleteConfigs\":false}" 2>&1)
 
               UNINSTALL_STATUS=$(echo "$UNINSTALL_RESPONSE" | tail -1)
               UNINSTALL_BODY=$(echo "$UNINSTALL_RESPONSE" | sed '$d')
