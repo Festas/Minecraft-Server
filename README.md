@@ -250,12 +250,25 @@ environment:
 
 Before deploying, configure these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
 
+#### Core Server Secrets (Required)
+
 | Secret | Description |
 |--------|-------------|
 | `SERVER_HOST` | Your server's IP address |
 | `SERVER_USER` | SSH username (e.g., `deploy`) |
 | `SSH_PRIVATE_KEY` | Private SSH key for authentication |
 | `RCON_PASSWORD` | Password for server console access |
+
+#### Console Secrets (Required for Web Console)
+
+| Secret | Description |
+|--------|-------------|
+| `CONSOLE_ADMIN_USER` | Console login username |
+| `CONSOLE_ADMIN_PASSWORD` | Console login password |
+| `SESSION_SECRET` | Random string for session encryption (32+ chars) |
+| `CSRF_SECRET` | Random string for CSRF protection (32+ chars) |
+| `REDIS_HOST` | Redis server hostname (e.g., 'redis' for Docker) |
+| `REDIS_PORT` | Redis server port (typically 6379) |
 
 **Optional secrets** for customization: `MINECRAFT_VERSION`, `WORLD_SEED`, `OP_OWNER`, `WHITELIST_ENABLED`, and more.  
 See **[SERVER-MANAGEMENT.md](SERVER-MANAGEMENT.md#github-secrets-configuration)** for all options.

@@ -14,7 +14,7 @@ The web console provides a browser-based interface to manage your Minecraft serv
 
 Go to your repository → Settings → Secrets and variables → Actions → New repository secret
 
-Add these 4 secrets:
+Add these required secrets:
 
 | Secret Name | Description | Maps to Env Var |
 |-------------|-------------|-----------------|
@@ -22,13 +22,28 @@ Add these 4 secrets:
 | `CONSOLE_ADMIN_PASSWORD` | Your console login password | `ADMIN_PASSWORD` |
 | `RCON_PASSWORD` | Password for RCON connection | `RCON_PASSWORD` |
 | `SESSION_SECRET` | Random string for session encryption (32+ chars) | `SESSION_SECRET` |
+| `CSRF_SECRET` | Random string for CSRF token encryption (32+ chars) | `CSRF_SECRET` |
+| `REDIS_HOST` | Redis server hostname (e.g., 'redis' for Docker) | `REDIS_HOST` |
+| `REDIS_PORT` | Redis server port (typically 6379) | `REDIS_PORT` |
 
 **Note:** The GitHub secrets are automatically mapped to the correct environment variable names during deployment.
 
-**To generate a secure session secret:**
+**To generate secure secrets:**
 ```bash
+# Generate session secret
 openssl rand -hex 32
+
+# Generate CSRF secret
+openssl rand -base64 32
+
+# Generate admin password
+openssl rand -base64 24
 ```
+
+**Redis Configuration:**
+- For Docker Compose deployments, set `REDIS_HOST=redis` (the service name)
+- For external Redis, use the hostname/IP of your Redis server
+- `REDIS_PORT` is typically `6379` (the default Redis port)
 
 ### Step 2: Redis Session Store (Included)
 

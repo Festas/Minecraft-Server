@@ -40,12 +40,25 @@ Complete guide for managing the festas_builds Minecraft server deployment, inclu
 
 These secrets **must** be configured in your GitHub repository for deployments to work:
 
+#### Core Server Secrets
+
 | Secret | Description | Example |
 |--------|-------------|---------|
 | `SERVER_HOST` | Your server's IP address or hostname | `123.45.67.89` |
 | `SERVER_USER` | SSH username for deployment | `deploy` |
 | `SSH_PRIVATE_KEY` | Private SSH key for authentication | Full private key content |
 | `RCON_PASSWORD` | Password for RCON console access | `SecurePassword123!` |
+
+#### Console Secrets (Required for Web Console)
+
+| Secret | Description | Example | How to Generate |
+|--------|-------------|---------|-----------------|
+| `CONSOLE_ADMIN_USER` | Console login username | `admin` | Choose any username |
+| `CONSOLE_ADMIN_PASSWORD` | Console login password | `SecurePass123!` | `openssl rand -base64 24` |
+| `SESSION_SECRET` | Session encryption key (32+ chars) | `abc123...` | `openssl rand -hex 32` |
+| `CSRF_SECRET` | CSRF token encryption key (32+ chars) | `xyz789...` | `openssl rand -base64 32` |
+| `REDIS_HOST` | Redis server hostname | `redis` | Use `redis` for Docker |
+| `REDIS_PORT` | Redis server port | `6379` | Default is `6379` |
 
 **To add secrets:**
 1. Go to your GitHub repository
