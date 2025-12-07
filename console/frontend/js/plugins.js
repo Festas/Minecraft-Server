@@ -278,7 +278,7 @@ async function handleInstall() {
 function handleInstallResult(result, url) {
     if (result.status === 'multiple-options') {
         showOptionsModal(result.options, url);
-    } else if (result.status === 'exists') {
+    } else if (result.status === 'conflict') {
         showConflictDialog(result, url);
     } else if (result.status === 'installed') {
         showToast(`✅ Successfully installed ${result.pluginName} v${result.version}`, 'success');
@@ -286,6 +286,10 @@ function handleInstallResult(result, url) {
         document.getElementById('customName').value = '';
         loadPlugins();
         loadHistory();
+    } else {
+        // Handle unexpected status
+        console.error('Unexpected install result status:', result.status);
+        showToast('Installation completed with unexpected status. Please refresh the page.', 'warning');
     }
 }
 

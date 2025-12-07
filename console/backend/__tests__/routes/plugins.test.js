@@ -144,6 +144,106 @@ describe('Plugins API Routes - Error Handling', () => {
             expect(response.body).toHaveProperty('error');
             expect(response.body.error).toBeTruthy();
         });
+
+        it('should return status "installed" on successful installation', async () => {
+            pluginManager.installFromUrl.mockResolvedValue({
+                status: 'installed',
+                pluginName: 'TestPlugin',
+                version: '1.0.0',
+                metadata: { name: 'TestPlugin', version: '1.0.0' }
+            });
+
+            const response = await request(app)
+                .post('/api/plugins/install')
+                .send({ url: 'http://example.com/test.jar' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.status).toBe('installed');
+            expect(response.body.pluginName).toBe('TestPlugin');
+            expect(response.body.version).toBe('1.0.0');
+        });
+
+        it('should return status "conflict" when plugin already exists', async () => {
+            pluginManager.installFromUrl.mockResolvedValue({
+                status: 'conflict',
+                pluginName: 'ExistingPlugin',
+                currentVersion: '1.0.0',
+                newVersion: '1.1.0',
+                comparison: 'upgrade',
+                metadata: { name: 'ExistingPlugin', version: '1.1.0' }
+            });
+
+            const response = await request(app)
+                .post('/api/plugins/install')
+                .send({ url: 'http://example.com/existing-plugin.jar' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.status).toBe('conflict');
+            expect(response.body.pluginName).toBe('ExistingPlugin');
+            expect(response.body.comparison).toBe('upgrade');
+        });
+
+        it('should return status "multiple-options" when multiple JARs are available', async () => {
+            pluginManager.installFromUrl.mockResolvedValue({
+                status: 'multiple-options',
+                options: [
+                    { downloadUrl: 'http://example.com/plugin-1.jar', filename: 'plugin-1.jar', size: 1024 },
+                    { downloadUrl: 'http://example.com/plugin-2.jar', filename: 'plugin-2.jar', size: 2048 }
+                ]
+            });
+
+            const response = await request(app)
+                .post('/api/plugins/install')
+                .send({ url: 'http://example.com/plugin-release' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.status).toBe('multiple-options');
+            expect(response.body.options).toHaveLength(2);
+        });
+
+        it('should accept customName parameter', async () => {
+            pluginManager.installFromUrl.mockResolvedValue({
+                status: 'installed',
+                pluginName: 'CustomPluginName',
+                version: '1.0.0',
+                metadata: { name: 'OriginalName', version: '1.0.0' }
+            });
+
+            const response = await request(app)
+                .post('/api/plugins/install')
+                .send({ url: 'http://example.com/test.jar', customName: 'CustomPluginName' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.status).toBe('installed');
+            expect(pluginManager.installFromUrl).toHaveBeenCalledWith(
+                'http://example.com/test.jar',
+                'CustomPluginName',
+                expect.any(Function)
+            );
+        });
+
+        it('should accept selectedOption parameter for multi-jar releases', async () => {
+            pluginManager.installFromUrl.mockResolvedValue({
+                status: 'installed',
+                pluginName: 'TestPlugin',
+                version: '1.0.0',
+                metadata: { name: 'TestPlugin', version: '1.0.0' }
+            });
+
+            const response = await request(app)
+                .post('/api/plugins/install')
+                .send({ 
+                    url: 'http://example.com/release',
+                    selectedOption: 'http://example.com/specific.jar'
+                });
+
+            expect(response.status).toBe(200);
+            expect(pluginManager.installFromUrl).toHaveBeenCalledWith(
+                'http://example.com/specific.jar',
+                undefined,
+                expect.any(Function)
+            );
+        });
     });
 
     describe('POST /api/plugins/uninstall', () => {
