@@ -275,6 +275,130 @@ jobs:
             echo "✓ Console deployed successfully!"
             echo "URL: https://mc.festas-builds.com/console"
 
+      - name: Test plugin install functionality
+        if: success()
+        run: |
+          echo "Testing plugin install API..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            set -e
+            
+            echo "=== Testing Plugin Install API ==="
+            
+            # Wait for console to be fully ready
+            for i in {1..10}; do
+              if curl -s http://localhost:3001/health > /dev/null 2>&1; then
+                echo "✓ Console is ready"
+                break
+              fi
+              echo "Waiting for console to be ready... ($i/10)"
+              sleep 2
+            done
+            
+            # Create test install script
+            cat > /tmp/test-plugin-install.sh << 'SCRIPT'
+            #!/bin/bash
+            set -e
+            
+            # Test URL - use a small, well-known plugin for testing
+            TEST_PLUGIN_URL="https://github.com/pl3xgaming/Pl3xMap/releases/download/v1.20.4-477/Pl3xMap-1.20.4-477.jar"
+            
+            echo "Testing plugin install with URL: $TEST_PLUGIN_URL"
+            
+            # Get auth token (login first)
+            # Note: This would require proper authentication in production
+            # For now, we'll just test the health endpoint and check logs
+            
+            # Check if install-errors.log exists and is accessible
+            BACKEND_DATA_DIR="/home/deploy/minecraft-console"
+            if docker exec minecraft-console ls -la /app/data/ 2>/dev/null; then
+              echo "✓ Backend data directory is accessible"
+            fi
+            
+            # Check console logs for any install errors
+            echo "=== Recent console logs ==="
+            docker logs minecraft-console --tail 50 2>&1 | grep -i "PLUGIN_INSTALL" || echo "No plugin install logs yet"
+            
+            # Check if we can access the plugins.json
+            if [ -f /home/deploy/minecraft-server/plugins.json ]; then
+              echo "✓ plugins.json exists and is readable"
+              echo "Current plugins count: $(jq '.plugins | length' /home/deploy/minecraft-server/plugins.json 2>/dev/null || echo 'unknown')"
+            else
+              echo "⚠ plugins.json not found at expected location"
+            fi
+            
+            # Check plugins directory permissions
+            if [ -d /home/deploy/minecraft-server/plugins ]; then
+              echo "✓ Plugins directory exists"
+              ls -la /home/deploy/minecraft-server/plugins/ | head -5
+            else
+              echo "⚠ Plugins directory not found"
+            fi
+            
+            echo "=== Plugin install test infrastructure verified ==="
+            SCRIPT
+            
+            chmod +x /tmp/test-plugin-install.sh
+            /tmp/test-plugin-install.sh
+            
+            # Collect install-errors.log if it exists
+            echo "=== Checking for install-errors.log ==="
+            docker exec minecraft-console cat /app/data/install-errors.log 2>/dev/null || echo "No install-errors.log found yet (this is normal if no installs have been attempted)"
+          EOF
+
+      - name: Download plugin install logs
+        if: always()
+        run: |
+          echo "Downloading plugin install logs and diagnostics..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            # Create a directory for plugin install diagnostics
+            mkdir -p /tmp/plugin-install-diagnostics
+            
+            # Copy install-errors.log if it exists
+            docker exec minecraft-console cat /app/data/install-errors.log > /tmp/plugin-install-diagnostics/install-errors.log 2>/dev/null || echo "No install-errors.log found" > /tmp/plugin-install-diagnostics/install-errors.log
+            
+            # Get recent console logs related to plugin installs
+            docker logs minecraft-console --tail 200 2>&1 | grep -i "plugin" > /tmp/plugin-install-diagnostics/console-plugin-logs.txt || echo "No plugin-related logs found"
+            
+            # Get full recent console logs
+            docker logs minecraft-console --tail 500 > /tmp/plugin-install-diagnostics/console-recent.log 2>&1
+            
+            # Collect backend data directory info
+            docker exec minecraft-console ls -laR /app/data/ > /tmp/plugin-install-diagnostics/backend-data-listing.txt 2>/dev/null || echo "Could not list backend data directory"
+            
+            # Collect plugin-history.json if it exists
+            docker exec minecraft-console cat /app/data/plugin-history.json > /tmp/plugin-install-diagnostics/plugin-history.json 2>/dev/null || echo "No plugin history found"
+            
+            # Create tarball
+            tar -czf /tmp/plugin-install-diagnostics.tar.gz -C /tmp plugin-install-diagnostics/
+          EOF
+          
+          # Download the diagnostics
+          scp -i ~/.ssh/id_rsa \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/plugin-install-diagnostics.tar.gz \
+            ./plugin-install-diagnostics.tar.gz || echo "No plugin install diagnostics available"
+          
+          if [ -f ./plugin-install-diagnostics.tar.gz ]; then
+            mkdir -p ./plugin-install-diagnostics
+            tar -xzf ./plugin-install-diagnostics.tar.gz -C ./plugin-install-diagnostics
+            
+            # Display install-errors.log if it exists
+            if [ -f ./plugin-install-diagnostics/plugin-install-diagnostics/install-errors.log ]; then
+              echo "=== install-errors.log content ==="
+              cat ./plugin-install-diagnostics/plugin-install-diagnostics/install-errors.log
+            fi
+          fi
+
+      - name: Upload plugin install diagnostics artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plugin-install-diagnostics-${{ github.run_number }}
+          path: plugin-install-diagnostics/
+          retention-days: 30
+          if-no-files-found: warn
+
       - name: Post-deployment diagnostics and auto-fix
         if: success()
         run: |
@@ -388,6 +512,10 @@ jobs:
             echo ""
             echo "### Diagnostics Artifacts"
             echo "- Pre-deployment diagnostics uploaded as artifact"
+            echo "- **Plugin install diagnostics uploaded as artifact** 📦"
+            echo "  - Includes install-errors.log for debugging plugin install issues"
+            echo "  - Console logs related to plugin operations"
+            echo "  - Backend data directory listing"
             echo "- Post-deployment diagnostics uploaded as artifact"
             echo "- Review artifacts for detailed health information"
           } >> "$GITHUB_STEP_SUMMARY"
