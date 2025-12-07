@@ -764,7 +764,7 @@ jobs:
               echo "DIRECTORY STRUCTURE"
               echo "═══════════════════════════════════════════════════════════════"
               echo ""
-              tree -L 3 "$PACKAGE_DIR" 2>/dev/null || find "$PACKAGE_DIR" -type f | head -50
+              tree -L 3 "$PACKAGE_DIR" 2>/dev/null || find "$PACKAGE_DIR" -type f | sort
 
               echo ""
               echo "═══════════════════════════════════════════════════════════════"

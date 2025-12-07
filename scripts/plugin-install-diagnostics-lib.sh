@@ -97,19 +97,20 @@ inspect_cookie_jar() {
 get_cookie_value() {
     local cookie_file="$1"
     local cookie_name="$2"
-    
+
     if [ ! -f "$cookie_file" ]; then
         echo "MISSING_FILE"
         return 1
     fi
-    
-    local value=$(grep -v '^#' "$cookie_file" | grep "$cookie_name" | tail -1 | awk '{print $NF}')
-    
+
+    # Use awk for more robust cookie parsing (field 6 is the cookie name, field 7 is the value)
+    local value=$(grep -v '^#' "$cookie_file" | awk -v name="$cookie_name" '$6 == name {print $7}' | tail -1)
+
     if [ -z "$value" ]; then
         echo "MISSING_COOKIE"
         return 1
     fi
-    
+
     echo "$value"
 }
 
