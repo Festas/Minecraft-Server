@@ -634,7 +634,7 @@ echo ""
                 fi
             else
                 log_issue "WARNING" "No Docker port mapping found for port ${API_PORT}"
-                log_manual "Check docker-compose.yml has ports: - '3001:3001' configured"
+                log_manual "Check docker-compose.console.yml has ports: - '3001:3001' configured"
             fi
             
             echo ""
