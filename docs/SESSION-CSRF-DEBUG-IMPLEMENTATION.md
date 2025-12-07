@@ -185,6 +185,209 @@ Updated `PLUGIN-MANAGER.md` with:
 
 ## Usage
 
+### Cookie Security Configuration for curl/HTTP Testing
+
+**CRITICAL:** Before testing with curl or any HTTP-based diagnostic tool, ensure cookie security is configured correctly.
+
+#### Quick Setup for HTTP Testing
+
+Add to your `.env` file:
+```bash
+# Allow cookies to work over HTTP (required for curl testing without SSL)
+COOKIE_SECURE=false
+```
+
+Or set in docker-compose environment:
+```yaml
+environment:
+  - COOKIE_SECURE=false
+```
+
+Then restart the backend:
+```bash
+docker compose -f docker-compose.console.yml restart console
+```
+
+Verify configuration in logs:
+```bash
+docker logs minecraft-console | grep "Cookie configuration"
+```
+
+Expected output:
+```
+[Session] Cookie configuration: { secure: false, nodeEnv: 'production', cookieSecureOverride: 'false', warning: 'HTTP allowed - cookies work without SSL' }
+[CSRF] Cookie configuration: { secure: false, nodeEnv: 'production', cookieSecureOverride: 'false', warning: 'HTTP allowed - cookies work without SSL' }
+```
+
+### curl Workflow Examples
+
+#### Basic Authentication Flow
+
+```bash
+# Step 1: Login and save session cookie
+curl -c cookies.txt -X POST http://localhost:3001/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"your-password"}'
+
+# Step 2: Get CSRF token (IMPORTANT: use both -c and -b)
+curl -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token
+
+# Step 3: Extract CSRF token
+# Note: This assumes jq is installed. Install with: apt-get install jq or brew install jq
+CSRF_TOKEN=$(curl -s -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token | jq -r '.csrfToken')
+# Verify token was extracted successfully
+if [ -z "$CSRF_TOKEN" ] || [ "$CSRF_TOKEN" = "null" ]; then
+    echo "ERROR: Failed to extract CSRF token"
+    exit 1
+fi
+
+# Step 4: Make authenticated request
+curl -b cookies.txt \
+  -H "CSRF-Token: $CSRF_TOKEN" \
+  http://localhost:3001/api/plugins
+```
+
+#### Why Both -c and -b Flags?
+
+When calling `/api/csrf-token`:
+- `-b cookies.txt` - **Send** the session cookie to prove you're authenticated
+- `-c cookies.txt` - **Save** the new CSRF cookie that the server sets
+
+**Common Mistake:** Using only `-b` (send cookies) without `-c` (save cookies)
+- Result: CSRF cookie is not saved to cookies.txt
+- Consequence: Next request has session but no CSRF cookie, validation fails
+
+**Correct Pattern:**
+```bash
+# Always use both flags when endpoint might set new cookies
+curl -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token
+```
+
+#### Complete Plugin Install Workflow
+
+```bash
+#!/bin/bash
+set -e
+
+BASE_URL="${BASE_URL:-http://localhost:3001}"
+ADMIN_USER="${ADMIN_USER:-admin}"
+ADMIN_PASS="${ADMIN_PASS:-your-password}"
+PLUGIN_URL="https://github.com/EssentialsX/Essentials/releases/latest"
+
+echo "=== Minecraft Console API Test ==="
+echo "Base URL: $BASE_URL"
+echo ""
+
+# Clean up
+rm -f cookies.txt
+
+# 1. Login
+echo "=== Step 1: Login ==="
+LOGIN_RESPONSE=$(curl -s -c cookies.txt -X POST "$BASE_URL/api/login" \
+  -H "Content-Type: application/json" \
+  -d "{\"username\":\"$ADMIN_USER\",\"password\":\"$ADMIN_PASS\"}")
+
+echo "$LOGIN_RESPONSE" | jq '.'
+
+if [[ $(echo "$LOGIN_RESPONSE" | jq -r '.success') != "true" ]]; then
+    echo "ERROR: Login failed"
+    exit 1
+fi
+
+echo "✓ Login successful"
+echo ""
+
+# 2. Get CSRF token
+echo "=== Step 2: Get CSRF Token ==="
+CSRF_RESPONSE=$(curl -s -c cookies.txt -b cookies.txt "$BASE_URL/api/csrf-token")
+CSRF_TOKEN=$(echo "$CSRF_RESPONSE" | jq -r '.csrfToken' 2>/dev/null)
+
+# Verify token was extracted successfully
+if [ -z "$CSRF_TOKEN" ] || [ "$CSRF_TOKEN" = "null" ]; then
+    echo "ERROR: Failed to extract CSRF token"
+    echo "Response: $CSRF_RESPONSE"
+    exit 1
+fi
+
+echo "CSRF Token: ${CSRF_TOKEN:0:20}..."
+echo "✓ CSRF token obtained"
+echo ""
+
+# 3. Verify cookies were saved
+echo "=== Step 3: Verify Cookies ==="
+if [[ ! -f cookies.txt ]]; then
+    echo "ERROR: cookies.txt not found"
+    exit 1
+fi
+
+if grep -q "console.sid" cookies.txt && grep -q "csrf-token" cookies.txt; then
+    echo "✓ Both session and CSRF cookies present"
+else
+    echo "ERROR: Missing cookies"
+    cat cookies.txt
+    exit 1
+fi
+echo ""
+
+# 4. Test authenticated endpoint
+echo "=== Step 4: List Plugins ==="
+PLUGINS_RESPONSE=$(curl -s -b cookies.txt \
+  -H "CSRF-Token: $CSRF_TOKEN" \
+  "$BASE_URL/api/plugins")
+
+PLUGIN_COUNT=$(echo "$PLUGINS_RESPONSE" | jq '.plugins | length')
+echo "Found $PLUGIN_COUNT plugins"
+echo "✓ Successfully accessed authenticated endpoint"
+echo ""
+
+# 5. Install a plugin
+echo "=== Step 5: Install Plugin ==="
+echo "Installing from: $PLUGIN_URL"
+
+INSTALL_RESPONSE=$(curl -s -b cookies.txt -X POST \
+  -H "Content-Type: application/json" \
+  -H "CSRF-Token: $CSRF_TOKEN" \
+  "$BASE_URL/api/plugins/install" \
+  -d "{\"url\":\"$PLUGIN_URL\"}")
+
+echo "$INSTALL_RESPONSE" | jq '.'
+
+if [[ $(echo "$INSTALL_RESPONSE" | jq -r '.status') == "success" ]]; then
+    echo "✓ Plugin installed successfully"
+else
+    echo "✗ Plugin installation failed"
+    exit 1
+fi
+
+echo ""
+echo "=== All Tests Passed ==="
+rm -f cookies.txt
+```
+
+#### Debugging with Verbose Output
+
+```bash
+# Use -v flag to see full HTTP exchange including headers
+curl -v -c cookies.txt -X POST http://localhost:3001/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"pass"}'
+```
+
+Look for in the output:
+```
+< Set-Cookie: console.sid=s%3A...; Path=/; HttpOnly; SameSite=Lax
+< Set-Cookie: csrf-token=...; Path=/; HttpOnly; SameSite=Lax
+```
+
+If you see `Secure` in the Set-Cookie header but you're using HTTP:
+```
+< Set-Cookie: console.sid=...; Path=/; HttpOnly; Secure; SameSite=Lax
+                                                  ^^^^^^
+                                                  This breaks HTTP!
+```
+
+**Fix:** Set `COOKIE_SECURE=false` and restart backend.
+
 ### Viewing Debug Logs
 
 **During Development:**
@@ -200,8 +403,13 @@ curl -c cookies.txt -X POST http://localhost:3001/api/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"your-password"}'
 
+# Get CSRF token
+CSRF_TOKEN=$(curl -s -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token | jq -r '.csrfToken')
+
 # Get debug logs
-curl -b cookies.txt http://localhost:3001/api/debug/logs
+curl -b cookies.txt \
+  -H "CSRF-Token: $CSRF_TOKEN" \
+  http://localhost:3001/api/debug/logs
 ```
 
 **In Diagnostic Workflows:**
@@ -345,6 +553,147 @@ Each log entry is a single-line JSON object with:
 
 **Tests:**
 - `console/backend/__tests__/auth/session.test.js` - Verifies cookie security based on environment
+
+
+### Detailed Troubleshooting Guide
+
+#### Issue 1: "401 Unauthorized" on Authenticated Endpoints
+
+**Symptoms:**
+```bash
+curl -b cookies.txt http://localhost:3001/api/plugins
+# Returns: {"error":"Authentication required"}
+```
+
+**Diagnosis:**
+```bash
+# Check if session cookie is in cookies.txt
+grep "console.sid" cookies.txt
+```
+
+**Likely Causes:**
+1. **Cookies not saved during login** - Missing `-c` flag
+2. **Secure cookies with HTTP** - Backend configured with `secure: true` but using HTTP
+3. **Session expired** - Session lasts 24 hours
+
+**Solution:**
+```bash
+# 1. Check backend cookie configuration
+docker logs minecraft-console | grep "Cookie configuration"
+# Should show: secure: false for HTTP
+
+# 2. Re-login with -c flag
+curl -c cookies.txt -X POST http://localhost:3001/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"pass"}'
+
+# 3. Verify cookies were saved
+cat cookies.txt | grep -E "(console.sid|csrf-token)"
+```
+
+#### Issue 2: "invalid csrf token" Error
+
+**Symptoms:**
+```bash
+curl -b cookies.txt -H "CSRF-Token: abc123" -X POST http://localhost:3001/api/plugins/install
+# Returns: {"error":"invalid csrf token"}
+```
+
+**Likely Causes:**
+1. **CSRF token not obtained after login** - Token from different session
+2. **CSRF cookie not saved** - Used `-b` but not `-c` when getting token
+3. **Token not sent in header** - Missing or wrong header name
+4. **Session cookie not sent** - CSRF validation requires matching session
+
+**Solution:**
+```bash
+# 1. Fresh authentication flow
+rm -f cookies.txt
+
+# 2. Login
+curl -c cookies.txt -X POST http://localhost:3001/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"pass"}'
+
+# 3. Get CSRF token (IMPORTANT: both -c and -b)
+CSRF_TOKEN=$(curl -s -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token | jq -r '.csrfToken')
+
+# 4. Verify both cookies are present
+cat cookies.txt | grep -E "(console.sid|csrf-token)"
+
+# 5. Make request with both cookies and header
+curl -b cookies.txt -H "CSRF-Token: $CSRF_TOKEN" -X POST http://localhost:3001/api/plugins/install \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com/plugin.jar"}'
+```
+
+#### Issue 3: Cookies Not Persisting Between Requests
+
+**Symptoms:**
+- Login succeeds but next request shows "not authenticated"
+- Different session ID on each request
+
+**Diagnosis:**
+```bash
+# Use -v to see Set-Cookie headers
+curl -v -c cookies.txt -X POST http://localhost:3001/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"pass"}' 2>&1 | grep -i "set-cookie"
+```
+
+**What to Look For:**
+- If you see `Secure` flag but using HTTP → **Problem!**
+- Expected for HTTP: `Set-Cookie: console.sid=...; Path=/; HttpOnly; SameSite=Lax`
+- Wrong for HTTP: `Set-Cookie: console.sid=...; Path=/; HttpOnly; Secure; SameSite=Lax`
+
+**Solution:**
+```bash
+# 1. Set environment variable
+echo "COOKIE_SECURE=false" >> .env
+
+# 2. Restart backend
+docker compose -f docker-compose.console.yml restart console
+
+# 3. Verify configuration
+docker logs minecraft-console | grep "Cookie configuration"
+# Should show: secure: false
+```
+
+### Diagnostic Checklist
+
+```bash
+# 1. Check backend cookie configuration
+docker logs minecraft-console | grep "Cookie configuration"
+# Expected: Both Session and CSRF should show "secure: false" for HTTP testing
+
+# 2. Check backend is running
+curl http://localhost:3001/health
+# Expected: {"status":"ok"}
+
+# 3. Test login with verbose output
+curl -v -c cookies.txt -X POST http://localhost:3001/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"pass"}' 2>&1 | grep -i "set-cookie"
+# Expected: Should see Set-Cookie headers WITHOUT "Secure" flag for HTTP
+
+# 4. Verify cookies were saved
+cat cookies.txt
+# Expected: Should contain console.sid
+
+# 5. Get CSRF token
+CSRF_TOKEN=$(curl -s -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token | jq -r '.csrfToken')
+echo "Token: ${CSRF_TOKEN:0:20}..."
+
+# 6. Verify CSRF cookie was saved
+cat cookies.txt | grep csrf-token
+
+# 7. Test authenticated endpoint
+curl -b cookies.txt -H "CSRF-Token: $CSRF_TOKEN" http://localhost:3001/api/plugins
+
+# 8. Check debug logs for CSRF details
+docker logs minecraft-console | grep PLUGIN_INSTALL_API
+# Should show detailed CSRF header and cookie values
+```
 
 
 ## Testing Checklist
