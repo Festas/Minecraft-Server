@@ -60,29 +60,26 @@ jobs:
         run: |
           echo "Running basic plugin diagnostics in ${{ github.event.inputs.mode }} mode..."
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          # Run diagnostics and capture fix count
+          FIX_COUNT=$(ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
             cd ${{ env.DEPLOY_DIR }}
             
             # Run basic diagnostics
             ./scripts/diagnose-plugins.sh ${{ github.event.inputs.mode }} || true
             
-            # Find the most recent diagnostics directory
-            DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | head -1)
+            # Find the most recent diagnostics directory and count fixes
+            DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | grep -v advanced | head -1)
             
-            if [ -n "$DIAG_DIR" ]; then
-              echo "DIAG_DIR=$DIAG_DIR" >> $GITHUB_ENV
-              
-              # Check if fixes were applied
-              if [ -f "$DIAG_DIR/fixes.log" ]; then
-                FIX_COUNT=$(wc -l < "$DIAG_DIR/fixes.log")
-                echo "FIXES_APPLIED=$FIX_COUNT" >> $GITHUB_ENV
-                echo "fixes_applied=$FIX_COUNT" >> $GITHUB_OUTPUT
-              else
-                echo "FIXES_APPLIED=0" >> $GITHUB_ENV
-                echo "fixes_applied=0" >> $GITHUB_OUTPUT
-              fi
+            if [ -n "$DIAG_DIR" ] && [ -f "$DIAG_DIR/fixes.log" ]; then
+              wc -l < "$DIAG_DIR/fixes.log"
+            else
+              echo "0"
             fi
           EOF
+          )
+          
+          echo "fixes_applied=$FIX_COUNT" >> $GITHUB_OUTPUT
+          echo "Fixes applied: $FIX_COUNT"
       
       - name: Run advanced diagnostics
         if: github.event.inputs.run_advanced == 'true'

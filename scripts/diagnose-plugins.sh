@@ -29,7 +29,7 @@
 #
 ################################################################################
 
-set +e  # Disable exit on error for diagnostics
+set +e  # Disable exit on error - diagnostics must continue even when errors are found to provide complete reports
 
 # Determine paths based on environment
 if [ -d "/home/deploy/minecraft-server" ]; then
@@ -409,7 +409,7 @@ echo ""
                 
                 # Check if it's an array
                 if command -v jq &> /dev/null; then
-                    if ! jq -e '. | if type == "array" then true else false end' "$HISTORY_FILE" > /dev/null 2>&1; then
+                    if ! jq -e 'type == "array"' "$HISTORY_FILE" > /dev/null 2>&1; then
                         log_issue "ERROR" "plugin-history.json is not an array"
                         
                         if [ "$ACTION" = "fix" ]; then

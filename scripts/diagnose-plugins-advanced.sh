@@ -24,7 +24,7 @@
 #
 ################################################################################
 
-set +e  # Disable exit on error for diagnostics
+set +e  # Disable exit on error - diagnostics must continue even when errors are found to provide complete reports
 
 # Determine paths based on environment
 if [ -d "/home/deploy/minecraft-server" ]; then
@@ -143,8 +143,8 @@ echo ""
                 echo "Log directory: $LOGS_DIR"
                 ls -lh "$LOGS_DIR" 2>/dev/null || echo "Cannot list log directory"
                 
-                # Find most recent log file
-                RECENT_LOG=$(find "$LOGS_DIR" -name "*.log" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2- || echo "")
+                # Find most recent log file (using ls -t for portability across Unix systems)
+                RECENT_LOG=$(ls -t "$LOGS_DIR"/*.log 2>/dev/null | head -1 || echo "")
                 
                 if [ -n "$RECENT_LOG" ]; then
                     echo "Most recent log: $RECENT_LOG"
