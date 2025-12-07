@@ -43,7 +43,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
       
       - name: Upload diagnostic scripts to server
         run: |
@@ -51,10 +51,10 @@ jobs:
           scp -i ~/.ssh/id_rsa \
             scripts/diagnose-plugins.sh \
             scripts/diagnose-plugins-advanced.sh \
-            ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:${{ env.DEPLOY_DIR }}/scripts/
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/scripts/
           
           echo "Setting executable permissions..."
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins.sh
             chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins-advanced.sh
           EOF
@@ -65,7 +65,7 @@ jobs:
           echo "Running basic plugin diagnostics in ${{ github.event.inputs.mode }} mode..."
           
           # Run diagnostics and capture fix count
-          FIX_COUNT=$(ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          FIX_COUNT=$(ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd ${{ env.DEPLOY_DIR }}
             
             # Run basic diagnostics
@@ -90,7 +90,7 @@ jobs:
         run: |
           echo "Running advanced plugin diagnostics..."
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd ${{ env.DEPLOY_DIR }}
             
             # Run advanced diagnostics
@@ -108,7 +108,7 @@ jobs:
         run: |
           echo "Downloading basic diagnostic reports..."
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Find most recent basic diagnostics directory
             DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | grep -v "advanced" | head -1)
             
@@ -123,7 +123,7 @@ jobs:
           
           # Download the tarball
           scp -i ~/.ssh/id_rsa \
-            ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/tmp/plugin-diagnostics-basic.tar.gz \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/plugin-diagnostics-basic.tar.gz \
             ./plugin-diagnostics-basic.tar.gz || echo "Failed to download basic diagnostics"
           
           # Extract for artifact upload
@@ -137,7 +137,7 @@ jobs:
         run: |
           echo "Downloading advanced diagnostic reports..."
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Find most recent advanced diagnostics directory
             ADV_DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-advanced-* 2>/dev/null | head -1)
             
@@ -152,7 +152,7 @@ jobs:
           
           # Download the tarball
           scp -i ~/.ssh/id_rsa \
-            ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/tmp/plugin-diagnostics-advanced.tar.gz \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/plugin-diagnostics-advanced.tar.gz \
             ./plugin-diagnostics-advanced.tar.gz || echo "Failed to download advanced diagnostics"
           
           # Extract for artifact upload
@@ -236,7 +236,7 @@ jobs:
         run: |
           echo "Fixes were applied, restarting backend..."
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd ${{ env.CONSOLE_DIR }}
             
             # Check if running in Docker
@@ -261,7 +261,7 @@ jobs:
         run: |
           echo "Cleaning up temporary files on server..."
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Remove diagnostic tarballs
             rm -f /tmp/plugin-diagnostics-basic.tar.gz
             rm -f /tmp/plugin-diagnostics-advanced.tar.gz
