@@ -1,8 +1,26 @@
 services:
+  # Redis service for persistent session storage
+  redis:
+    image: redis:7-alpine
+    container_name: minecraft-console-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      # Persist Redis data for session recovery across restarts
+      - redis-data:/data
+    networks:
+      - minecraft-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
   console:
     build:
-      context: ./console/backend
-      dockerfile: Dockerfile
+      context: ./console
+      dockerfile: backend/Dockerfile
     container_name: minecraft-console
     restart: unless-stopped
     ports:
@@ -18,6 +36,11 @@ services:
       - NODE_ENV=${NODE_ENV:-production}
       - COOKIE_SECURE=${COOKIE_SECURE:-}
       - SESSION_SECRET=${SESSION_SECRET:-change-this-to-a-secure-random-string}
+
+      # Redis Configuration (for persistent sessions)
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
 
       # Admin Account
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
@@ -59,12 +82,20 @@ services:
     networks:
       - minecraft-network
 
+    depends_on:
+      redis:
+        condition: service_healthy
+
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
+
+volumes:
+  redis-data:
+    driver: local
 
 networks:
   minecraft-network:

@@ -18,7 +18,7 @@ const { shouldUseSecureCookies, logCookieConfiguration } = require('./utils/cook
 const rconService = require('./services/rcon');
 const logsService = require('./services/logs');
 const { initializeUsers } = require('./auth/auth');
-const { getSessionMiddleware } = require('./auth/session');
+const { getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
 
 // Import middleware
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -227,7 +227,11 @@ app.use('/api/plugins', pluginRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok' });
+    const sessionStatus = getSessionStoreStatus();
+    res.json({ 
+        status: 'ok',
+        session: sessionStatus
+    });
 });
 
 // 404 handler
@@ -343,6 +347,7 @@ process.on('SIGTERM', async () => {
     
     logsService.stopStreaming();
     await rconService.disconnect();
+    await shutdownSessionStore();
     
     server.close(() => {
         console.log('Server closed');
@@ -355,6 +360,7 @@ process.on('SIGINT', async () => {
     
     logsService.stopStreaming();
     await rconService.disconnect();
+    await shutdownSessionStore();
     
     server.close(() => {
         console.log('Server closed');
