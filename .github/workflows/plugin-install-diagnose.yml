@@ -288,7 +288,7 @@ jobs:
               # Save session cookie state for diagnostics
               if [ -f /tmp/cookies.txt ]; then
                 echo "Session cookie saved to /tmp/cookies.txt"
-                cat /tmp/cookies.txt > /tmp/session-cookie-state.txt
+                cp /tmp/cookies.txt /tmp/session-cookie-state.txt
               else
                 echo "⚠ Warning: No session cookie file created"
                 echo "no cookie file" > /tmp/session-cookie-state.txt
@@ -566,8 +566,8 @@ jobs:
             echo "Collecting files to: $DIAG_DIR"
 
             # Copy session and CSRF state
-            cp /tmp/session-cookie-state.txt "$DIAG_DIR/" 2>/dev/null || echo "No session state" > "$DIAG_DIR/session-cookie-state.txt"
-            cp /tmp/csrf-token-state.json "$DIAG_DIR/" 2>/dev/null || echo "{}" > "$DIAG_DIR/csrf-token-state.json"
+            cp /tmp/session-cookie-state.txt "$DIAG_DIR/" 2>/dev/null || echo "no cookie file" > "$DIAG_DIR/session-cookie-state.txt"
+            cp /tmp/csrf-token-state.json "$DIAG_DIR/" 2>/dev/null || echo '{"error":"No CSRF token state available"}' > "$DIAG_DIR/csrf-token-state.json"
 
             # Copy plugins.json states
             cp /tmp/plugins-before.json "$DIAG_DIR/" 2>/dev/null || echo "No plugins-before.json"
