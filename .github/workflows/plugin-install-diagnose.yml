@@ -88,25 +88,25 @@ jobs:
           echo "║           PRE-INSTALL COMPREHENSIVE DIAGNOSTICS                ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           # Upload diagnostic scripts to server
           scp -i ~/.ssh/id_rsa \
             scripts/plugin-install-diagnostics-lib.sh \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
-          
+
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set +e  # Continue on errors to collect all diagnostics
-            
+
             # Source diagnostics library
             source /tmp/plugin-install-diagnostics-lib.sh
-            
+
             # Create diagnostics directory
             DIAG_DIR="/tmp/plugin-install-diagnostics-pre-${{ github.run_number }}"
             mkdir -p "$DIAG_DIR"
-            
+
             log_section "System State Capture"
             capture_system_state "$DIAG_DIR/system-state.txt"
-            
+
             log_section "Environment Variables"
             {
               echo "Relevant environment variables:"
@@ -116,7 +116,7 @@ jobs:
               echo "Disk usage:"
               df -h / /tmp ${{ env.DEPLOY_DIR }} 2>/dev/null || true
             } | tee "$DIAG_DIR/environment.txt"
-            
+
             log_section "Clock and Time Sync"
             {
               echo "System time information:"
@@ -136,31 +136,31 @@ jobs:
                 timedatectl show --property=NTP --value 2>/dev/null || echo "  Not available"
               fi
             } | tee "$DIAG_DIR/clock-sync.txt"
-            
+
             log_section "File Permissions - plugins.json"
             PLUGINS_JSON="${{ env.DEPLOY_DIR }}/plugins.json"
             test_file_permissions "$PLUGINS_JSON" "$DIAG_DIR/plugins-json-permissions.txt"
-            
+
             log_section "File Permissions - plugins directory"
             PLUGINS_DIR="${{ env.DEPLOY_DIR }}/plugins"
             test_file_permissions "$PLUGINS_DIR" "$DIAG_DIR/plugins-dir-permissions.txt"
-            
+
             log_section "Capture plugins.json state (BEFORE)"
             capture_plugins_json "$PLUGINS_JSON" "$DIAG_DIR/plugins-json-before.txt"
-            
+
             log_section "Capture plugins directory state (BEFORE)"
             capture_plugins_dir "$PLUGINS_DIR" "$DIAG_DIR/plugins-dir-before.txt"
-            
+
             log_section "Docker Container Diagnostics"
             docker_diagnostics "minecraft-console" "$DIAG_DIR/docker-diagnostics.txt"
-            
+
             log_section "Docker Compose Configuration"
             {
               echo "Docker Compose config:"
               cd ${{ env.CONSOLE_DIR }}
               docker compose config 2>&1 || echo "Failed to get compose config"
             } | tee "$DIAG_DIR/docker-compose-config.yml"
-            
+
             log_section "Docker Network Inspection"
             {
               echo "Docker networks:"
@@ -173,34 +173,34 @@ jobs:
                 Networks: .NetworkSettings.Networks
               }' 2>/dev/null || echo "Failed to inspect networks"
             } | tee "$DIAG_DIR/docker-network.txt"
-            
+
             log_section "Backend API Health Check"
             {
               echo "Testing backend API endpoints:"
               echo ""
-              
+
               echo "1. Health endpoint:"
               curl -v http://localhost:3001/health 2>&1 | tee "$DIAG_DIR/health-check-raw.txt" | head -30
               echo ""
-              
+
               echo "2. Plugins endpoint (unauthenticated):"
               curl -v http://localhost:3001/api/plugins 2>&1 | tee "$DIAG_DIR/plugins-unauth-raw.txt" | head -30
               echo ""
             } | tee "$DIAG_DIR/api-health-check.txt"
-            
+
             log_section "Container Resource Usage"
             {
               echo "Container stats snapshot:"
               docker stats minecraft-console --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}" 2>/dev/null || echo "Stats not available"
               echo ""
-              
+
               echo "Container processes:"
               docker top minecraft-console 2>/dev/null || echo "Process list not available"
             } | tee "$DIAG_DIR/container-resources.txt"
-            
+
             log_section "Backend Logs (last 200 lines)"
             docker logs minecraft-console --tail 200 2>&1 | tee "$DIAG_DIR/backend-logs-pre.txt"
-            
+
             log_section "Check for Debug Logs"
             {
               if docker exec minecraft-console test -f /app/logs/api-debug.log 2>/dev/null; then
@@ -211,10 +211,10 @@ jobs:
                 echo "ℹ API debug log not found (may not be enabled)"
               fi
             } | tee "$DIAG_DIR/debug-logs-pre.txt"
-            
+
             log_success "Pre-install diagnostics complete"
             echo "Results saved to: $DIAG_DIR"
-            
+
             # List all diagnostic files created
             echo ""
             echo "Diagnostic files created:"
@@ -302,7 +302,7 @@ jobs:
               echo "Waiting... ($i/20)"
               sleep 3
             done
-            
+
             if ! curl -s http://localhost:3001/health > /dev/null 2>&1; then
               log_error "Backend is not responding after 60 seconds"
               exit 1
@@ -312,16 +312,16 @@ jobs:
             # If run_all_scenarios is true, use the comprehensive test script
             if [ "$RUN_ALL_SCENARIOS" = "true" ]; then
               log_section "Running All Test Scenarios"
-              
+
               # Make script executable
               chmod +x /tmp/plugin-install-test-scenarios.sh
-              
+
               # Run the comprehensive test scenarios
               /tmp/plugin-install-test-scenarios.sh
-              
+
               SCENARIO_EXIT_CODE=$?
               echo "scenario_exit_code=$SCENARIO_EXIT_CODE" > /tmp/scenario-result.txt
-              
+
               if [ $SCENARIO_EXIT_CODE -eq 0 ]; then
                 log_success "All test scenarios completed successfully"
                 echo "install_success=1" > /tmp/install-result.txt
@@ -332,22 +332,22 @@ jobs:
             else
               # Run just the basic valid scenario
               log_section "Running Basic Valid Scenario Only"
-              
+
               mkdir -p "$RESULTS_DIR"
-              
+
               COOKIES_FILE="$RESULTS_DIR/cookies.txt"
               SCENARIO_DIR="$RESULTS_DIR/scenario-basic-valid"
               mkdir -p "$SCENARIO_DIR"
-              
+
               INSTALL_SUCCESS=0
-              
+
               # Step 1: Authenticate
               log_subsection "Step 1: Authentication"
               LOGIN_REQUEST=$(jq -n --arg user "$ADMIN_USER" --arg pass "$ADMIN_PASS" \
                 '{username: $user, password: $pass}')
-              
+
               echo "$LOGIN_REQUEST" > "$SCENARIO_DIR/login-request.json"
-              
+
               LOGIN_RESPONSE=$(curl -s -c "$COOKIES_FILE" -w "\n%{http_code}" \
                 -D "$SCENARIO_DIR/login-response-headers.txt" \
                 -X POST http://localhost:3001/api/login \
@@ -361,11 +361,11 @@ jobs:
               echo "$LOGIN_BODY" > "$SCENARIO_DIR/login-response.json"
 
               log_info "Login status: $LOGIN_STATUS"
-              
+
               if [ "$LOGIN_STATUS" = "200" ]; then
                 log_success "Authentication successful"
                 echo "$LOGIN_BODY" | jq '.' 2>/dev/null || echo "$LOGIN_BODY"
-                
+
                 # Inspect cookies
                 inspect_cookie_jar "$COOKIES_FILE" "$SCENARIO_DIR/post-login-cookies.txt"
               else
@@ -390,16 +390,16 @@ jobs:
               echo "$CSRF_BODY" > "$SCENARIO_DIR/csrf-response.json"
 
               log_info "CSRF token endpoint status: $CSRF_STATUS"
-              
+
               if [ "$CSRF_STATUS" = "200" ]; then
                 CSRF_TOKEN=$(echo "$CSRF_BODY" | jq -r '.csrfToken' 2>/dev/null)
                 if [ -n "$CSRF_TOKEN" ] && [ "$CSRF_TOKEN" != "null" ]; then
                   log_success "CSRF token obtained successfully"
                   log_info "CSRF token length: ${#CSRF_TOKEN} characters"
-                  
+
                   # Validate and inspect CSRF token
                   validate_csrf_token "$SCENARIO_DIR/csrf-response.json" "$COOKIES_FILE" "$SCENARIO_DIR/csrf-validation.txt"
-                  
+
                   # Inspect cookies after CSRF
                   inspect_cookie_jar "$COOKIES_FILE" "$SCENARIO_DIR/post-csrf-cookies.txt"
                 else
@@ -442,10 +442,10 @@ jobs:
 
               # Step 4: Attempt plugin install
               log_subsection "Step 4: Plugin Install"
-              
+
               INSTALL_REQUEST=$(jq -n --arg url "$TEST_PLUGIN_URL" '{url: $url}')
               echo "$INSTALL_REQUEST" > "$SCENARIO_DIR/install-request.json"
-              
+
               INSTALL_RESPONSE=$(curl -s -b "$COOKIES_FILE" -c "$COOKIES_FILE" \
                 -w "\n%{http_code}" \
                 -D "$SCENARIO_DIR/install-response-headers.txt" \
@@ -464,7 +464,7 @@ jobs:
               log_info "Response:"
               echo "$INSTALL_BODY" | jq '.' 2>/dev/null || echo "$INSTALL_BODY"
               echo ""
-              
+
               # Inspect cookies after install
               inspect_cookie_jar "$COOKIES_FILE" "$SCENARIO_DIR/post-install-cookies.txt"
 
@@ -508,17 +508,17 @@ jobs:
 
               # Save result
               echo "install_success=$INSTALL_SUCCESS" > /tmp/install-result.txt
-              
+
               if [ $INSTALL_SUCCESS -eq 1 ]; then
                 echo "PASS: Plugin install succeeded" > "$SCENARIO_DIR/scenario-result.txt"
               else
                 echo "FAIL: Plugin install failed" > "$SCENARIO_DIR/scenario-result.txt"
               fi
-              
+
               # Generate summary for this scenario
               generate_summary "$RESULTS_DIR" "$RESULTS_DIR/test-summary.txt"
             fi
-            
+
             log_section "Test Scenarios Complete"
           EOFMAIN
 
@@ -544,24 +544,24 @@ jobs:
 
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set +e  # Continue on errors to collect all diagnostics
-            
+
             # Source diagnostics library
             source /tmp/plugin-install-diagnostics-lib.sh
-            
+
             # Create post-diagnostics directory
             DIAG_DIR="/tmp/plugin-install-diagnostics-post-${{ github.run_number }}"
             mkdir -p "$DIAG_DIR"
-            
+
             log_section "Post-Install State Capture"
-            
+
             log_subsection "Capture plugins.json state (AFTER)"
             PLUGINS_JSON="${{ env.DEPLOY_DIR }}/plugins.json"
             capture_plugins_json "$PLUGINS_JSON" "$DIAG_DIR/plugins-json-after.txt"
-            
+
             log_subsection "Capture plugins directory state (AFTER)"
             PLUGINS_DIR="${{ env.DEPLOY_DIR }}/plugins"
             capture_plugins_dir "$PLUGINS_DIR" "$DIAG_DIR/plugins-dir-after.txt"
-            
+
             log_subsection "Verify test plugin in plugins.json"
             {
               if [ -f "$PLUGINS_JSON" ]; then
@@ -575,7 +575,7 @@ jobs:
                 log_error "plugins.json does not exist"
               fi
             } | tee "$DIAG_DIR/test-plugin-verification.txt"
-            
+
             log_subsection "Verify test plugin JAR file"
             {
               if [ -d "$PLUGINS_DIR" ]; then
@@ -591,9 +591,9 @@ jobs:
                 log_error "plugins directory does not exist"
               fi
             } | tee "$DIAG_DIR/test-plugin-jar-verification.txt"
-            
+
             log_section "Backend Error Logs"
-            
+
             log_subsection "Install errors log"
             {
               if docker exec minecraft-console test -f /app/data/install-errors.log 2>/dev/null; then
@@ -604,7 +604,7 @@ jobs:
                 log_info "install-errors.log not found (no errors logged)"
               fi
             } | tee "$DIAG_DIR/install-errors.log"
-            
+
             log_subsection "Plugin history log"
             {
               if docker exec minecraft-console test -f /app/data/plugin-history.json 2>/dev/null; then
@@ -615,10 +615,10 @@ jobs:
                 log_info "plugin-history.json not found"
               fi
             } | tee "$DIAG_DIR/plugin-history.json"
-            
+
             log_subsection "Backend logs (last 300 lines)"
             docker logs minecraft-console --tail 300 2>&1 | tee "$DIAG_DIR/backend-logs-post.txt"
-            
+
             log_subsection "API debug logs (full)"
             {
               if docker exec minecraft-console test -f /app/logs/api-debug.log 2>/dev/null; then
@@ -628,9 +628,9 @@ jobs:
                 log_info "api-debug.log not found"
               fi
             } | tee "$DIAG_DIR/api-debug-full.log"
-            
+
             log_section "State Comparison"
-            
+
             # Compare plugins.json before/after
             if [ -f /tmp/plugin-install-diagnostics-pre-${{ github.run_number }}/plugins-json-before.txt.json ]; then
               log_subsection "plugins.json comparison"
@@ -639,7 +639,7 @@ jobs:
                 "$DIAG_DIR/plugins-json-after.txt.json" \
                 "$DIAG_DIR/plugins-json-comparison.txt"
             fi
-            
+
             # Compare plugins directory before/after
             if [ -f /tmp/plugin-install-diagnostics-pre-${{ github.run_number }}/plugins-dir-before.txt ]; then
               log_subsection "plugins directory comparison"
@@ -650,12 +650,12 @@ jobs:
                   "$DIAG_DIR/plugins-dir-after.txt" || true
               } | tee "$DIAG_DIR/plugins-dir-comparison.txt"
             fi
-            
+
             log_section "Final System State"
-            
+
             capture_system_state "$DIAG_DIR/system-state-final.txt"
             docker_diagnostics "minecraft-console" "$DIAG_DIR/docker-diagnostics-final.txt"
-            
+
             log_success "Post-install diagnostics complete"
             echo "Results saved to: $DIAG_DIR"
           EOF
@@ -671,36 +671,36 @@ jobs:
 
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             set +e
-            
+
             # Source diagnostics library
             source /tmp/plugin-install-diagnostics-lib.sh
-            
+
             log_section "Collecting Diagnostic Artifacts"
-            
+
             # Create comprehensive diagnostics package
             PACKAGE_DIR="/tmp/plugin-install-diagnostics-final-${{ github.run_number }}"
             mkdir -p "$PACKAGE_DIR"
-            
+
             log_info "Package directory: $PACKAGE_DIR"
-            
+
             # Copy pre-install diagnostics
             if [ -d "/tmp/plugin-install-diagnostics-pre-${{ github.run_number }}" ]; then
               log_info "Copying pre-install diagnostics..."
               cp -r "/tmp/plugin-install-diagnostics-pre-${{ github.run_number }}" "$PACKAGE_DIR/pre-install/"
             fi
-            
+
             # Copy post-install diagnostics
             if [ -d "/tmp/plugin-install-diagnostics-post-${{ github.run_number }}" ]; then
               log_info "Copying post-install diagnostics..."
               cp -r "/tmp/plugin-install-diagnostics-post-${{ github.run_number }}" "$PACKAGE_DIR/post-install/"
             fi
-            
+
             # Copy test scenario results
             if [ -d "/tmp/plugin-install-test-results-${{ github.run_number }}" ]; then
               log_info "Copying test scenario results..."
               cp -r "/tmp/plugin-install-test-results-${{ github.run_number }}" "$PACKAGE_DIR/test-scenarios/"
             fi
-            
+
             # Generate comprehensive summary
             log_info "Generating comprehensive summary..."
             {
@@ -750,7 +750,7 @@ jobs:
               echo "TEST RESULTS SUMMARY"
               echo "═══════════════════════════════════════════════════════════════"
               echo ""
-              
+
               if [ -f "$PACKAGE_DIR/test-scenarios/comprehensive-summary.txt" ]; then
                 cat "$PACKAGE_DIR/test-scenarios/comprehensive-summary.txt"
               elif [ -f "$PACKAGE_DIR/test-scenarios/test-summary.txt" ]; then
@@ -758,14 +758,14 @@ jobs:
               else
                 echo "No test summary available"
               fi
-              
+
               echo ""
               echo "═══════════════════════════════════════════════════════════════"
               echo "DIRECTORY STRUCTURE"
               echo "═══════════════════════════════════════════════════════════════"
               echo ""
               tree -L 3 "$PACKAGE_DIR" 2>/dev/null || find "$PACKAGE_DIR" -type f | head -50
-              
+
               echo ""
               echo "═══════════════════════════════════════════════════════════════"
               echo "FILE INVENTORY"
@@ -776,7 +776,7 @@ jobs:
                 size=$(stat -c '%s' "$file" 2>/dev/null || echo "0")
                 printf "  %-70s %10s bytes\n" "$rel_path" "$size"
               done
-              
+
               echo ""
               echo "═══════════════════════════════════════════════════════════════"
               echo "DEBUGGING TIPS"
@@ -793,17 +793,17 @@ jobs:
               echo "8. Review pre-install/docker-diagnostics.txt for container health"
               echo ""
               echo "═══════════════════════════════════════════════════════════════"
-              
+
             } > "$PACKAGE_DIR/COMPREHENSIVE-SUMMARY.txt"
-            
+
             # Create tarball
             log_info "Creating tarball..."
             tar -czf /tmp/plugin-install-diagnostics-final.tar.gz -C /tmp "plugin-install-diagnostics-final-${{ github.run_number }}"
-            
+
             # Show package info
             log_success "Diagnostics package created"
             ls -lh /tmp/plugin-install-diagnostics-final.tar.gz
-            
+
             echo ""
             echo "Package contents:"
             tar -tzf /tmp/plugin-install-diagnostics-final.tar.gz | head -50
@@ -827,119 +827,192 @@ jobs:
       - name: Display comprehensive diagnostic summary
         if: always()
         run: |
-          echo "=== DIAGNOSTIC FILES SUMMARY ==="
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║           COMPREHENSIVE DIAGNOSTIC SUMMARY DISPLAY             ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
 
           if [ -d ./plugin-install-diagnostics ]; then
-            find ./plugin-install-diagnostics -type f -exec echo "- {}" \; | sed 's|./plugin-install-diagnostics/||'
+            # Show main summary if it exists
+            if [ -f ./plugin-install-diagnostics/COMPREHENSIVE-SUMMARY.txt ]; then
+              echo "Main Summary:"
+              cat ./plugin-install-diagnostics/COMPREHENSIVE-SUMMARY.txt
+              echo ""
+            fi
 
-            echo ""
-            echo "=== KEY FILE CONTENTS ==="
+            echo "═══════════════════════════════════════════════════════════════"
+            echo "KEY DIAGNOSTIC FILES"
+            echo "═══════════════════════════════════════════════════════════════"
             echo ""
 
-            # Show install response
-            INSTALL_RESP_FILE=$(find ./plugin-install-diagnostics -name "install-response.json" | head -1)
-            if [ -f "$INSTALL_RESP_FILE" ]; then
-              echo "## Install API Response:"
-              cat "$INSTALL_RESP_FILE" | jq '.' 2>/dev/null || cat "$INSTALL_RESP_FILE"
+            # Show test scenario results
+            if [ -d ./plugin-install-diagnostics/test-scenarios ]; then
+              echo "## Test Scenario Results:"
+              find ./plugin-install-diagnostics/test-scenarios -name "*-result.txt" | while read -r file; do
+                echo ""
+                echo "$(basename "$file"):"
+                cat "$file"
+              done
+              echo ""
+            fi
+
+            # Show install response from any scenario
+            INSTALL_RESP=$(find ./plugin-install-diagnostics -name "install-response.json" | head -1)
+            if [ -f "$INSTALL_RESP" ]; then
+              echo "## Sample Install API Response:"
+              cat "$INSTALL_RESP" | jq '.' 2>/dev/null || cat "$INSTALL_RESP"
               echo ""
             fi
 
             # Show install errors
-            INSTALL_ERR_FILE=$(find ./plugin-install-diagnostics -name "install-errors.log" | head -1)
-            if [ -f "$INSTALL_ERR_FILE" ]; then
-              echo "## Install Errors Log:"
-              tail -20 "$INSTALL_ERR_FILE"
+            INSTALL_ERR=$(find ./plugin-install-diagnostics -name "install-errors.log" | head -1)
+            if [ -f "$INSTALL_ERR" ] && [ -s "$INSTALL_ERR" ]; then
+              echo "## Install Errors Log (last 50 lines):"
+              tail -50 "$INSTALL_ERR"
               echo ""
             fi
+
+            # Show permission issues if any
+            PERM_FILES=$(find ./plugin-install-diagnostics -name "*-permissions.txt")
+            if [ -n "$PERM_FILES" ]; then
+              echo "## File Permission Checks:"
+              echo "$PERM_FILES" | while read -r file; do
+                echo ""
+                echo "$(basename "$file"):"
+                cat "$file" | grep -A 5 "Permissions:" || cat "$file" | head -20
+              done
+              echo ""
+            fi
+          else
+            echo "⚠ No diagnostic files found"
           fi
 
-      - name: Upload diagnostic artifacts
+      - name: Upload comprehensive diagnostic artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: plugin-install-diagnostics-${{ github.run_number }}
+          name: plugin-install-diagnostics-comprehensive-${{ github.run_number }}
           path: plugin-install-diagnostics/
           retention-days: 30
           if-no-files-found: warn
 
-      - name: Detect and report failures
+      - name: Analyze results and detect failures
         if: always()
         run: |
-          echo "=== FAILURE DETECTION ==="
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║                 FAILURE DETECTION & ANALYSIS                   ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
 
           FAILURE_DETECTED=0
           FAILURE_REASONS=()
+          SUCCESS_COUNT=0
+          TOTAL_SCENARIOS=0
 
-          # Check if install succeeded
+          # Check if install succeeded (basic test)
           INSTALL_SUCCESS="${{ steps.test_install.outputs.install_success }}"
-          if [ "$INSTALL_SUCCESS" != "1" ]; then
+
+          # Analyze test scenario results if available
+          if [ -d ./plugin-install-diagnostics/test-scenarios ]; then
+            echo "Analyzing test scenario results..."
+
+            # Count total scenarios
+            TOTAL_SCENARIOS=$(find ./plugin-install-diagnostics/test-scenarios -name "*-result.txt" 2>/dev/null | wc -l)
+
+            # Count passed scenarios
+            SUCCESS_COUNT=$(find ./plugin-install-diagnostics/test-scenarios -name "*-result.txt" -exec grep -l "PASS" {} \; 2>/dev/null | wc -l)
+
+            # Count failed scenarios
+            FAILED_COUNT=$(find ./plugin-install-diagnostics/test-scenarios -name "*-result.txt" -exec grep -l "FAIL" {} \; 2>/dev/null | wc -l)
+
+            echo "Test Scenarios:"
+            echo "  Total: $TOTAL_SCENARIOS"
+            echo "  Passed: $SUCCESS_COUNT"
+            echo "  Failed: $FAILED_COUNT"
+            echo ""
+
+            if [ $FAILED_COUNT -gt 0 ]; then
+              FAILURE_DETECTED=1
+              FAILURE_REASONS+=("$FAILED_COUNT test scenario(s) failed")
+
+              # List failed scenarios
+              echo "Failed scenarios:"
+              find ./plugin-install-diagnostics/test-scenarios -name "*-result.txt" -exec grep -l "FAIL" {} \; | while read -r file; do
+                scenario_name=$(basename "$(dirname "$file")")
+                echo "  - $scenario_name"
+                cat "$file"
+              done
+              echo ""
+            fi
+          elif [ "$INSTALL_SUCCESS" != "1" ]; then
             FAILURE_DETECTED=1
-            FAILURE_REASONS+=("Plugin install API returned error or unexpected status")
+            FAILURE_REASONS+=("Basic plugin install test failed")
           fi
 
-          # Check if files were created (download diagnostic files to check)
+          # Check file system state
           if [ -d ./plugin-install-diagnostics ]; then
-            # Check if plugins.json was updated
-            PLUGINS_BEFORE_FILE=$(find ./plugin-install-diagnostics -name "plugins-before.json" | head -1)
-            PLUGINS_AFTER_FILE=$(find ./plugin-install-diagnostics -name "plugins-after.json" | head -1)
-
-            if [ -f "$PLUGINS_BEFORE_FILE" ] && [ -f "$PLUGINS_AFTER_FILE" ]; then
-              BEFORE_COUNT=$(jq '.plugins | length' "$PLUGINS_BEFORE_FILE" 2>/dev/null || echo "0")
-              AFTER_COUNT=$(jq '.plugins | length' "$PLUGINS_AFTER_FILE" 2>/dev/null || echo "0")
-
-              # Check if plugin was added to plugins.json
-              PLUGIN_IN_JSON=$(jq -e ".plugins[] | select(.name == \"${{ env.TEST_PLUGIN_NAME }}\")" "$PLUGINS_AFTER_FILE" > /dev/null 2>&1 && echo "yes" || echo "no")
-
-              if [ "$PLUGIN_IN_JSON" != "yes" ] && [ "$INSTALL_SUCCESS" = "1" ]; then
-                FAILURE_DETECTED=1
-                FAILURE_REASONS+=("Plugin not found in plugins.json after install")
-              fi
+            # Check for permission errors
+            if find ./plugin-install-diagnostics -name "install-errors.log" -exec grep -qi "permission\|EACCES" {} \; 2>/dev/null; then
+              FAILURE_DETECTED=1
+              FAILURE_REASONS+=("Permission errors detected in install logs")
             fi
 
-            # Check for permissions errors in install errors log
-            INSTALL_ERR_FILE=$(find ./plugin-install-diagnostics -name "install-errors.log" | head -1)
-            if [ -f "$INSTALL_ERR_FILE" ]; then
-              if grep -qi "permission\|not writable\|EACCES" "$INSTALL_ERR_FILE"; then
-                FAILURE_DETECTED=1
-                FAILURE_REASONS+=("Permission errors detected in install-errors.log")
-              fi
+            # Check for CSRF errors in responses
+            if find ./plugin-install-diagnostics -name "*-response.json" -exec grep -qi "csrf.*invalid\|csrf.*missing" {} \; 2>/dev/null; then
+              FAILURE_REASONS+=("CSRF validation errors detected")
             fi
 
-            # Check backend logs for errors
-            BACKEND_LOG_FILE=$(find ./plugin-install-diagnostics -name "backend-logs.txt" | head -1)
-            if [ -f "$BACKEND_LOG_FILE" ]; then
-              if tail -100 "$BACKEND_LOG_FILE" | grep -qi "error.*plugin\|failed.*install"; then
-                FAILURE_DETECTED=1
-                FAILURE_REASONS+=("Backend errors detected in container logs")
-              fi
+            # Check for authentication errors
+            if find ./plugin-install-diagnostics -name "*-response.json" -exec grep -qi "unauthorized\|not authenticated" {} \; 2>/dev/null; then
+              FAILURE_REASONS+=("Authentication errors detected")
             fi
           fi
 
           # Report results
-          if [ $FAILURE_DETECTED -eq 1 ]; then
-            echo "::error::Plugin install diagnostics detected failures"
+          echo "═══════════════════════════════════════════════════════════════"
+          echo "FINAL RESULT"
+          echo "═══════════════════════════════════════════════════════════════"
+          echo ""
+
+          if [ $FAILURE_DETECTED -eq 0 ]; then
+            echo "✓ ALL DIAGNOSTICS PASSED"
+            echo ""
+            echo "Summary:"
+            echo "  - No critical failures detected"
+            if [ $TOTAL_SCENARIOS -gt 0 ]; then
+              echo "  - $SUCCESS_COUNT/$TOTAL_SCENARIOS test scenarios passed"
+            else
+              echo "  - Basic plugin install test passed"
+            fi
+            echo ""
+            echo "Plugin install functionality appears to be working correctly."
+          else
+            echo "✗ FAILURES DETECTED"
             echo ""
             echo "Failure reasons:"
             for reason in "${FAILURE_REASONS[@]}"; do
-              echo "  - $reason"
+              echo "  ✗ $reason"
             done
             echo ""
-            echo "Review the uploaded artifacts for detailed diagnostics."
-            exit 1
-          else
-            echo "✓ No critical failures detected"
+            echo "Review the uploaded artifacts for detailed diagnostics:"
+            echo "  - Artifact name: plugin-install-diagnostics-comprehensive-${{ github.run_number }}"
+            echo "  - Start with: COMPREHENSIVE-SUMMARY.txt"
+            echo "  - Check test-scenarios/*-result.txt for individual test results"
+            echo "  - Review *-response.json files for API errors"
+            echo "  - Examine install-errors.log for plugin manager issues"
             echo ""
-            echo "Plugin install appears to be working correctly."
+            exit 1
           fi
 
-      - name: Cleanup test plugin
+      - name: Cleanup test plugin and temporary files
         if: success() && github.event.inputs.skip_cleanup != 'true'
         env:
           ADMIN_USER: ${{ secrets.CONSOLE_ADMIN_USER }}
           ADMIN_PASS: ${{ secrets.CONSOLE_ADMIN_PASSWORD }}
         run: |
-          echo "=== CLEANING UP TEST PLUGIN ==="
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║                    CLEANUP TEST PLUGIN                         ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
 
           # Validate credentials before proceeding
@@ -1031,9 +1104,14 @@ jobs:
               echo "✗ Could not authenticate for cleanup"
             fi
 
-            # Clean up temporary files
+            echo ""
+            echo "Cleaning up all temporary diagnostic files..."
+
+            # Clean up cookie files
             rm -f /tmp/cookies.txt /tmp/cookies-cleanup.txt
             rm -f /tmp/session-cookie-state.txt /tmp/csrf-token-state.json
+
+            # Clean up old format files
             rm -f /tmp/plugins-before.json /tmp/plugins-after.json
             rm -f /tmp/api-plugins-before.json /tmp/api-plugins-after.json
             rm -f /tmp/install-response.json /tmp/install-result.txt
@@ -1041,54 +1119,155 @@ jobs:
             rm -rf /tmp/plugin-install-diagnostics-$GITHUB_RUN_NUMBER
             rm -f /tmp/plugin-install-diagnostics.tar.gz
 
-            echo "✓ Temporary files cleaned up"
+            # Clean up new comprehensive diagnostic directories
+            rm -rf /tmp/plugin-install-diagnostics-pre-$GITHUB_RUN_NUMBER
+            rm -rf /tmp/plugin-install-diagnostics-post-$GITHUB_RUN_NUMBER
+            rm -rf /tmp/plugin-install-test-results-$GITHUB_RUN_NUMBER
+            rm -rf /tmp/plugin-install-diagnostics-final-$GITHUB_RUN_NUMBER
+            rm -f /tmp/plugin-install-diagnostics-final.tar.gz
+
+            # Clean up diagnostic scripts
+            rm -f /tmp/plugin-install-diagnostics-lib.sh
+            rm -f /tmp/plugin-install-test-scenarios.sh
+
+            # Clean up any scenario-specific files
+            rm -f /tmp/scenario-result.txt
+
+            echo "✓ All temporary files cleaned up"
           EOF
 
           echo ""
           echo "✓ Cleanup complete"
 
-      - name: Workflow summary
+      - name: Generate workflow summary
         if: always()
         run: |
           {
-            echo "## Plugin Install Diagnostics Summary"
+            echo "╔════════════════════════════════════════════════════════════════╗"
+            echo "║     Plugin Install Diagnostics - Workflow Summary             ║"
+            echo "╚════════════════════════════════════════════════════════════════╝"
             echo ""
-            echo "**Workflow Run:** ${{ github.run_number }}"
+            echo "## Comprehensive Plugin Install Diagnostics"
+            echo ""
+            echo "**Workflow Run:** #${{ github.run_number }}"
             echo "**Test Plugin:** ${{ env.TEST_PLUGIN_NAME }}"
             echo "**Test Plugin URL:** ${{ env.TEST_PLUGIN_URL }}"
+            echo "**Run All Scenarios:** ${{ env.RUN_ALL_SCENARIOS }}"
+            echo "**Timestamp:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
             echo ""
 
             INSTALL_SUCCESS="${{ steps.test_install.outputs.install_success }}"
+
+            echo "═══════════════════════════════════════════════════════════════"
+            echo "TEST RESULTS"
+            echo "═══════════════════════════════════════════════════════════════"
+            echo ""
+
             if [ "$INSTALL_SUCCESS" = "1" ]; then
-              echo "### ✓ Install Test Result: PASSED"
+              echo "### ✓ Overall Result: **PASSED**"
+              echo ""
+              if [ "${{ env.RUN_ALL_SCENARIOS }}" = "true" ]; then
+                echo "All test scenarios completed successfully. See artifact for detailed results."
+              else
+                echo "Basic plugin install test passed."
+              fi
             else
-              echo "### ✗ Install Test Result: FAILED"
+              echo "### ✗ Overall Result: **FAILED**"
+              echo ""
+              echo "One or more tests failed. See artifact for detailed diagnostics."
             fi
             echo ""
 
-            echo "### Diagnostic Artifacts"
-            echo "All diagnostic files have been uploaded as workflow artifacts:"
-            echo "- \`plugins-before.json\` and \`plugins-after.json\` - Plugin state comparison"
-            echo "- \`api-plugins-before.json\` and \`api-plugins-after.json\` - API response comparison"
-            echo "- \`install-response.json\` - Install API response"
-            echo "- \`install-errors.log\` - Plugin install error log"
-            echo "- \`backend-logs.txt\` - Complete backend container logs"
-            echo "- \`container-inspect.json\` - Docker container inspection"
-            echo "- \`plugins-dir-before.txt\` and \`plugins-dir-after.txt\` - Directory listings"
+            echo "═══════════════════════════════════════════════════════════════"
+            echo "DIAGNOSTIC ARTIFACTS"
+            echo "═══════════════════════════════════════════════════════════════"
             echo ""
-            echo "Download the artifact to debug plugin install issues without needing browser dev tools."
+            echo "**Artifact Name:** \`plugin-install-diagnostics-comprehensive-${{ github.run_number }}\`"
+            echo ""
+            echo "### What's Included"
+            echo ""
+            echo "#### Pre-Install Diagnostics (\`pre-install/\`)"
+            echo "- System state and environment variables"
+            echo "- Clock synchronization check"
+            echo "- File permissions for plugins.json and plugins directory"
+            echo "- Initial plugins.json and directory state"
+            echo "- Docker container diagnostics and health"
+            echo "- Docker network configuration"
+            echo "- Backend logs and API debug logs"
+            echo ""
+            if [ "${{ env.RUN_ALL_SCENARIOS }}" = "true" ]; then
+              echo "#### Test Scenarios (\`test-scenarios/\`)"
+              echo "- **scenario-01-valid/**: Valid CSRF and session (expected: success)"
+              echo "- **scenario-02-missing-csrf/**: Missing CSRF token (expected: 403)"
+              echo "- **scenario-03-invalid-csrf/**: Invalid CSRF token (expected: 403)"
+              echo "- **scenario-04-missing-session/**: Missing session cookie (expected: 401)"
+              echo "- **scenario-05-invalid-session/**: Invalid session cookie (expected: 401)"
+              echo "- **scenario-06-expired-session/**: Expired session test (if feasible)"
+              echo ""
+              echo "Each scenario includes:"
+              echo "- Full cookie jar inspection (login, CSRF, install)"
+              echo "- Complete request/response headers"
+              echo "- CSRF token validation and comparison"
+              echo "- API response bodies (JSON)"
+              echo "- Test result (PASS/FAIL/SKIP)"
+            else
+              echo "#### Test Scenarios (\`test-scenarios/\`)"
+              echo "- Basic valid scenario with full diagnostics"
+            fi
+            echo ""
+            echo "#### Post-Install Diagnostics (\`post-install/\`)"
+            echo "- Final plugins.json and directory state"
+            echo "- State comparisons (before/after)"
+            echo "- Install error logs"
+            echo "- Plugin operation history"
+            echo "- Final backend logs and API debug logs"
+            echo "- Final Docker container state"
+            echo ""
+            echo "#### Summary Files"
+            echo "- **COMPREHENSIVE-SUMMARY.txt**: Complete summary with all test results"
+            echo "- Debugging tips and file guide"
             echo ""
 
-            echo "### Next Steps"
-            if [ "$INSTALL_SUCCESS" = "1" ]; then
-              echo "- Plugin install is working correctly"
-              echo "- Review artifacts if you need detailed information"
+            echo "═══════════════════════════════════════════════════════════════"
+            echo "DEBUGGING GUIDE"
+            echo "═══════════════════════════════════════════════════════════════"
+            echo ""
+            echo "### Quick Start"
+            echo ""
+            echo "1. Download the artifact from the workflow run"
+            echo "2. Read \`COMPREHENSIVE-SUMMARY.txt\` for overview"
+            if [ "${{ env.RUN_ALL_SCENARIOS }}" = "true" ]; then
+              echo "3. Check \`test-scenarios/*/scenario-result.txt\` for individual test results"
+              echo "4. Review failed scenarios for detailed error information"
             else
-              echo "1. Download the diagnostic artifacts from this workflow run"
-              echo "2. Review \`install-response.json\` for API error details"
-              echo "3. Check \`install-errors.log\` for plugin manager errors"
-              echo "4. Review \`backend-logs.txt\` for server-side issues"
-              echo "5. Compare before/after states to identify what changed"
-              echo "6. Check permissions on plugins.json and plugins directory"
+              echo "3. Check \`test-scenarios/scenario-basic-valid/scenario-result.txt\`"
             fi
+            echo ""
+            echo "### Common Issues"
+            echo ""
+            echo "**CSRF Errors (403):**"
+            echo "- Check \`test-scenarios/*/csrf-validation.txt\` for token mismatch"
+            echo "- Review \`test-scenarios/*/post-csrf-cookies.txt\` for cookie state"
+            echo "- Verify CSRF cookie is being set in response headers"
+            echo ""
+            echo "**Authentication Errors (401):**"
+            echo "- Check \`test-scenarios/*/post-login-cookies.txt\` for session cookie"
+            echo "- Review \`test-scenarios/*/login-response.json\` for login errors"
+            echo "- Verify session is maintained across requests"
+            echo ""
+            echo "**Permission Errors:**"
+            echo "- Check \`pre-install/plugins-json-permissions.txt\`"
+            echo "- Check \`pre-install/plugins-dir-permissions.txt\`"
+            echo "- Review \`post-install/install-errors.log\` for EACCES errors"
+            echo ""
+            echo "**Plugin Manager Errors:**"
+            echo "- Review \`post-install/install-errors.log\`"
+            echo "- Check \`post-install/backend-logs-post.txt\`"
+            echo "- Review \`test-scenarios/*/install-response.json\`"
+            echo ""
+
+            echo "═══════════════════════════════════════════════════════════════"
+            echo ""
+
           } >> "$GITHUB_STEP_SUMMARY"
+
