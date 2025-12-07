@@ -78,9 +78,9 @@ router.post('/install', async (req, res) => {
         username: req.session?.username || 'NOT_SET',
         csrf: {
             headerValue: req.headers['csrf-token'] || req.headers['x-csrf-token'] || 'MISSING',
-            cookieValue: req.cookies['csrf-token'] || 'MISSING',
+            cookieValue: (req.cookies && req.cookies['csrf-token']) || 'MISSING',
             headerPresent: !!(req.headers['csrf-token'] || req.headers['x-csrf-token']),
-            cookiePresent: !!req.cookies['csrf-token']
+            cookiePresent: !!(req.cookies && req.cookies['csrf-token'])
         },
         timestamp: new Date().toISOString()
     });
