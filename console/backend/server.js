@@ -107,18 +107,21 @@ if (!csrfSecret) {
 const useSecureCsrfCookies = shouldUseSecureCookies();
 logCookieConfiguration('CSRF', useSecureCsrfCookies);
 
+// Shared CSRF cookie options for consistency between doubleCsrf middleware and /api/csrf-token endpoint
+const csrfCookieOptions = {
+    sameSite: 'lax', // Must match session cookie for consistency
+    path: '/', // Ensure cookie is available for all paths
+    secure: useSecureCsrfCookies, // HTTPS only in production, HTTP allowed in dev/test/CI
+    httpOnly: true // Prevent XSS attacks
+};
+
 const {
     generateToken, // Generates a CSRF token
     doubleCsrfProtection, // Full middleware
 } = doubleCsrf({
     getSecret: () => csrfSecret,
     cookieName: 'csrf-token',
-    cookieOptions: {
-        sameSite: 'lax', // Must match session cookie for consistency
-        path: '/', // Ensure cookie is available for all paths
-        secure: useSecureCsrfCookies, // HTTPS only in production, HTTP allowed in dev/test/CI
-        httpOnly: true // Prevent XSS attacks
-    },
+    cookieOptions: csrfCookieOptions,
     size: 64,
     ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
     // Read CSRF token from header (standard practice for APIs)
@@ -152,13 +155,8 @@ app.get('/api/csrf-token', (req, res) => {
     
     // Explicitly set the CSRF cookie to ensure it's sent to the client
     // The csrf-csrf middleware expects both the cookie AND the header for double-submit pattern
-    // Using the same cookie name as configured in doubleCsrf above ('csrf-token')
-    res.cookie('csrf-token', token, {
-        sameSite: 'lax', // Must match session cookie for consistency
-        path: '/', // Ensure cookie is available for all paths
-        secure: useSecureCsrfCookies, // HTTPS only in production, HTTP allowed in dev/test/CI
-        httpOnly: true // Prevent XSS attacks
-    });
+    // Using the same cookie name and options as configured in doubleCsrf above
+    res.cookie('csrf-token', token, csrfCookieOptions);
     
     console.log('[CSRF] Token generated and cookie set:', {
         sessionID: req.sessionID,
