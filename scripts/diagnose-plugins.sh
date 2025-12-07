@@ -685,10 +685,10 @@ echo ""
                     
                     if [ "$ACTION" = "fix" ]; then
                         echo "Generating docker-compose.console.yml patch..."
-                        cat > "$DIAGNOSTICS_DIR/docker-compose-port-fix.patch" <<'PATCH_EOF'
+                        cat > "$DIAGNOSTICS_DIR/docker-compose-port-fix.patch" <<PATCH_EOF
 # Add this to your docker-compose.console.yml under the console service:
     ports:
-      - "3001:3001"
+      - "${API_PORT}:${API_PORT}"
 PATCH_EOF
                         log_manual "Apply the patch in $DIAGNOSTICS_DIR/docker-compose-port-fix.patch"
                         log_manual "Then run: docker compose -f docker-compose.console.yml up -d --force-recreate"
@@ -702,16 +702,16 @@ PATCH_EOF
             echo ""
             echo "Checking container network binding inside container..."
             # Run netstat inside the container
-            CONTAINER_NETSTAT=$(docker exec "$CONSOLE_CONTAINER" sh -c "netstat -tuln 2>/dev/null | grep ':3001' || ss -tuln 2>/dev/null | grep ':3001' || echo 'netstat/ss not available'" 2>/dev/null || echo "Cannot execute in container")
+            CONTAINER_NETSTAT=$(docker exec "$CONSOLE_CONTAINER" sh -c "netstat -tuln 2>/dev/null | grep ':${API_PORT}' || ss -tuln 2>/dev/null | grep ':${API_PORT}' || echo 'netstat/ss not available'" 2>/dev/null || echo "Cannot execute in container")
             
             if [ "$CONTAINER_NETSTAT" != "Cannot execute in container" ] && [ "$CONTAINER_NETSTAT" != "netstat/ss not available" ]; then
                 echo "Port binding inside container:"
                 echo "$CONTAINER_NETSTAT"
                 
-                # Check if bound to 0.0.0.0
-                if echo "$CONTAINER_NETSTAT" | grep -q "0.0.0.0:3001\|0.0.0.0:${API_PORT}\|\*:3001\|\*:${API_PORT}"; then
+                # Check if bound to 0.0.0.0 or * (all interfaces)
+                if echo "$CONTAINER_NETSTAT" | grep -qE "0\.0\.0\.0:${API_PORT}|\*:${API_PORT}"; then
                     echo "✓ Container binds to all interfaces (0.0.0.0 or *)"
-                elif echo "$CONTAINER_NETSTAT" | grep -q "127.0.0.1:3001\|127.0.0.1:${API_PORT}"; then
+                elif echo "$CONTAINER_NETSTAT" | grep -qE "127\.0\.0\.1:${API_PORT}"; then
                     log_issue "ERROR" "Container binds to localhost only (127.0.0.1)"
                     log_manual "Update server.js to bind to '0.0.0.0' instead of 'localhost' or '127.0.0.1'"
                 else

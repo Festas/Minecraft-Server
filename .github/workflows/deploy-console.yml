@@ -128,9 +128,6 @@ jobs:
             DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | head -1)
             
             if [ -n "$DIAG_DIR" ]; then
-              # Create pre-deployment summary
-              echo "PRE_DEPLOY_SUMMARY_DIR=$DIAG_DIR" >> $GITHUB_ENV
-              
               # Count issues
               if [ -f "$DIAG_DIR/issues.log" ]; then
                 ISSUE_COUNT=$(wc -l < "$DIAG_DIR/issues.log")
