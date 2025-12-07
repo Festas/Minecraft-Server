@@ -68,11 +68,20 @@ router.post('/parse-url', async (req, res) => {
  * Install plugin from URL
  */
 router.post('/install', async (req, res) => {
-    // Log the incoming request for debugging
+    // Log the incoming request for debugging with CSRF details
     console.log('[PLUGIN_INSTALL_API] Install request received:', {
         url: req.body.url,
         customName: req.body.customName,
         selectedOption: req.body.selectedOption,
+        sessionID: req.sessionID,
+        authenticated: req.session?.authenticated || false,
+        username: req.session?.username || 'NOT_SET',
+        csrf: {
+            headerValue: req.headers['csrf-token'] || req.headers['x-csrf-token'] || 'MISSING',
+            cookieValue: req.cookies['csrf-token'] || 'MISSING',
+            headerPresent: !!(req.headers['csrf-token'] || req.headers['x-csrf-token']),
+            cookiePresent: !!req.cookies['csrf-token']
+        },
         timestamp: new Date().toISOString()
     });
     

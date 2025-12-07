@@ -92,7 +92,49 @@ networks:
 #    from all interfaces. Port 3001 is exposed and mapped for external access.
 #
 # 7. Cookie Security Configuration:
-#    - Production (NODE_ENV=production): secure cookies enabled (HTTPS/SSL required)
-#    - Development/Test: Set NODE_ENV=development or COOKIE_SECURE=false for HTTP testing
-#    - CI/Diagnostics: Use COOKIE_SECURE=false to allow plain HTTP authentication
-#    - Without proper configuration, session cookies won't be sent over HTTP, breaking authentication
+#    IMPORTANT: Session and CSRF cookies use the 'secure' flag based on environment.
+#    
+#    Secure cookies (secure=true) are ONLY sent over HTTPS:
+#    - Required for production security
+#    - Prevents cookie theft over unencrypted connections
+#    - But BREAKS all HTTP testing (local dev, CI, curl, diagnostics)
+#    
+#    When secure=true with HTTP requests:
+#    - Browsers/curl do NOT send the cookie to the server
+#    - Server sees no cookies, creates new session every request
+#    - Authentication always fails (session not persisted)
+#    - CSRF tokens never match (different sessions)
+#    
+#    Configuration options:
+#    a) Production with HTTPS/SSL (recommended):
+#       - NODE_ENV=production (secure=true automatically)
+#       - Requires reverse proxy with SSL (Nginx/Caddy)
+#       
+#    b) Development/Testing with HTTP:
+#       - NODE_ENV=development or NODE_ENV=test (secure=false automatically)
+#       - Works with plain HTTP on localhost
+#       
+#    c) Override for HTTP testing in any environment:
+#       - COOKIE_SECURE=false (forces secure=false)
+#       - Use for CI/CD, curl diagnostics, HTTP testing
+#       - Example: Production deployment but testing API via HTTP before SSL is configured
+#    
+#    How to test:
+#    - Check backend logs for "[Session] Cookie configuration" and "[CSRF] Cookie configuration"
+#    - Both should show "secure: false" for HTTP or "secure: true" for HTTPS
+#    - Test with curl using -c/-b flags to save/send cookies
+#    
+#    Example curl workflow for HTTP testing:
+#      # Login and save cookies
+#      curl -c cookies.txt -X POST http://localhost:3001/api/login \
+#        -H "Content-Type: application/json" \
+#        -d '{"username":"admin","password":"your-password"}'
+#      
+#      # Get CSRF token (uses saved cookies, saves new CSRF cookie)
+#      curl -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token
+#      
+#      # Make authenticated request with CSRF token
+#      curl -b cookies.txt -H "CSRF-Token: <token>" http://localhost:3001/api/plugins
+#    
+#    See docs/SESSION-CSRF-DEBUG-IMPLEMENTATION.md for troubleshooting details.
+#    Without proper configuration, session cookies won't be sent over HTTP, breaking authentication
