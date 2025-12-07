@@ -216,6 +216,9 @@ jobs:
               echo 'MC_CONTAINER_NAME=minecraft-server'
               echo 'MC_SERVER_DIR=/minecraft'
               echo 'NODE_ENV=production'
+              # Allow cookies over HTTP for CI testing (secure: false)
+              # Without this, session cookies won't be sent over HTTP and auth will fail
+              echo 'COOKIE_SECURE=false'
             } > .env
             chmod 600 .env
 
