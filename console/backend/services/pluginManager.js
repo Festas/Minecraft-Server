@@ -9,6 +9,33 @@ const { parseUrl } = require('./urlParser');
 const PLUGINS_DIR = process.env.PLUGINS_DIR || path.join(process.cwd(), '../../plugins');
 const PLUGINS_JSON = process.env.PLUGINS_JSON || path.join(process.cwd(), '../../plugins.json');
 const HISTORY_FILE = path.join(__dirname, '../data/plugin-history.json');
+const INSTALL_ERRORS_LOG = path.join(__dirname, '../data/install-errors.log');
+
+/**
+ * Log plugin install attempt to install-errors.log
+ * Logs all install attempts (success and failure) for debugging
+ */
+async function logInstallAttempt(logEntry) {
+    try {
+        const timestamp = new Date().toISOString();
+        const logLine = JSON.stringify({
+            timestamp,
+            ...logEntry
+        }) + '\n';
+        
+        // Ensure data directory exists
+        const dataDir = path.dirname(INSTALL_ERRORS_LOG);
+        await fs.mkdir(dataDir, { recursive: true });
+        
+        // Append to log file
+        await fs.appendFile(INSTALL_ERRORS_LOG, logLine, 'utf8');
+        
+        // Also log to console for immediate visibility
+        console.log(`[PLUGIN_INSTALL] ${JSON.stringify(logEntry)}`);
+    } catch (error) {
+        console.error('Failed to write to install-errors.log:', error.message);
+    }
+}
 
 /**
  * Download a file from URL with timeout protection
@@ -214,24 +241,65 @@ async function getHistory() {
  * Install plugin from URL
  */
 async function installFromUrl(url, customName = null, onProgress = null) {
+    const startTime = Date.now();
+    
+    // Log the install attempt at the start
+    await logInstallAttempt({
+        action: 'install_attempt',
+        url,
+        customName,
+        status: 'started'
+    });
+    
     try {
         // Validate plugins directory first
         try {
             await fs.access(PLUGINS_DIR);
             await fs.access(PLUGINS_DIR, fs.constants.W_OK);
         } catch (accessError) {
-            throw new Error(`Plugins directory not accessible or not writable: ${PLUGINS_DIR}`);
+            const permissionError = `Plugins directory not accessible or not writable: ${PLUGINS_DIR}`;
+            
+            // Log permission error
+            await logInstallAttempt({
+                action: 'install_attempt',
+                url,
+                customName,
+                status: 'failed',
+                error: permissionError,
+                errorType: 'permission_error',
+                pluginsDir: PLUGINS_DIR,
+                duration_ms: Date.now() - startTime
+            });
+            
+            throw new Error(permissionError);
         }
         
         // Parse URL
         const urlInfo = await parseUrl(url);
         
         if (urlInfo.type === 'spigot') {
+            await logInstallAttempt({
+                action: 'install_attempt',
+                url,
+                customName,
+                status: 'failed',
+                error: urlInfo.error,
+                errorType: 'unsupported_url_type',
+                duration_ms: Date.now() - startTime
+            });
             throw new Error(urlInfo.error);
         }
         
         if (urlInfo.type === 'github-release-multiple') {
             // Return options for user to choose
+            await logInstallAttempt({
+                action: 'install_attempt',
+                url,
+                customName,
+                status: 'multiple_options',
+                optionsCount: urlInfo.options?.length || 0,
+                duration_ms: Date.now() - startTime
+            });
             return {
                 status: 'multiple-options',
                 options: urlInfo.options
@@ -247,6 +315,18 @@ async function installFromUrl(url, customName = null, onProgress = null) {
             // Validate JAR
             if (!isValidJar(tempFile)) {
                 await fs.unlink(tempFile);
+                
+                await logInstallAttempt({
+                    action: 'install_attempt',
+                    url,
+                    customName,
+                    status: 'failed',
+                    error: 'Invalid plugin file: Missing or corrupt plugin.yml',
+                    errorType: 'invalid_jar',
+                    downloadUrl: urlInfo.downloadUrl,
+                    duration_ms: Date.now() - startTime
+                });
+                
                 throw new Error('Invalid plugin file: Missing or corrupt plugin.yml');
             }
             
@@ -265,6 +345,18 @@ async function installFromUrl(url, customName = null, onProgress = null) {
                 const comparison = compareVersions(newVersion, currentVersion);
                 
                 await fs.unlink(tempFile);
+                
+                await logInstallAttempt({
+                    action: 'install_attempt',
+                    url,
+                    customName,
+                    status: 'plugin_exists',
+                    pluginName,
+                    currentVersion,
+                    newVersion,
+                    comparison,
+                    duration_ms: Date.now() - startTime
+                });
                 
                 return {
                     status: 'exists',
@@ -285,7 +377,7 @@ async function installFromUrl(url, customName = null, onProgress = null) {
             
             // Add to plugins.json
             const plugins = await getAllPlugins();
-            plugins.push({
+            const newPluginEntry = {
                 name: pluginName,
                 enabled: true,
                 category: 'custom',
@@ -294,7 +386,8 @@ async function installFromUrl(url, customName = null, onProgress = null) {
                 version: metadata.version,
                 description: metadata.description,
                 installed_at: new Date().toISOString()
-            });
+            };
+            plugins.push(newPluginEntry);
             
             await updatePluginsJson(plugins);
             
@@ -304,6 +397,22 @@ async function installFromUrl(url, customName = null, onProgress = null) {
                 plugin: pluginName,
                 version: metadata.version,
                 details: `Installed from URL`
+            });
+            
+            // Log successful installation with all details
+            await logInstallAttempt({
+                action: 'install_attempt',
+                url,
+                customName,
+                status: 'success',
+                pluginName,
+                version: metadata.version,
+                jarFile: finalFilename,
+                jarPath: finalPath,
+                addedToPluginsJson: true,
+                pluginEntry: newPluginEntry,
+                totalPlugins: plugins.length,
+                duration_ms: Date.now() - startTime
             });
             
             return {
@@ -327,6 +436,22 @@ async function installFromUrl(url, customName = null, onProgress = null) {
             error: error.message,
             stack: error.stack
         });
+        
+        // Log the error if not already logged
+        if (!error.message.includes('not accessible or not writable') && 
+            !error.message.includes('Invalid plugin file')) {
+            await logInstallAttempt({
+                action: 'install_attempt',
+                url,
+                customName,
+                status: 'failed',
+                error: error.message,
+                errorType: 'unexpected_error',
+                stack: error.stack,
+                duration_ms: Date.now() - startTime
+            });
+        }
+        
         throw new Error(`Installation failed: ${error.message}`);
     }
 }
@@ -335,6 +460,17 @@ async function installFromUrl(url, customName = null, onProgress = null) {
  * Proceed with installation when plugin exists (update/downgrade/reinstall)
  */
 async function proceedWithInstall(url, pluginName, action, onProgress = null) {
+    const startTime = Date.now();
+    
+    // Log the proceed install attempt at the start
+    await logInstallAttempt({
+        action: 'proceed_install_attempt',
+        url,
+        pluginName,
+        actionType: action,
+        status: 'started'
+    });
+    
     try {
         const urlInfo = await parseUrl(url);
         const tempFile = path.join(PLUGINS_DIR, `.temp-${Date.now()}.jar`);
@@ -344,6 +480,18 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
             
             if (!isValidJar(tempFile)) {
                 await fs.unlink(tempFile);
+                
+                await logInstallAttempt({
+                    action: 'proceed_install_attempt',
+                    url,
+                    pluginName,
+                    actionType: action,
+                    status: 'failed',
+                    error: 'Invalid plugin file',
+                    errorType: 'invalid_jar',
+                    duration_ms: Date.now() - startTime
+                });
+                
                 throw new Error('Invalid plugin file');
             }
             
@@ -352,9 +500,11 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
             const jarPath = path.join(PLUGINS_DIR, jarFilename);
             
             // Create backup
+            let backupCreated = false;
             if (fsSync.existsSync(jarPath)) {
                 const backupPath = `${jarPath}.backup`;
                 await fs.copyFile(jarPath, backupPath);
+                backupCreated = true;
             }
             
             // Replace JAR
@@ -364,8 +514,9 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
             const plugins = await getAllPlugins();
             const pluginIndex = plugins.findIndex(p => p.name.toLowerCase() === pluginName.toLowerCase());
             
+            let updatedPluginEntry = null;
             if (pluginIndex !== -1) {
-                plugins[pluginIndex] = {
+                updatedPluginEntry = {
                     ...plugins[pluginIndex],
                     version: metadata.version,
                     description: metadata.description,
@@ -373,6 +524,7 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
                     source: 'url',
                     updated_at: new Date().toISOString()
                 };
+                plugins[pluginIndex] = updatedPluginEntry;
                 await updatePluginsJson(plugins);
             }
             
@@ -382,6 +534,22 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
                 plugin: pluginName,
                 version: metadata.version,
                 details: `${action} from URL`
+            });
+            
+            // Log successful update with all details
+            await logInstallAttempt({
+                action: 'proceed_install_attempt',
+                url,
+                pluginName,
+                actionType: action,
+                status: 'success',
+                version: metadata.version,
+                jarFile: jarFilename,
+                jarPath,
+                backupCreated,
+                updatedInPluginsJson: pluginIndex !== -1,
+                pluginEntry: updatedPluginEntry,
+                duration_ms: Date.now() - startTime
             });
             
             return {
@@ -400,6 +568,21 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
             throw error;
         }
     } catch (error) {
+        // Log the error if not already logged
+        if (!error.message.includes('Invalid plugin file')) {
+            await logInstallAttempt({
+                action: 'proceed_install_attempt',
+                url,
+                pluginName,
+                actionType: action,
+                status: 'failed',
+                error: error.message,
+                errorType: 'unexpected_error',
+                stack: error.stack,
+                duration_ms: Date.now() - startTime
+            });
+        }
+        
         throw new Error(`Installation failed: ${error.message}`);
     }
 }
