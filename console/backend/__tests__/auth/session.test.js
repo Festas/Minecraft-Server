@@ -1,14 +1,13 @@
 /**
  * Session Cookie Security Configuration Tests
  * 
- * These tests verify that the session cookie security settings
- * are correctly configured based on NODE_ENV and COOKIE_SECURE.
- * 
- * Since express-session doesn't expose internal configuration,
- * we test by verifying the console output on module load.
+ * These tests verify that the cookie security utility function
+ * correctly determines secure flag based on NODE_ENV and COOKIE_SECURE.
  */
 
-describe('Session Cookie Configuration', () => {
+const { shouldUseSecureCookies, getCookieSecurityWarning, logCookieConfiguration } = require('../../utils/cookieSecurity');
+
+describe('Cookie Security Configuration', () => {
     let originalNodeEnv;
     let originalCookieSecure;
 
@@ -16,49 +15,76 @@ describe('Session Cookie Configuration', () => {
         // Save original environment
         originalNodeEnv = process.env.NODE_ENV;
         originalCookieSecure = process.env.COOKIE_SECURE;
-        
-        // Clear require cache to force re-evaluation
-        jest.resetModules();
     });
 
     afterEach(() => {
         // Restore original environment
         process.env.NODE_ENV = originalNodeEnv;
         process.env.COOKIE_SECURE = originalCookieSecure;
-        
-        // Clear console mocks
-        jest.restoreAllMocks();
     });
 
-    describe('Cookie secure flag based on NODE_ENV', () => {
-        it('should log secure: false in development environment', () => {
+    describe('shouldUseSecureCookies()', () => {
+        it('should return false in development environment', () => {
             process.env.NODE_ENV = 'development';
             delete process.env.COOKIE_SECURE;
             
-            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-            
-            require('../../auth/session');
-            
-            expect(consoleSpy).toHaveBeenCalledWith(
-                '[Session] Cookie configuration:',
-                expect.objectContaining({
-                    secure: false,
-                    nodeEnv: 'development',
-                    cookieSecureOverride: 'not set',
-                    warning: 'HTTP allowed - cookies work without SSL'
-                })
-            );
-            
-            consoleSpy.mockRestore();
+            expect(shouldUseSecureCookies()).toBe(false);
         });
 
-        it('should log secure: false in test environment', () => {
+        it('should return false in test environment', () => {
+            process.env.NODE_ENV = 'test';
+            delete process.env.COOKIE_SECURE;
+            
+            expect(shouldUseSecureCookies()).toBe(false);
+        });
+
+        it('should return true in production environment', () => {
+            process.env.NODE_ENV = 'production';
+            delete process.env.COOKIE_SECURE;
+            
+            expect(shouldUseSecureCookies()).toBe(true);
+        });
+
+        it('should return false when COOKIE_SECURE=false in production', () => {
+            process.env.NODE_ENV = 'production';
+            process.env.COOKIE_SECURE = 'false';
+            
+            expect(shouldUseSecureCookies()).toBe(false);
+        });
+
+        it('should return true when COOKIE_SECURE=true in development', () => {
+            process.env.NODE_ENV = 'development';
+            process.env.COOKIE_SECURE = 'true';
+            
+            expect(shouldUseSecureCookies()).toBe(true);
+        });
+
+        it('should return false when NODE_ENV is not set', () => {
+            delete process.env.NODE_ENV;
+            delete process.env.COOKIE_SECURE;
+            
+            expect(shouldUseSecureCookies()).toBe(false);
+        });
+    });
+
+    describe('getCookieSecurityWarning()', () => {
+        it('should return HTTPS warning for secure cookies', () => {
+            expect(getCookieSecurityWarning(true)).toBe('HTTPS/SSL required for cookies to work');
+        });
+
+        it('should return HTTP allowed warning for non-secure cookies', () => {
+            expect(getCookieSecurityWarning(false)).toBe('HTTP allowed - cookies work without SSL');
+        });
+    });
+
+    describe('logCookieConfiguration()', () => {
+        it('should log configuration with correct format', () => {
             process.env.NODE_ENV = 'test';
             delete process.env.COOKIE_SECURE;
             
             const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
             
-            require('../../auth/session');
+            logCookieConfiguration('Session', false);
             
             expect(consoleSpy).toHaveBeenCalledWith(
                 '[Session] Cookie configuration:',
@@ -72,80 +98,17 @@ describe('Session Cookie Configuration', () => {
             
             consoleSpy.mockRestore();
         });
-
-        it('should log secure: true in production environment', () => {
-            process.env.NODE_ENV = 'production';
-            delete process.env.COOKIE_SECURE;
-            
-            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-            
-            require('../../auth/session');
-            
-            expect(consoleSpy).toHaveBeenCalledWith(
-                '[Session] Cookie configuration:',
-                expect.objectContaining({
-                    secure: true,
-                    nodeEnv: 'production',
-                    cookieSecureOverride: 'not set',
-                    warning: 'HTTPS/SSL required for cookies to work'
-                })
-            );
-            
-            consoleSpy.mockRestore();
-        });
-    });
-
-    describe('Cookie secure flag with COOKIE_SECURE override', () => {
-        it('should log secure: false when COOKIE_SECURE=false in production', () => {
-            process.env.NODE_ENV = 'production';
-            process.env.COOKIE_SECURE = 'false';
-            
-            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-            
-            require('../../auth/session');
-            
-            expect(consoleSpy).toHaveBeenCalledWith(
-                '[Session] Cookie configuration:',
-                expect.objectContaining({
-                    secure: false,
-                    nodeEnv: 'production',
-                    cookieSecureOverride: 'false',
-                    warning: 'HTTP allowed - cookies work without SSL'
-                })
-            );
-            
-            consoleSpy.mockRestore();
-        });
-
-        it('should log secure: true when COOKIE_SECURE=true in development', () => {
-            process.env.NODE_ENV = 'development';
-            process.env.COOKIE_SECURE = 'true';
-            
-            const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-            
-            require('../../auth/session');
-            
-            expect(consoleSpy).toHaveBeenCalledWith(
-                '[Session] Cookie configuration:',
-                expect.objectContaining({
-                    secure: true,
-                    nodeEnv: 'development',
-                    cookieSecureOverride: 'true',
-                    warning: 'HTTPS/SSL required for cookies to work'
-                })
-            );
-            
-            consoleSpy.mockRestore();
-        });
     });
 
     describe('Session middleware creation', () => {
-        it('should successfully create session middleware', () => {
+        it('should successfully create session middleware with utility', () => {
             process.env.NODE_ENV = 'test';
             delete process.env.COOKIE_SECURE;
             
             jest.spyOn(console, 'log').mockImplementation();
             
+            // Clear module cache to ensure fresh load
+            jest.resetModules();
             const { sessionMiddleware, getSessionMiddleware } = require('../../auth/session');
             
             expect(sessionMiddleware).toBeDefined();
@@ -153,6 +116,8 @@ describe('Session Cookie Configuration', () => {
             expect(getSessionMiddleware).toBeDefined();
             expect(typeof getSessionMiddleware).toBe('function');
             expect(getSessionMiddleware()).toBe(sessionMiddleware);
+            
+            jest.restoreAllMocks();
         });
     });
 });

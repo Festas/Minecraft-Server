@@ -11,6 +11,9 @@ const path = require('path');
 const morgan = require('morgan');
 const crypto = require('crypto');
 
+// Import utilities
+const { shouldUseSecureCookies, logCookieConfiguration } = require('./utils/cookieSecurity');
+
 // Import services
 const rconService = require('./services/rcon');
 const logsService = require('./services/logs');
@@ -100,29 +103,9 @@ if (!csrfSecret) {
     process.exit(1);
 }
 
-/**
- * Determine if secure cookies should be used for CSRF tokens.
- * MUST match session cookie configuration to avoid mismatched cookie behavior.
- * See auth/session.js for detailed explanation of why secure: false is required for HTTP.
- */
-function shouldUseSecureCsrfCookies() {
-    // Allow explicit override for testing/diagnostics
-    if (process.env.COOKIE_SECURE !== undefined) {
-        return process.env.COOKIE_SECURE === 'true';
-    }
-    
-    // Only use secure cookies in production (assumes HTTPS/SSL is configured)
-    return process.env.NODE_ENV === 'production';
-}
-
-const useSecureCsrfCookies = shouldUseSecureCsrfCookies();
-
-console.log('[CSRF] Cookie configuration:', {
-    secure: useSecureCsrfCookies,
-    nodeEnv: process.env.NODE_ENV || 'development',
-    cookieSecureOverride: process.env.COOKIE_SECURE || 'not set',
-    warning: useSecureCsrfCookies ? 'HTTPS/SSL required for CSRF cookies' : 'HTTP allowed - CSRF cookies work without SSL'
-});
+// Use the same cookie security configuration as session cookies
+const useSecureCsrfCookies = shouldUseSecureCookies();
+logCookieConfiguration('CSRF', useSecureCsrfCookies);
 
 const {
     generateToken, // Generates a CSRF token
