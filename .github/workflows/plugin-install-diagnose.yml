@@ -123,11 +123,10 @@ jobs:
             echo "## 3. Listing files in plugins directory"
             echo "------------------------------------------------"
             if [ -d "$PLUGINS_DIR" ]; then
-              echo "Total files: $(ls -1 "$PLUGINS_DIR" | wc -l)"
-              ls -lh "$PLUGINS_DIR" | head -20
-
-              # Save full listing for later comparison
+              # Save full listing for later comparison and display
               ls -lh "$PLUGINS_DIR" > /tmp/plugins-dir-before.txt
+              echo "Total files: $(wc -l < /tmp/plugins-dir-before.txt)"
+              head -20 /tmp/plugins-dir-before.txt
             else
               echo "No plugins directory found"
             fi
@@ -230,7 +229,8 @@ jobs:
 
             # Step 1: Authenticate
             echo "Step 1: Authenticating with admin credentials..."
-            LOGIN_RESPONSE=$(printf '{"username":"%s","password":"%s"}' "${ADMIN_USER}" "${ADMIN_PASS}" | \
+            LOGIN_RESPONSE=$(jq -n --arg user "${ADMIN_USER}" --arg pass "${ADMIN_PASS}" \
+              '{username: $user, password: $pass}' | \
               curl -s -c /tmp/cookies.txt -w "\n%{http_code}" \
               -X POST http://localhost:3001/api/login \
               -H "Content-Type: application/json" \
@@ -646,7 +646,8 @@ jobs:
             set +e
 
             echo "Authenticating for cleanup..."
-            LOGIN_RESPONSE=$(printf '{"username":"%s","password":"%s"}' "${ADMIN_USER}" "${ADMIN_PASS}" | \
+            LOGIN_RESPONSE=$(jq -n --arg user "${ADMIN_USER}" --arg pass "${ADMIN_PASS}" \
+              '{username: $user, password: $pass}' | \
               curl -s -c /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
               -X POST http://localhost:3001/api/login \
               -H "Content-Type: application/json" \
