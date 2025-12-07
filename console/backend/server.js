@@ -222,9 +222,15 @@ async function initializeServices() {
     }
 }
 
-// Start server
-server.listen(PORT, () => {
-    console.log(`Console server running on port ${PORT}`);
+// Start server - explicitly bind to 0.0.0.0 to accept connections from all interfaces
+// This is required for Docker containers to be accessible from outside the container
+const HOST = '0.0.0.0';
+server.listen(PORT, HOST, () => {
+    console.log(`Console server running on ${HOST}:${PORT}`);
+    console.log(`API endpoints available at http://${HOST}:${PORT}/api`);
+    console.log(`Health check: http://${HOST}:${PORT}/health`);
+    console.log(`Plugin API: http://${HOST}:${PORT}/api/plugins`);
+    console.log(`Plugin Health: http://${HOST}:${PORT}/api/plugins/health`);
     initializeServices();
 });
 

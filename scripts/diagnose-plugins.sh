@@ -552,6 +552,104 @@ echo ""
 } | tee "$DIAGNOSTICS_DIR/05-backend-process.log"
 
 echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "SECTION 6: Network Binding and Port Check"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+{
+    echo "Verifying port binding and network configuration..."
+    echo ""
+    
+    # Check if port 3001 is listening
+    if command -v netstat &> /dev/null; then
+        echo "Checking port ${API_PORT} with netstat..."
+        NETSTAT_OUTPUT=$(netstat -tuln 2>/dev/null | grep ":${API_PORT}" || echo "")
+        if [ -n "$NETSTAT_OUTPUT" ]; then
+            echo "✓ Port ${API_PORT} is listening:"
+            echo "$NETSTAT_OUTPUT"
+            
+            # Check if it's bound to 0.0.0.0 (all interfaces)
+            if echo "$NETSTAT_OUTPUT" | grep -q "0.0.0.0:${API_PORT}"; then
+                echo "✓ Port is correctly bound to 0.0.0.0 (all interfaces)"
+            elif echo "$NETSTAT_OUTPUT" | grep -q ":::${API_PORT}"; then
+                echo "✓ Port is bound to IPv6 all interfaces (:::)"
+            elif echo "$NETSTAT_OUTPUT" | grep -q "127.0.0.1:${API_PORT}"; then
+                log_issue "ERROR" "Port ${API_PORT} is bound to localhost only (127.0.0.1)"
+                echo "  This prevents external connections to the API"
+                log_manual "Update server.js to bind to 0.0.0.0 instead of localhost"
+            else
+                echo "  Port binding address: $(echo "$NETSTAT_OUTPUT" | awk '{print $4}')"
+            fi
+        else
+            log_issue "WARNING" "Port ${API_PORT} is not listening"
+            log_manual "Ensure the backend server is running and listening on port ${API_PORT}"
+        fi
+    elif command -v ss &> /dev/null; then
+        echo "Checking port ${API_PORT} with ss..."
+        SS_OUTPUT=$(ss -tuln 2>/dev/null | grep ":${API_PORT}" || echo "")
+        if [ -n "$SS_OUTPUT" ]; then
+            echo "✓ Port ${API_PORT} is listening:"
+            echo "$SS_OUTPUT"
+            
+            # Check if it's bound to 0.0.0.0 (all interfaces)
+            if echo "$SS_OUTPUT" | grep -q "0.0.0.0:${API_PORT}"; then
+                echo "✓ Port is correctly bound to 0.0.0.0 (all interfaces)"
+            elif echo "$SS_OUTPUT" | grep -q "\*:${API_PORT}"; then
+                echo "✓ Port is bound to all interfaces (*)"
+            elif echo "$SS_OUTPUT" | grep -q ":::${API_PORT}"; then
+                echo "✓ Port is bound to IPv6 all interfaces (:::)"
+            elif echo "$SS_OUTPUT" | grep -q "127.0.0.1:${API_PORT}"; then
+                log_issue "ERROR" "Port ${API_PORT} is bound to localhost only (127.0.0.1)"
+                echo "  This prevents external connections to the API"
+                log_manual "Update server.js to bind to 0.0.0.0 instead of localhost"
+            else
+                echo "  Port binding: $(echo "$SS_OUTPUT" | awk '{print $5}')"
+            fi
+        else
+            log_issue "WARNING" "Port ${API_PORT} is not listening"
+            log_manual "Ensure the backend server is running and listening on port ${API_PORT}"
+        fi
+    else
+        echo "  Neither netstat nor ss available, skipping port binding check"
+    fi
+    
+    echo ""
+    
+    # Check Docker port mapping if applicable
+    if command -v docker &> /dev/null; then
+        CONSOLE_CONTAINER=$(docker ps --filter "name=minecraft-console" --format "{{.Names}}" 2>/dev/null || echo "")
+        if [ -n "$CONSOLE_CONTAINER" ]; then
+            echo "Checking Docker port mapping for $CONSOLE_CONTAINER..."
+            PORT_MAPPING=$(docker port "$CONSOLE_CONTAINER" 2>/dev/null | grep "${API_PORT}" || echo "")
+            if [ -n "$PORT_MAPPING" ]; then
+                echo "✓ Docker port mapping configured:"
+                echo "  $PORT_MAPPING"
+                
+                # Verify the mapping is to 0.0.0.0 or all interfaces
+                if echo "$PORT_MAPPING" | grep -q "0.0.0.0:${API_PORT}"; then
+                    echo "✓ Port is mapped to all host interfaces (0.0.0.0)"
+                else
+                    echo "  Port mapping: $PORT_MAPPING"
+                fi
+            else
+                log_issue "WARNING" "No Docker port mapping found for port ${API_PORT}"
+                log_manual "Check docker-compose.console.yml has ports: - '3001:3001' configured"
+            fi
+            
+            echo ""
+            echo "Checking container logs for binding messages..."
+            BIND_LOGS=$(docker logs "$CONSOLE_CONTAINER" 2>&1 | grep -i "running on\|listening\|bind" | tail -5 || echo "")
+            if [ -n "$BIND_LOGS" ]; then
+                echo "$BIND_LOGS"
+            else
+                echo "  No binding-related log messages found"
+            fi
+        fi
+    fi
+} | tee "$DIAGNOSTICS_DIR/06-network-binding.log"
+
+echo ""
 echo "============================================================"
 echo "DIAGNOSTIC SUMMARY"
 echo "============================================================"

@@ -369,6 +369,118 @@ curl http://localhost:3001/api/plugins/health
 - Check browser console for specific errors
 - Verify authentication (may need to re-login)
 
+### API Not Reachable / Connection Refused
+
+**Symptoms:**
+- Cannot access `http://localhost:3001/api/plugins`
+- Cannot access `http://localhost:3001/api/plugins/health`
+- Connection refused or timeout errors
+- Container is running but API doesn't respond
+
+**Common Causes & Solutions:**
+
+1. **Backend not binding to correct address**
+   - **Check:** Server should bind to `0.0.0.0:3001` (all interfaces), not `127.0.0.1`
+   - **Verify:** Look for "Console server running on 0.0.0.0:3001" in container logs:
+     ```bash
+     docker logs minecraft-console | grep "running on"
+     ```
+   - **Fix:** Update `server.js` to explicitly bind to `0.0.0.0`:
+     ```javascript
+     server.listen(PORT, '0.0.0.0', () => { ... });
+     ```
+
+2. **Docker port mapping not configured**
+   - **Check:** Verify port mapping exists:
+     ```bash
+     docker port minecraft-console
+     # Should show: 3001/tcp -> 0.0.0.0:3001
+     ```
+   - **Fix:** Update `docker-compose.console.yml`:
+     ```yaml
+     ports:
+       - "3001:3001"
+     ```
+   - Recreate container: `docker compose -f docker-compose.console.yml up -d --force-recreate`
+
+3. **Port bound to localhost only (127.0.0.1)**
+   - **Symptoms:** API works from inside container but not from host/SSH
+   - **Check binding:** From host machine:
+     ```bash
+     # On host (via SSH)
+     netstat -tuln | grep 3001
+     # or
+     ss -tuln | grep 3001
+     # Should show 0.0.0.0:3001, not 127.0.0.1:3001
+     ```
+   - **Test from inside container:**
+     ```bash
+     docker exec minecraft-console curl -s http://localhost:3001/health
+     # Should return: {"status":"ok"}
+     ```
+   - **Test from host:**
+     ```bash
+     curl -s http://localhost:3001/health
+     # Should also work if bound correctly
+     ```
+
+4. **Missing CSRF_SECRET environment variable**
+   - **Symptoms:** Container starts but server crashes immediately
+   - **Check logs:**
+     ```bash
+     docker logs minecraft-console
+     # Look for: "ERROR: CSRF_SECRET environment variable must be set!"
+     ```
+   - **Fix:** Add to `.env` file:
+     ```bash
+     CSRF_SECRET=$(openssl rand -base64 32)
+     ```
+   - Recreate container: `docker compose -f docker-compose.console.yml up -d --force-recreate`
+
+5. **Firewall blocking port 3001**
+   - **Check:** Verify firewall rules:
+     ```bash
+     sudo ufw status | grep 3001
+     # or
+     sudo iptables -L -n | grep 3001
+     ```
+   - **Fix:** Allow port 3001:
+     ```bash
+     sudo ufw allow 3001/tcp
+     ```
+
+6. **Network diagnostics**
+   - Run the diagnostic script with network checks:
+     ```bash
+     ./scripts/diagnose-plugins.sh diagnose
+     ```
+   - Check section "Network Binding and Port Check" in output
+   - Look for binding to `0.0.0.0` vs `127.0.0.1`
+
+**Quick Test Checklist:**
+```bash
+# 1. Check container is running
+docker ps | grep minecraft-console
+
+# 2. Check port mapping
+docker port minecraft-console
+
+# 3. Check binding from container logs
+docker logs minecraft-console | grep "running on"
+
+# 4. Test from inside container
+docker exec minecraft-console curl -s http://localhost:3001/health
+
+# 5. Test from host
+curl -s http://localhost:3001/health
+
+# 6. Check port binding on host
+netstat -tuln | grep 3001   # or: ss -tuln | grep 3001
+
+# 7. Run diagnostics
+./scripts/diagnose-plugins.sh diagnose
+```
+
 ## Diagnostic Tools
 
 The plugin manager includes comprehensive diagnostic scripts to help troubleshoot issues.
@@ -383,6 +495,8 @@ This script performs basic health checks and can automatically fix common issues
 - Checks plugins directory presence and permissions
 - Validates `plugin-history.json`
 - Tests API backend reachability
+- **Verifies network port binding (0.0.0.0 vs 127.0.0.1)**
+- **Checks Docker port mapping configuration**
 - Auto-fixes missing or corrupt files
 - Fixes directory permission problems
 
