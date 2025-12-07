@@ -150,10 +150,22 @@ app.get('/api/csrf-token', (req, res) => {
     
     const token = generateToken(req, res);
     
-    console.log('[CSRF] Token generated:', {
+    // Explicitly set the CSRF cookie to ensure it's sent to the client
+    // The csrf-csrf middleware expects both the cookie AND the header for double-submit pattern
+    // Using the same cookie name as configured in doubleCsrf above ('csrf-token')
+    res.cookie('csrf-token', token, {
+        sameSite: 'lax', // Must match session cookie for consistency
+        path: '/', // Ensure cookie is available for all paths
+        secure: useSecureCsrfCookies, // HTTPS only in production, HTTP allowed in dev/test/CI
+        httpOnly: true // Prevent XSS attacks
+    });
+    
+    console.log('[CSRF] Token generated and cookie set:', {
         sessionID: req.sessionID,
         tokenLength: token.length,
-        tokenPrefix: token.substring(0, 8) + '...'
+        tokenPrefix: token.substring(0, 8) + '...',
+        cookieName: 'csrf-token',
+        secure: useSecureCsrfCookies
     });
     
     res.json({ csrfToken: token });
