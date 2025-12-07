@@ -271,7 +271,9 @@ async function installFromUrl(url, customName = null, onProgress = null) {
                 duration_ms: Date.now() - startTime
             });
             
-            throw new Error(permissionError);
+            const error = new Error(permissionError);
+            error.logged = true; // Mark as already logged
+            throw error;
         }
         
         // Parse URL
@@ -287,7 +289,9 @@ async function installFromUrl(url, customName = null, onProgress = null) {
                 errorType: 'unsupported_url_type',
                 duration_ms: Date.now() - startTime
             });
-            throw new Error(urlInfo.error);
+            const error = new Error(urlInfo.error);
+            error.logged = true; // Mark as already logged
+            throw error;
         }
         
         if (urlInfo.type === 'github-release-multiple') {
@@ -327,7 +331,9 @@ async function installFromUrl(url, customName = null, onProgress = null) {
                     duration_ms: Date.now() - startTime
                 });
                 
-                throw new Error('Invalid plugin file: Missing or corrupt plugin.yml');
+                const error = new Error('Invalid plugin file: Missing or corrupt plugin.yml');
+                error.logged = true; // Mark as already logged
+                throw error;
             }
             
             // Parse plugin metadata
@@ -437,9 +443,8 @@ async function installFromUrl(url, customName = null, onProgress = null) {
             stack: error.stack
         });
         
-        // Log the error if not already logged
-        if (!error.message.includes('not accessible or not writable') && 
-            !error.message.includes('Invalid plugin file')) {
+        // Log the error if not already logged (check for custom property)
+        if (!error.logged) {
             await logInstallAttempt({
                 action: 'install_attempt',
                 url,
@@ -492,7 +497,9 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
                     duration_ms: Date.now() - startTime
                 });
                 
-                throw new Error('Invalid plugin file');
+                const error = new Error('Invalid plugin file');
+                error.logged = true; // Mark as already logged
+                throw error;
             }
             
             const metadata = parsePluginYml(tempFile);
@@ -568,8 +575,8 @@ async function proceedWithInstall(url, pluginName, action, onProgress = null) {
             throw error;
         }
     } catch (error) {
-        // Log the error if not already logged
-        if (!error.message.includes('Invalid plugin file')) {
+        // Log the error if not already logged (check for custom property)
+        if (!error.logged) {
             await logInstallAttempt({
                 action: 'proceed_install_attempt',
                 url,
