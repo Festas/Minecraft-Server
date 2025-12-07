@@ -226,12 +226,43 @@ async function initializeServices() {
 // This is required for Docker containers to be accessible from outside the container
 const HOST = '0.0.0.0';
 server.listen(PORT, HOST, () => {
-    console.log(`Console server running on ${HOST}:${PORT}`);
-    console.log(`API endpoints available at http://${HOST}:${PORT}/api`);
-    console.log(`Health check: http://${HOST}:${PORT}/health`);
-    console.log(`Plugin API: http://${HOST}:${PORT}/api/plugins`);
-    console.log(`Plugin Health: http://${HOST}:${PORT}/api/plugins/health`);
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('✓ Console Server Started Successfully');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log(`Server binding:     ${HOST}:${PORT}`);
+    console.log(`Node environment:   ${process.env.NODE_ENV || 'development'}`);
+    console.log(`API base URL:       http://${HOST}:${PORT}/api`);
+    console.log(`Health endpoint:    http://${HOST}:${PORT}/health`);
+    console.log(`Plugin API:         http://${HOST}:${PORT}/api/plugins`);
+    console.log(`Plugin Health:      http://${HOST}:${PORT}/api/plugins/health`);
+    console.log('═══════════════════════════════════════════════════════════');
     initializeServices();
+});
+
+// Handle server startup errors
+server.on('error', (error) => {
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('✗ Server Failed to Start');
+    console.error('═══════════════════════════════════════════════════════════');
+    
+    if (error.code === 'EADDRINUSE') {
+        console.error(`ERROR: Port ${PORT} is already in use`);
+        console.error(`Solution: Stop the process using port ${PORT} or use a different port`);
+        console.error(`Check with: lsof -i :${PORT} or netstat -tuln | grep ${PORT}`);
+    } else if (error.code === 'EACCES') {
+        console.error(`ERROR: Permission denied to bind to port ${PORT}`);
+        console.error(`Solution: Use a port >= 1024 or run with elevated permissions`);
+    } else if (error.code === 'EADDRNOTAVAIL') {
+        console.error(`ERROR: Cannot bind to address ${HOST}`);
+        console.error(`Solution: Verify network interface configuration`);
+    } else {
+        console.error(`ERROR: ${error.code || 'Unknown error'}`);
+        console.error(`Message: ${error.message}`);
+    }
+    
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('Stack trace:', error.stack);
+    process.exit(1);
 });
 
 // Graceful shutdown

@@ -55,6 +55,9 @@ jobs:
       contents: read
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Validate required secrets
         run: |
           MISSING_SECRETS=()
@@ -94,7 +97,85 @@ jobs:
 
           echo "✓ All required secrets are configured"
 
-      - name: Deploy to server
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload diagnostic scripts
+        run: |
+          echo "Uploading diagnostic scripts to server..."
+          scp -i ~/.ssh/id_rsa scripts/diagnose-plugins.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/deploy/minecraft-server/scripts/
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "chmod +x /home/deploy/minecraft-server/scripts/diagnose-plugins.sh"
+
+      - name: Pre-deployment diagnostics and auto-fix
+        id: pre_deploy_check
+        run: |
+          echo "Running pre-deployment diagnostics..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /home/deploy/minecraft-server
+            
+            # Run diagnostics in fix mode
+            ./scripts/diagnose-plugins.sh fix || true
+            
+            # Get the latest diagnostics directory
+            DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | head -1)
+            
+            if [ -n "$DIAG_DIR" ]; then
+              # Create pre-deployment summary
+              echo "PRE_DEPLOY_SUMMARY_DIR=$DIAG_DIR" >> $GITHUB_ENV
+              
+              # Count issues
+              if [ -f "$DIAG_DIR/issues.log" ]; then
+                ISSUE_COUNT=$(wc -l < "$DIAG_DIR/issues.log")
+                echo "Pre-deployment found $ISSUE_COUNT issues"
+              fi
+              
+              # Check for critical blocking issues
+              if [ -f "$DIAG_DIR/manual-actions.log" ]; then
+                if grep -qi "port.*missing\|bind.*missing" "$DIAG_DIR/manual-actions.log"; then
+                  echo "::warning::Critical port/bind configuration issues detected"
+                fi
+              fi
+            fi
+          EOF
+
+      - name: Download pre-deployment diagnostics
+        run: |
+          echo "Downloading pre-deployment diagnostics..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | head -1)
+            if [ -n "$DIAG_DIR" ]; then
+              tar -czf /tmp/pre-deploy-diagnostics.tar.gz -C "$(dirname "$DIAG_DIR")" "$(basename "$DIAG_DIR")"
+            fi
+          EOF
+          
+          scp -i ~/.ssh/id_rsa \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/pre-deploy-diagnostics.tar.gz \
+            ./pre-deploy-diagnostics.tar.gz || echo "No pre-deploy diagnostics available"
+          
+          if [ -f ./pre-deploy-diagnostics.tar.gz ]; then
+            mkdir -p ./pre-deploy-diagnostics
+            tar -xzf ./pre-deploy-diagnostics.tar.gz -C ./pre-deploy-diagnostics
+          fi
+
+      - name: Upload pre-deployment diagnostics artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pre-deployment-diagnostics-${{ github.run_number }}
+          path: pre-deploy-diagnostics/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Validate required secrets
         uses: appleboy/ssh-action@v1.0.3
         env:
           IMAGE_SHA: ${{ needs.build-and-push.outputs.image_sha }}
@@ -148,16 +229,18 @@ jobs:
                 image: ghcr.io/festas/minecraft-console:${IMAGE_SHA}
                 container_name: minecraft-console
                 restart: unless-stopped
+                ports:
+                  - "3001:3001"
                 extra_hosts:
                   - "host.docker.internal:host-gateway"
+                environment:
+                  - API_PORT=3001
                 volumes:
                   - ./.env:/app/.env:ro
                   - ${MC_DIR}:/minecraft:rw
                   - /var/run/docker.sock:/var/run/docker.sock
                   - console_data:/app/data
                   - console_config:/app/config
-                expose:
-                  - "3001"
                 networks:
                   - caddy-network
                 healthcheck:
@@ -195,6 +278,69 @@ jobs:
             echo "✓ Console deployed successfully!"
             echo "URL: https://mc.festas-builds.com/console"
 
+      - name: Post-deployment diagnostics and auto-fix
+        if: success()
+        run: |
+          echo "Running post-deployment diagnostics..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /home/deploy/minecraft-server
+            
+            # Run diagnostics in fix mode with auto-restart enabled
+            AUTO_RESTART=true ./scripts/diagnose-plugins.sh fix || true
+            
+            # Get the latest diagnostics directory
+            DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | head -1)
+            
+            if [ -n "$DIAG_DIR" ]; then
+              echo "Post-deployment diagnostics completed"
+              
+              # Display summary
+              if [ -f "$DIAG_DIR/deployment-summary.txt" ]; then
+                echo "=== Deployment Summary ==="
+                cat "$DIAG_DIR/deployment-summary.txt"
+              fi
+              
+              # Check if any issues remain
+              if [ -f "$DIAG_DIR/manual-actions.log" ]; then
+                MANUAL_COUNT=$(wc -l < "$DIAG_DIR/manual-actions.log")
+                if [ "$MANUAL_COUNT" -gt 0 ]; then
+                  echo "::warning::$MANUAL_COUNT manual actions still required after deployment"
+                fi
+              fi
+            fi
+          EOF
+
+      - name: Download post-deployment diagnostics
+        if: success()
+        run: |
+          echo "Downloading post-deployment diagnostics..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | head -1)
+            if [ -n "$DIAG_DIR" ]; then
+              tar -czf /tmp/post-deploy-diagnostics.tar.gz -C "$(dirname "$DIAG_DIR")" "$(basename "$DIAG_DIR")"
+            fi
+          EOF
+          
+          scp -i ~/.ssh/id_rsa \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/post-deploy-diagnostics.tar.gz \
+            ./post-deploy-diagnostics.tar.gz || echo "No post-deploy diagnostics available"
+          
+          if [ -f ./post-deploy-diagnostics.tar.gz ]; then
+            mkdir -p ./post-deploy-diagnostics
+            tar -xzf ./post-deploy-diagnostics.tar.gz -C ./post-deploy-diagnostics
+          fi
+
+      - name: Upload post-deployment diagnostics artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: post-deployment-diagnostics-${{ github.run_number }}
+          path: post-deploy-diagnostics/
+          retention-days: 30
+          if-no-files-found: warn
+
       - name: Handle deployment failure
         if: failure()
         uses: appleboy/ssh-action@v1.0.3
@@ -225,8 +371,26 @@ jobs:
             echo "**Docker Image:** ghcr.io/festas/minecraft-console:${{ needs.build-and-push.outputs.image_sha }}"
             echo "**Console URL:** https://mc.festas-builds.com/console"
             echo ""
+            
+            # Include post-deployment diagnostics summary if available
+            if [ -d ./post-deploy-diagnostics ]; then
+              SUMMARY_FILE=$(find ./post-deploy-diagnostics -name "deployment-summary.txt" | head -1)
+              if [ -f "$SUMMARY_FILE" ]; then
+                echo "### Post-Deployment Health Check"
+                echo '```'
+                cat "$SUMMARY_FILE"
+                echo '```'
+                echo ""
+              fi
+            fi
+            
             echo "### Next Steps"
             echo "1. Ensure RCON is enabled in server.properties"
             echo "2. Update Caddyfile in Link-in-Bio repository (one-time setup)"
             echo "3. Access console at the URL above"
+            echo ""
+            echo "### Diagnostics Artifacts"
+            echo "- Pre-deployment diagnostics uploaded as artifact"
+            echo "- Post-deployment diagnostics uploaded as artifact"
+            echo "- Review artifacts for detailed health information"
           } >> "$GITHUB_STEP_SUMMARY"
