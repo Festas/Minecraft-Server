@@ -233,7 +233,13 @@ curl -c cookies.txt -X POST http://localhost:3001/api/login \
 curl -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token
 
 # Step 3: Extract CSRF token
+# Note: This assumes jq is installed. Install with: apt-get install jq or brew install jq
 CSRF_TOKEN=$(curl -s -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token | jq -r '.csrfToken')
+# Verify token was extracted successfully
+if [ -z "$CSRF_TOKEN" ] || [ "$CSRF_TOKEN" = "null" ]; then
+    echo "ERROR: Failed to extract CSRF token"
+    exit 1
+fi
 
 # Step 4: Make authenticated request
 curl -b cookies.txt \
@@ -294,7 +300,14 @@ echo ""
 # 2. Get CSRF token
 echo "=== Step 2: Get CSRF Token ==="
 CSRF_RESPONSE=$(curl -s -c cookies.txt -b cookies.txt "$BASE_URL/api/csrf-token")
-CSRF_TOKEN=$(echo "$CSRF_RESPONSE" | jq -r '.csrfToken')
+CSRF_TOKEN=$(echo "$CSRF_RESPONSE" | jq -r '.csrfToken' 2>/dev/null)
+
+# Verify token was extracted successfully
+if [ -z "$CSRF_TOKEN" ] || [ "$CSRF_TOKEN" = "null" ]; then
+    echo "ERROR: Failed to extract CSRF token"
+    echo "Response: $CSRF_RESPONSE"
+    exit 1
+fi
 
 echo "CSRF Token: ${CSRF_TOKEN:0:20}..."
 echo "✓ CSRF token obtained"

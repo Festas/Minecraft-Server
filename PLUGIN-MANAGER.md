@@ -242,8 +242,13 @@ curl -c cookies.txt -X POST http://localhost:3001/api/login \
 curl -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token
 
 # Response: {"csrfToken":"abc123xyz..."}
-# Extract token for next step
+# Extract token for next step (requires jq - install with: apt-get install jq)
 CSRF_TOKEN=$(curl -s -c cookies.txt -b cookies.txt http://localhost:3001/api/csrf-token | jq -r '.csrfToken')
+# Verify extraction succeeded
+if [ -z "$CSRF_TOKEN" ] || [ "$CSRF_TOKEN" = "null" ]; then
+    echo "ERROR: Failed to extract CSRF token"
+    exit 1
+fi
 
 # Step 3: Make authenticated API request
 # Send both cookies and CSRF token in header
@@ -282,7 +287,14 @@ curl -s -c "$COOKIES_FILE" -X POST "$BASE_URL/api/login" \
   -d '{"username":"admin","password":"your-password"}' | jq '.'
 
 echo -e "\n=== Step 2: Get CSRF Token ==="
-CSRF_TOKEN=$(curl -s -c "$COOKIES_FILE" -b "$COOKIES_FILE" "$BASE_URL/api/csrf-token" | jq -r '.csrfToken')
+CSRF_TOKEN=$(curl -s -c "$COOKIES_FILE" -b "$COOKIES_FILE" "$BASE_URL/api/csrf-token" | jq -r '.csrfToken' 2>/dev/null)
+
+# Verify token was extracted
+if [ -z "$CSRF_TOKEN" ] || [ "$CSRF_TOKEN" = "null" ]; then
+    echo "ERROR: Failed to extract CSRF token"
+    exit 1
+fi
+
 echo "CSRF Token: ${CSRF_TOKEN:0:20}..."
 
 echo -e "\n=== Step 3: List Plugins ==="
