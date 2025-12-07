@@ -383,7 +383,7 @@ jobs:
               if [ -n "$CSRF_TOKEN" ] && [ "$CSRF_TOKEN" != "null" ]; then
                 echo "✓ CSRF token obtained successfully"
                 echo "CSRF token length: ${#CSRF_TOKEN} characters"
-                
+
                 # Check if CSRF cookie was saved
                 echo "CSRF cookie check:"
                 cat /tmp/cookies.txt | grep -v '^#' | grep csrf-token || echo "⚠ No csrf-token cookie found"
