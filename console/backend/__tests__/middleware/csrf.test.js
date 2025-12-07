@@ -106,18 +106,21 @@ describe('CSRF Protection Middleware', () => {
     });
 
     describe('CSRF validation success', () => {
+        // Helper to verify CSRF doesn't block the request
+        const expectNoCsrfError = (response) => {
+            expect(response.status).not.toBe(403);
+            if (response.status === 500 || response.status === 401) {
+                expect(response.body.error).not.toMatch(/csrf.*token/i);
+            }
+        };
+
         it('should pass CSRF validation when valid token is provided in CSRF-Token header', async () => {
             const response = await request(app)
                 .post('/api/logout')
                 .set('Cookie', cookies)
                 .set('CSRF-Token', csrfToken);
             
-            // Should not return 403 CSRF error
-            // May return other errors (like session not found), but not CSRF-related
-            expect(response.status).not.toBe(403);
-            if (response.status === 500 || response.status === 401) {
-                expect(response.body.error).not.toMatch(/csrf.*token/i);
-            }
+            expectNoCsrfError(response);
         });
 
         it('should pass CSRF validation when valid token is provided in X-CSRF-Token header', async () => {
@@ -126,11 +129,7 @@ describe('CSRF Protection Middleware', () => {
                 .set('Cookie', cookies)
                 .set('X-CSRF-Token', csrfToken);
             
-            // Should not return 403 CSRF error
-            expect(response.status).not.toBe(403);
-            if (response.status === 500 || response.status === 401) {
-                expect(response.body.error).not.toMatch(/csrf.*token/i);
-            }
+            expectNoCsrfError(response);
         });
     });
 
