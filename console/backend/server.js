@@ -80,8 +80,22 @@ app.use((req, res, next) => {
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ============================================================================
+// MIDDLEWARE ORDER AUDIT (for CSRF protection)
+// ============================================================================
+// 1. cookie-parser MUST come before CSRF middleware (below)
+//    - CSRF double-submit pattern requires reading cookies
+//    - Applied globally to all routes
+// 2. Session middleware comes after cookie-parser
+//    - Session also needs cookies
+// 3. CSRF middleware applied to /api routes (search for "doubleCsrfProtection")
+//    - Validates CSRF token from both cookie AND header
+//    - No duplicate CSRF middleware found
+//    - Cookie name: 'csrf-token' (consistent throughout)
+// ============================================================================
+
 // Cookie parser is needed for CSRF protection (csrf-csrf library)
-// CSRF protection is applied below at line 128
 app.use(cookieParser());
 
 // Get session middleware (shared between Express and Socket.io)
@@ -108,11 +122,14 @@ const useSecureCsrfCookies = shouldUseSecureCookies();
 logCookieConfiguration('CSRF', useSecureCsrfCookies);
 
 // Shared CSRF cookie options for consistency between doubleCsrf middleware and /api/csrf-token endpoint
+// NOTE: httpOnly MUST be false for double-submit CSRF pattern to work with client-side JavaScript
+// The client needs to read the cookie value and send it in the CSRF-Token header
+// Security tradeoff: Cookie is readable by JS, but CSRF protection still works via double-submit validation
 const csrfCookieOptions = {
     sameSite: 'lax', // Must match session cookie for consistency
     path: '/', // Ensure cookie is available for all paths
     secure: useSecureCsrfCookies, // HTTPS only in production, HTTP allowed in dev/test/CI
-    httpOnly: true // Prevent XSS attacks
+    httpOnly: false // MUST be false - client JS needs to read cookie for double-submit pattern
 };
 
 const {
@@ -163,7 +180,15 @@ app.get('/api/csrf-token', (req, res) => {
         tokenLength: token.length,
         tokenPrefix: token.substring(0, 8) + '...',
         cookieName: 'csrf-token',
-        secure: useSecureCsrfCookies
+        cookieOptions: {
+            httpOnly: csrfCookieOptions.httpOnly,
+            sameSite: csrfCookieOptions.sameSite,
+            secure: csrfCookieOptions.secure,
+            path: csrfCookieOptions.path
+        },
+        warning: csrfCookieOptions.httpOnly 
+            ? '⚠ httpOnly=true prevents client JS from reading cookie!' 
+            : '✓ httpOnly=false allows client JS to read cookie for double-submit pattern'
     });
     
     res.json({ csrfToken: token });

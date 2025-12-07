@@ -39,7 +39,8 @@ describe('CSRF Protection Middleware', () => {
                 cookie.startsWith('csrf-token=')
             );
             expect(csrfCookie).toBeDefined();
-            expect(csrfCookie).toMatch(/HttpOnly/);
+            // MUST NOT be HttpOnly - client JS needs to read cookie for double-submit pattern
+            expect(csrfCookie).not.toMatch(/HttpOnly/);
             expect(csrfCookie).toMatch(/Path=\//);
             expect(csrfCookie).toMatch(/SameSite=Lax/i);
         });
