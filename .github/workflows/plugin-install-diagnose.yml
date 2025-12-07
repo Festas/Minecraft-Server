@@ -283,6 +283,16 @@ jobs:
             echo "Login status: $LOGIN_STATUS"
             if [ "$LOGIN_STATUS" = "200" ]; then
               echo "✓ Authentication successful"
+              echo "Response: $LOGIN_BODY"
+
+              # Save session cookie state for diagnostics
+              if [ -f /tmp/cookies.txt ]; then
+                echo "Session cookie saved to /tmp/cookies.txt"
+                cp /tmp/cookies.txt /tmp/session-cookie-state.txt
+              else
+                echo "⚠ Warning: No session cookie file created"
+                echo "no cookie file" > /tmp/session-cookie-state.txt
+              fi
             else
               echo "✗ Authentication failed"
               echo "Response: $LOGIN_BODY"
@@ -291,13 +301,57 @@ jobs:
             fi
             echo ""
 
+            # Step 1.5: Fetch CSRF token
+            echo "Step 1.5: Fetching CSRF token..."
+            CSRF_RESPONSE=$(curl -s -b /tmp/cookies.txt -w "\n%{http_code}" \
+              -X GET http://localhost:3001/api/csrf-token 2>&1)
+
+            CSRF_STATUS=$(echo "$CSRF_RESPONSE" | tail -1)
+            CSRF_BODY=$(echo "$CSRF_RESPONSE" | sed '$d')
+
+            echo "CSRF token endpoint status: $CSRF_STATUS"
+            if [ "$CSRF_STATUS" = "200" ]; then
+              CSRF_TOKEN=$(echo "$CSRF_BODY" | jq -r '.csrfToken' 2>/dev/null)
+              if [ -n "$CSRF_TOKEN" ] && [ "$CSRF_TOKEN" != "null" ]; then
+                echo "✓ CSRF token obtained successfully"
+                echo "CSRF token length: ${#CSRF_TOKEN} characters"
+
+                # Save CSRF token state for diagnostics
+                echo "$CSRF_BODY" > /tmp/csrf-token-state.json
+              else
+                echo "✗ Failed to parse CSRF token from response"
+                echo "Response: $CSRF_BODY"
+                echo "INSTALL_SUCCESS=0" >> /tmp/install-result.txt
+                exit 1
+              fi
+            else
+              echo "✗ Failed to fetch CSRF token"
+              echo "Response: $CSRF_BODY"
+              echo "INSTALL_SUCCESS=0" >> /tmp/install-result.txt
+              exit 1
+            fi
+            echo ""
+
             # Step 2: Get initial plugin state via API
             echo "Step 2: Getting initial plugin state via API..."
             PLUGINS_BEFORE=$(curl -s -b /tmp/cookies.txt \
+              -H "CSRF-Token: $CSRF_TOKEN" \
               http://localhost:3001/api/plugins 2>&1)
 
             echo "$PLUGINS_BEFORE" | jq '.' 2>/dev/null || echo "$PLUGINS_BEFORE"
             echo "$PLUGINS_BEFORE" > /tmp/api-plugins-before.json
+
+            # Validate API response
+            if echo "$PLUGINS_BEFORE" | jq -e '.plugins' > /dev/null 2>&1; then
+              echo "✓ Successfully retrieved plugin list"
+            else
+              echo "⚠ Warning: Unexpected API response format"
+              if echo "$PLUGINS_BEFORE" | grep -qi "csrf\|token"; then
+                echo "✗ CSRF token may be invalid or rejected"
+                echo "INSTALL_SUCCESS=0" >> /tmp/install-result.txt
+                exit 1
+              fi
+            fi
             echo ""
 
             # Step 3: Attempt plugin install
@@ -305,6 +359,7 @@ jobs:
             INSTALL_RESPONSE=$(curl -s -b /tmp/cookies.txt -w "\n%{http_code}" \
               -X POST http://localhost:3001/api/plugins/install \
               -H "Content-Type: application/json" \
+              -H "CSRF-Token: $CSRF_TOKEN" \
               -d "{\"url\":\"$TEST_PLUGIN_URL\"}" 2>&1)
 
             INSTALL_STATUS=$(echo "$INSTALL_RESPONSE" | tail -1)
@@ -338,6 +393,22 @@ jobs:
               fi
             else
               echo "✗ Install API returned error status: $INSTALL_STATUS"
+
+              # Check for specific error types
+              if echo "$INSTALL_BODY" | grep -qi "csrf\|token"; then
+                echo "⚠ CSRF token error detected!"
+                echo "This indicates the CSRF token was invalid or missing."
+                echo "Session cookie state:"
+                cat /tmp/session-cookie-state.txt 2>/dev/null || echo "No session state saved"
+                echo "CSRF token state:"
+                cat /tmp/csrf-token-state.json 2>/dev/null || echo "No CSRF state saved"
+              elif echo "$INSTALL_BODY" | grep -qi "auth"; then
+                echo "⚠ Authentication error detected!"
+                echo "This indicates the session may have expired or is invalid."
+                echo "Session cookie state:"
+                cat /tmp/session-cookie-state.txt 2>/dev/null || echo "No session state saved"
+              fi
+
               if echo "$INSTALL_BODY" | jq -e '.error' > /dev/null 2>&1; then
                 ERROR_MSG=$(echo "$INSTALL_BODY" | jq -r '.error')
                 echo "Error message: $ERROR_MSG"
@@ -429,6 +500,7 @@ jobs:
             echo "## 3. Checking API for new plugin entry"
             echo "------------------------------------------------"
             PLUGINS_AFTER=$(curl -s -b /tmp/cookies.txt \
+              -H "CSRF-Token: $CSRF_TOKEN" \
               http://localhost:3001/api/plugins 2>&1)
 
             echo "$PLUGINS_AFTER" | jq '.' 2>/dev/null || echo "$PLUGINS_AFTER"
@@ -493,6 +565,10 @@ jobs:
 
             echo "Collecting files to: $DIAG_DIR"
 
+            # Copy session and CSRF state
+            cp /tmp/session-cookie-state.txt "$DIAG_DIR/" 2>/dev/null || echo "no cookie file" > "$DIAG_DIR/session-cookie-state.txt"
+            cp /tmp/csrf-token-state.json "$DIAG_DIR/" 2>/dev/null || echo '{"error":"No CSRF token state available"}' > "$DIAG_DIR/csrf-token-state.json"
+
             # Copy plugins.json states
             cp /tmp/plugins-before.json "$DIAG_DIR/" 2>/dev/null || echo "No plugins-before.json"
             cp /tmp/plugins-after.json "$DIAG_DIR/" 2>/dev/null || echo "No plugins-after.json"
@@ -532,6 +608,8 @@ jobs:
               echo "Test Plugin Name: ${{ env.TEST_PLUGIN_NAME }}"
               echo ""
               echo "Files Included:"
+              echo "- session-cookie-state.txt: Session cookie state after login"
+              echo "- csrf-token-state.json: CSRF token obtained from /api/csrf-token"
               echo "- plugins-before.json: State of plugins.json before install"
               echo "- plugins-after.json: State of plugins.json after install"
               echo "- api-plugins-before.json: API response before install"
@@ -718,12 +796,44 @@ jobs:
             if [ "$LOGIN_STATUS" = "200" ]; then
               echo "✓ Authenticated"
 
+              # Fetch CSRF token for cleanup operations
+              echo "Fetching CSRF token for cleanup..."
+              CSRF_RESPONSE=$(curl -s -b /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
+                -X GET http://localhost:3001/api/csrf-token 2>&1)
+
+              CSRF_STATUS=$(echo "$CSRF_RESPONSE" | tail -1)
+              CSRF_BODY=$(echo "$CSRF_RESPONSE" | sed '$d')
+
+              if [ "$CSRF_STATUS" = "200" ]; then
+                CSRF_TOKEN=$(echo "$CSRF_BODY" | jq -r '.csrfToken' 2>/dev/null)
+                if [ -n "$CSRF_TOKEN" ] && [ "$CSRF_TOKEN" != "null" ]; then
+                  echo "✓ CSRF token obtained for cleanup"
+                else
+                  echo "⚠ Failed to parse CSRF token, cleanup may fail"
+                  CSRF_TOKEN=""
+                fi
+              else
+                echo "⚠ Failed to fetch CSRF token, cleanup may fail"
+                CSRF_TOKEN=""
+              fi
+
               # Attempt to uninstall test plugin
               echo "Uninstalling test plugin '$TEST_PLUGIN_NAME'..."
-              UNINSTALL_RESPONSE=$(curl -s -b /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
-                -X POST http://localhost:3001/api/plugins/uninstall \
-                -H "Content-Type: application/json" \
-                -d "{\"pluginName\":\"$TEST_PLUGIN_NAME\",\"deleteConfigs\":false}" 2>&1)
+
+              # Make uninstall request with or without CSRF token
+              if [ -n "$CSRF_TOKEN" ]; then
+                UNINSTALL_RESPONSE=$(curl -s -b /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
+                  -X POST http://localhost:3001/api/plugins/uninstall \
+                  -H "Content-Type: application/json" \
+                  -H "CSRF-Token: $CSRF_TOKEN" \
+                  -d "{\"pluginName\":\"$TEST_PLUGIN_NAME\",\"deleteConfigs\":false}" 2>&1)
+              else
+                echo "⚠ No CSRF token available, attempting without it (will likely fail)"
+                UNINSTALL_RESPONSE=$(curl -s -b /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
+                  -X POST http://localhost:3001/api/plugins/uninstall \
+                  -H "Content-Type: application/json" \
+                  -d "{\"pluginName\":\"$TEST_PLUGIN_NAME\",\"deleteConfigs\":false}" 2>&1)
+              fi
 
               UNINSTALL_STATUS=$(echo "$UNINSTALL_RESPONSE" | tail -1)
               UNINSTALL_BODY=$(echo "$UNINSTALL_RESPONSE" | sed '$d')
@@ -742,6 +852,7 @@ jobs:
 
             # Clean up temporary files
             rm -f /tmp/cookies.txt /tmp/cookies-cleanup.txt
+            rm -f /tmp/session-cookie-state.txt /tmp/csrf-token-state.json
             rm -f /tmp/plugins-before.json /tmp/plugins-after.json
             rm -f /tmp/api-plugins-before.json /tmp/api-plugins-after.json
             rm -f /tmp/install-response.json /tmp/install-result.txt
