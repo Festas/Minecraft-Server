@@ -25,6 +25,8 @@ jobs:
     env:
       DEPLOY_DIR: /home/deploy/minecraft-server
       CONSOLE_DIR: /home/deploy/minecraft-console
+      # Default test plugin - update if this version becomes unavailable
+      # Using a small, stable plugin for testing. Can be overridden via test_plugin_url input.
       TEST_PLUGIN_URL: ${{ github.event.inputs.test_plugin_url || 'https://github.com/pl3xgaming/Pl3xMap/releases/download/v1.20.4-477/Pl3xMap-1.20.4-477.jar' }}
       TEST_PLUGIN_NAME: 'Pl3xMap'
 
@@ -367,9 +369,9 @@ jobs:
               echo "✓ plugins directory exists"
 
               # Look for test plugin JAR
-              if ls "$PLUGINS_DIR"/ 2>/dev/null | grep -i "${{ env.TEST_PLUGIN_NAME }}" > /dev/null; then
+              if ls "$PLUGINS_DIR" 2>/dev/null | grep -i "${{ env.TEST_PLUGIN_NAME }}" > /dev/null; then
                 echo "✓ Test plugin JAR found in plugins directory:"
-                ls -lh "$PLUGINS_DIR"/ | grep -i "${{ env.TEST_PLUGIN_NAME }}"
+                ls -lh "$PLUGINS_DIR" | grep -i "${{ env.TEST_PLUGIN_NAME }}"
               else
                 echo "⚠ Test plugin JAR not found in plugins directory"
                 echo "Files in plugins directory:"
