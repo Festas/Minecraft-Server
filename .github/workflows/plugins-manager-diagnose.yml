@@ -26,6 +26,10 @@ jobs:
   plugin-diagnostics:
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: read  # Required for actions/checkout
+      actions: write  # Required for actions/upload-artifact
+    
     env:
       DEPLOY_DIR: /home/deploy/minecraft-server
       CONSOLE_DIR: /home/deploy/minecraft-console
