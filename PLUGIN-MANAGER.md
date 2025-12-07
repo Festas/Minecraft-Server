@@ -95,6 +95,106 @@ Then run:
 | POST | `/api/plugins/rollback` | Rollback to backup |
 | GET | `/api/plugins/history` | Get installation history |
 
+### API Authentication
+
+All plugin API endpoints require authentication. The API uses session-based authentication with CSRF protection.
+
+#### Authentication Flow
+
+1. **Login** - Authenticate and create session
+   ```bash
+   curl -c cookies.txt -X POST http://localhost:3001/api/login \
+     -H "Content-Type: application/json" \
+     -d '{"username":"admin","password":"your-password"}'
+   ```
+   
+   Response:
+   ```json
+   {"success":true,"message":"Login successful","sessionID":"..."}
+   ```
+
+2. **Get CSRF Token** - Required for all protected endpoints
+   ```bash
+   curl -b cookies.txt -X GET http://localhost:3001/api/csrf-token
+   ```
+   
+   Response:
+   ```json
+   {"csrfToken":"abc123..."}
+   ```
+
+3. **Make Authenticated Requests** - Include session cookie and CSRF token
+   ```bash
+   curl -b cookies.txt -X GET http://localhost:3001/api/plugins \
+     -H "CSRF-Token: abc123..."
+   ```
+
+#### Complete Example: Installing a Plugin via API
+
+```bash
+#!/bin/bash
+
+# 1. Login and save session cookie
+LOGIN_RESPONSE=$(curl -s -c cookies.txt -X POST http://localhost:3001/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"your-password"}')
+
+echo "Login: $LOGIN_RESPONSE"
+
+# 2. Get CSRF token
+CSRF_TOKEN=$(curl -s -b cookies.txt http://localhost:3001/api/csrf-token | jq -r '.csrfToken')
+
+echo "CSRF Token: ${CSRF_TOKEN:0:20}..."
+
+# 3. Get current plugins
+curl -s -b cookies.txt -H "CSRF-Token: $CSRF_TOKEN" \
+  http://localhost:3001/api/plugins | jq '.'
+
+# 4. Install a plugin
+curl -s -b cookies.txt -X POST http://localhost:3001/api/plugins/install \
+  -H "Content-Type: application/json" \
+  -H "CSRF-Token: $CSRF_TOKEN" \
+  -d '{"url":"https://github.com/owner/repo/releases/latest"}' | jq '.'
+```
+
+#### Session and Cookie Configuration
+
+The backend uses the following session/cookie settings:
+
+- **Session Cookie Name**: `console.sid`
+- **Cookie Settings**:
+  - `httpOnly: true` - Prevents XSS attacks
+  - `secure: true` (production) - HTTPS only
+  - `sameSite: 'lax'` - Compatible with API calls
+  - `maxAge: 24h` - Session expires after 24 hours
+  - `path: '/'` - Available for all paths
+
+- **CSRF Cookie Name**: `csrf-token`
+- **CSRF Header**: `CSRF-Token` or `X-CSRF-Token`
+
+#### Debugging Authentication Issues
+
+If you encounter authentication or CSRF errors, use the debug logs endpoint:
+
+```bash
+# Get debug logs (requires authentication)
+curl -s -b cookies.txt http://localhost:3001/api/debug/logs > debug.log
+```
+
+The debug logs show detailed information about:
+- Session ID and authentication state
+- Cookie values (session and CSRF)
+- Request headers
+- CSRF token validation
+- Authentication checks
+
+Or use the provided test script:
+```bash
+./scripts/test-api-auth.sh
+```
+
+This script tests the complete authentication flow and provides detailed output.
+
 ## URL Format Support
 
 ### Direct JAR
@@ -159,8 +259,12 @@ console/
 │   │   ├── pluginParser.js      # Parse plugin.yml from JAR
 │   │   ├── urlParser.js         # Smart URL detection
 │   │   └── pluginManager.js     # Core plugin management
-│   └── data/
-│       └── plugin-history.json  # Installation history log
+│   ├── middleware/
+│   │   └── debugLogger.js       # Debug logging for session/CSRF
+│   ├── data/
+│   │   └── plugin-history.json  # Installation history log
+│   └── logs/
+│       └── api-debug.log        # API debug logs (session, cookies, CSRF)
 └── frontend/
     ├── plugins.html             # Plugin manager UI
     ├── js/
@@ -171,11 +275,16 @@ console/
 
 ## Security
 
-- All endpoints require authentication
-- CSRF protection enabled
-- Rate limiting applied (20 requests/minute)
+- All endpoints require authentication (session-based)
+- CSRF protection enabled on all POST/PUT/DELETE endpoints
+- Rate limiting applied (20 requests/minute for plugin operations)
 - Input validation and sanitization
 - JAR file validation before installation
+- Session cookies with httpOnly and secure flags (production)
+- Debug logging for troubleshooting authentication issues
+  - Logs session state, cookies, and CSRF tokens
+  - Available at `/api/debug/logs` (authenticated endpoint)
+  - Automatically collected in diagnostic workflows
 
 ## Dependencies
 

@@ -101,7 +101,6 @@ router.get('/session', (req, res) => {
  * This endpoint helps diagnose session and CSRF issues
  */
 router.get('/debug/logs', async (req, res) => {
-    const { requireAuth } = require('../auth/auth');
     const { getDebugLogs } = require('../middleware/debugLogger');
     
     // Check authentication
