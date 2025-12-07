@@ -417,14 +417,14 @@ jobs:
               echo "✓ API returned success status"
             else
               echo "✗ API returned error status: $INSTALL_STATUS"
-              
+
               # Check for CSRF or authentication errors
               if echo "$INSTALL_BODY" | grep -qi "csrf\|token"; then
                 echo "⚠ CSRF token error detected - the CSRF token may be invalid"
               elif echo "$INSTALL_BODY" | grep -qi "auth"; then
                 echo "⚠ Authentication error detected - the session may be invalid"
               fi
-              
+
               TEST_FAILED=1
             fi
 

@@ -284,7 +284,7 @@ jobs:
             if [ "$LOGIN_STATUS" = "200" ]; then
               echo "✓ Authentication successful"
               echo "Response: $LOGIN_BODY"
-              
+
               # Save session cookie state for diagnostics
               if [ -f /tmp/cookies.txt ]; then
                 echo "Session cookie saved to /tmp/cookies.txt"
@@ -315,7 +315,7 @@ jobs:
               if [ -n "$CSRF_TOKEN" ] && [ "$CSRF_TOKEN" != "null" ]; then
                 echo "✓ CSRF token obtained successfully"
                 echo "CSRF token length: ${#CSRF_TOKEN} characters"
-                
+
                 # Save CSRF token state for diagnostics
                 echo "$CSRF_BODY" > /tmp/csrf-token-state.json
               else
@@ -340,7 +340,7 @@ jobs:
 
             echo "$PLUGINS_BEFORE" | jq '.' 2>/dev/null || echo "$PLUGINS_BEFORE"
             echo "$PLUGINS_BEFORE" > /tmp/api-plugins-before.json
-            
+
             # Validate API response
             if echo "$PLUGINS_BEFORE" | jq -e '.plugins' > /dev/null 2>&1; then
               echo "✓ Successfully retrieved plugin list"
@@ -393,7 +393,7 @@ jobs:
               fi
             else
               echo "✗ Install API returned error status: $INSTALL_STATUS"
-              
+
               # Check for specific error types
               if echo "$INSTALL_BODY" | grep -qi "csrf\|token"; then
                 echo "⚠ CSRF token error detected!"
@@ -408,7 +408,7 @@ jobs:
                 echo "Session cookie state:"
                 cat /tmp/session-cookie-state.txt 2>/dev/null || echo "No session state saved"
               fi
-              
+
               if echo "$INSTALL_BODY" | jq -e '.error' > /dev/null 2>&1; then
                 ERROR_MSG=$(echo "$INSTALL_BODY" | jq -r '.error')
                 echo "Error message: $ERROR_MSG"
@@ -819,7 +819,7 @@ jobs:
 
               # Attempt to uninstall test plugin
               echo "Uninstalling test plugin '$TEST_PLUGIN_NAME'..."
-              
+
               if [ -n "$CSRF_TOKEN" ]; then
                 UNINSTALL_RESPONSE=$(curl -s -b /tmp/cookies-cleanup.txt -w "\n%{http_code}" \
                   -X POST http://localhost:3001/api/plugins/uninstall \
