@@ -20,6 +20,7 @@ const { getSessionMiddleware } = require('./auth/session');
 // Import middleware
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 const { apiLimiter } = require('./middleware/rateLimiter');
+const { debugLogger } = require('./middleware/debugLogger');
 
 // Import routes
 const apiRoutes = require('./routes/api');
@@ -106,13 +107,18 @@ const {
     getSecret: () => csrfSecret,
     cookieName: 'csrf-token',
     cookieOptions: {
-        sameSite: 'lax',
-        path: '/',
+        sameSite: 'lax', // Must match session cookie for consistency
+        path: '/', // Ensure cookie is available for all paths
         secure: process.env.NODE_ENV === 'production',
-        httpOnly: true
+        httpOnly: true // Prevent XSS attacks
     },
     size: 64,
-    ignoredMethods: ['GET', 'HEAD', 'OPTIONS']
+    ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
+    // Read CSRF token from header (standard practice for APIs)
+    getTokenFromRequest: (req) => {
+        // Check both common CSRF header names
+        return req.headers['csrf-token'] || req.headers['x-csrf-token'];
+    }
 });
 
 // Serve static frontend files (no CSRF needed for static files)
@@ -121,27 +127,76 @@ app.use('/console', express.static(path.join(__dirname, '../frontend')));
 // Apply general API rate limiting
 app.use('/api', apiLimiter);
 
+// Apply debug logging to all API routes (logs session, cookies, CSRF, headers)
+// This helps diagnose authentication and CSRF issues
+app.use('/api', debugLogger({ logBody: true, logResponse: true }));
+
 // CSRF token endpoint
 app.get('/api/csrf-token', (req, res) => {
-    res.json({ csrfToken: generateToken(req, res) });
+    console.log('[CSRF] Token request:', {
+        sessionID: req.sessionID,
+        authenticated: req.session?.authenticated || false,
+        username: req.session?.username || 'NOT_SET',
+        hasCookies: !!req.headers.cookie,
+        timestamp: new Date().toISOString()
+    });
+    
+    const token = generateToken(req, res);
+    
+    console.log('[CSRF] Token generated:', {
+        sessionID: req.sessionID,
+        tokenLength: token.length,
+        tokenPrefix: token.substring(0, 8) + '...'
+    });
+    
+    res.json({ csrfToken: token });
 });
 
 // Apply CSRF protection to all API routes except login and session check
 app.use('/api', (req, res, next) => {
     // Skip CSRF for login endpoint (it's the first request)
     if (req.path === '/login' && req.method === 'POST') {
+        console.log('[CSRF] Skipping CSRF check for login');
         return next();
     }
     // Skip CSRF for session check (GET request)
     if (req.path === '/session' && req.method === 'GET') {
+        console.log('[CSRF] Skipping CSRF check for session');
         return next();
     }
     // Skip CSRF for csrf-token endpoint
     if (req.path === '/csrf-token' && req.method === 'GET') {
+        console.log('[CSRF] Skipping CSRF check for csrf-token endpoint');
         return next();
     }
+    // Skip CSRF for debug logs endpoint
+    if (req.path === '/debug/logs' && req.method === 'GET') {
+        console.log('[CSRF] Skipping CSRF check for debug logs');
+        return next();
+    }
+    
+    console.log('[CSRF] Applying CSRF protection:', {
+        path: req.path,
+        method: req.method,
+        csrfHeader: req.headers['csrf-token'] || req.headers['x-csrf-token'] || 'MISSING',
+        csrfCookie: req.cookies['csrf-token'] ? 'PRESENT' : 'MISSING',
+        sessionID: req.sessionID
+    });
+    
     // Apply CSRF to all other API routes
-    doubleCsrfProtection(req, res, next);
+    doubleCsrfProtection(req, res, (err) => {
+        if (err) {
+            console.error('[CSRF] CSRF validation failed:', {
+                path: req.path,
+                method: req.method,
+                error: err.message,
+                csrfHeader: req.headers['csrf-token'] || req.headers['x-csrf-token'] || 'MISSING',
+                csrfCookie: req.cookies['csrf-token'] ? 'PRESENT' : 'MISSING',
+                sessionID: req.sessionID
+            });
+        }
+        next(err);
+    });
 });
 
 // API routes
