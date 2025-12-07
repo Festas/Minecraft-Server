@@ -68,11 +68,23 @@ router.post('/parse-url', async (req, res) => {
  * Install plugin from URL
  */
 router.post('/install', async (req, res) => {
+    // Log the incoming request for debugging
+    console.log('[PLUGIN_INSTALL_API] Install request received:', {
+        url: req.body.url,
+        customName: req.body.customName,
+        selectedOption: req.body.selectedOption,
+        timestamp: new Date().toISOString()
+    });
+    
     try {
         const { url, customName, selectedOption } = req.body;
         
         if (!url) {
-            return res.status(400).json({ error: 'URL is required' });
+            console.log('[PLUGIN_INSTALL_API] Install request failed: URL is required');
+            return res.status(400).json({ 
+                error: 'URL is required',
+                details: 'The url field is required in the request body'
+            });
         }
         
         // If a specific option was selected (from multiple JARs)
@@ -83,10 +95,41 @@ router.post('/install', async (req, res) => {
             console.log(`Download progress: ${progress.percentage}%`);
         });
         
+        console.log('[PLUGIN_INSTALL_API] Install request succeeded:', {
+            url,
+            status: result.status,
+            pluginName: result.pluginName,
+            version: result.version
+        });
+        
         res.json(result);
     } catch (error) {
-        console.error('Error installing plugin:', error);
-        res.status(500).json({ error: error.message });
+        console.error('[PLUGIN_INSTALL_API] Install request failed with error:', {
+            url: req.body.url,
+            error: error.message,
+            stack: error.stack
+        });
+        
+        // Determine appropriate status code based on error type
+        let statusCode = 500;
+        let errorDetails = error.message;
+        
+        if (error.message.includes('not accessible or not writable')) {
+            statusCode = 500;
+            errorDetails = 'Permission error: Unable to write to plugins directory or plugins.json. Check server permissions.';
+        } else if (error.message.includes('Invalid plugin file')) {
+            statusCode = 400;
+            errorDetails = 'The downloaded file is not a valid Minecraft plugin JAR file.';
+        } else if (error.message.includes('timeout')) {
+            statusCode = 504;
+            errorDetails = 'Plugin download timed out. Please try again or check the URL.';
+        }
+        
+        res.status(statusCode).json({ 
+            error: errorDetails,
+            originalError: error.message,
+            timestamp: new Date().toISOString()
+        });
     }
 });
 
@@ -95,25 +138,72 @@ router.post('/install', async (req, res) => {
  * Proceed with installation after conflict detection
  */
 router.post('/proceed-install', async (req, res) => {
+    // Log the incoming request for debugging
+    console.log('[PLUGIN_INSTALL_API] Proceed-install request received:', {
+        url: req.body.url,
+        pluginName: req.body.pluginName,
+        action: req.body.action,
+        timestamp: new Date().toISOString()
+    });
+    
     try {
         const { url, pluginName, action } = req.body;
         
         if (!url || !pluginName || !action) {
-            return res.status(400).json({ error: 'URL, pluginName, and action are required' });
+            console.log('[PLUGIN_INSTALL_API] Proceed-install request failed: Missing required fields');
+            return res.status(400).json({ 
+                error: 'URL, pluginName, and action are required',
+                details: 'All three fields (url, pluginName, action) must be provided'
+            });
         }
         
         if (!['update', 'downgrade', 'reinstall'].includes(action)) {
-            return res.status(400).json({ error: 'Invalid action' });
+            console.log('[PLUGIN_INSTALL_API] Proceed-install request failed: Invalid action');
+            return res.status(400).json({ 
+                error: 'Invalid action',
+                details: 'Action must be one of: update, downgrade, reinstall'
+            });
         }
         
         const result = await pluginManager.proceedWithInstall(url, pluginName, action, (progress) => {
             console.log(`Download progress: ${progress.percentage}%`);
         });
         
+        console.log('[PLUGIN_INSTALL_API] Proceed-install request succeeded:', {
+            url,
+            pluginName,
+            action,
+            status: result.status,
+            version: result.version
+        });
+        
         res.json(result);
     } catch (error) {
-        console.error('Error proceeding with install:', error);
-        res.status(500).json({ error: error.message });
+        console.error('[PLUGIN_INSTALL_API] Proceed-install request failed with error:', {
+            url: req.body.url,
+            pluginName: req.body.pluginName,
+            action: req.body.action,
+            error: error.message,
+            stack: error.stack
+        });
+        
+        // Determine appropriate status code based on error type
+        let statusCode = 500;
+        let errorDetails = error.message;
+        
+        if (error.message.includes('Invalid plugin file')) {
+            statusCode = 400;
+            errorDetails = 'The downloaded file is not a valid Minecraft plugin JAR file.';
+        } else if (error.message.includes('timeout')) {
+            statusCode = 504;
+            errorDetails = 'Plugin download timed out. Please try again or check the URL.';
+        }
+        
+        res.status(statusCode).json({ 
+            error: errorDetails,
+            originalError: error.message,
+            timestamp: new Date().toISOString()
+        });
     }
 });
 
