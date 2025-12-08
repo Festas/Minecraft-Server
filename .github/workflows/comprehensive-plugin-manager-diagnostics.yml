@@ -7,32 +7,32 @@ on:
         description: 'Console URL to test (defaults to deployed console)'
         required: false
         type: string
-      
+
       # Feature toggles
       run_browser_diagnostics:
         description: 'Run browser-based diagnostics (Puppeteer)'
         required: true
         type: boolean
         default: true
-      
+
       run_backend_diagnostics:
         description: 'Run backend/plugin diagnostics'
         required: true
         type: boolean
         default: true
-      
+
       run_api_profiling:
         description: 'Run API endpoint profiling'
         required: true
         type: boolean
         default: true
-      
+
       run_resource_monitoring:
         description: 'Run resource monitoring (CPU, memory, Docker)'
         required: true
         type: boolean
         default: true
-      
+
       # Backend diagnostics options
       backend_mode:
         description: 'Backend diagnostic mode (diagnose or fix)'
@@ -42,27 +42,27 @@ on:
           - diagnose
           - fix
         default: diagnose
-      
+
       run_advanced_backend:
         description: 'Run advanced backend diagnostics'
         required: true
         type: boolean
         default: true
-      
+
       # Browser options
       headless:
         description: 'Run browser in headless mode'
         required: true
         type: boolean
         default: true
-      
+
       # Resource monitoring options
       monitor_duration:
         description: 'Resource monitoring duration (seconds)'
         required: true
         type: number
         default: 90
-      
+
       monitor_interval:
         description: 'Resource monitoring sample interval (seconds)'
         required: true
@@ -72,26 +72,26 @@ on:
 jobs:
   comprehensive-diagnostics:
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: read
       actions: write
-    
+
     env:
       DEPLOY_DIR: /home/deploy/minecraft-server
       CONSOLE_DIR: /home/deploy/minecraft-console
       RUN_NUMBER: ${{ github.run_number }}
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         if: github.event.inputs.run_browser_diagnostics == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-      
+
       - name: Install Puppeteer dependencies
         if: github.event.inputs.run_browser_diagnostics == 'true'
         run: |
@@ -113,13 +113,13 @@ jobs:
             libasound2 \
             libpango-1.0-0 \
             libcairo2
-      
+
       - name: Install Puppeteer
         if: github.event.inputs.run_browser_diagnostics == 'true'
         run: |
           cd console/backend
           npm install puppeteer@21.6.1
-      
+
       - name: Determine console URL
         id: console_url
         run: |
@@ -133,9 +133,9 @@ jobs:
               echo "url=http://localhost:3000" >> $GITHUB_OUTPUT
             fi
           fi
-          
+
           echo "Console URL: $(cat $GITHUB_OUTPUT | grep url | cut -d'=' -f2-)"
-      
+
       - name: Setup SSH (if testing deployed console)
         if: secrets.SERVER_HOST != '' && secrets.SSH_PRIVATE_KEY != ''
         run: |
@@ -143,7 +143,7 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-      
+
       # ========================================================================
       # RESOURCE MONITORING - Start monitoring early to capture all activity
       # ========================================================================
@@ -154,32 +154,32 @@ jobs:
           echo "║               STARTING RESOURCE MONITORING                     ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Configure resource monitor
             export OUTPUT_DIR=/tmp/comprehensive-diagnostics-resources-${{ github.run_number }}
             export MONITOR_DURATION=${{ github.event.inputs.monitor_duration }}
             export MONITOR_INTERVAL=${{ github.event.inputs.monitor_interval }}
             export CONTAINER_NAME=minecraft-console
-            
+
             # Create scripts directory
             mkdir -p /tmp/scripts
           EOF
-          
+
           # Upload resource monitor script
           scp -i ~/.ssh/id_rsa scripts/resource-monitor.sh \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/scripts/
-          
+
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             chmod +x /tmp/scripts/resource-monitor.sh
-            
+
             # Run in background
             nohup /tmp/scripts/resource-monitor.sh > /tmp/resource-monitor-${{ github.run_number }}.log 2>&1 &
             echo $! > /tmp/resource-monitor-${{ github.run_number }}.pid
-            
+
             echo "✓ Resource monitoring started (PID: $(cat /tmp/resource-monitor-${{ github.run_number }}.pid))"
           EOF
-      
+
       # ========================================================================
       # BACKEND DIAGNOSTICS - Run plugin manager diagnostics
       # ========================================================================
@@ -190,21 +190,21 @@ jobs:
           echo "║               BACKEND DIAGNOSTICS SETUP                        ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           echo "Uploading diagnostic scripts..."
           scp -i ~/.ssh/id_rsa \
             scripts/diagnose-plugins.sh \
             scripts/diagnose-plugins-advanced.sh \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/scripts/
-          
+
           echo "Setting executable permissions..."
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins.sh
             chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins-advanced.sh
           EOF
-          
+
           echo "✓ Diagnostic scripts uploaded"
-      
+
       - name: Run basic backend diagnostics
         if: github.event.inputs.run_backend_diagnostics == 'true' && secrets.SERVER_HOST != ''
         id: basic_backend_diagnostics
@@ -215,17 +215,17 @@ jobs:
           echo ""
           echo "Mode: ${{ github.event.inputs.backend_mode }}"
           echo ""
-          
+
           # Run diagnostics and capture fix count
           FIX_COUNT=$(ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd ${{ env.DEPLOY_DIR }}
-            
+
             # Run basic diagnostics
             ./scripts/diagnose-plugins.sh ${{ github.event.inputs.backend_mode }} || true
-            
+
             # Find the most recent diagnostics directory and count fixes
             DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | grep -v advanced | head -1)
-            
+
             if [ -n "$DIAG_DIR" ] && [ -f "$DIAG_DIR/fixes.log" ]; then
               wc -l < "$DIAG_DIR/fixes.log"
             else
@@ -233,10 +233,10 @@ jobs:
             fi
           EOF
           )
-          
+
           echo "fixes_applied=$FIX_COUNT" >> $GITHUB_OUTPUT
           echo "✓ Basic diagnostics completed. Fixes applied: $FIX_COUNT"
-      
+
       - name: Run advanced backend diagnostics
         if: github.event.inputs.run_backend_diagnostics == 'true' && github.event.inputs.run_advanced_backend == 'true' && secrets.SERVER_HOST != ''
         run: |
@@ -244,16 +244,16 @@ jobs:
           echo "║           RUNNING ADVANCED BACKEND DIAGNOSTICS                 ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd ${{ env.DEPLOY_DIR }}
-            
+
             # Run advanced diagnostics
             ./scripts/diagnose-plugins-advanced.sh || true
           EOF
-          
+
           echo "✓ Advanced diagnostics completed"
-      
+
       # ========================================================================
       # BROWSER DIAGNOSTICS - Automated browser testing
       # ========================================================================
@@ -274,16 +274,16 @@ jobs:
           echo "Console URL: ${CONSOLE_URL}"
           echo "Headless mode: ${HEADLESS}"
           echo ""
-          
+
           # Run browser diagnostics and capture exit code
           EXIT_CODE=0
           node scripts/browser-diagnostics.js || EXIT_CODE=$?
-          
+
           # List generated files
           echo ""
           echo "Generated diagnostic files:"
           ls -lh /tmp/comprehensive-browser-diagnostics-${{ github.run_number }}/ || echo "No files generated"
-          
+
           # Exit with error if diagnostics failed critically (exit code > 1)
           # Exit code 1 is acceptable (errors found but diagnostics completed)
           # Exit code > 1 indicates script failure
@@ -291,9 +291,9 @@ jobs:
             echo "✗ Browser diagnostics failed with exit code $EXIT_CODE"
             exit $EXIT_CODE
           fi
-          
+
           echo "✓ Browser diagnostics completed (exit code: $EXIT_CODE)"
-      
+
       # ========================================================================
       # API PROFILING - Comprehensive API endpoint testing
       # ========================================================================
@@ -309,17 +309,17 @@ jobs:
           echo "║                   API PROFILING                                ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           chmod +x scripts/api-profiler.sh
           scripts/api-profiler.sh || true
-          
+
           # List generated files
           echo ""
           echo "Generated API profiling files:"
           ls -lh /tmp/comprehensive-api-profiler-${{ github.run_number }}/ || echo "No files generated"
-          
+
           echo "✓ API profiling completed"
-      
+
       # ========================================================================
       # STOP RESOURCE MONITORING - Collect results
       # ========================================================================
@@ -330,10 +330,10 @@ jobs:
           echo "║          STOPPING RESOURCE MONITORING                          ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           # Give it a moment to finish current cycle
           sleep 5
-          
+
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Stop monitoring if still running
             if [ -f /tmp/resource-monitor-${{ github.run_number }}.pid ]; then
@@ -344,7 +344,7 @@ jobs:
                 sleep 2
               fi
             fi
-            
+
             # Create tarball if data exists
             if [ -d /tmp/comprehensive-diagnostics-resources-${{ github.run_number }} ]; then
               cd /tmp
@@ -353,19 +353,19 @@ jobs:
               echo "✓ Resource monitoring data archived"
             fi
           EOF
-          
+
           # Download the tarball
           scp -i ~/.ssh/id_rsa \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/comprehensive-diagnostics-resources-${{ github.run_number }}.tar.gz \
             ./comprehensive-diagnostics-resources.tar.gz || echo "⚠ No resource monitoring data to download"
-          
+
           # Extract if downloaded
           if [ -f ./comprehensive-diagnostics-resources.tar.gz ]; then
             mkdir -p ./diagnostics-resources
             tar -xzf ./comprehensive-diagnostics-resources.tar.gz -C ./diagnostics-resources
             echo "✓ Resource monitoring data downloaded and extracted"
           fi
-      
+
       # ========================================================================
       # DOWNLOAD BACKEND DIAGNOSTICS
       # ========================================================================
@@ -376,11 +376,11 @@ jobs:
           echo "║         DOWNLOADING BACKEND DIAGNOSTIC REPORTS                 ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Find most recent basic diagnostics directory
             DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | grep -v "advanced" | head -1)
-            
+
             if [ -n "$DIAG_DIR" ]; then
               # Create tarball of diagnostics
               tar -czf /tmp/plugin-diagnostics-basic-${{ github.run_number }}.tar.gz -C "$(dirname "$DIAG_DIR")" "$(basename "$DIAG_DIR")"
@@ -389,28 +389,28 @@ jobs:
               echo "⚠ No basic diagnostics directory found"
             fi
           EOF
-          
+
           # Download the tarball
           scp -i ~/.ssh/id_rsa \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/plugin-diagnostics-basic-${{ github.run_number }}.tar.gz \
             ./plugin-diagnostics-basic.tar.gz || echo "⚠ Failed to download basic diagnostics"
-          
+
           # Extract for artifact upload
           if [ -f ./plugin-diagnostics-basic.tar.gz ]; then
             mkdir -p ./diagnostics-backend-basic
             tar -xzf ./plugin-diagnostics-basic.tar.gz -C ./diagnostics-backend-basic
             echo "✓ Basic backend diagnostics downloaded"
           fi
-      
+
       - name: Download advanced backend diagnostic reports
         if: always() && github.event.inputs.run_backend_diagnostics == 'true' && github.event.inputs.run_advanced_backend == 'true' && secrets.SERVER_HOST != ''
         run: |
           echo "Downloading advanced backend diagnostic reports..."
-          
+
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             # Find most recent advanced diagnostics directory
             ADV_DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-advanced-* 2>/dev/null | head -1)
-            
+
             if [ -n "$ADV_DIAG_DIR" ]; then
               # Create tarball of diagnostics
               tar -czf /tmp/plugin-diagnostics-advanced-${{ github.run_number }}.tar.gz -C "$(dirname "$ADV_DIAG_DIR")" "$(basename "$ADV_DIAG_DIR")"
@@ -419,19 +419,19 @@ jobs:
               echo "⚠ No advanced diagnostics directory found"
             fi
           EOF
-          
+
           # Download the tarball
           scp -i ~/.ssh/id_rsa \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/plugin-diagnostics-advanced-${{ github.run_number }}.tar.gz \
             ./plugin-diagnostics-advanced.tar.gz || echo "⚠ Failed to download advanced diagnostics"
-          
+
           # Extract for artifact upload
           if [ -f ./plugin-diagnostics-advanced.tar.gz ]; then
             mkdir -p ./diagnostics-backend-advanced
             tar -xzf ./plugin-diagnostics-advanced.tar.gz -C ./diagnostics-backend-advanced
             echo "✓ Advanced backend diagnostics downloaded"
           fi
-      
+
       # ========================================================================
       # MASTER AGGREGATION AND SUMMARY
       # ========================================================================
@@ -442,9 +442,9 @@ jobs:
           echo "║           GENERATING MASTER SUMMARY                            ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           mkdir -p ./comprehensive-summary
-          
+
           {
             echo "╔════════════════════════════════════════════════════════════════╗"
             echo "║  COMPREHENSIVE PLUGIN MANAGER DIAGNOSTICS - MASTER SUMMARY     ║"
@@ -458,13 +458,13 @@ jobs:
             echo "DIAGNOSTIC COMPONENTS EXECUTED"
             echo "════════════════════════════════════════════════════════════════"
             echo ""
-            
+
             if [ "${{ github.event.inputs.run_browser_diagnostics }}" = "true" ]; then
               echo "✓ Browser Automation Diagnostics (Puppeteer)"
             else
               echo "○ Browser Automation Diagnostics (skipped)"
             fi
-            
+
             if [ "${{ github.event.inputs.run_backend_diagnostics }}" = "true" ]; then
               echo "✓ Backend/Plugin Diagnostics (mode: ${{ github.event.inputs.backend_mode }})"
               if [ "${{ github.event.inputs.run_advanced_backend }}" = "true" ]; then
@@ -473,13 +473,13 @@ jobs:
             else
               echo "○ Backend/Plugin Diagnostics (skipped)"
             fi
-            
+
             if [ "${{ github.event.inputs.run_api_profiling }}" = "true" ]; then
               echo "✓ API Endpoint Profiling"
             else
               echo "○ API Endpoint Profiling (skipped)"
             fi
-            
+
             if [ "${{ github.event.inputs.run_resource_monitoring }}" = "true" ]; then
               echo "✓ Resource Monitoring (CPU, Memory, Docker)"
               echo "  Duration: ${{ github.event.inputs.monitor_duration }}s"
@@ -487,13 +487,13 @@ jobs:
             else
               echo "○ Resource Monitoring (skipped)"
             fi
-            
+
             echo ""
             echo "════════════════════════════════════════════════════════════════"
             echo "DIAGNOSTIC RESULTS SUMMARY"
             echo "════════════════════════════════════════════════════════════════"
             echo ""
-            
+
             # Browser diagnostics summary
             if [ -f /tmp/comprehensive-browser-diagnostics-${{ github.run_number }}/SUMMARY.txt ]; then
               echo "┌─ BROWSER DIAGNOSTICS ─────────────────────────────────────────┐"
@@ -501,7 +501,7 @@ jobs:
               echo "└───────────────────────────────────────────────────────────────┘"
               echo ""
             fi
-            
+
             # Backend diagnostics summary
             if [ -d ./diagnostics-backend-basic ]; then
               SUMMARY_FILE=$(find ./diagnostics-backend-basic -name "summary.log" | head -1)
@@ -511,7 +511,7 @@ jobs:
                 echo "└───────────────────────────────────────────────────────────────┘"
                 echo ""
               fi
-              
+
               # Show issues if any
               ISSUES_FILE=$(find ./diagnostics-backend-basic -name "issues.log" | head -1)
               if [ -f "$ISSUES_FILE" ] && [ -s "$ISSUES_FILE" ]; then
@@ -520,7 +520,7 @@ jobs:
                 echo "└───────────────────────────────────────────────────────────────┘"
                 echo ""
               fi
-              
+
               # Show fixes if any
               FIXES_FILE=$(find ./diagnostics-backend-basic -name "fixes.log" | head -1)
               if [ -f "$FIXES_FILE" ] && [ -s "$FIXES_FILE" ]; then
@@ -530,7 +530,7 @@ jobs:
                 echo ""
               fi
             fi
-            
+
             # Advanced backend diagnostics summary
             if [ -d ./diagnostics-backend-advanced ]; then
               ADV_SUMMARY_FILE=$(find ./diagnostics-backend-advanced -name "summary.log" | head -1)
@@ -541,7 +541,7 @@ jobs:
                 echo ""
               fi
             fi
-            
+
             # API profiling summary
             if [ -f /tmp/comprehensive-api-profiler-${{ github.run_number }}/SUMMARY.txt ]; then
               echo "┌─ API PROFILING ───────────────────────────────────────────────┐"
@@ -549,7 +549,7 @@ jobs:
               echo "└───────────────────────────────────────────────────────────────┘"
               echo ""
             fi
-            
+
             # Resource monitoring summary
             if [ -d ./diagnostics-resources ]; then
               RESOURCE_SUMMARY=$(find ./diagnostics-resources -name "SUMMARY.txt" -type f | head -1)
@@ -560,14 +560,14 @@ jobs:
                 echo ""
               fi
             fi
-            
+
             echo "════════════════════════════════════════════════════════════════"
             echo "ARTIFACTS AVAILABLE"
             echo "════════════════════════════════════════════════════════════════"
             echo ""
             echo "All diagnostic data is available in GitHub Actions artifacts:"
             echo ""
-            
+
             if [ "${{ github.event.inputs.run_browser_diagnostics }}" = "true" ]; then
               echo "📦 browser-diagnostics-${{ github.run_number }}"
               echo "   • Console errors and warnings"
@@ -578,7 +578,7 @@ jobs:
               echo "   • JavaScript error traces"
               echo ""
             fi
-            
+
             if [ "${{ github.event.inputs.run_backend_diagnostics }}" = "true" ]; then
               echo "📦 backend-diagnostics-basic-${{ github.run_number }}"
               echo "   • plugins.json validation results"
@@ -587,7 +587,7 @@ jobs:
               echo "   • Auto-fix logs (if mode=fix)"
               echo "   • Manual action recommendations"
               echo ""
-              
+
               if [ "${{ github.event.inputs.run_advanced_backend }}" = "true" ]; then
                 echo "📦 backend-diagnostics-advanced-${{ github.run_number }}"
                 echo "   • Deep plugin structure analysis"
@@ -597,7 +597,7 @@ jobs:
                 echo ""
               fi
             fi
-            
+
             if [ "${{ github.event.inputs.run_api_profiling }}" = "true" ]; then
               echo "📦 api-profiling-${{ github.run_number }}"
               echo "   • API response times for all endpoints"
@@ -606,7 +606,7 @@ jobs:
               echo "   • Performance bottleneck analysis"
               echo ""
             fi
-            
+
             if [ "${{ github.event.inputs.run_resource_monitoring }}" = "true" ]; then
               echo "📦 resource-monitoring-${{ github.run_number }}"
               echo "   • System CPU/memory usage over time"
@@ -615,13 +615,13 @@ jobs:
               echo "   • Process resource usage"
               echo ""
             fi
-            
+
             echo "📦 comprehensive-summary-${{ github.run_number }}"
             echo "   • This master summary report"
             echo "   • Debugging recommendations"
             echo "   • Quick reference guide"
             echo ""
-            
+
             echo "════════════════════════════════════════════════════════════════"
             echo "RAPID TRIAGE & DEBUGGING GUIDE"
             echo "════════════════════════════════════════════════════════════════"
@@ -695,9 +695,9 @@ jobs:
             echo "════════════════════════════════════════════════════════════════"
             echo "END OF MASTER SUMMARY"
             echo "════════════════════════════════════════════════════════════════"
-            
+
           } > ./comprehensive-summary/MASTER-SUMMARY.txt
-          
+
           # Also create a markdown version for GitHub display
           {
             echo "# Comprehensive Plugin Manager Diagnostics"
@@ -710,53 +710,53 @@ jobs:
             echo ""
             echo "## Components Executed"
             echo ""
-            
+
             if [ "${{ github.event.inputs.run_browser_diagnostics }}" = "true" ]; then
               echo "- ✅ Browser Automation Diagnostics"
             else
               echo "- ⏭️ Browser Automation Diagnostics (skipped)"
             fi
-            
+
             if [ "${{ github.event.inputs.run_backend_diagnostics }}" = "true" ]; then
               echo "- ✅ Backend/Plugin Diagnostics (mode: ${{ github.event.inputs.backend_mode }})"
             else
               echo "- ⏭️ Backend/Plugin Diagnostics (skipped)"
             fi
-            
+
             if [ "${{ github.event.inputs.run_api_profiling }}" = "true" ]; then
               echo "- ✅ API Endpoint Profiling"
             else
               echo "- ⏭️ API Endpoint Profiling (skipped)"
             fi
-            
+
             if [ "${{ github.event.inputs.run_resource_monitoring }}" = "true" ]; then
               echo "- ✅ Resource Monitoring"
             else
               echo "- ⏭️ Resource Monitoring (skipped)"
             fi
-            
+
             echo ""
             echo "## Quick Links to Artifacts"
             echo ""
             echo "Download the following artifacts from this workflow run for detailed diagnostics:"
             echo ""
-            
+
             [ "${{ github.event.inputs.run_browser_diagnostics }}" = "true" ] && \
               echo "- 📦 \`browser-diagnostics-${{ github.run_number }}\` - Browser automation results"
-            
+
             [ "${{ github.event.inputs.run_backend_diagnostics }}" = "true" ] && \
               echo "- 📦 \`backend-diagnostics-basic-${{ github.run_number }}\` - Plugin manager diagnostics"
-            
+
             [ "${{ github.event.inputs.run_backend_diagnostics }}" = "true" ] && \
               [ "${{ github.event.inputs.run_advanced_backend }}" = "true" ] && \
               echo "- 📦 \`backend-diagnostics-advanced-${{ github.run_number }}\` - Advanced diagnostics"
-            
+
             [ "${{ github.event.inputs.run_api_profiling }}" = "true" ] && \
               echo "- 📦 \`api-profiling-${{ github.run_number }}\` - API performance data"
-            
+
             [ "${{ github.event.inputs.run_resource_monitoring }}" = "true" ] && \
               echo "- 📦 \`resource-monitoring-${{ github.run_number }}\` - Resource usage data"
-            
+
             echo "- 📦 \`comprehensive-summary-${{ github.run_number }}\` - Master summary (this report)"
             echo ""
             echo "## Debugging Priority"
@@ -768,12 +768,12 @@ jobs:
             echo "- 📋 Step-by-step debugging workflow"
             echo "- 🔗 Cross-references between artifacts"
             echo ""
-            
+
           } > ./comprehensive-summary/README.md
-          
+
           echo "✓ Master summary generated"
           cat ./comprehensive-summary/MASTER-SUMMARY.txt
-      
+
       # ========================================================================
       # UPLOAD ARTIFACTS
       # ========================================================================
@@ -785,7 +785,7 @@ jobs:
           path: /tmp/comprehensive-browser-diagnostics-${{ github.run_number }}/
           retention-days: 30
           if-no-files-found: warn
-      
+
       - name: Upload backend basic diagnostics artifact
         uses: actions/upload-artifact@v4
         if: always() && github.event.inputs.run_backend_diagnostics == 'true'
@@ -794,7 +794,7 @@ jobs:
           path: diagnostics-backend-basic/
           retention-days: 30
           if-no-files-found: warn
-      
+
       - name: Upload backend advanced diagnostics artifact
         uses: actions/upload-artifact@v4
         if: always() && github.event.inputs.run_backend_diagnostics == 'true' && github.event.inputs.run_advanced_backend == 'true'
@@ -803,7 +803,7 @@ jobs:
           path: diagnostics-backend-advanced/
           retention-days: 30
           if-no-files-found: warn
-      
+
       - name: Upload API profiling artifact
         uses: actions/upload-artifact@v4
         if: always() && github.event.inputs.run_api_profiling == 'true'
@@ -812,7 +812,7 @@ jobs:
           path: /tmp/comprehensive-api-profiler-${{ github.run_number }}/
           retention-days: 30
           if-no-files-found: warn
-      
+
       - name: Upload resource monitoring artifact
         uses: actions/upload-artifact@v4
         if: always() && github.event.inputs.run_resource_monitoring == 'true'
@@ -821,7 +821,7 @@ jobs:
           path: ./diagnostics-resources/
           retention-days: 30
           if-no-files-found: warn
-      
+
       - name: Upload comprehensive summary artifact
         uses: actions/upload-artifact@v4
         if: always()
@@ -830,7 +830,7 @@ jobs:
           path: ./comprehensive-summary/
           retention-days: 30
           if-no-files-found: warn
-      
+
       # ========================================================================
       # DISPLAY SUMMARY IN WORKFLOW
       # ========================================================================
@@ -840,7 +840,7 @@ jobs:
           if [ -f ./comprehensive-summary/README.md ]; then
             cat ./comprehensive-summary/README.md >> $GITHUB_STEP_SUMMARY
           fi
-      
+
       # ========================================================================
       # CLEANUP
       # ========================================================================
@@ -851,7 +851,7 @@ jobs:
           echo "║                    CLEANUP                                     ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF' || true
             # Remove temporary files from this run
             rm -f /tmp/resource-monitor-${{ github.run_number }}.pid
@@ -860,10 +860,10 @@ jobs:
             rm -rf /tmp/comprehensive-diagnostics-resources-${{ github.run_number }}
             rm -f /tmp/plugin-diagnostics-basic-${{ github.run_number }}.tar.gz
             rm -f /tmp/plugin-diagnostics-advanced-${{ github.run_number }}.tar.gz
-            
+
             # Keep diagnostic directories for 7 days, clean up older ones
             find /tmp -maxdepth 1 -name "plugin-diagnostics-*" -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
             find /tmp -maxdepth 1 -name "comprehensive-diagnostics-resources-*" -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
-            
+
             echo "✓ Cleanup complete"
           EOF
