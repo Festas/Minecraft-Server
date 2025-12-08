@@ -1,12 +1,16 @@
-# Comprehensive Plugin Manager Diagnostics Workflow
+# Comprehensive Plugin Manager Diagnostics Workflow (v2.0)
 #
 # This workflow combines all diagnostic tools into a single coordinated run:
 # - Browser diagnostics (Puppeteer automation)
 # - Backend/plugin diagnostics (plugin manager checks)
 # - API profiling (endpoint performance testing)
 # - Resource monitoring (CPU, memory, Docker stats)
+# - Secrets requirements documentation
 #
-# Use this as the recommended starting point for troubleshooting any issue.
+# ✅ FULLY SELF-DISPATCHABLE - Run from GitHub Actions UI without any manual changes!
+# ✅ NO SECRET-DEPENDENT IF CONDITIONS - Uses runtime detection instead
+# ✅ GRACEFUL FALLBACK - Missing secrets skip steps with clear explanations
+# ✅ COMPREHENSIVE REPORTING - Includes secrets usage and requirements documentation
 #
 # WHEN TO USE:
 # - Complex issues where root cause is unclear
@@ -19,6 +23,8 @@
 # - Individual artifacts for each diagnostic type
 # - Cross-referenced findings
 # - Actionable debugging recommendations
+# - Secrets requirements and usage documentation
+# - Step-by-step guide for enabling full diagnostics
 #
 # HOW TO USE:
 # 1. Go to Actions → Comprehensive Plugin Manager Diagnostics
@@ -116,6 +122,88 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Detect and document available secrets
+        id: secrets_check
+        run: |
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║           DETECTING AVAILABLE SECRETS                          ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+          echo ""
+
+          # Check each secret and set flags
+          # Use shell logic instead of GitHub's secrets context in if conditions
+
+          HAS_SERVER_HOST="false"
+          HAS_SERVER_USER="false"
+          HAS_SSH_KEY="false"
+          HAS_CONSOLE_USER="false"
+          HAS_CONSOLE_PASS="false"
+
+          # Check SERVER_HOST
+          if [ -n "${{ secrets.SERVER_HOST }}" ]; then
+            echo "✓ SERVER_HOST is configured"
+            HAS_SERVER_HOST="true"
+          else
+            echo "✗ SERVER_HOST is NOT configured"
+          fi
+
+          # Check SERVER_USER
+          if [ -n "${{ secrets.SERVER_USER }}" ]; then
+            echo "✓ SERVER_USER is configured"
+            HAS_SERVER_USER="true"
+          else
+            echo "✗ SERVER_USER is NOT configured"
+          fi
+
+          # Check SSH_PRIVATE_KEY
+          if [ -n "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "✓ SSH_PRIVATE_KEY is configured"
+            HAS_SSH_KEY="true"
+          else
+            echo "✗ SSH_PRIVATE_KEY is NOT configured"
+          fi
+
+          # Check CONSOLE_ADMIN_USER
+          if [ -n "${{ secrets.CONSOLE_ADMIN_USER }}" ]; then
+            echo "✓ CONSOLE_ADMIN_USER is configured"
+            HAS_CONSOLE_USER="true"
+          else
+            echo "✗ CONSOLE_ADMIN_USER is NOT configured (will use default: admin)"
+          fi
+
+          # Check CONSOLE_ADMIN_PASSWORD
+          if [ -n "${{ secrets.CONSOLE_ADMIN_PASSWORD }}" ]; then
+            echo "✓ CONSOLE_ADMIN_PASSWORD is configured"
+            HAS_CONSOLE_PASS="true"
+          else
+            echo "✗ CONSOLE_ADMIN_PASSWORD is NOT configured (will use default: admin)"
+          fi
+
+          echo ""
+          echo "Setting output flags for conditional steps..."
+          echo "has_server_host=$HAS_SERVER_HOST" >> $GITHUB_OUTPUT
+          echo "has_server_user=$HAS_SERVER_USER" >> $GITHUB_OUTPUT
+          echo "has_ssh_key=$HAS_SSH_KEY" >> $GITHUB_OUTPUT
+          echo "has_console_user=$HAS_CONSOLE_USER" >> $GITHUB_OUTPUT
+          echo "has_console_pass=$HAS_CONSOLE_PASS" >> $GITHUB_OUTPUT
+
+          # Determine if we can do remote diagnostics
+          if [ "$HAS_SERVER_HOST" = "true" ] && [ "$HAS_SERVER_USER" = "true" ] && [ "$HAS_SSH_KEY" = "true" ]; then
+            echo "can_ssh=true" >> $GITHUB_OUTPUT
+            echo ""
+            echo "✓ Remote diagnostics ENABLED (SSH access available)"
+          else
+            echo "can_ssh=false" >> $GITHUB_OUTPUT
+            echo ""
+            echo "✗ Remote diagnostics DISABLED (missing SSH credentials)"
+            echo "  Required: SERVER_HOST, SERVER_USER, SSH_PRIVATE_KEY"
+          fi
+
+          echo ""
+          echo "╔════════════════════════════════════════════════════════════════╗"
+          echo "║           SECRET DETECTION COMPLETE                            ║"
+          echo "╚════════════════════════════════════════════════════════════════╝"
+
       - name: Setup Node.js
         if: github.event.inputs.run_browser_diagnostics == 'true'
         uses: actions/setup-node@v4
@@ -167,7 +255,7 @@ jobs:
           echo "Console URL: $(grep url "$GITHUB_OUTPUT" | cut -d'=' -f2-)"
 
       - name: Setup SSH (if testing deployed console)
-        if: secrets.SERVER_HOST != '' && secrets.SSH_PRIVATE_KEY != ''
+        if: steps.secrets_check.outputs.can_ssh == 'true'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
@@ -178,7 +266,7 @@ jobs:
       # RESOURCE MONITORING - Start monitoring early to capture all activity
       # ========================================================================
       - name: Start resource monitoring
-        if: github.event.inputs.run_resource_monitoring == 'true' && secrets.SERVER_HOST != ''
+        if: github.event.inputs.run_resource_monitoring == 'true' && steps.secrets_check.outputs.can_ssh == 'true'
         run: |
           echo "╔════════════════════════════════════════════════════════════════╗"
           echo "║               STARTING RESOURCE MONITORING                     ║"
@@ -210,11 +298,18 @@ jobs:
             echo "✓ Resource monitoring started (PID: $(cat /tmp/resource-monitor-${{ github.run_number }}.pid))"
           EOF
 
+      - name: Resource monitoring skipped (SSH not available)
+        if: github.event.inputs.run_resource_monitoring == 'true' && steps.secrets_check.outputs.can_ssh != 'true'
+        run: |
+          echo "⚠️ Resource monitoring requires SSH access to remote server"
+          echo "   Missing secrets: SERVER_HOST, SERVER_USER, and/or SSH_PRIVATE_KEY"
+          echo "   This step has been skipped - see final summary for how to enable"
+
       # ========================================================================
       # BACKEND DIAGNOSTICS - Run plugin manager diagnostics
       # ========================================================================
       - name: Upload diagnostic scripts to server
-        if: github.event.inputs.run_backend_diagnostics == 'true' && secrets.SERVER_HOST != ''
+        if: github.event.inputs.run_backend_diagnostics == 'true' && steps.secrets_check.outputs.can_ssh == 'true'
         run: |
           echo "╔════════════════════════════════════════════════════════════════╗"
           echo "║               BACKEND DIAGNOSTICS SETUP                        ║"
@@ -236,7 +331,7 @@ jobs:
           echo "✓ Diagnostic scripts uploaded"
 
       - name: Run basic backend diagnostics
-        if: github.event.inputs.run_backend_diagnostics == 'true' && secrets.SERVER_HOST != ''
+        if: github.event.inputs.run_backend_diagnostics == 'true' && steps.secrets_check.outputs.can_ssh == 'true'
         id: basic_backend_diagnostics
         run: |
           echo "╔════════════════════════════════════════════════════════════════╗"
@@ -268,7 +363,7 @@ jobs:
           echo "✓ Basic diagnostics completed. Fixes applied: $FIX_COUNT"
 
       - name: Run advanced backend diagnostics
-        if: github.event.inputs.run_backend_diagnostics == 'true' && github.event.inputs.run_advanced_backend == 'true' && secrets.SERVER_HOST != ''
+        if: github.event.inputs.run_backend_diagnostics == 'true' && github.event.inputs.run_advanced_backend == 'true' && steps.secrets_check.outputs.can_ssh == 'true'
         run: |
           echo "╔════════════════════════════════════════════════════════════════╗"
           echo "║           RUNNING ADVANCED BACKEND DIAGNOSTICS                 ║"
@@ -283,6 +378,13 @@ jobs:
           EOF
 
           echo "✓ Advanced diagnostics completed"
+
+      - name: Backend diagnostics skipped (SSH not available)
+        if: github.event.inputs.run_backend_diagnostics == 'true' && steps.secrets_check.outputs.can_ssh != 'true'
+        run: |
+          echo "⚠️ Backend diagnostics require SSH access to remote server"
+          echo "   Missing secrets: SERVER_HOST, SERVER_USER, and/or SSH_PRIVATE_KEY"
+          echo "   This step has been skipped - see final summary for how to enable"
 
       # ========================================================================
       # BROWSER DIAGNOSTICS - Automated browser testing
@@ -354,7 +456,7 @@ jobs:
       # STOP RESOURCE MONITORING - Collect results
       # ========================================================================
       - name: Stop resource monitoring and download results
-        if: always() && github.event.inputs.run_resource_monitoring == 'true' && secrets.SERVER_HOST != ''
+        if: always() && github.event.inputs.run_resource_monitoring == 'true' && steps.secrets_check.outputs.can_ssh == 'true'
         run: |
           echo "╔════════════════════════════════════════════════════════════════╗"
           echo "║          STOPPING RESOURCE MONITORING                          ║"
@@ -400,7 +502,7 @@ jobs:
       # DOWNLOAD BACKEND DIAGNOSTICS
       # ========================================================================
       - name: Download basic backend diagnostic reports
-        if: always() && github.event.inputs.run_backend_diagnostics == 'true' && secrets.SERVER_HOST != ''
+        if: always() && github.event.inputs.run_backend_diagnostics == 'true' && steps.secrets_check.outputs.can_ssh == 'true'
         run: |
           echo "╔════════════════════════════════════════════════════════════════╗"
           echo "║         DOWNLOADING BACKEND DIAGNOSTIC REPORTS                 ║"
@@ -433,7 +535,7 @@ jobs:
           fi
 
       - name: Download advanced backend diagnostic reports
-        if: always() && github.event.inputs.run_backend_diagnostics == 'true' && github.event.inputs.run_advanced_backend == 'true' && secrets.SERVER_HOST != ''
+        if: always() && github.event.inputs.run_backend_diagnostics == 'true' && github.event.inputs.run_advanced_backend == 'true' && steps.secrets_check.outputs.can_ssh == 'true'
         run: |
           echo "Downloading advanced backend diagnostic reports..."
 
@@ -717,6 +819,167 @@ jobs:
             echo "5. Cross-reference findings between different diagnostic types"
             echo "6. Use timestamps to correlate events across artifacts"
             echo ""
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "SECRETS CONFIGURATION STATUS"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "This workflow uses GitHub repository secrets to access remote"
+            echo "resources and credentials. Some diagnostics require specific"
+            echo "secrets to be configured."
+            echo ""
+            echo "┌─ SECRETS STATUS ──────────────────────────────────────────────┐"
+            echo ""
+
+            # Server access secrets
+            if [ "${{ steps.secrets_check.outputs.has_server_host }}" = "true" ]; then
+              echo "  ✅ SERVER_HOST          : Configured"
+            else
+              echo "  ❌ SERVER_HOST          : NOT configured"
+            fi
+
+            if [ "${{ steps.secrets_check.outputs.has_server_user }}" = "true" ]; then
+              echo "  ✅ SERVER_USER          : Configured"
+            else
+              echo "  ❌ SERVER_USER          : NOT configured"
+            fi
+
+            if [ "${{ steps.secrets_check.outputs.has_ssh_key }}" = "true" ]; then
+              echo "  ✅ SSH_PRIVATE_KEY      : Configured"
+            else
+              echo "  ❌ SSH_PRIVATE_KEY      : NOT configured"
+            fi
+
+            # Console credentials
+            if [ "${{ steps.secrets_check.outputs.has_console_user }}" = "true" ]; then
+              echo "  ✅ CONSOLE_ADMIN_USER   : Configured"
+            else
+              echo "  ⚠️  CONSOLE_ADMIN_USER   : Using default (admin)"
+            fi
+
+            if [ "${{ steps.secrets_check.outputs.has_console_pass }}" = "true" ]; then
+              echo "  ✅ CONSOLE_ADMIN_PASSWORD: Configured"
+            else
+              echo "  ⚠️  CONSOLE_ADMIN_PASSWORD: Using default (admin)"
+            fi
+
+            echo ""
+            echo "└───────────────────────────────────────────────────────────────┘"
+            echo ""
+
+            # Explain what was skipped
+            echo "┌─ DIAGNOSTICS EXECUTED/SKIPPED BASED ON SECRETS ───────────────┐"
+            echo ""
+
+            if [ "${{ steps.secrets_check.outputs.can_ssh }}" = "true" ]; then
+              echo "  ✅ Remote SSH Access: ENABLED"
+              echo "     ├─ Backend diagnostics: Available"
+              echo "     ├─ Resource monitoring: Available"
+              echo "     └─ Server file access: Available"
+            else
+              echo "  ❌ Remote SSH Access: DISABLED"
+              echo "     Missing: SERVER_HOST, SERVER_USER, or SSH_PRIVATE_KEY"
+              echo "     ├─ Backend diagnostics: SKIPPED"
+              echo "     ├─ Resource monitoring: SKIPPED"
+              echo "     └─ Server file access: UNAVAILABLE"
+            fi
+
+            echo ""
+
+            if [ "${{ github.event.inputs.run_browser_diagnostics }}" = "true" ]; then
+              echo "  ✅ Browser Diagnostics: EXECUTED"
+              echo "     Uses: CONSOLE_ADMIN_USER, CONSOLE_ADMIN_PASSWORD"
+              echo "     Note: Defaults used if secrets not configured"
+            fi
+
+            if [ "${{ github.event.inputs.run_api_profiling }}" = "true" ]; then
+              echo "  ✅ API Profiling: EXECUTED"
+              echo "     Uses: CONSOLE_ADMIN_USER, CONSOLE_ADMIN_PASSWORD"
+              echo "     Note: Defaults used if secrets not configured"
+            fi
+
+            echo ""
+            echo "└───────────────────────────────────────────────────────────────┘"
+            echo ""
+
+            echo "════════════════════════════════════════════════════════════════"
+            echo "HOW TO ADD MISSING SECRETS"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "To enable full diagnostic capabilities, configure these secrets"
+            echo "in your GitHub repository:"
+            echo ""
+            echo "1. Navigate to: Repository → Settings → Secrets and variables → Actions"
+            echo ""
+            echo "2. Click 'New repository secret' for each missing secret:"
+            echo ""
+            echo "   SECRET NAME              DESCRIPTION                      REQUIRED FOR"
+            echo "   ──────────────────────── ──────────────────────────────── ─────────────────────"
+            echo "   SERVER_HOST              Production server hostname       Remote diagnostics"
+            echo "                            (e.g., server.example.com)"
+            echo ""
+            echo "   SERVER_USER              SSH username for server          Remote diagnostics"
+            echo "                            (e.g., deploy, ubuntu)"
+            echo ""
+            echo "   SSH_PRIVATE_KEY          SSH private key for auth         Remote diagnostics"
+            echo "                            (full key including headers)"
+            echo ""
+            echo "   CONSOLE_ADMIN_USER       Console admin username           Browser/API testing"
+            echo "                            (default: admin)"
+            echo ""
+            echo "   CONSOLE_ADMIN_PASSWORD   Console admin password           Browser/API testing"
+            echo "                            (default: admin)"
+            echo ""
+            echo "3. SECURITY BEST PRACTICES:"
+            echo ""
+            echo "   • Never commit secrets to code"
+            echo "   • Use dedicated SSH keys for CI/CD (not personal keys)"
+            echo "   • Rotate secrets regularly"
+            echo "   • Grant minimum required permissions"
+            echo "   • Use strong, unique passwords"
+            echo "   • Limit secret access to necessary workflows only"
+            echo ""
+            echo "4. SSH KEY GENERATION:"
+            echo ""
+            echo "   # Generate a dedicated key pair for GitHub Actions"
+            echo "   ssh-keygen -t ed25519 -C 'github-actions' -f github_actions_key"
+            echo ""
+            echo "   # Add public key to server's authorized_keys"
+            echo "   ssh-copy-id -i github_actions_key.pub user@server.example.com"
+            echo ""
+            echo "   # Add private key content to SSH_PRIVATE_KEY secret"
+            echo "   cat github_actions_key  # Copy entire output including headers"
+            echo ""
+            echo "5. TESTING YOUR CONFIGURATION:"
+            echo ""
+            echo "   After adding secrets, run this workflow again to verify:"
+            echo "   • All secret detection checks show ✅"
+            echo "   • Remote diagnostics are no longer skipped"
+            echo "   • All enabled components execute successfully"
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "WORKFLOW DISPATCH INFORMATION"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "This workflow is FULLY SELF-DISPATCHABLE from GitHub Actions UI."
+            echo ""
+            echo "✅ NO manual file changes required"
+            echo "✅ NO secrets needed in workflow YAML conditions"
+            echo "✅ Graceful fallback for missing secrets"
+            echo "✅ Clear explanations for skipped steps"
+            echo ""
+            echo "To run again:"
+            echo "  1. Go to: Actions → Comprehensive Plugin Manager Diagnostics"
+            echo "  2. Click: 'Run workflow' button"
+            echo "  3. Configure: Options or use defaults"
+            echo "  4. Click: 'Run workflow' (green button)"
+            echo ""
+            echo "The workflow will automatically:"
+            echo "  • Detect available secrets at runtime"
+            echo "  • Skip unavailable diagnostics gracefully"
+            echo "  • Explain what was run and what was skipped"
+            echo "  • Provide guidance for enabling full diagnostics"
+            echo ""
             echo "For detailed documentation, see:"
             echo "  • docs/DIAGNOSTICS-GUIDE.md"
             echo "  • docs/BROWSER-DIAGNOSTICS.md"
@@ -801,6 +1064,290 @@ jobs:
 
           } > ./comprehensive-summary/README.md
 
+          # Create a dedicated secrets configuration guide
+          {
+            echo "════════════════════════════════════════════════════════════════"
+            echo "SECRETS CONFIGURATION GUIDE"
+            echo "Comprehensive Plugin Manager Diagnostics Workflow"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "This guide explains how to configure GitHub repository secrets"
+            echo "to enable full diagnostic capabilities in this workflow."
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "CURRENT SECRET STATUS"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+
+            if [ "${{ steps.secrets_check.outputs.has_server_host }}" = "true" ]; then
+              echo "✅ SERVER_HOST          : Configured"
+            else
+              echo "❌ SERVER_HOST          : NOT configured"
+            fi
+
+            if [ "${{ steps.secrets_check.outputs.has_server_user }}" = "true" ]; then
+              echo "✅ SERVER_USER          : Configured"
+            else
+              echo "❌ SERVER_USER          : NOT configured"
+            fi
+
+            if [ "${{ steps.secrets_check.outputs.has_ssh_key }}" = "true" ]; then
+              echo "✅ SSH_PRIVATE_KEY      : Configured"
+            else
+              echo "❌ SSH_PRIVATE_KEY      : NOT configured"
+            fi
+
+            if [ "${{ steps.secrets_check.outputs.has_console_user }}" = "true" ]; then
+              echo "✅ CONSOLE_ADMIN_USER   : Configured"
+            else
+              echo "⚠️  CONSOLE_ADMIN_USER   : Using default (admin)"
+            fi
+
+            if [ "${{ steps.secrets_check.outputs.has_console_pass }}" = "true" ]; then
+              echo "✅ CONSOLE_ADMIN_PASSWORD: Configured"
+            else
+              echo "⚠️  CONSOLE_ADMIN_PASSWORD: Using default (admin)"
+            fi
+
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "REQUIRED SECRETS BY DIAGNOSTIC TYPE"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "┌─ BROWSER DIAGNOSTICS ─────────────────────────────────────────┐"
+            echo "│ • CONSOLE_ADMIN_USER      (optional - defaults to 'admin')    │"
+            echo "│ • CONSOLE_ADMIN_PASSWORD  (optional - defaults to 'admin')    │"
+            echo "│                                                                │"
+            echo "│ What it enables:                                              │"
+            echo "│   - Automated browser login                                   │"
+            echo "│   - Page interaction testing                                  │"
+            echo "│   - Screenshot capture of authenticated pages                 │"
+            echo "│   - Network request monitoring                                │"
+            echo "└────────────────────────────────────────────────────────────────┘"
+            echo ""
+            echo "┌─ API PROFILING ───────────────────────────────────────────────┐"
+            echo "│ • CONSOLE_ADMIN_USER      (optional - defaults to 'admin')    │"
+            echo "│ • CONSOLE_ADMIN_PASSWORD  (optional - defaults to 'admin')    │"
+            echo "│                                                                │"
+            echo "│ What it enables:                                              │"
+            echo "│   - API endpoint authentication testing                       │"
+            echo "│   - CSRF token flow validation                                │"
+            echo "│   - Session management testing                                │"
+            echo "│   - Performance profiling of protected endpoints             │"
+            echo "└────────────────────────────────────────────────────────────────┘"
+            echo ""
+            echo "┌─ BACKEND DIAGNOSTICS ─────────────────────────────────────────┐"
+            echo "│ • SERVER_HOST             (REQUIRED for remote diagnostics)   │"
+            echo "│ • SERVER_USER             (REQUIRED for remote diagnostics)   │"
+            echo "│ • SSH_PRIVATE_KEY         (REQUIRED for remote diagnostics)   │"
+            echo "│                                                                │"
+            echo "│ What it enables:                                              │"
+            echo "│   - Remote server file access                                 │"
+            echo "│   - Plugin manager diagnostics                                │"
+            echo "│   - Permission and ownership checks                           │"
+            echo "│   - Auto-fix capabilities (in fix mode)                       │"
+            echo "│   - Advanced plugin structure analysis                        │"
+            echo "└────────────────────────────────────────────────────────────────┘"
+            echo ""
+            echo "┌─ RESOURCE MONITORING ─────────────────────────────────────────┐"
+            echo "│ • SERVER_HOST             (REQUIRED for remote monitoring)    │"
+            echo "│ • SERVER_USER             (REQUIRED for remote monitoring)    │"
+            echo "│ • SSH_PRIVATE_KEY         (REQUIRED for remote monitoring)    │"
+            echo "│                                                                │"
+            echo "│ What it enables:                                              │"
+            echo "│   - CPU and memory usage tracking                             │"
+            echo "│   - Docker container statistics                               │"
+            echo "│   - Network connection monitoring                             │"
+            echo "│   - Process resource analysis                                 │"
+            echo "└────────────────────────────────────────────────────────────────┘"
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "HOW TO ADD SECRETS"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "STEP 1: Navigate to Secrets Settings"
+            echo "--------------------------------------"
+            echo "1. Go to your GitHub repository"
+            echo "2. Click 'Settings' tab"
+            echo "3. In left sidebar: 'Secrets and variables' → 'Actions'"
+            echo "4. Click 'New repository secret' button"
+            echo ""
+            echo "STEP 2: Add Each Required Secret"
+            echo "----------------------------------"
+            echo ""
+            echo "SECRET: SERVER_HOST"
+            echo "  Description: Hostname or IP address of your production server"
+            echo "  Example: server.example.com  OR  203.0.113.42"
+            echo "  How to get: Check your server provider dashboard"
+            echo ""
+            echo "SECRET: SERVER_USER"
+            echo "  Description: SSH username for server access"
+            echo "  Example: deploy, ubuntu, admin, root"
+            echo "  How to get: Check server account settings or hosting docs"
+            echo ""
+            echo "SECRET: SSH_PRIVATE_KEY"
+            echo "  Description: Private SSH key for authentication"
+            echo "  Format: Full key including BEGIN/END headers"
+            echo "  Example:"
+            echo "    -----BEGIN OPENSSH PRIVATE KEY-----"
+            echo "    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAA..."
+            echo "    -----END OPENSSH PRIVATE KEY-----"
+            echo ""
+            echo "  How to generate (RECOMMENDED - dedicated key for CI/CD):"
+            echo "    1. On your local machine:"
+            echo "       ssh-keygen -t ed25519 -C 'github-actions-diagnostics' -f ~/.ssh/github_actions"
+            echo ""
+            echo "    2. Add public key to server:"
+            echo "       ssh-copy-id -i ~/.ssh/github_actions.pub user@server.example.com"
+            echo "       # OR manually append to server's ~/.ssh/authorized_keys"
+            echo ""
+            echo "    3. Copy private key content:"
+            echo "       cat ~/.ssh/github_actions"
+            echo "       # Copy ENTIRE output including headers"
+            echo ""
+            echo "    4. Paste into SSH_PRIVATE_KEY secret"
+            echo ""
+            echo "SECRET: CONSOLE_ADMIN_USER"
+            echo "  Description: Username for console web interface"
+            echo "  Default: admin (used if not configured)"
+            echo "  Example: admin, superuser, administrator"
+            echo ""
+            echo "SECRET: CONSOLE_ADMIN_PASSWORD"
+            echo "  Description: Password for console web interface"
+            echo "  Default: admin (used if not configured - INSECURE!)"
+            echo "  Recommendation: Use strong, unique password"
+            echo "  Example: Generate with: openssl rand -base64 32"
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "SECURITY BEST PRACTICES"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "✅ DO:"
+            echo "  • Use dedicated SSH keys for CI/CD (not your personal key)"
+            echo "  • Use ed25519 keys (modern, secure, fast)"
+            echo "  • Rotate secrets regularly (every 90-180 days)"
+            echo "  • Use strong, unique passwords (min 16 characters)"
+            echo "  • Limit SSH key permissions on server (read-only if possible)"
+            echo "  • Monitor secret usage in workflow logs"
+            echo "  • Use environment-specific secrets (staging vs production)"
+            echo ""
+            echo "❌ DON'T:"
+            echo "  • Commit secrets to code or documentation"
+            echo "  • Share secrets between different environments"
+            echo "  • Use root account for CI/CD access"
+            echo "  • Reuse personal SSH keys"
+            echo "  • Use weak/default passwords in production"
+            echo "  • Store secrets in workflow files"
+            echo "  • Echo or print secret values in logs"
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "SSH KEY SECURITY"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "When generating SSH keys for GitHub Actions:"
+            echo ""
+            echo "1. Use a dedicated key pair (don't reuse personal keys)"
+            echo "2. Add to authorized_keys with restrictions:"
+            echo "   from=\"140.82.112.0/20,143.55.64.0/20\" ssh-ed25519 AAAA..."
+            echo "   (GitHub Actions IP ranges)"
+            echo ""
+            echo "3. Consider command restrictions in authorized_keys:"
+            echo "   command=\"/path/to/allowed-commands.sh\" ssh-ed25519 AAAA..."
+            echo ""
+            echo "4. Monitor SSH access logs:"
+            echo "   tail -f /var/log/auth.log  # Debian/Ubuntu"
+            echo "   tail -f /var/log/secure    # RHEL/CentOS"
+            echo ""
+            echo "5. Revoke key if compromised:"
+            echo "   Remove from ~/.ssh/authorized_keys on server"
+            echo "   Delete from GitHub repository secrets"
+            echo "   Generate and configure new key pair"
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "TESTING YOUR CONFIGURATION"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "After adding secrets, verify they work:"
+            echo ""
+            echo "1. Run this workflow again from GitHub Actions"
+            echo "2. Check the 'Detect and document available secrets' step"
+            echo "3. Verify all required secrets show ✅"
+            echo "4. Confirm no diagnostics are skipped (unless intentional)"
+            echo "5. Review artifacts to ensure data was collected"
+            echo ""
+            echo "Common issues and fixes:"
+            echo ""
+            echo "❌ \"Permission denied (publickey)\""
+            echo "   → Public key not in authorized_keys on server"
+            echo "   → Wrong username in SERVER_USER"
+            echo "   → Key format issue (check for extra whitespace)"
+            echo ""
+            echo "❌ \"Host key verification failed\""
+            echo "   → Workflow includes ssh-keyscan step to handle this"
+            echo "   → Check SERVER_HOST is correct"
+            echo ""
+            echo "❌ \"Login failed\" in browser/API tests"
+            echo "   → Check CONSOLE_ADMIN_USER and CONSOLE_ADMIN_PASSWORD"
+            echo "   → Verify credentials work manually first"
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "MINIMAL SETUP FOR TESTING"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "If you want to test the workflow without remote server access:"
+            echo ""
+            echo "1. Configure only CONSOLE_ADMIN_USER and CONSOLE_ADMIN_PASSWORD"
+            echo "2. Enable only:"
+            echo "   - Browser diagnostics"
+            echo "   - API profiling"
+            echo "3. Skip:"
+            echo "   - Backend diagnostics (requires SSH)"
+            echo "   - Resource monitoring (requires SSH)"
+            echo ""
+            echo "This will run local diagnostics against the console URL without"
+            echo "requiring server access."
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "FULL SETUP FOR PRODUCTION"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "For complete diagnostic capabilities:"
+            echo ""
+            echo "1. Configure all 5 secrets:"
+            echo "   ✅ SERVER_HOST"
+            echo "   ✅ SERVER_USER"
+            echo "   ✅ SSH_PRIVATE_KEY"
+            echo "   ✅ CONSOLE_ADMIN_USER"
+            echo "   ✅ CONSOLE_ADMIN_PASSWORD"
+            echo ""
+            echo "2. Enable all diagnostic components in workflow inputs"
+            echo ""
+            echo "3. Run with default settings for comprehensive analysis"
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "SUPPORT AND TROUBLESHOOTING"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            echo "If you encounter issues:"
+            echo ""
+            echo "1. Check workflow logs for detailed error messages"
+            echo "2. Review MASTER-SUMMARY.txt for what was executed/skipped"
+            echo "3. Verify secrets are configured correctly in GitHub"
+            echo "4. Test SSH connection manually: ssh -i key user@host"
+            echo "5. Check server firewall allows SSH from GitHub Actions IPs"
+            echo "6. Review server logs: /var/log/auth.log or /var/log/secure"
+            echo ""
+            echo "For more help:"
+            echo "  • Repository: docs/DIAGNOSTICS-GUIDE.md"
+            echo "  • Workflow file: .github/workflows/comprehensive-plugin-manager-diagnostics.yml"
+            echo "  • GitHub Actions: https://docs.github.com/en/actions/security-guides/encrypted-secrets"
+            echo ""
+            echo "════════════════════════════════════════════════════════════════"
+            echo "END OF SECRETS CONFIGURATION GUIDE"
+            echo "════════════════════════════════════════════════════════════════"
+
+          } > ./comprehensive-summary/SECRETS-GUIDE.txt
+
           echo "✓ Master summary generated"
           cat ./comprehensive-summary/MASTER-SUMMARY.txt
 
@@ -875,7 +1422,7 @@ jobs:
       # CLEANUP
       # ========================================================================
       - name: Cleanup server files
-        if: always() && secrets.SERVER_HOST != ''
+        if: always() && steps.secrets_check.outputs.can_ssh == 'true'
         run: |
           echo "╔════════════════════════════════════════════════════════════════╗"
           echo "║                    CLEANUP                                     ║"
