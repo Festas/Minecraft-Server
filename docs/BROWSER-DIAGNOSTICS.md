@@ -315,6 +315,14 @@ Contains:
 - Only share artifacts with authorized team members
 - Redact passwords if present in logs
 - Use artifacts for debugging only, not monitoring
+- Clean up diagnostic artifacts after issue resolution
+- Never commit diagnostic artifacts to version control
+
+**Security Notes**:
+- Browser diagnostics disable Puppeteer sandbox for CI compatibility
+- API profiling creates temporary files with credentials (cleaned automatically)
+- Frontend diagnostics module overwrites global `fetch` function
+- Ensure diagnostic tools are only accessible to administrators
 
 ## Integration with Existing Diagnostics
 
@@ -348,6 +356,8 @@ sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0 \
 # Test browser launch
 node -e "const puppeteer = require('puppeteer'); (async () => { const browser = await puppeteer.launch(); await browser.close(); })();"
 ```
+
+**Security Note**: Browser diagnostics run with `--no-sandbox` flag for Docker/CI compatibility. In production environments, consider running Puppeteer with proper user permissions instead of disabling the sandbox.
 
 ### No Screenshots Generated
 

@@ -127,6 +127,10 @@
     
     /**
      * Monitor fetch requests
+     * 
+     * Note: This overrides the global fetch function to add monitoring.
+     * The original fetch behavior is preserved via the originalFetch reference.
+     * This may interact with other libraries that also wrap fetch.
      */
     function monitorFetch() {
         const originalFetch = window.fetch;
@@ -144,6 +148,7 @@
                 timeFromStart: Date.now() - diagnostics.startTime
             };
             
+            // Preserve original fetch behavior by calling it directly
             return originalFetch.apply(this, args).then(response => {
                 const endTime = performance.now();
                 const duration = endTime - startTime;

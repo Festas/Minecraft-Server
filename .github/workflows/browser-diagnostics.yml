@@ -132,13 +132,24 @@ jobs:
           echo "Running browser diagnostics..."
           echo "Console URL: ${CONSOLE_URL}"
           
-          # Run browser diagnostics
-          node scripts/browser-diagnostics.js || true
+          # Run browser diagnostics and capture exit code
+          EXIT_CODE=0
+          node scripts/browser-diagnostics.js || EXIT_CODE=$?
           
           # List generated files
           echo ""
           echo "Generated diagnostic files:"
           ls -lh /tmp/browser-diagnostics-${{ github.run_number }}/ || echo "No files generated"
+          
+          # Exit with error if diagnostics failed critically (exit code > 1)
+          # Exit code 1 is acceptable (errors found but diagnostics completed)
+          # Exit code > 1 indicates script failure
+          if [ $EXIT_CODE -gt 1 ]; then
+            echo "Browser diagnostics failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
+          
+          echo "Browser diagnostics completed with exit code $EXIT_CODE"
       
       - name: Run API profiling (if enabled)
         if: github.event.inputs.run_api_profiler == 'true'

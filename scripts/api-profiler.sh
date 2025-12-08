@@ -131,8 +131,16 @@ log "===========================================================================
 log ""
 
 # 1.1 Login - Valid Credentials
+# Note: Credentials are passed via environment variables to avoid exposure in process lists
+cat > "${OUTPUT_DIR}/login-payload.json" << EOF
+{"username":"${ADMIN_USERNAME}","password":"${ADMIN_PASSWORD}"}
+EOF
+
 status=$(timed_request "01-login-valid" "POST" "${CONSOLE_URL}/api/login" \
-    -d "{\"username\":\"${ADMIN_USERNAME}\",\"password\":\"${ADMIN_PASSWORD}\"}")
+    -d @"${OUTPUT_DIR}/login-payload.json")
+
+# Clean up credential file
+rm -f "${OUTPUT_DIR}/login-payload.json"
 
 if [ "${status}" = "200" ] || [ "${status}" = "201" ]; then
     log_success "Login successful"

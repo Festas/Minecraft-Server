@@ -479,6 +479,9 @@ async function main() {
     browser = await puppeteer.launch({
       headless: config.headless,
       args: [
+        // Security note: --no-sandbox is required in Docker/CI environments
+        // where proper sandboxing is not available. In production environments,
+        // consider running Puppeteer with proper user permissions instead.
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',

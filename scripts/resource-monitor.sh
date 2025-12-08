@@ -50,8 +50,39 @@ monitor_system_resources() {
         while [ $count -lt $max_count ]; do
             timestamp=$(date '+%Y-%m-%d %H:%M:%S')
             
-            # CPU usage (from top)
-            cpu_percent=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}')
+            # CPU usage - robust approach using /proc/stat if available
+            if [ -f /proc/stat ]; then
+                # Read CPU values from /proc/stat for more reliable CPU usage
+                cpu_line=$(grep "^cpu " /proc/stat)
+                cpu_user=$(echo "$cpu_line" | awk '{print $2}')
+                cpu_nice=$(echo "$cpu_line" | awk '{print $3}')
+                cpu_system=$(echo "$cpu_line" | awk '{print $4}')
+                cpu_idle=$(echo "$cpu_line" | awk '{print $5}')
+                cpu_total=$((cpu_user + cpu_nice + cpu_system + cpu_idle))
+                cpu_used=$((cpu_user + cpu_nice + cpu_system))
+                
+                # Store for next iteration to calculate percentage
+                if [ -n "$prev_cpu_total" ]; then
+                    cpu_diff=$((cpu_total - prev_cpu_total))
+                    cpu_used_diff=$((cpu_used - prev_cpu_used))
+                    if [ "$cpu_diff" -gt 0 ]; then
+                        cpu_percent=$(awk "BEGIN {printf \"%.2f\", (${cpu_used_diff}/${cpu_diff})*100}")
+                    else
+                        cpu_percent="0"
+                    fi
+                else
+                    cpu_percent="0"
+                fi
+                
+                prev_cpu_total=$cpu_total
+                prev_cpu_used=$cpu_used
+            else
+                # Fallback to top if /proc/stat not available, with error handling
+                cpu_percent=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}' 2>/dev/null || echo "0")
+                if [ -z "$cpu_percent" ] || [ "$cpu_percent" = "100" ]; then
+                    cpu_percent="0"
+                fi
+            fi
             
             # Memory usage
             mem_info=$(free -m | grep "Mem:")
