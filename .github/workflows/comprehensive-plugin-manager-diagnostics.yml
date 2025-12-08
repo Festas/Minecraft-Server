@@ -1,3 +1,33 @@
+# Comprehensive Plugin Manager Diagnostics Workflow
+#
+# This workflow combines all diagnostic tools into a single coordinated run:
+# - Browser diagnostics (Puppeteer automation)
+# - Backend/plugin diagnostics (plugin manager checks)
+# - API profiling (endpoint performance testing)
+# - Resource monitoring (CPU, memory, Docker stats)
+#
+# Use this as the recommended starting point for troubleshooting any issue.
+#
+# WHEN TO USE:
+# - Complex issues where root cause is unclear
+# - Production health checks / post-deployment validation
+# - Performance issues
+# - Complete system diagnostics
+#
+# WHAT YOU GET:
+# - Master summary with rapid triage guide
+# - Individual artifacts for each diagnostic type
+# - Cross-referenced findings
+# - Actionable debugging recommendations
+#
+# HOW TO USE:
+# 1. Go to Actions → Comprehensive Plugin Manager Diagnostics
+# 2. Click "Run workflow"
+# 3. Configure options (or use defaults)
+# 4. Review artifacts starting with comprehensive-summary
+#
+# See docs/DIAGNOSTICS-GUIDE.md for detailed documentation
+
 name: Comprehensive Plugin Manager Diagnostics
 
 on:
