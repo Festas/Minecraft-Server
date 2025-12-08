@@ -1,0 +1,366 @@
+name: Browser Diagnostics - Plugin Manager
+
+on:
+  workflow_dispatch:
+    inputs:
+      console_url:
+        description: 'Console URL to test (defaults to deployed console)'
+        required: false
+        type: string
+      run_resource_monitor:
+        description: 'Run resource monitoring during page load'
+        required: true
+        type: boolean
+        default: true
+      run_api_profiler:
+        description: 'Run API profiling'
+        required: true
+        type: boolean
+        default: true
+      headless:
+        description: 'Run browser in headless mode'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  browser-diagnostics:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      actions: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Puppeteer dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libnspr4 \
+            libatk1.0-0 \
+            libatk-bridge2.0-0 \
+            libcups2 \
+            libdrm2 \
+            libdbus-1-3 \
+            libxkbcommon0 \
+            libxcomposite1 \
+            libxdamage1 \
+            libxfixes3 \
+            libxrandr2 \
+            libgbm1 \
+            libasound2 \
+            libpango-1.0-0 \
+            libcairo2
+      
+      - name: Install Puppeteer
+        run: |
+          cd console/backend
+          npm install puppeteer@21.6.1
+      
+      - name: Determine console URL
+        id: console_url
+        run: |
+          if [ -n "${{ github.event.inputs.console_url }}" ]; then
+            echo "url=${{ github.event.inputs.console_url }}" >> $GITHUB_OUTPUT
+          else
+            # Use deployed console URL (construct from secrets if available)
+            if [ -n "${{ secrets.SERVER_HOST }}" ]; then
+              echo "url=https://${{ secrets.SERVER_HOST }}/console" >> $GITHUB_OUTPUT
+            else
+              echo "url=http://localhost:3000" >> $GITHUB_OUTPUT
+            fi
+          fi
+          
+          echo "Console URL: $(cat $GITHUB_OUTPUT | grep url | cut -d'=' -f2-)"
+      
+      - name: Setup SSH (if testing deployed console)
+        if: secrets.SERVER_HOST != '' && secrets.SSH_PRIVATE_KEY != ''
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Start resource monitoring (if enabled)
+        if: github.event.inputs.run_resource_monitor == 'true' && secrets.SERVER_HOST != ''
+        run: |
+          echo "Starting resource monitoring on server..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            # Start resource monitor in background
+            export OUTPUT_DIR=/tmp/browser-diagnostics-resources-${{ github.run_number }}
+            export MONITOR_DURATION=60
+            export MONITOR_INTERVAL=2
+            export CONTAINER_NAME=minecraft-console
+            
+            # Upload and run script
+            mkdir -p /tmp/scripts
+          EOF
+          
+          # Upload resource monitor script
+          scp -i ~/.ssh/id_rsa scripts/resource-monitor.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/scripts/
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            chmod +x /tmp/scripts/resource-monitor.sh
+            
+            # Run in background
+            nohup /tmp/scripts/resource-monitor.sh > /tmp/resource-monitor.log 2>&1 &
+            echo $! > /tmp/resource-monitor.pid
+            
+            echo "Resource monitoring started (PID: $(cat /tmp/resource-monitor.pid))"
+          EOF
+      
+      - name: Run browser diagnostics
+        env:
+          CONSOLE_URL: ${{ steps.console_url.outputs.url }}
+          ADMIN_USERNAME: ${{ secrets.CONSOLE_ADMIN_USER || 'admin' }}
+          ADMIN_PASSWORD: ${{ secrets.CONSOLE_ADMIN_PASSWORD || 'admin' }}
+          OUTPUT_DIR: /tmp/browser-diagnostics-${{ github.run_number }}
+          HEADLESS: ${{ github.event.inputs.headless }}
+          TIMEOUT: 30000
+        run: |
+          echo "Running browser diagnostics..."
+          echo "Console URL: ${CONSOLE_URL}"
+          
+          # Run browser diagnostics and capture exit code
+          EXIT_CODE=0
+          node scripts/browser-diagnostics.js || EXIT_CODE=$?
+          
+          # List generated files
+          echo ""
+          echo "Generated diagnostic files:"
+          ls -lh /tmp/browser-diagnostics-${{ github.run_number }}/ || echo "No files generated"
+          
+          # Exit with error if diagnostics failed critically (exit code > 1)
+          # Exit code 1 is acceptable (errors found but diagnostics completed)
+          # Exit code > 1 indicates script failure
+          if [ $EXIT_CODE -gt 1 ]; then
+            echo "Browser diagnostics failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
+          
+          echo "Browser diagnostics completed with exit code $EXIT_CODE"
+      
+      - name: Run API profiling (if enabled)
+        if: github.event.inputs.run_api_profiler == 'true'
+        env:
+          CONSOLE_URL: ${{ steps.console_url.outputs.url }}
+          ADMIN_USERNAME: ${{ secrets.CONSOLE_ADMIN_USER || 'admin' }}
+          ADMIN_PASSWORD: ${{ secrets.CONSOLE_ADMIN_PASSWORD || 'admin' }}
+          OUTPUT_DIR: /tmp/api-profiler-${{ github.run_number }}
+        run: |
+          echo "Running API profiling..."
+          
+          chmod +x scripts/api-profiler.sh
+          scripts/api-profiler.sh || true
+          
+          # List generated files
+          echo ""
+          echo "Generated API profiling files:"
+          ls -lh /tmp/api-profiler-${{ github.run_number }}/ || echo "No files generated"
+      
+      - name: Stop resource monitoring and download results
+        if: github.event.inputs.run_resource_monitor == 'true' && secrets.SERVER_HOST != ''
+        run: |
+          echo "Stopping resource monitoring and downloading results..."
+          
+          # Give it a moment to finish current cycle
+          sleep 5
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            # Stop monitoring if still running
+            if [ -f /tmp/resource-monitor.pid ]; then
+              PID=$(cat /tmp/resource-monitor.pid)
+              if ps -p $PID > /dev/null 2>&1; then
+                echo "Stopping resource monitor (PID: $PID)"
+                kill $PID 2>/dev/null || true
+                sleep 2
+              fi
+            fi
+            
+            # Create tarball if data exists
+            if [ -d /tmp/browser-diagnostics-resources-${{ github.run_number }} ]; then
+              cd /tmp
+              tar -czf browser-diagnostics-resources-${{ github.run_number }}.tar.gz \
+                browser-diagnostics-resources-${{ github.run_number }}/
+              echo "Resource monitoring data archived"
+            fi
+          EOF
+          
+          # Download the tarball
+          scp -i ~/.ssh/id_rsa \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/browser-diagnostics-resources-${{ github.run_number }}.tar.gz \
+            ./browser-diagnostics-resources.tar.gz || echo "No resource monitoring data to download"
+          
+          # Extract if downloaded
+          if [ -f ./browser-diagnostics-resources.tar.gz ]; then
+            mkdir -p ./diagnostics-resources
+            tar -xzf ./browser-diagnostics-resources.tar.gz -C ./diagnostics-resources
+          fi
+      
+      - name: Generate comprehensive summary
+        if: always()
+        run: |
+          mkdir -p ./diagnostics-summary
+          
+          {
+            echo "================================================================================"
+            echo "COMPREHENSIVE BROWSER & API DIAGNOSTICS SUMMARY"
+            echo "================================================================================"
+            echo ""
+            echo "Workflow Run: ${{ github.run_number }}"
+            echo "Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo "Console URL: ${{ steps.console_url.outputs.url }}"
+            echo ""
+            
+            echo "DIAGNOSTIC COMPONENTS"
+            echo "--------------------------------------------------------------------------------"
+            echo "✓ Browser Automation (Puppeteer)"
+            if [ "${{ github.event.inputs.run_api_profiler }}" = "true" ]; then
+              echo "✓ API Profiling"
+            fi
+            if [ "${{ github.event.inputs.run_resource_monitor }}" = "true" ]; then
+              echo "✓ Resource Monitoring"
+            fi
+            echo ""
+            
+            # Browser diagnostics summary
+            if [ -f /tmp/browser-diagnostics-${{ github.run_number }}/SUMMARY.txt ]; then
+              echo "BROWSER DIAGNOSTICS"
+              echo "--------------------------------------------------------------------------------"
+              cat /tmp/browser-diagnostics-${{ github.run_number }}/SUMMARY.txt
+              echo ""
+            fi
+            
+            # API profiling summary
+            if [ -f /tmp/api-profiler-${{ github.run_number }}/SUMMARY.txt ]; then
+              echo "API PROFILING"
+              echo "--------------------------------------------------------------------------------"
+              cat /tmp/api-profiler-${{ github.run_number }}/SUMMARY.txt
+              echo ""
+            fi
+            
+            # Resource monitoring summary
+            if [ -d ./diagnostics-resources ]; then
+              RESOURCE_SUMMARY=$(find ./diagnostics-resources -name "SUMMARY.txt" -type f | head -1)
+              if [ -f "$RESOURCE_SUMMARY" ]; then
+                echo "RESOURCE MONITORING"
+                echo "--------------------------------------------------------------------------------"
+                cat "$RESOURCE_SUMMARY"
+                echo ""
+              fi
+            fi
+            
+            echo "ARTIFACT FILES"
+            echo "--------------------------------------------------------------------------------"
+            echo "All diagnostic files are available in the workflow artifacts:"
+            echo ""
+            echo "1. browser-diagnostics-${{ github.run_number }}"
+            echo "   - Console errors and warnings"
+            echo "   - Network request logs with timings"
+            echo "   - Performance metrics"
+            echo "   - DOM complexity analysis"
+            echo "   - Screenshots of page states"
+            echo ""
+            
+            if [ "${{ github.event.inputs.run_api_profiler }}" = "true" ]; then
+              echo "2. api-profiling-${{ github.run_number }}"
+              echo "   - API response times"
+              echo "   - Request/response samples"
+              echo "   - Error case testing results"
+              echo ""
+            fi
+            
+            if [ "${{ github.event.inputs.run_resource_monitor }}" = "true" ]; then
+              echo "3. resource-monitoring-${{ github.run_number }}"
+              echo "   - System CPU/memory usage"
+              echo "   - Docker container stats"
+              echo "   - Network connections"
+              echo ""
+            fi
+            
+            echo "ROOT CAUSE ANALYSIS GUIDE"
+            echo "--------------------------------------------------------------------------------"
+            echo "Start debugging by:"
+            echo "1. Review browser-diagnostics SUMMARY.txt for JavaScript errors"
+            echo "2. Check screenshots for visual rendering issues"
+            echo "3. Examine network-requests.json for failed API calls"
+            echo "4. Review performance-metrics.json for slow load times"
+            echo "5. Check resource-monitoring for CPU/memory spikes"
+            echo "6. Compare API profiling results for backend delays"
+            echo ""
+            
+          } > ./diagnostics-summary/COMPREHENSIVE-SUMMARY.txt
+          
+          cat ./diagnostics-summary/COMPREHENSIVE-SUMMARY.txt
+      
+      - name: Upload browser diagnostics artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-diagnostics-${{ github.run_number }}
+          path: /tmp/browser-diagnostics-${{ github.run_number }}/
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Upload API profiling artifact
+        uses: actions/upload-artifact@v4
+        if: always() && github.event.inputs.run_api_profiler == 'true'
+        with:
+          name: api-profiling-${{ github.run_number }}
+          path: /tmp/api-profiler-${{ github.run_number }}/
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Upload resource monitoring artifact
+        uses: actions/upload-artifact@v4
+        if: always() && github.event.inputs.run_resource_monitor == 'true'
+        with:
+          name: resource-monitoring-${{ github.run_number }}
+          path: ./diagnostics-resources/
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Upload comprehensive summary
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: comprehensive-summary-${{ github.run_number }}
+          path: ./diagnostics-summary/
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Display summary in workflow
+        if: always()
+        run: |
+          if [ -f ./diagnostics-summary/COMPREHENSIVE-SUMMARY.txt ]; then
+            cat ./diagnostics-summary/COMPREHENSIVE-SUMMARY.txt >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Cleanup server files
+        if: always() && secrets.SERVER_HOST != ''
+        run: |
+          echo "Cleaning up temporary files on server..."
+          
+          ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF' || true
+            # Remove temporary files
+            rm -f /tmp/resource-monitor.pid
+            rm -f /tmp/resource-monitor.log
+            rm -f /tmp/browser-diagnostics-resources-${{ github.run_number }}.tar.gz
+            rm -rf /tmp/browser-diagnostics-resources-${{ github.run_number }}
+            
+            # Keep diagnostic directories for 7 days, clean up older ones
+            find /tmp -maxdepth 1 -name "browser-diagnostics-resources-*" -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+            
+            echo "Cleanup complete"
+          EOF

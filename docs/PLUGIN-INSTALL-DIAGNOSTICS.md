@@ -294,6 +294,64 @@ Times may vary based on:
 - Artifact upload step succeeded
 - Files were created in expected locations on server
 
+## Related Diagnostic Tools
+
+The Plugin Install Diagnostics focus on backend plugin installation testing. For comprehensive debugging, consider using additional tools:
+
+### Frontend/Browser Issues
+
+If the Plugin Manager UI is unresponsive or showing JavaScript errors:
+
+**Use**: [Browser Diagnostics](./BROWSER-DIAGNOSTICS.md)
+```bash
+# Via GitHub Actions
+Actions → Browser Diagnostics - Plugin Manager → Run workflow
+```
+
+Browser Diagnostics provide:
+- JavaScript error and exception capture
+- Network request monitoring with timings
+- Performance metrics and page load analysis
+- DOM complexity analysis
+- Visual screenshots at key stages
+
+### API Performance Issues
+
+For API response time analysis and endpoint testing:
+
+**Use**: API Profiling (part of Browser Diagnostics)
+```bash
+./scripts/api-profiler.sh
+```
+
+API Profiling provides:
+- Response times for all endpoints
+- Valid and invalid request scenarios
+- CSRF token flow testing
+- Error case coverage
+
+### Resource/Performance Issues
+
+For CPU, memory, or resource exhaustion problems:
+
+**Use**: Resource Monitoring
+```bash
+./scripts/resource-monitor.sh
+```
+
+Resource Monitoring provides:
+- System CPU/memory usage over time
+- Docker container resource consumption
+- Network connection tracking
+- Process list snapshots
+
+### Comprehensive Diagnostics
+
+For full-stack issue diagnosis, see:
+- [Diagnostics Guide](./DIAGNOSTICS-GUIDE.md) - Overview of all diagnostic tools
+- [Browser Diagnostics](./BROWSER-DIAGNOSTICS.md) - Frontend and API diagnostics
+- [API Authentication Guide](./API-AUTHENTICATION-GUIDE.md) - CSRF and session flow
+
 ## Support
 
 If you encounter issues not covered in this guide:
@@ -301,8 +359,9 @@ If you encounter issues not covered in this guide:
 1. Review the COMPREHENSIVE-SUMMARY.txt in the artifact
 2. Check individual scenario result files
 3. Review backend logs for specific error messages
-4. Consult related documentation listed above
-5. Open an issue with:
+4. Consider running Browser Diagnostics for frontend issues
+5. Consult related documentation listed above
+6. Open an issue with:
    - Workflow run number
    - Test scenario that failed
    - Relevant log excerpts

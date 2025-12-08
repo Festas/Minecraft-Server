@@ -110,11 +110,33 @@ See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
 
 ### Troubleshooting & Diagnostics
 
-- **[PLUGIN-MANAGER.md#diagnostic-tools](PLUGIN-MANAGER.md#diagnostic-tools)** - Plugin manager diagnostics and auto-fix
+- **[docs/DIAGNOSTICS-GUIDE.md](docs/DIAGNOSTICS-GUIDE.md)** - Comprehensive diagnostics overview ⭐
+  - Decision tree for choosing the right diagnostic tool
+  - Integration between different diagnostic systems
+  - Common diagnostic patterns and solutions
+
+- **[docs/BROWSER-DIAGNOSTICS.md](docs/BROWSER-DIAGNOSTICS.md)** - Frontend & API diagnostics
+  - Browser automation with Puppeteer
+  - JavaScript error and performance tracking
+  - API profiling and timing analysis
+  - Resource monitoring during page load
+  - GitHub Actions workflow: `.github/workflows/browser-diagnostics.yml`
+
+- **[docs/PLUGIN-INSTALL-DIAGNOSTICS.md](docs/PLUGIN-INSTALL-DIAGNOSTICS.md)** - Plugin installation testing
+  - Comprehensive backend plugin install flow testing
+  - CSRF, session, and permission validation
+  - GitHub Actions workflow: `.github/workflows/plugin-install-diagnose.yml`
+
+- **[PLUGIN-MANAGER.md#diagnostic-tools](PLUGIN-MANAGER.md#diagnostic-tools)** - Plugin manager diagnostics
   - Basic diagnostics: `./scripts/diagnose-plugins.sh diagnose`
   - Auto-fix mode: `./scripts/diagnose-plugins.sh fix`
   - Advanced diagnostics: `./scripts/diagnose-plugins-advanced.sh`
   - GitHub Actions workflow: `.github/workflows/plugins-manager-diagnose.yml`
+
+- **[scripts/README.md](scripts/README.md)** - Diagnostic scripts reference
+  - Browser diagnostics: `scripts/browser-diagnostics.js`
+  - API profiling: `scripts/api-profiler.sh`
+  - Resource monitoring: `scripts/resource-monitor.sh`
 
 ### Planning & Features
 
