@@ -124,6 +124,12 @@ jobs:
 
       - name: Detect and document available secrets
         id: secrets_check
+        env:
+          CHECK_SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          CHECK_SERVER_USER: ${{ secrets.SERVER_USER }}
+          CHECK_SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          CHECK_CONSOLE_USER: ${{ secrets.CONSOLE_ADMIN_USER }}
+          CHECK_CONSOLE_PASS: ${{ secrets.CONSOLE_ADMIN_PASSWORD }}
         run: |
           echo "╔════════════════════════════════════════════════════════════════╗"
           echo "║           DETECTING AVAILABLE SECRETS                          ║"
@@ -131,7 +137,7 @@ jobs:
           echo ""
 
           # Check each secret and set flags
-          # Use shell logic instead of GitHub's secrets context in if conditions
+          # Use environment variables instead of direct secret access for safety
 
           HAS_SERVER_HOST="false"
           HAS_SERVER_USER="false"
@@ -140,7 +146,7 @@ jobs:
           HAS_CONSOLE_PASS="false"
 
           # Check SERVER_HOST
-          if [ -n "${{ secrets.SERVER_HOST }}" ]; then
+          if [ -n "$CHECK_SERVER_HOST" ]; then
             echo "✓ SERVER_HOST is configured"
             HAS_SERVER_HOST="true"
           else
@@ -148,7 +154,7 @@ jobs:
           fi
 
           # Check SERVER_USER
-          if [ -n "${{ secrets.SERVER_USER }}" ]; then
+          if [ -n "$CHECK_SERVER_USER" ]; then
             echo "✓ SERVER_USER is configured"
             HAS_SERVER_USER="true"
           else
@@ -156,7 +162,7 @@ jobs:
           fi
 
           # Check SSH_PRIVATE_KEY
-          if [ -n "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+          if [ -n "$CHECK_SSH_KEY" ]; then
             echo "✓ SSH_PRIVATE_KEY is configured"
             HAS_SSH_KEY="true"
           else
@@ -164,7 +170,7 @@ jobs:
           fi
 
           # Check CONSOLE_ADMIN_USER
-          if [ -n "${{ secrets.CONSOLE_ADMIN_USER }}" ]; then
+          if [ -n "$CHECK_CONSOLE_USER" ]; then
             echo "✓ CONSOLE_ADMIN_USER is configured"
             HAS_CONSOLE_USER="true"
           else
@@ -172,7 +178,7 @@ jobs:
           fi
 
           # Check CONSOLE_ADMIN_PASSWORD
-          if [ -n "${{ secrets.CONSOLE_ADMIN_PASSWORD }}" ]; then
+          if [ -n "$CHECK_CONSOLE_PASS" ]; then
             echo "✓ CONSOLE_ADMIN_PASSWORD is configured"
             HAS_CONSOLE_PASS="true"
           else
