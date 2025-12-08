@@ -98,8 +98,28 @@ app.use(express.urlencoded({ extended: true }));
 // Cookie parser is needed for CSRF protection (double-submit pattern)
 app.use(cookieParser());
 
-// NOTE: Session middleware will be applied during async startup (after Redis initialization)
-// This ensures sessions are ALWAYS backed by Redis in production, never MemoryStore
+// Session middleware initialization
+// In production/development: Applied during async startup (after Redis initialization)
+// In test: Applied immediately with memory store for synchronous test execution
+if (process.env.NODE_ENV === 'test') {
+    // Test mode: Create and apply session middleware immediately with memory store
+    const session = require('express-session');
+    const sessionMiddleware = session({
+        secret: process.env.SESSION_SECRET || 'test-session-secret',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            httpOnly: true,
+            secure: shouldUseSecureCookies(),
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000,
+            path: '/'
+        }
+    });
+    app.use(sessionMiddleware);
+    console.log('[Test] Session middleware initialized (memory store)');
+}
+// NOTE: In production/development, session middleware will be applied during async startup
 
 // Configure CSRF protection using simple double-submit pattern
 // Token validation: cookie value === header value + session.authenticated === true
@@ -534,35 +554,6 @@ async function startServer() {
 // Start the server (skip in test environment)
 if (require.main === module) {
     startServer();
-} else if (process.env.NODE_ENV === 'test') {
-    // In test mode, initialize session middleware immediately when module is imported
-    // This ensures tests have access to session functionality
-    // Use an IIFE to handle the async initialization
-    (async function initTestSession() {
-        try {
-            await initializeSessionStore();
-            const sessionMiddleware = getSessionMiddleware();
-            app.use(sessionMiddleware);
-            console.log('[Test] Session middleware initialized');
-        } catch (err) {
-            console.error('[Test] Failed to initialize session:', err);
-            // Fallback: create session middleware with memory store directly
-            const session = require('express-session');
-            app.use(session({
-                secret: process.env.SESSION_SECRET || 'test-session-secret',
-                resave: false,
-                saveUninitialized: false,
-                cookie: {
-                    httpOnly: true,
-                    secure: false,
-                    sameSite: 'lax',
-                    maxAge: 24 * 60 * 60 * 1000,
-                    path: '/'
-                }
-            }));
-            console.log('[Test] Session middleware initialized with fallback memory store');
-        }
-    })();
 }
 
 // Handle server startup errors

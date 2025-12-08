@@ -27,9 +27,6 @@ describe('CSRF Protection Middleware', () => {
                 password: process.env.ADMIN_PASSWORD || 'test-password-123' 
             });
         
-        console.log('[TEST] Login status:', loginResponse.status);
-        console.log('[TEST] Login Set-Cookie:', loginResponse.headers['set-cookie']);
-        
         if (loginResponse.status === 200) {
             sessionCookies = loginResponse.headers['set-cookie'];
         } else {
@@ -38,14 +35,10 @@ describe('CSRF Protection Middleware', () => {
 
         // Get a CSRF token and cookies for testing with authenticated session
         const parsedSession = parseCookies(sessionCookies);
-        console.log('[TEST] Parsed session cookies:', parsedSession);
         
         const response = await request(app)
             .get('/api/csrf-token')
             .set('Cookie', parsedSession);
-        
-        console.log('[TEST] CSRF token response status:', response.status);
-        console.log('[TEST] CSRF token:', response.body.csrfToken);
         
         expect(response.status).toBe(200);
         expect(response.body).toHaveProperty('csrfToken');
@@ -56,7 +49,6 @@ describe('CSRF Protection Middleware', () => {
         const csrfCookies = response.headers['set-cookie'] || [];
         const allCookies = [...sessionCookies, ...csrfCookies];
         cookies = parseCookies(allCookies);
-        console.log('[TEST] Final cookies:', cookies);
     });
 
     describe('CSRF token endpoint', () => {
@@ -159,18 +151,20 @@ describe('CSRF Protection Middleware', () => {
 
         it('should pass CSRF validation when valid token is provided in CSRF-Token header', async () => {
             const response = await request(app)
-                .post('/api/logout')
+                .post('/api/commands/history')
                 .set('Cookie', cookies)
-                .set('CSRF-Token', csrfToken);
+                .set('CSRF-Token', csrfToken)
+                .send({ command: 'test command' });
             
             expectNoCsrfError(response);
         });
 
         it('should pass CSRF validation when valid token is provided in X-CSRF-Token header', async () => {
             const response = await request(app)
-                .post('/api/logout')
+                .post('/api/commands/history')
                 .set('Cookie', cookies)
-                .set('X-CSRF-Token', csrfToken);
+                .set('X-CSRF-Token', csrfToken)
+                .send({ command: 'test command' });
             
             expectNoCsrfError(response);
         });
@@ -181,9 +175,10 @@ describe('CSRF Protection Middleware', () => {
             const consoleSpy = jest.spyOn(console, 'log');
             
             await request(app)
-                .post('/api/logout')
+                .post('/api/commands/history')
                 .set('Cookie', cookies)
-                .set('CSRF-Token', csrfToken);
+                .set('CSRF-Token', csrfToken)
+                .send({ command: 'test' });
             
             // Check that success log was called
             const csrfSuccessLogs = consoleSpy.mock.calls.filter(call => 
@@ -215,9 +210,10 @@ describe('CSRF Protection Middleware', () => {
             const consoleSpy = jest.spyOn(console, 'log');
             
             await request(app)
-                .post('/api/logout')
+                .post('/api/commands/history')
                 .set('Cookie', cookies)
-                .set('CSRF-Token', csrfToken);
+                .set('CSRF-Token', csrfToken)
+                .send({ command: 'test' });
             
             // Find the CSRF validation log
             const csrfLogs = consoleSpy.mock.calls.filter(call => 
@@ -239,9 +235,10 @@ describe('CSRF Protection Middleware', () => {
             const consoleSpy = jest.spyOn(console, 'log');
             
             await request(app)
-                .post('/api/logout')
+                .post('/api/commands/history')
                 .set('Cookie', cookies)
-                .set('X-CSRF-Token', csrfToken);
+                .set('X-CSRF-Token', csrfToken)
+                .send({ command: 'test' });
             
             // Find the CSRF validation log
             const csrfLogs = consoleSpy.mock.calls.filter(call => 
@@ -286,10 +283,11 @@ describe('CSRF Protection Middleware', () => {
         it('should log missing header as failure reason when session is authenticated', async () => {
             const consoleErrorSpy = jest.spyOn(console, 'error');
             
-            // Send authenticated cookies but no CSRF header
+            // Send authenticated cookies with CSRF cookie but no CSRF header
             await request(app)
-                .post('/api/logout')
-                .set('Cookie', cookies); // has session + csrf cookie but no csrf header
+                .post('/api/commands/history')
+                .set('Cookie', cookies) // has session + csrf cookie but no csrf header
+                .send({ command: 'test' });
             
             // Find the CSRF failure log
             const csrfErrorLogs = consoleErrorSpy.mock.calls.filter(call => 
@@ -310,9 +308,10 @@ describe('CSRF Protection Middleware', () => {
             
             // Test CSRF-Token header
             await request(app)
-                .post('/api/logout')
+                .post('/api/commands/history')
                 .set('Cookie', cookies)
-                .set('CSRF-Token', csrfToken);
+                .set('CSRF-Token', csrfToken)
+                .send({ command: 'test1' });
             
             const csrfTokenLogs = consoleSpy.mock.calls.filter(call => 
                 call[0] && call[0].includes('[CSRF] Applying CSRF protection')
@@ -323,9 +322,10 @@ describe('CSRF Protection Middleware', () => {
             
             // Test X-CSRF-Token header
             await request(app)
-                .post('/api/logout')
+                .post('/api/commands/history')
                 .set('Cookie', cookies)
-                .set('X-CSRF-Token', csrfToken);
+                .set('X-CSRF-Token', csrfToken)
+                .send({ command: 'test2' });
             
             const xCsrfTokenLogs = consoleSpy.mock.calls.filter(call => 
                 call[0] && call[0].includes('[CSRF] Applying CSRF protection')
