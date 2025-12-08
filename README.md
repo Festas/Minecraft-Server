@@ -115,6 +115,13 @@ See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
   - Integration between different diagnostic systems
   - Common diagnostic patterns and solutions
 
+- **⭐ NEW: [.github/workflows/comprehensive-plugin-manager-diagnostics.yml](.github/workflows/comprehensive-plugin-manager-diagnostics.yml)** - **All-in-one diagnostics**
+  - Combines browser, backend, API, and resource monitoring
+  - Toggleable components for targeted testing
+  - Master summary with rapid triage guide
+  - Complete production health checks
+  - **Recommended starting point for troubleshooting**
+
 - **[docs/BROWSER-DIAGNOSTICS.md](docs/BROWSER-DIAGNOSTICS.md)** - Frontend & API diagnostics
   - Browser automation with Puppeteer
   - JavaScript error and performance tracking

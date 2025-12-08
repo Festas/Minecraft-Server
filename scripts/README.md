@@ -2,6 +2,32 @@
 
 This directory contains various scripts for diagnosing and troubleshooting the Minecraft server console and plugin manager.
 
+## 🚀 Quick Start: Comprehensive Diagnostics
+
+**Recommended**: Use the all-in-one workflow for most troubleshooting scenarios:
+
+```
+GitHub Actions → Comprehensive Plugin Manager Diagnostics → Run workflow
+```
+
+This runs all diagnostic scripts in a coordinated manner and produces a master summary with rapid triage guide.
+
+**When to use the comprehensive workflow**:
+- ✅ You're not sure where the problem is
+- ✅ Need complete production health check
+- ✅ Post-deployment validation
+- ✅ Complex issues requiring multiple perspectives
+- ✅ Performance issues
+
+**See**: `.github/workflows/comprehensive-plugin-manager-diagnostics.yml`
+**Documentation**: [DIAGNOSTICS-GUIDE.md](../docs/DIAGNOSTICS-GUIDE.md)
+
+---
+
+## Individual Scripts
+
+For targeted diagnostics or manual testing, you can run individual scripts:
+
 ## Scripts Overview
 
 ### Browser Automation
@@ -285,6 +311,22 @@ cat /tmp/resource-monitor/SUMMARY.txt
 
 ### Complete Diagnostic Suite
 
+**RECOMMENDED: Use the Comprehensive Workflow**
+
+The easiest way to run all diagnostics is via the GitHub Actions workflow:
+
+```
+Actions → Comprehensive Plugin Manager Diagnostics → Run workflow
+```
+
+This automatically:
+- Coordinates all diagnostic scripts
+- Captures resource monitoring during all tests
+- Generates master summary with triage guide
+- Uploads organized artifacts
+
+**Alternatively, run manually** (for local testing):
+
 ```bash
 # Run all diagnostics together for comprehensive analysis
 
@@ -300,6 +342,10 @@ node scripts/browser-diagnostics.js
 # Review all outputs
 ls -lR /tmp/browser-diagnostics /tmp/api-profiler /tmp/resource-monitor
 ```
+
+**When to use manual vs workflow**:
+- ✅ **Workflow**: Production diagnostics, complete health check, artifact retention
+- ✅ **Manual**: Local development, quick testing, custom configurations
 
 ## Environment Variables
 
