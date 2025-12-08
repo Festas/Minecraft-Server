@@ -45,19 +45,27 @@ openssl rand -base64 24
 - For external Redis, use the hostname/IP of your Redis server
 - `REDIS_PORT` is typically `6379` (the default Redis port)
 
-### Step 2: Redis Session Store (Included)
+### Step 2: Redis Session Store (Auto-Injected)
 
 The console uses **Redis** for persistent session storage. This ensures:
 - Sessions survive server restarts
 - CSRF tokens remain valid across deployments
 - Plugin installations work reliably in CI/Docker
 
-**Redis is automatically configured** when you use `docker-compose.console.yml`:
-- Redis service starts automatically
-- Console connects to Redis at `redis:6379`
-- Sessions persist in a Docker volume (`redis-data`)
+**Redis is automatically injected in all deployments:**
+- ✅ `docker-compose.console.yml` includes Redis service by default
+- ✅ GitHub Actions deployment workflow auto-injects Redis into generated docker-compose.yml
+- ✅ Redis service with recommended settings (redis:7-alpine, health checks, persistent volume)
+- ✅ Console waits for Redis to be healthy before starting
 
-**No manual configuration needed** - Redis is included and configured by default.
+**No manual configuration needed** - Redis is automatically included in all deployment scenarios.
+
+**Auto-Injection Details:**
+- Redis service is automatically added to docker-compose.yml during deployment
+- Uses `redis:7-alpine` image for minimal size and security
+- Includes health check to ensure Redis is ready before console starts
+- Data persists in `redis_data` volume across restarts
+- Console connects to Redis at `redis:6379` by default
 
 **Optional Redis Configuration:**
 
@@ -80,6 +88,9 @@ docker ps | grep redis
 # Check Redis connection in console logs
 docker logs minecraft-console | grep "Redis"
 
+# Check for Redis warning at startup
+docker logs minecraft-console | grep "WARNING: Redis"
+
 # Check health endpoint
 curl http://localhost:3001/health
 ```
@@ -96,6 +107,13 @@ The health endpoint response includes session store status:
   }
 }
 ```
+
+**Troubleshooting:**
+If the console logs show `WARNING: Redis Session Store Not Available`:
+- Check if Redis container is running: `docker ps | grep redis`
+- Verify Redis is healthy: `docker inspect minecraft-console-redis`
+- Check network connectivity between console and Redis
+- Review REDIS_HOST and REDIS_PORT environment variables
 
 ### Step 2.5: Environment Variables Summary
 

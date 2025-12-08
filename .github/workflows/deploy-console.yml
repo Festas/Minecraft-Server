@@ -232,9 +232,46 @@ jobs:
             } > .env
             chmod 600 .env
 
-            # Create docker-compose.yml
+            # ================================================================
+            # DOCKER COMPOSE GENERATION WITH AUTO-INJECTED REDIS SERVICE
+            # ================================================================
+            # This deployment workflow automatically injects the Redis service
+            # and redis_data volume into the generated docker-compose.yml.
+            # 
+            # Why Redis is auto-injected:
+            # - Ensures reliable session persistence across restarts
+            # - Guarantees CSRF token validity in all deployments
+            # - Prevents session-related issues in CI/CD workflows
+            # 
+            # The Redis service includes:
+            # - Image: redis:7-alpine (recommended version)
+            # - Health check: ensures Redis is ready before console starts
+            # - Volume: redis_data for persistent session storage
+            # - Network: caddy-network for service communication
+            # ================================================================
+            
+            # Create docker-compose.yml with auto-injected Redis service
+            # Redis is automatically included to ensure reliable session and CSRF support
             cat > docker-compose.yml <<EOF
             services:
+              # Redis service for persistent session storage
+              # Auto-injected to guarantee session/CSRF reliability in all deployments
+              redis:
+                image: redis:7-alpine
+                container_name: minecraft-console-redis
+                restart: unless-stopped
+                command: redis-server --appendonly yes
+                volumes:
+                  - redis_data:/data
+                networks:
+                  - caddy-network
+                healthcheck:
+                  test: ["CMD", "redis-cli", "ping"]
+                  interval: 10s
+                  timeout: 3s
+                  retries: 3
+                  start_period: 10s
+
               minecraft-console:
                 image: ghcr.io/festas/minecraft-console:${IMAGE_SHA}
                 container_name: minecraft-console
@@ -253,6 +290,9 @@ jobs:
                   - console_config:/app/config
                 networks:
                   - caddy-network
+                depends_on:
+                  redis:
+                    condition: service_healthy
                 healthcheck:
                   test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
                   interval: 30s
@@ -263,6 +303,8 @@ jobs:
             volumes:
               console_data:
               console_config:
+              redis_data:
+                driver: local
 
             networks:
               caddy-network:

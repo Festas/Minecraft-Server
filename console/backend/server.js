@@ -393,6 +393,29 @@ server.listen(PORT, HOST, () => {
     console.log(`Plugin API:         http://${HOST}:${PORT}/api/plugins`);
     console.log(`Plugin Health:      http://${HOST}:${PORT}/api/plugins/health`);
     console.log('═══════════════════════════════════════════════════════════');
+    
+    // Validate Redis connection for session persistence
+    const sessionStatus = getSessionStoreStatus();
+    if (!sessionStatus.usingRedis || !sessionStatus.redisConnected) {
+        console.log('');
+        console.log('⚠ WARNING: Redis Session Store Not Available');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('Redis service is not connected. Using memory store fallback.');
+        console.log('');
+        console.log('Impact:');
+        console.log('  - Sessions will not persist across server restarts');
+        console.log('  - CSRF tokens may become invalid on restart');
+        console.log('  - Plugin installations may fail in some scenarios');
+        console.log('');
+        console.log('Solution:');
+        console.log('  - Ensure Redis service is running and accessible');
+        console.log('  - Check REDIS_HOST and REDIS_PORT environment variables');
+        console.log('  - For Docker deployments, Redis is auto-injected');
+        console.log('  - Verify with: docker ps | grep redis');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('');
+    }
+    
     initializeServices();
 });
 
