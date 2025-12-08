@@ -124,6 +124,11 @@ if (process.env.NODE_ENV === 'test') {
 // Configure CSRF protection using simple double-submit pattern
 // Token validation: cookie value === header value + session.authenticated === true
 // No hash or pipe separator required - client and curl requests with simple matching token values work
+// 
+// NOTE: CSRF_SECRET is required to be set but is NOT used in token generation/validation for this
+// simple double-submit implementation. We only verify that cookie === header. This is intentional
+// and provides adequate security when combined with session authentication and SameSite cookies.
+// The secret requirement remains for potential future use and to maintain consistency with deployment configs.
 const csrfSecret = process.env.CSRF_SECRET;
 
 if (!csrfSecret) {
@@ -310,15 +315,13 @@ app.use('/api', (req, res, next) => {
     console.log('[CSRF] Applying CSRF protection:', logInfo);
     
     // Perform CSRF validation: cookie === header + session.authenticated
+    // Order of checks: Verify tokens are present BEFORE checking session state
+    // This prevents information leakage about session authentication to requests without proper tokens
     let validationPassed = false;
     let failureReason = null;
     
-    // Check if session is authenticated
-    if (!sessionInfo.authenticated) {
-        failureReason = 'Session not authenticated - CSRF validation requires authenticated session';
-    }
-    // Check if header token is present
-    else if (!headerToken) {
+    // Check if header token is present (check tokens first to avoid session state leakage)
+    if (!headerToken) {
         failureReason = 'CSRF token missing from request header (neither CSRF-Token nor X-CSRF-Token present)';
     }
     // Check if cookie token is present
@@ -328,6 +331,10 @@ app.use('/api', (req, res, next) => {
     // Check if cookie and header tokens match
     else if (headerToken !== cookieToken) {
         failureReason = 'CSRF token mismatch: header token does not match cookie token';
+    }
+    // Check if session is authenticated (only after verifying tokens are valid)
+    else if (!sessionInfo.authenticated) {
+        failureReason = 'Session not authenticated - CSRF validation requires authenticated session';
     }
     // All checks passed
     else {
