@@ -608,11 +608,11 @@ jobs:
           echo "║           GENERATING MASTER SUMMARY                            ║"
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
-          
+
           # Make script executable and run it
           chmod +x scripts/generate-diagnostics-summary.sh
           scripts/generate-diagnostics-summary.sh
-          
+
           echo ""
           echo "✓ Master summary generated successfully"
           echo ""
