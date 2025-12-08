@@ -18,7 +18,7 @@ const { shouldUseSecureCookies, logCookieConfiguration } = require('./utils/cook
 const rconService = require('./services/rcon');
 const logsService = require('./services/logs');
 const { initializeUsers } = require('./auth/auth');
-const { getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
+const { initializeSessionStore, getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
 
 // Import middleware
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -98,14 +98,8 @@ app.use(express.urlencoded({ extended: true }));
 // Cookie parser is needed for CSRF protection (csrf-csrf library)
 app.use(cookieParser());
 
-// Get session middleware (shared between Express and Socket.io)
-const sessionMiddleware = getSessionMiddleware();
-
-// Apply session middleware to Express
-app.use(sessionMiddleware);
-
-// Share session middleware with Socket.io
-io.engine.use(sessionMiddleware);
+// NOTE: Session middleware will be applied during async startup (after Redis initialization)
+// This ensures sessions are ALWAYS backed by Redis in production, never MemoryStore
 
 // Configure CSRF protection using csrf-csrf
 const csrfSecret = process.env.CSRF_SECRET;
@@ -451,61 +445,105 @@ io.on('connection', (socket) => {
 
 // Initialize services
 async function initializeServices() {
+    // Initialize admin users
+    await initializeUsers();
+
+    // Connect to RCON
+    await rconService.connect();
+
+    // Start log streaming
+    await logsService.startStreaming();
+
+    console.log('[Startup] ✓ All services initialized successfully');
+}
+
+// Async startup function to ensure proper initialization order
+async function startServer() {
     try {
-        // Initialize admin users
-        await initializeUsers();
-
-        // Connect to RCON
-        await rconService.connect();
-
-        // Start log streaming
-        await logsService.startStreaming();
-
-        console.log('All services initialized successfully');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('Starting Console Server...');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log(`Node environment:   ${process.env.NODE_ENV || 'development'}`);
+        console.log('');
+        
+        // Step 1: Initialize session store (Redis in production, may fallback in dev)
+        console.log('[Startup] Step 1/3: Initializing session store...');
+        await initializeSessionStore();
+        
+        // Step 2: Apply session middleware to Express and Socket.io
+        console.log('[Startup] Step 2/3: Applying session middleware...');
+        const sessionMiddleware = getSessionMiddleware();
+        app.use(sessionMiddleware);
+        io.engine.use(sessionMiddleware);
+        console.log('[Startup] ✓ Session middleware applied');
+        
+        // Verify Redis connection status before starting server
+        const sessionStatus = getSessionStoreStatus();
+        console.log('[Startup] Session store status:', {
+            storeType: sessionStatus.storeType,
+            redisConnected: sessionStatus.redisConnected,
+            initialized: sessionStatus.initialized
+        });
+        
+        if (!sessionStatus.usingRedis) {
+            console.log('');
+            console.log('[Startup] ⚠ WARNING: Using memory store for sessions');
+            console.log('[Startup] This is only allowed in development/test environments');
+            console.log('');
+        } else {
+            console.log('[Startup] ✓ Redis connected - sessions will persist');
+        }
+        
+        // Step 3: Start the HTTP server
+        console.log('[Startup] Step 3/3: Starting HTTP server...');
+        await new Promise((resolve, reject) => {
+            const HOST = '0.0.0.0';
+            server.listen(PORT, HOST, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    console.log('');
+                    console.log('═══════════════════════════════════════════════════════════');
+                    console.log('✓ Console Server Started Successfully');
+                    console.log('═══════════════════════════════════════════════════════════');
+                    console.log(`Server binding:     ${HOST}:${PORT}`);
+                    console.log(`Node environment:   ${process.env.NODE_ENV || 'development'}`);
+                    console.log(`API base URL:       http://${HOST}:${PORT}/api`);
+                    console.log(`Health endpoint:    http://${HOST}:${PORT}/health`);
+                    console.log(`Plugin API:         http://${HOST}:${PORT}/api/plugins`);
+                    console.log(`Plugin Health:      http://${HOST}:${PORT}/api/plugins/health`);
+                    console.log('═══════════════════════════════════════════════════════════');
+                    resolve();
+                }
+            });
+        });
+        
+        // Initialize other services (RCON, logs, etc.)
+        await initializeServices();
+        
+        console.log('');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('✓ Server is ready to accept requests');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('');
+        
     } catch (error) {
-        console.error('Error initializing services:', error);
+        console.error('');
+        console.error('═══════════════════════════════════════════════════════════');
+        console.error('✗ Server Failed to Start');
+        console.error('═══════════════════════════════════════════════════════════');
+        console.error('Error:', error.message);
+        console.error('Stack trace:', error.stack);
+        console.error('═══════════════════════════════════════════════════════════');
+        console.error('');
+        process.exit(1);
     }
 }
 
-// Start server - explicitly bind to 0.0.0.0 to accept connections from all interfaces
-// This is required for Docker containers to be accessible from outside the container
-const HOST = '0.0.0.0';
-server.listen(PORT, HOST, () => {
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log('✓ Console Server Started Successfully');
-    console.log('═══════════════════════════════════════════════════════════');
-    console.log(`Server binding:     ${HOST}:${PORT}`);
-    console.log(`Node environment:   ${process.env.NODE_ENV || 'development'}`);
-    console.log(`API base URL:       http://${HOST}:${PORT}/api`);
-    console.log(`Health endpoint:    http://${HOST}:${PORT}/health`);
-    console.log(`Plugin API:         http://${HOST}:${PORT}/api/plugins`);
-    console.log(`Plugin Health:      http://${HOST}:${PORT}/api/plugins/health`);
-    console.log('═══════════════════════════════════════════════════════════');
-    
-    // Validate Redis connection for session persistence
-    const sessionStatus = getSessionStoreStatus();
-    if (!sessionStatus.usingRedis || !sessionStatus.redisConnected) {
-        console.log('');
-        console.log('⚠ WARNING: Redis Session Store Not Available');
-        console.log('═══════════════════════════════════════════════════════════');
-        console.log('Redis service is not connected. Using memory store fallback.');
-        console.log('');
-        console.log('Impact:');
-        console.log('  - Sessions will not persist across server restarts');
-        console.log('  - CSRF tokens may become invalid on restart');
-        console.log('  - Plugin installations may fail in some scenarios');
-        console.log('');
-        console.log('Solution:');
-        console.log('  - Ensure Redis service is running and accessible');
-        console.log('  - Check REDIS_HOST and REDIS_PORT environment variables');
-        console.log('  - For Docker deployments, Redis is auto-injected');
-        console.log('  - Verify with: docker ps | grep redis');
-        console.log('═══════════════════════════════════════════════════════════');
-        console.log('');
-    }
-    
-    initializeServices();
-});
+// Start the server (skip in test environment)
+if (require.main === module) {
+    startServer();
+}
 
 // Handle server startup errors
 server.on('error', (error) => {

@@ -101,7 +101,7 @@ describe('Cookie Security Configuration', () => {
     });
 
     describe('Session middleware creation', () => {
-        it('should successfully create session middleware with utility', () => {
+        it('should successfully create session middleware with utility', async () => {
             process.env.NODE_ENV = 'test';
             delete process.env.COOKIE_SECURE;
             
@@ -109,15 +109,23 @@ describe('Cookie Security Configuration', () => {
             
             // Clear module cache to ensure fresh load
             jest.resetModules();
-            const { sessionMiddleware, getSessionMiddleware } = require('../../auth/session');
+            const { initializeSessionStore, getSessionMiddleware } = require('../../auth/session');
             
-            expect(sessionMiddleware).toBeDefined();
-            expect(typeof sessionMiddleware).toBe('function');
-            expect(getSessionMiddleware).toBeDefined();
-            expect(typeof getSessionMiddleware).toBe('function');
-            expect(getSessionMiddleware()).toBe(sessionMiddleware);
+            // Initialize session store first
+            await initializeSessionStore();
+            
+            const middleware = getSessionMiddleware();
+            expect(middleware).toBeDefined();
+            expect(typeof middleware).toBe('function');
             
             jest.restoreAllMocks();
+        });
+        
+        it('should throw error if getSessionMiddleware called before initialization', () => {
+            jest.resetModules();
+            const { getSessionMiddleware } = require('../../auth/session');
+            
+            expect(() => getSessionMiddleware()).toThrow('Session middleware not initialized');
         });
     });
 });
