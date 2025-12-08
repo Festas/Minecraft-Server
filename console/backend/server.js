@@ -169,6 +169,9 @@ app.get('/api/csrf-token', (req, res) => {
     };
     
     // Development-only: Log detailed session and cookie information
+    // Security: NODE_ENV check ensures sensitive data (session contents, cookies, headers)
+    // is never logged in production. NODE_ENV is the standard Node.js environment indicator.
+    // Production deployments should ALWAYS set NODE_ENV=production.
     if (process.env.NODE_ENV === 'development') {
         logInfo.sessionData = req.session;
         logInfo.cookies = req.cookies;

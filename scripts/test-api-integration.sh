@@ -18,6 +18,10 @@ DEFAULT_ADMIN_USER="${ADMIN_USER:-admin}"
 DEFAULT_ADMIN_PASS="${ADMIN_PASSWORD:-change-this-secure-password}"
 DEFAULT_PORT="${CONSOLE_PORT:-3001}"
 COOKIE_FILE="/tmp/api-integration-test-cookies.txt"
+
+# Test plugin URL - using a stable, well-known plugin
+# Note: Network failures or URL unavailability are handled gracefully in the test
+# The test accepts 4xx/5xx errors as long as they're not 401/403 (auth/CSRF failures)
 TEST_PLUGIN_URL="https://github.com/pl3xgaming/Pl3xMap/releases/download/v1.20.4-477/Pl3xMap-1.20.4-477.jar"
 
 # Test mode: basic or full

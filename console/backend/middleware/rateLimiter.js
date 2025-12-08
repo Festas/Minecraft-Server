@@ -11,7 +11,13 @@ const loginLimiter = rateLimit({
     message: 'Too many login attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
-    skipSuccessfulRequests: true, // Reset rate limit on successful login (2xx response)
+    // skipSuccessfulRequests: Reset counter on successful login (2xx response)
+    // Security rationale: This is the intended behavior for login rate limiting.
+    // - Failed logins still count toward the limit (protects against brute force)
+    // - Successful logins reset the counter (prevents locking out legitimate users)
+    // - If attacker has valid credentials, they don't need to brute force
+    // - This is standard practice for login rate limiting (OWASP recommendation)
+    skipSuccessfulRequests: true,
     // Enhanced handler to log rate-limiting events
     handler: (req, res, next, options) => {
         console.error('[RATE_LIMIT] Login rate limit exceeded:', {
