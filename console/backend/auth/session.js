@@ -189,11 +189,6 @@ async function initializeRedisClient() {
  */
 async function initializeSessionStore() {
     await initializeRedisClient();
-    
-    if (!sessionMiddleware) {
-        throw new Error('Session middleware failed to initialize');
-    }
-    
     console.log('[Session] ✓ Session store initialized and ready');
 }
 

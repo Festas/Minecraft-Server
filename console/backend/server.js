@@ -542,12 +542,7 @@ async function startServer() {
 
 // Start the server (skip in test environment)
 if (require.main === module) {
-    startServer().catch((error) => {
-        // This should never happen since startServer handles its own errors
-        // But just in case, log and exit
-        console.error('Unhandled error in startServer:', error);
-        process.exit(1);
-    });
+    startServer();
 }
 
 // Handle server startup errors
