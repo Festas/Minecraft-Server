@@ -47,12 +47,10 @@ if (!SESSION_SECRET || SESSION_SECRET === 'your-secure-random-session-secret') {
 
 // Function to create session middleware with given store
 function createSessionMiddleware(store) {
-    // In test mode, allow fallback to test secret since validation is skipped
-    // In production/development, SESSION_SECRET is validated and guaranteed to be set
-    const sessionSecret = SESSION_SECRET || (process.env.NODE_ENV === 'test' ? 'test-session-secret' : SESSION_SECRET);
-    
+    // SESSION_SECRET validation above ensures it's set for non-test environments
+    // Fallback only applies in test mode where validation is skipped
     return session({
-        secret: sessionSecret,
+        secret: SESSION_SECRET || 'test-session-secret',
         resave: false,
         saveUninitialized: false,
         store: store || undefined, // Use provided store or undefined for memory store
@@ -175,12 +173,13 @@ async function initializeRedisClient() {
             storeType: 'RedisStore'
         });
 
-        // Update session middleware to use Redis store
-        // Note: express-session doesn't support hot-swapping stores
-        // Sessions created with MemoryStore before Redis connected will remain in memory
-        // New sessions after Redis connection will use Redis
+        // NOTE: Express-session doesn't support hot-swapping stores
+        // This reassignment only affects new middleware instances
+        // Sessions created before Redis connection will remain in MemoryStore
+        // New sessions created after this point will use Redis
         sessionMiddleware = createSessionMiddleware(sessionStore);
         console.log('[Session] ✓ Session middleware updated with Redis store');
+        console.log('[Session] Note: Existing sessions remain in MemoryStore; new sessions use Redis');
 
     } catch (err) {
         console.error('[Session] Failed to connect to Redis:', err.message);

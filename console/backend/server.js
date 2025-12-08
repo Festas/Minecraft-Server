@@ -521,11 +521,11 @@ async function startServer() {
             console.log('');
             console.log('[Startup] ⚠ WARNING: Using memory store for sessions');
             console.log('[Startup] This is only allowed in development/test environments');
-            console.log('[Startup] Sessions created before Redis connection will remain in memory');
+            console.log('[Startup] All sessions (including early ones) will use MemoryStore');
             console.log('');
         } else {
             console.log('[Startup] ✓ Redis connected - new sessions will persist');
-            console.log('[Startup] Note: Sessions created during startup use MemoryStore');
+            console.log('[Startup] Note: Sessions created before Redis connected remain in MemoryStore');
         }
         
         // Step 2: Start the HTTP server
