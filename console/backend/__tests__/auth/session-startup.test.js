@@ -51,7 +51,7 @@ describe('Session Startup Order', () => {
             
             // Should throw error in production when Redis unavailable
             await expect(initializeSessionStore()).rejects.toThrow('Redis connection required in production mode');
-        }, 3000); // 3 second timeout for connection failure
+        }, 15000); // 15 second timeout for connection failure with retries
     });
 
     describe('Development mode (NODE_ENV=development)', () => {
@@ -69,7 +69,7 @@ describe('Session Startup Order', () => {
             expect(status.usingRedis).toBe(false);
             expect(status.storeType).toBe('memory');
             expect(status.initialized).toBe(true);
-        }, 4000); // 4 second timeout for connection failure + fallback
+        }, 15000); // 15 second timeout for connection failure with retries + fallback
     });
 
     describe('Test mode (NODE_ENV=test)', () => {
@@ -91,55 +91,58 @@ describe('Session Startup Order', () => {
     });
 
     describe('Session middleware access', () => {
-        it('should throw error if getSessionMiddleware called before initialization', () => {
+        it('should create middleware immediately via initializeSessionMiddleware', () => {
             process.env.NODE_ENV = 'test';
             
-            const { getSessionMiddleware } = require('../../auth/session');
+            const { initializeSessionMiddleware } = require('../../auth/session');
             
-            // Should throw because initializeSessionStore() has not been called
-            expect(() => getSessionMiddleware()).toThrow('Session middleware not initialized');
-        });
-
-        it('should return middleware after initialization', async () => {
-            process.env.NODE_ENV = 'test';
-            
-            const { initializeSessionStore, getSessionMiddleware } = require('../../auth/session');
-            
-            await initializeSessionStore();
-            
-            const middleware = getSessionMiddleware();
+            // Should create middleware immediately (for use before routes)
+            const middleware = initializeSessionMiddleware();
             expect(middleware).toBeDefined();
             expect(typeof middleware).toBe('function');
+        });
+
+        it('should return same middleware instance on subsequent calls', async () => {
+            process.env.NODE_ENV = 'test';
+            
+            const { initializeSessionMiddleware } = require('../../auth/session');
+            
+            const middleware1 = initializeSessionMiddleware();
+            const middleware2 = initializeSessionMiddleware();
+            
+            expect(middleware1).toBe(middleware2);
         });
     });
 
     describe('Initialization order enforcement', () => {
-        it('should initialize session store before creating middleware', async () => {
+        it('should initialize session middleware early for routes', async () => {
             process.env.NODE_ENV = 'test';
             
-            const { initializeSessionStore, getSessionStoreStatus } = require('../../auth/session');
+            const { initializeSessionMiddleware, getSessionStoreStatus } = require('../../auth/session');
             
-            // Before initialization
+            // Initialize middleware early (before routes are defined)
+            const middleware = initializeSessionMiddleware();
+            expect(middleware).toBeDefined();
+            
+            // Status should show initialized even before Redis connection
             const statusBefore = getSessionStoreStatus();
-            expect(statusBefore.initialized).toBe(false);
+            expect(statusBefore.initialized).toBe(true);
+        });
+
+        it('should upgrade to Redis during async initialization', async () => {
+            process.env.NODE_ENV = 'test';
             
-            // Initialize
+            const { initializeSessionMiddleware, initializeSessionStore, getSessionStoreStatus } = require('../../auth/session');
+            
+            // Initialize middleware early
+            initializeSessionMiddleware();
+            
+            // Then initialize store (Redis or fallback)
             await initializeSessionStore();
             
             // After initialization
             const statusAfter = getSessionStoreStatus();
             expect(statusAfter.initialized).toBe(true);
-        });
-
-        it('should set initialized flag on successful initialization', async () => {
-            process.env.NODE_ENV = 'test';
-            
-            const { initializeSessionStore, getSessionStoreStatus } = require('../../auth/session');
-            
-            await initializeSessionStore();
-            
-            const status = getSessionStoreStatus();
-            expect(status.initialized).toBe(true);
         });
     });
 });

@@ -92,13 +92,29 @@ describe('Enhanced Diagnostic Logging', () => {
     });
 
     describe('CSRF Validation Logging', () => {
+        let authCookies; // Cookies after login
+        
         beforeAll(async () => {
-            // Get a CSRF token for testing
+            // Ensure users are initialized (in case server startup wasn't called)
+            const { initializeUsers } = require('../../auth/auth');
+            await initializeUsers();
+            
+            // Login first to get authenticated session
+            const loginResponse = await request(app)
+                .post('/api/login')
+                .send({ username: 'admin', password: process.env.ADMIN_PASSWORD || 'test-password-123' });
+            
+            expect(loginResponse.status).toBe(200);
+            authCookies = loginResponse.headers['set-cookie'];
+            
+            // Get a CSRF token for testing (using authenticated session)
             const response = await request(app)
-                .get('/api/csrf-token');
+                .get('/api/csrf-token')
+                .set('Cookie', authCookies);
 
             csrfToken = response.body.csrfToken;
-            cookies = response.headers['set-cookie'];
+            // Merge cookies (session + CSRF)
+            cookies = [...authCookies, ...response.headers['set-cookie']];
         });
 
         it('should log detailed information on CSRF validation failure', async () => {
@@ -115,14 +131,16 @@ describe('Enhanced Diagnostic Logging', () => {
             );
             expect(errorLogs.length).toBeGreaterThan(0);
 
-            // Verify diagnostic info is logged
+            // Verify diagnostic info is logged (new format with nested structure)
             const logData = errorLogs[0][1];
             expect(logData).toHaveProperty('path');
             expect(logData).toHaveProperty('method');
-            expect(logData).toHaveProperty('csrfHeader');
-            expect(logData).toHaveProperty('csrfCookie');
-            expect(logData).toHaveProperty('sessionID');
-            expect(logData).toHaveProperty('allCookies');
+            expect(logData).toHaveProperty('failureReason');
+            expect(logData).toHaveProperty('session');
+            expect(logData).toHaveProperty('validation');
+            expect(logData.session).toHaveProperty('sessionID');
+            expect(logData.validation).toHaveProperty('headerTokenPresent');
+            expect(logData.validation).toHaveProperty('cookieTokenPresent');
         });
 
         it('should log success on valid CSRF token', async () => {
@@ -131,7 +149,7 @@ describe('Enhanced Diagnostic Logging', () => {
                 .set('Cookie', cookies)
                 .set('CSRF-Token', csrfToken);
 
-            // Should not be 403 (might be 200 or other)
+            // Should not be 403 (should be 200 for successful logout)
             expect(response.status).not.toBe(403);
 
             // Check success logging
@@ -139,6 +157,14 @@ describe('Enhanced Diagnostic Logging', () => {
                 call[0] && call[0].includes('[CSRF] CSRF validation passed')
             );
             expect(successLogs.length).toBeGreaterThan(0);
+            
+            // Verify success info is logged (new format with nested structure)
+            const logData = successLogs[0][1];
+            expect(logData).toHaveProperty('path');
+            expect(logData).toHaveProperty('method');
+            expect(logData).toHaveProperty('session');
+            expect(logData).toHaveProperty('validation');
+            expect(logData.validation).toHaveProperty('passed');
         });
     });
 

@@ -229,8 +229,14 @@ async function initializeRedisClient() {
         redisClient = null;
         sessionStore = null;
         
-        // Session middleware already created with MemoryStore in initializeSessionMiddleware
-        console.log('[Session] ✓ Continuing with memory store for sessions');
+        // Ensure session middleware exists (create if not already created by initializeSessionMiddleware)
+        if (!sessionMiddleware) {
+            sessionMiddleware = createSessionMiddleware(null);
+            console.log('[Session] ✓ Session middleware created with memory store');
+        } else {
+            console.log('[Session] ✓ Continuing with memory store for sessions');
+        }
+        sessionInitialized = true;
     }
 }
 
