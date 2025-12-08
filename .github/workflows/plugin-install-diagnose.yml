@@ -32,8 +32,8 @@ jobs:
       CONSOLE_DIR: /home/deploy/minecraft-console
       # Default test plugin - update if this version becomes unavailable
       # Using a small, stable plugin for testing. Can be overridden via test_plugin_url input.
-      TEST_PLUGIN_URL: ${{ github.event.inputs.test_plugin_url || 'https://github.com/pl3xgaming/Pl3xMap/releases/download/v1.20.4-477/Pl3xMap-1.20.4-477.jar' }}
-      TEST_PLUGIN_NAME: 'Pl3xMap'
+      TEST_PLUGIN_URL: ${{ github.event.inputs.test_plugin_url || 'https://cdn.modrinth.com/data/yro4niHu/versions/bYRNAPF0/PlugManX-3.0.2.jar' }}
+      TEST_PLUGIN_NAME: 'PlugManX'
       RUN_ALL_SCENARIOS: ${{ github.event.inputs.run_all_scenarios || 'true' }}
 
     steps:
