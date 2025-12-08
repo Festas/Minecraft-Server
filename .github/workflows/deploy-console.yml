@@ -80,6 +80,12 @@ jobs:
           if [ -z "${{ secrets.CSRF_SECRET }}" ]; then
             MISSING_SECRETS+=("CSRF_SECRET")
           fi
+          if [ -z "${{ secrets.REDIS_HOST }}" ]; then
+            MISSING_SECRETS+=("REDIS_HOST")
+          fi
+          if [ -z "${{ secrets.REDIS_PORT }}" ]; then
+            MISSING_SECRETS+=("REDIS_PORT")
+          fi
 
           if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
             echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
@@ -183,11 +189,13 @@ jobs:
           RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           CSRF_SECRET: ${{ secrets.CSRF_SECRET }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: IMAGE_SHA,GHCR_PAT,GHCR_ACTOR,CONSOLE_ADMIN_USER,CONSOLE_ADMIN_PASSWORD,RCON_PASSWORD,SESSION_SECRET,CSRF_SECRET
+          envs: IMAGE_SHA,GHCR_PAT,GHCR_ACTOR,CONSOLE_ADMIN_USER,CONSOLE_ADMIN_PASSWORD,RCON_PASSWORD,SESSION_SECRET,CSRF_SECRET,REDIS_HOST,REDIS_PORT
           script: |
             set -e
 
@@ -212,6 +220,8 @@ jobs:
               printf 'RCON_PASSWORD=%s\n' "${RCON_PASSWORD}"
               printf 'SESSION_SECRET=%s\n' "${SESSION_SECRET}"
               printf 'CSRF_SECRET=%s\n' "${CSRF_SECRET}"
+              printf 'REDIS_HOST=%s\n' "${REDIS_HOST}"
+              printf 'REDIS_PORT=%s\n' "${REDIS_PORT}"
               echo 'CONSOLE_PORT=3001'
               echo 'MC_CONTAINER_NAME=minecraft-server'
               echo 'MC_SERVER_DIR=/minecraft'
@@ -373,7 +383,7 @@ jobs:
               if [ -n "$CSRF_TOKEN" ] && [ "$CSRF_TOKEN" != "null" ]; then
                 echo "✓ CSRF token obtained successfully"
                 echo "CSRF token length: ${#CSRF_TOKEN} characters"
-                
+
                 # Check if CSRF cookie was saved
                 echo "CSRF cookie check:"
                 cat /tmp/cookies.txt | grep -v '^#' | grep csrf-token || echo "⚠ No csrf-token cookie found"
