@@ -32,7 +32,7 @@ function renderPlayersList(data) {
         playerItem.innerHTML = `
             <div class="player-info">
                 <img 
-                    src="https://crafatar.com/avatars/${player}?size=32" 
+                    src="https://mc-heads.net/avatar/${player}/32" 
                     alt="${player}" 
                     class="player-avatar"
                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>'"

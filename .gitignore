@@ -23,6 +23,7 @@ backups/
 # Temporary files
 *.tmp
 *.log
+tmp/
 
 # System files
 .DS_Store
