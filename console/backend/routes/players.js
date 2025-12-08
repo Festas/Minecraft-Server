@@ -30,6 +30,15 @@ router.get('/all', async (req, res) => {
         const allPlayers = playerTracker.getAllPlayers();
         const onlinePlayers = playerTracker.getOnlinePlayers();
         
+        // Get current server info for max players
+        let maxPlayers = 20; // Default fallback
+        try {
+            const serverInfo = await rconService.getPlayers();
+            maxPlayers = serverInfo.max || 20;
+        } catch (error) {
+            console.warn('Could not get max players from RCON, using default:', error.message);
+        }
+        
         // Sort by total playtime (descending)
         const sortedPlayers = allPlayers.sort((a, b) => 
             b.totalPlaytimeMs - a.totalPlaytimeMs
@@ -46,7 +55,8 @@ router.get('/all', async (req, res) => {
             success: true,
             players: playersWithStatus,
             totalPlayers: playersWithStatus.length,
-            onlineCount: onlinePlayers.length
+            onlineCount: onlinePlayers.length,
+            maxPlayers: maxPlayers
         });
     } catch (error) {
         console.error('Error getting all players:', error);

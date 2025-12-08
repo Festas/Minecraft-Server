@@ -7,7 +7,7 @@ async function loadPlayers() {
         
         if (data.success) {
             renderAllPlayersList(data);
-            updatePlayerCount(data.onlineCount, 20); // Keeping max at 20 for now
+            updatePlayerCount(data.onlineCount, data.maxPlayers || 20);
         }
     } catch (error) {
         console.error('Error loading players:', error);

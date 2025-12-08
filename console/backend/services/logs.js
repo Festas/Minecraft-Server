@@ -80,7 +80,8 @@ class LogsService extends EventEmitter {
      */
     parsePlayerEvents(logLine) {
         // Match player joined: "PlayerName joined the game"
-        const joinMatch = logLine.match(/(\w+) joined the game/);
+        // Minecraft usernames: 3-16 chars, alphanumeric and underscores only
+        const joinMatch = logLine.match(/([a-zA-Z0-9_]{3,16}) joined the game/);
         if (joinMatch) {
             const username = joinMatch[1];
             this.emit('player-joined', { username });
@@ -88,7 +89,7 @@ class LogsService extends EventEmitter {
         }
 
         // Match player left: "PlayerName left the game"
-        const leaveMatch = logLine.match(/(\w+) left the game/);
+        const leaveMatch = logLine.match(/([a-zA-Z0-9_]{3,16}) left the game/);
         if (leaveMatch) {
             const username = leaveMatch[1];
             this.emit('player-left', { username });
