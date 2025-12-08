@@ -4,6 +4,7 @@ FROM nginx:alpine
 # Build arguments for environment variables
 ARG MINECRAFT_VERSION=1.21.10
 ARG SERVER_SOFTWARE=Paper
+ARG DISCORD_INVITE_CODE=YOUR_INVITE_CODE
 
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
@@ -16,8 +17,10 @@ COPY images/ /usr/share/nginx/html/images/
 
 # Copy config template and generate config.js with environment variables
 COPY js/config.template.js /tmp/config.template.js
-RUN export MINECRAFT_VERSION="${MINECRAFT_VERSION}" SERVER_SOFTWARE="${SERVER_SOFTWARE}" && \
-    envsubst '${MINECRAFT_VERSION} ${SERVER_SOFTWARE}' < /tmp/config.template.js > /usr/share/nginx/html/js/config.js && \
+RUN export MINECRAFT_VERSION="${MINECRAFT_VERSION}" \
+           SERVER_SOFTWARE="${SERVER_SOFTWARE}" \
+           DISCORD_INVITE_CODE="${DISCORD_INVITE_CODE}" && \
+    envsubst '${MINECRAFT_VERSION} ${SERVER_SOFTWARE} ${DISCORD_INVITE_CODE}' < /tmp/config.template.js > /usr/share/nginx/html/js/config.js && \
     rm /tmp/config.template.js
 
 # Create cache directory for nginx

@@ -158,6 +158,7 @@ code {
     margin-bottom: var(--spacing-md);
     animation: fadeInDown 1s ease, glow 2s ease-in-out infinite alternate;
     box-shadow: 0 4px 15px rgba(125, 189, 84, 0.3);
+    will-change: box-shadow;
 }
 
 .version-icon {
@@ -556,7 +557,7 @@ code {
     content: '';
     position: absolute;
     top: -50%;
-    left: -50%;
+    left: -100%;
     width: 200%;
     height: 200%;
     background: linear-gradient(
@@ -565,7 +566,7 @@ code {
         rgba(125, 189, 84, 0.1),
         transparent
     );
-    transform: rotate(45deg);
+    transform: translateX(0);
     transition: var(--transition);
     opacity: 0;
 }
@@ -583,10 +584,10 @@ code {
 
 @keyframes shine {
     0% {
-        left: -50%;
+        transform: translateX(0);
     }
     100% {
-        left: 150%;
+        transform: translateX(100%);
     }
 }
 

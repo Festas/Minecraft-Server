@@ -20,6 +20,6 @@ window.MC_CONFIG = {
     
     // External links
     bluemapURL: 'https://map.festas-builds.com',
-    discordURL: 'https://discord.gg/YOUR_INVITE_CODE',
+    discordURL: 'https://discord.gg/${DISCORD_INVITE_CODE}',
     githubURL: 'https://github.com/Festas/Minecraft-Server'
 };
