@@ -6,7 +6,6 @@ const http = require('http');
 const socketIo = require('socket.io');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
-const { doubleCsrf } = require('csrf-csrf');
 const path = require('path');
 const morgan = require('morgan');
 const crypto = require('crypto');
@@ -89,19 +88,22 @@ app.use(express.urlencoded({ extended: true }));
 //    - Applied globally to all routes
 // 2. Session middleware comes after cookie-parser
 //    - Session also needs cookies
-// 3. CSRF middleware applied to /api routes (search for "doubleCsrfProtection")
-//    - Validates CSRF token from both cookie AND header
-//    - No duplicate CSRF middleware found
+// 3. CSRF middleware applied to /api routes (custom double-submit validation)
+//    - Validates CSRF token from both cookie AND header (simple match)
+//    - Requires session authentication
+//    - No hash or pipe separator validation
 //    - Cookie name: 'csrf-token' (consistent throughout)
 // ============================================================================
 
-// Cookie parser is needed for CSRF protection (csrf-csrf library)
+// Cookie parser is needed for CSRF protection (double-submit pattern)
 app.use(cookieParser());
 
 // NOTE: Session middleware will be applied during async startup (after Redis initialization)
 // This ensures sessions are ALWAYS backed by Redis in production, never MemoryStore
 
-// Configure CSRF protection using csrf-csrf
+// Configure CSRF protection using simple double-submit pattern
+// Token validation: cookie value === header value + session.authenticated === true
+// No hash or pipe separator required - client and curl requests with simple matching token values work
 const csrfSecret = process.env.CSRF_SECRET;
 
 if (!csrfSecret) {
@@ -115,7 +117,7 @@ if (!csrfSecret) {
 const useSecureCsrfCookies = shouldUseSecureCookies();
 logCookieConfiguration('CSRF', useSecureCsrfCookies);
 
-// Shared CSRF cookie options for consistency between doubleCsrf middleware and /api/csrf-token endpoint
+// Shared CSRF cookie options for consistency
 // NOTE: httpOnly MUST be false for double-submit CSRF pattern to work with client-side JavaScript
 // The client needs to read the cookie value and send it in the CSRF-Token header
 // Security tradeoff: Cookie is readable by JS, but CSRF protection still works via double-submit validation
@@ -126,21 +128,11 @@ const csrfCookieOptions = {
     httpOnly: false // MUST be false - client JS needs to read cookie for double-submit pattern
 };
 
-const {
-    generateToken, // Generates a CSRF token
-    doubleCsrfProtection, // Full middleware
-} = doubleCsrf({
-    getSecret: () => csrfSecret,
-    cookieName: 'csrf-token',
-    cookieOptions: csrfCookieOptions,
-    size: 64,
-    ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
-    // Read CSRF token from header (standard practice for APIs)
-    getTokenFromRequest: (req) => {
-        // Check both common CSRF header names
-        return req.headers['csrf-token'] || req.headers['x-csrf-token'];
-    }
-});
+// Simple CSRF token generator - generates random token without hash or pipe separator
+// Returns a 64-character random hex string for use in double-submit pattern
+function generateCsrfToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
 
 // Serve static frontend files (no CSRF needed for static files)
 app.use('/console', express.static(path.join(__dirname, '../frontend')));
@@ -180,11 +172,11 @@ app.get('/api/csrf-token', (req, res) => {
     
     console.log('[CSRF] Token request:', logInfo);
     
-    const token = generateToken(req, res);
+    // Generate simple CSRF token (no hash or pipe separator)
+    const token = generateCsrfToken();
     
-    // Explicitly set the CSRF cookie to ensure it's sent to the client
-    // The csrf-csrf middleware expects both the cookie AND the header for double-submit pattern
-    // Using the same cookie name and options as configured in doubleCsrf above
+    // Set the CSRF cookie to ensure it's sent to the client
+    // The double-submit pattern expects both the cookie AND the header to match
     res.cookie('csrf-token', token, csrfCookieOptions);
     
     const responseLog = {
@@ -214,6 +206,8 @@ app.get('/api/csrf-token', (req, res) => {
 });
 
 // Apply CSRF protection to all API routes except login and session check
+// Double-submit pattern: cookie value === header value + session.authenticated === true
+// No hash validation or pipe separator required
 app.use('/api', (req, res, next) => {
     // Skip CSRF for login endpoint (it's the first request)
     if (req.path === '/login' && req.method === 'POST') {
@@ -236,6 +230,11 @@ app.use('/api', (req, res, next) => {
         return next();
     }
     
+    // Skip CSRF validation for GET, HEAD, OPTIONS requests (read-only operations)
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        return next();
+    }
+    
     // Extract CSRF token from headers (supporting both 'CSRF-Token' and 'X-CSRF-Token')
     const csrfHeaderValue = req.headers['csrf-token'] || req.headers['x-csrf-token'];
     const csrfCookieValue = req.cookies['csrf-token'];
@@ -247,17 +246,9 @@ app.use('/api', (req, res, next) => {
         username: req.session?.username || 'NOT_SET'
     };
     
-    // Explicitly decode token values and extract first segment if pipe separator exists
+    // Simple token extraction - no pipe separator parsing needed
     const headerToken = csrfHeaderValue ? String(csrfHeaderValue).trim() : null;
-    
-    // Split cookie value once and reuse
-    let cookieToken = null;
-    let cookieHash = null;
-    if (csrfCookieValue) {
-        const cookieParts = String(csrfCookieValue).split('|');
-        cookieToken = cookieParts[0] ? cookieParts[0].trim() : null;
-        cookieHash = cookieParts[1] ? cookieParts[1].trim() : null;
-    }
+    const cookieToken = csrfCookieValue ? String(csrfCookieValue).trim() : null;
     
     // Determine header source for logging
     let headerSource = 'NONE';
@@ -267,26 +258,23 @@ app.use('/api', (req, res, next) => {
         headerSource = 'X-CSRF-Token';
     }
     
-    // Log all token values and session details for every authenticated API call
+    // Log all token values and session details for every API call
     const logInfo = {
         path: req.path,
         method: req.method,
         session: sessionInfo,
         tokens: {
             headerPresent: !!headerToken,
-            cookiePresent: !!csrfCookieValue,
-            headerSource: headerSource,
-            cookieHasPipeSeparator: csrfCookieValue ? csrfCookieValue.includes('|') : false
+            cookiePresent: !!cookieToken,
+            headerSource: headerSource
         }
     };
     
     // In development mode, log exact token values for debugging
     if (process.env.NODE_ENV === 'development') {
         logInfo.tokens.headerValue = headerToken || 'NONE';
-        logInfo.tokens.cookieValue = csrfCookieValue || 'NONE';
-        logInfo.tokens.cookieTokenSegment = cookieToken || 'NONE';
-        logInfo.tokens.cookieHashSegment = cookieHash || 'NONE';
-        logInfo.tokens.firstSegmentMatch = headerToken === cookieToken;
+        logInfo.tokens.cookieValue = cookieToken || 'NONE';
+        logInfo.tokens.tokensMatch = headerToken === cookieToken;
         logInfo.session.fullData = req.session;
         logInfo.allCookies = req.cookies;
         logInfo.allHeaders = {
@@ -301,82 +289,85 @@ app.use('/api', (req, res, next) => {
     
     console.log('[CSRF] Applying CSRF protection:', logInfo);
     
-    // Apply CSRF to all other API routes
-    doubleCsrfProtection(req, res, (err) => {
-        if (err) {
-            // Enhanced diagnostic logging for CSRF validation failures
-            // Log ALL received values and the reason for failure
-            const failureInfo = {
-                path: req.path,
-                method: req.method,
-                error: err.message,
-                errorCode: err.code || 'UNKNOWN',
-                session: sessionInfo,
-                validation: {
-                    headerTokenPresent: !!headerToken,
-                    cookieTokenPresent: !!cookieToken,
-                    cookieHashPresent: !!cookieHash,
-                    sessionAuthenticated: sessionInfo.authenticated,
-                    allCookiesPresent: Object.keys(req.cookies || {})
-                }
-            };
-            
-            // Determine specific failure reason
-            if (!headerToken) {
-                failureInfo.failureReason = 'CSRF token missing from request header (neither CSRF-Token nor X-CSRF-Token present)';
-            } else if (!csrfCookieValue) {
-                failureInfo.failureReason = 'CSRF cookie missing from request';
-            } else if (!cookieToken) {
-                failureInfo.failureReason = 'CSRF cookie does not contain token segment (no pipe separator or empty token)';
-            } else if (headerToken && cookieToken && headerToken !== cookieToken) {
-                failureInfo.failureReason = 'CSRF token mismatch: header token does not match cookie token (first segment comparison)';
-            } else {
-                failureInfo.failureReason = 'CSRF hash validation failed (token matches but hash is invalid - possible secret mismatch or tampering)';
-            }
-            
-            // Development-only: Log actual token values for diagnostics
-            if (process.env.NODE_ENV === 'development') {
-                failureInfo.validation.headerTokenValue = headerToken || 'NONE';
-                failureInfo.validation.cookieFullValue = csrfCookieValue || 'NONE';
-                failureInfo.validation.cookieTokenSegment = cookieToken || 'NONE';
-                failureInfo.validation.cookieHashSegment = cookieHash || 'NONE';
-                failureInfo.validation.firstSegmentMatch = headerToken === cookieToken;
-                failureInfo.validation.allCookieValues = req.cookies;
-                failureInfo.validation.sessionData = req.session;
-                failureInfo.validation.allHeaders = req.headers;
-            }
-            
-            console.error('[CSRF] CSRF validation failed:', failureInfo);
-            
-            // Return 403 Forbidden for CSRF validation failures
-            return res.status(403).json({ 
-                error: 'invalid csrf token',
-                message: 'CSRF token validation failed. Please refresh and try again.'
-            });
-        }
-        
-        // Log successful validation with token comparison details
-        const successInfo = {
+    // Perform CSRF validation: cookie === header + session.authenticated
+    let validationPassed = false;
+    let failureReason = null;
+    
+    // Check if session is authenticated
+    if (!sessionInfo.authenticated) {
+        failureReason = 'Session not authenticated - CSRF validation requires authenticated session';
+    }
+    // Check if header token is present
+    else if (!headerToken) {
+        failureReason = 'CSRF token missing from request header (neither CSRF-Token nor X-CSRF-Token present)';
+    }
+    // Check if cookie token is present
+    else if (!cookieToken) {
+        failureReason = 'CSRF cookie missing from request';
+    }
+    // Check if cookie and header tokens match
+    else if (headerToken !== cookieToken) {
+        failureReason = 'CSRF token mismatch: header token does not match cookie token';
+    }
+    // All checks passed
+    else {
+        validationPassed = true;
+    }
+    
+    if (!validationPassed) {
+        // Enhanced diagnostic logging for CSRF validation failures
+        const failureInfo = {
             path: req.path,
             method: req.method,
+            failureReason: failureReason,
             session: sessionInfo,
             validation: {
-                passed: true,
-                headerTokenMatched: true,
-                hashValidated: true
+                headerTokenPresent: !!headerToken,
+                cookieTokenPresent: !!cookieToken,
+                tokensMatch: headerToken === cookieToken,
+                sessionAuthenticated: sessionInfo.authenticated,
+                allCookiesPresent: Object.keys(req.cookies || {})
             }
         };
         
-        // Development-only: Log token values on success
+        // Development-only: Log actual token values for diagnostics
         if (process.env.NODE_ENV === 'development') {
-            successInfo.validation.headerTokenValue = headerToken || 'NONE';
-            successInfo.validation.cookieTokenSegment = cookieToken || 'NONE';
-            successInfo.validation.firstSegmentMatch = headerToken === cookieToken;
+            failureInfo.validation.headerTokenValue = headerToken || 'NONE';
+            failureInfo.validation.cookieTokenValue = cookieToken || 'NONE';
+            failureInfo.validation.allCookieValues = req.cookies;
+            failureInfo.validation.sessionData = req.session;
+            failureInfo.validation.allHeaders = req.headers;
         }
         
-        console.log('[CSRF] CSRF validation passed:', successInfo);
-        next();
-    });
+        console.error('[CSRF] CSRF validation failed:', failureInfo);
+        
+        // Return 403 Forbidden for CSRF validation failures
+        return res.status(403).json({ 
+            error: 'invalid csrf token',
+            message: 'CSRF token validation failed. Please refresh and try again.'
+        });
+    }
+    
+    // Log successful validation with token comparison details
+    const successInfo = {
+        path: req.path,
+        method: req.method,
+        session: sessionInfo,
+        validation: {
+            passed: true,
+            tokensMatch: true,
+            sessionAuthenticated: true
+        }
+    };
+    
+    // Development-only: Log token values on success
+    if (process.env.NODE_ENV === 'development') {
+        successInfo.validation.headerTokenValue = headerToken || 'NONE';
+        successInfo.validation.cookieTokenValue = cookieToken || 'NONE';
+    }
+    
+    console.log('[CSRF] CSRF validation passed:', successInfo);
+    next();
 });
 
 // API routes
@@ -543,6 +534,35 @@ async function startServer() {
 // Start the server (skip in test environment)
 if (require.main === module) {
     startServer();
+} else if (process.env.NODE_ENV === 'test') {
+    // In test mode, initialize session middleware immediately when module is imported
+    // This ensures tests have access to session functionality
+    // Use an IIFE to handle the async initialization
+    (async function initTestSession() {
+        try {
+            await initializeSessionStore();
+            const sessionMiddleware = getSessionMiddleware();
+            app.use(sessionMiddleware);
+            console.log('[Test] Session middleware initialized');
+        } catch (err) {
+            console.error('[Test] Failed to initialize session:', err);
+            // Fallback: create session middleware with memory store directly
+            const session = require('express-session');
+            app.use(session({
+                secret: process.env.SESSION_SECRET || 'test-session-secret',
+                resave: false,
+                saveUninitialized: false,
+                cookie: {
+                    httpOnly: true,
+                    secure: false,
+                    sameSite: 'lax',
+                    maxAge: 24 * 60 * 60 * 1000,
+                    path: '/'
+                }
+            }));
+            console.log('[Test] Session middleware initialized with fallback memory store');
+        }
+    })();
 }
 
 // Handle server startup errors
