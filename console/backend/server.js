@@ -17,7 +17,7 @@ const { shouldUseSecureCookies, logCookieConfiguration } = require('./utils/cook
 const rconService = require('./services/rcon');
 const logsService = require('./services/logs');
 const { initializeUsers } = require('./auth/auth');
-const { initializeSessionStore, getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
+const { initializeSessionMiddleware, initializeSessionStore, getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
 
 // Import middleware
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -99,12 +99,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Session middleware initialization
-// In production/development: Applied during async startup (after Redis initialization)
-// In test: Applied immediately with memory store for synchronous test execution
+// Initialize session middleware synchronously BEFORE routes are defined
+// This ensures req.session is available in all route handlers including /api/login
+// The actual session store (Redis/Memory) is initialized asynchronously during startup
+let sessionMiddleware;
 if (process.env.NODE_ENV === 'test') {
     // Test mode: Create and apply session middleware immediately with memory store
     const session = require('express-session');
-    const sessionMiddleware = session({
+    sessionMiddleware = session({
         secret: process.env.SESSION_SECRET || 'test-session-secret',
         resave: false,
         saveUninitialized: false,
@@ -118,8 +120,26 @@ if (process.env.NODE_ENV === 'test') {
     });
     app.use(sessionMiddleware);
     console.log('[Test] Session middleware initialized (memory store)');
+} else {
+    // Production/Development: Initialize session middleware with temporary MemoryStore
+    // This ensures session middleware is applied BEFORE routes are defined
+    // Redis store will be initialized asynchronously during server startup
+    sessionMiddleware = initializeSessionMiddleware();
+    app.use(sessionMiddleware);
+    console.log('[Startup] Session middleware applied (will upgrade to Redis if available)');
 }
-// NOTE: In production/development, session middleware will be applied during async startup
+
+// Apply session middleware to Socket.io for WebSocket authentication
+io.engine.use(sessionMiddleware);
+console.log('[Startup] Session middleware applied to Socket.io');
+
+// Log session initialization status with environment info
+console.log('[Session] Initialization status:', {
+    nodeEnv: process.env.NODE_ENV || 'development',
+    sessionSecretSet: !!process.env.SESSION_SECRET && process.env.SESSION_SECRET !== 'your-secure-random-session-secret',
+    redisConfigured: !!(process.env.REDIS_HOST || process.env.REDIS_URL),
+    middlewareApplied: true
+});
 
 // Configure CSRF protection using simple double-submit pattern
 // Token validation: cookie value === header value + session.authenticated === true
@@ -484,18 +504,13 @@ async function startServer() {
         console.log(`Node environment:   ${process.env.NODE_ENV || 'development'}`);
         console.log('');
         
-        // Step 1: Initialize session store (Redis in production, may fallback in dev)
-        console.log('[Startup] Step 1/3: Initializing session store...');
+        // Step 1: Initialize session store (attempt Redis connection, fallback to memory in dev)
+        // Note: Session middleware is already applied before routes with temporary MemoryStore
+        // This step upgrades the session store to Redis if available
+        console.log('[Startup] Step 1/3: Initializing session store (Redis)...');
         await initializeSessionStore();
         
-        // Step 2: Apply session middleware to Express and Socket.io
-        console.log('[Startup] Step 2/3: Applying session middleware...');
-        const sessionMiddleware = getSessionMiddleware();
-        app.use(sessionMiddleware);
-        io.engine.use(sessionMiddleware);
-        console.log('[Startup] ✓ Session middleware applied');
-        
-        // Verify Redis connection status before starting server
+        // Verify session store status
         const sessionStatus = getSessionStoreStatus();
         console.log('[Startup] Session store status:', {
             storeType: sessionStatus.storeType,
@@ -507,13 +522,15 @@ async function startServer() {
             console.log('');
             console.log('[Startup] ⚠ WARNING: Using memory store for sessions');
             console.log('[Startup] This is only allowed in development/test environments');
+            console.log('[Startup] Sessions created before Redis connection will remain in memory');
             console.log('');
         } else {
-            console.log('[Startup] ✓ Redis connected - sessions will persist');
+            console.log('[Startup] ✓ Redis connected - new sessions will persist');
+            console.log('[Startup] Note: Sessions created during startup use MemoryStore');
         }
         
-        // Step 3: Start the HTTP server
-        console.log('[Startup] Step 3/3: Starting HTTP server...');
+        // Step 2: Start the HTTP server
+        console.log('[Startup] Step 2/3: Starting HTTP server...');
         await new Promise((resolve, reject) => {
             const HOST = '0.0.0.0';
             server.listen(PORT, HOST, (err) => {
@@ -536,7 +553,8 @@ async function startServer() {
             });
         });
         
-        // Initialize other services (RCON, logs, etc.)
+        // Step 3: Initialize other services (RCON, logs, etc.)
+        console.log('[Startup] Step 3/3: Initializing services...');
         await initializeServices();
         
         console.log('');

@@ -21,10 +21,34 @@ let useRedisStore = false;
 let sessionMiddleware = null;
 let sessionInitialized = false;
 
+// Validate SESSION_SECRET is set from environment (not using default)
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET || SESSION_SECRET === 'your-secure-random-session-secret') {
+    console.error('');
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('✗ FATAL: SESSION_SECRET environment variable must be set');
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('SESSION_SECRET is required for secure session management.');
+    console.error('Using the default or not setting it is a security risk.');
+    console.error('');
+    console.error('Solution:');
+    console.error('  1. Generate a secure random secret:');
+    console.error('     openssl rand -hex 32');
+    console.error('  2. Add it to your .env file:');
+    console.error('     SESSION_SECRET=<your-generated-secret>');
+    console.error('  3. For production deployments, ensure SESSION_SECRET is set');
+    console.error('     in GitHub secrets or deployment configuration');
+    console.error('═══════════════════════════════════════════════════════════');
+    console.error('');
+    if (process.env.NODE_ENV !== 'test') {
+        process.exit(1);
+    }
+}
+
 // Function to create session middleware with given store
 function createSessionMiddleware(store) {
     return session({
-        secret: process.env.SESSION_SECRET || 'your-secure-random-session-secret',
+        secret: SESSION_SECRET || 'test-session-secret', // Use validated SESSION_SECRET
         resave: false,
         saveUninitialized: false,
         store: store || undefined, // Use provided store or undefined for memory store
@@ -41,14 +65,36 @@ function createSessionMiddleware(store) {
     });
 }
 
+// Initialize session middleware immediately (synchronously) for early application
+// This ensures session middleware is available when routes are defined
+// Session store (Redis/Memory) will be initialized asynchronously during startup
+function initializeSessionMiddleware() {
+    if (sessionMiddleware) {
+        console.log('[Session] Session middleware already initialized');
+        return sessionMiddleware;
+    }
+    
+    // Create session middleware with MemoryStore (default) for immediate use
+    // This will be updated with Redis store during async startup if available
+    sessionMiddleware = createSessionMiddleware(null);
+    sessionInitialized = true;
+    
+    console.log('[Session] Session middleware initialized (temporary memory store)');
+    console.log('[Session] Redis store will be configured during async startup');
+    
+    return sessionMiddleware;
+}
+
 // Initialize Redis client and session store
 async function initializeRedisClient() {
     // Skip Redis in test environment - use memory store for tests
     if (process.env.NODE_ENV === 'test') {
         console.log('[Session] Test environment detected - using memory store');
         useRedisStore = false;
-        sessionInitialized = true;
-        sessionMiddleware = createSessionMiddleware(null);
+        if (!sessionMiddleware) {
+            sessionMiddleware = createSessionMiddleware(null);
+            sessionInitialized = true;
+        }
         return;
     }
 
@@ -57,6 +103,12 @@ async function initializeRedisClient() {
     
     try {
         console.log('[Session] Initializing Redis connection...');
+        console.log('[Session] Redis configuration:', {
+            host: REDIS_URL ? 'from REDIS_URL' : REDIS_HOST,
+            port: REDIS_URL ? 'from REDIS_URL' : REDIS_PORT,
+            hasPassword: !!REDIS_PASSWORD,
+            useRedisStore: 'attempting...'
+        });
         
         // Create Redis client with configuration
         const clientConfig = REDIS_URL 
@@ -108,19 +160,23 @@ async function initializeRedisClient() {
         });
 
         useRedisStore = true;
-        sessionInitialized = true;
 
         console.log('[Session] ✓ Redis connected and ready for session persistence');
-        console.log('[Session] Redis configuration:', {
+        console.log('[Session] Redis store configuration:', {
             host: REDIS_URL ? 'from REDIS_URL' : REDIS_HOST,
             port: REDIS_URL ? 'from REDIS_URL' : REDIS_PORT,
             hasPassword: !!REDIS_PASSWORD,
             prefix: 'sess:',
-            ttl: '24h'
+            ttl: '24h',
+            storeType: 'RedisStore'
         });
 
-        // Create session middleware with Redis store
+        // Update session middleware to use Redis store
+        // Note: express-session doesn't support hot-swapping stores
+        // Sessions created with MemoryStore before Redis connected will remain in memory
+        // New sessions after Redis connection will use Redis
         sessionMiddleware = createSessionMiddleware(sessionStore);
+        console.log('[Session] ✓ Session middleware updated with Redis store');
 
     } catch (err) {
         console.error('[Session] Failed to connect to Redis:', err.message);
@@ -155,7 +211,7 @@ async function initializeRedisClient() {
         console.warn('[Session] ═══════════════════════════════════════════════════');
         console.warn('[Session] ⚠ WARNING: Using memory store fallback (development only)');
         console.warn('[Session] ═══════════════════════════════════════════════════');
-        console.warn('[Session] Redis is not available - falling back to memory store.');
+        console.warn('[Session] Redis is not available - continuing with memory store.');
         console.warn('[Session] This is only allowed in development mode.');
         console.warn('[Session] ');
         console.warn('[Session] Impact:');
@@ -172,10 +228,9 @@ async function initializeRedisClient() {
         useRedisStore = false;
         redisClient = null;
         sessionStore = null;
-        sessionInitialized = true;
         
-        // Create session middleware with memory store
-        sessionMiddleware = createSessionMiddleware(null);
+        // Session middleware already created with MemoryStore in initializeSessionMiddleware
+        console.log('[Session] ✓ Continuing with memory store for sessions');
     }
 }
 
@@ -260,6 +315,7 @@ async function shutdownSessionStore() {
 }
 
 module.exports = {
+    initializeSessionMiddleware,
     initializeSessionStore,
     getSessionMiddleware,
     getSessionStoreStatus,

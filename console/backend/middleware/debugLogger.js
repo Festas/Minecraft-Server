@@ -62,6 +62,7 @@ function debugLogger(options = {}) {
             sessionExists: !!req.session,
             authenticated: req.session?.authenticated || false,
             username: req.session?.username || 'NOT_SET',
+            sessionUndefined: !req.session, // Flag for defensive logging
             sessionData: req.session ? {
                 cookie: {
                     maxAge: req.session.cookie.maxAge,
@@ -74,6 +75,23 @@ function debugLogger(options = {}) {
                 }
             } : null
         };
+        
+        // Defensive check: Log if session is undefined (should never happen)
+        if (!req.session) {
+            console.error('');
+            console.error('═══════════════════════════════════════════════════════════');
+            console.error('⚠ WARNING: req.session is undefined');
+            console.error('═══════════════════════════════════════════════════════════');
+            console.error('This indicates session middleware was not properly applied');
+            console.error('Request details:', {
+                method: req.method,
+                url: req.url,
+                path: req.path,
+                ip: req.ip
+            });
+            console.error('═══════════════════════════════════════════════════════════');
+            console.error('');
+        }
 
         // Extract cookie information
         const cookieInfo = {
