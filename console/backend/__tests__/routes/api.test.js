@@ -64,7 +64,8 @@ describe('API Routes', () => {
       expect(csrfCookie).toBeDefined();
       
       // Verify cookie attributes
-      expect(csrfCookie).toMatch(/HttpOnly/);
+      // CSRF cookie should NOT have HttpOnly for double-submit pattern (client JS needs to read it)
+      expect(csrfCookie).not.toMatch(/HttpOnly/);
       expect(csrfCookie).toMatch(/Path=\//);
       expect(csrfCookie).toMatch(/SameSite=Lax/i);
     });

@@ -24,6 +24,18 @@ jest.mock('../services/pluginManager', () => ({
 const pluginManager = require('../services/pluginManager');
 const { app } = require('../server');
 
+// Helper function to convert Set-Cookie headers array to Cookie header string
+// Set-Cookie format: "name=value; Path=/; HttpOnly; SameSite=Lax"
+// Cookie format: "name1=value1; name2=value2"
+function parseCookies(setCookieHeaders) {
+    if (!setCookieHeaders || !Array.isArray(setCookieHeaders)) {
+        return '';
+    }
+    return setCookieHeaders
+        .map(cookie => cookie.split(';')[0].trim())
+        .join('; ');
+}
+
 describe('CSRF Cookie Regression Tests', () => {
     describe('/api/csrf-token endpoint cookie behavior', () => {
         it('should set Set-Cookie header when returning CSRF token', async () => {
@@ -119,7 +131,7 @@ describe('CSRF Cookie Regression Tests', () => {
                 .post('/api/login')
                 .send({ 
                     username: process.env.ADMIN_USERNAME || 'admin', 
-                    password: process.env.ADMIN_PASSWORD || 'changeme123' 
+                    password: process.env.ADMIN_PASSWORD || 'test-password-123' 
                 });
             
             if (loginResponse.status === 200) {
@@ -131,14 +143,15 @@ describe('CSRF Cookie Regression Tests', () => {
             // Get CSRF token with authenticated session
             const csrfResponse = await request(app)
                 .get('/api/csrf-token')
-                .set('Cookie', sessionCookies);
+                .set('Cookie', parseCookies(sessionCookies));
             
             expect(csrfResponse.status).toBe(200);
             csrfToken = csrfResponse.body.csrfToken;
             
             // Combine session and CSRF cookies
             const csrfCookies = csrfResponse.headers['set-cookie'] || [];
-            cookies = [...sessionCookies, ...csrfCookies];
+            const allCookies = [...sessionCookies, ...csrfCookies];
+            cookies = parseCookies(allCookies);
         });
 
         beforeEach(() => {
@@ -182,7 +195,7 @@ describe('CSRF Cookie Regression Tests', () => {
         it('should fail with 403 when CSRF cookie is missing (header only)', async () => {
             const response = await request(app)
                 .post('/api/plugins/install')
-                .set('Cookie', sessionCookies) // Only session cookie, no CSRF cookie
+                .set('Cookie', parseCookies(sessionCookies)) // Only session cookie, no CSRF cookie
                 .set('CSRF-Token', csrfToken)
                 .send({ url: 'https://example.com/plugin.jar' });
             
