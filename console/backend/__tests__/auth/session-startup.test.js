@@ -51,7 +51,7 @@ describe('Session Startup Order', () => {
             
             // Should throw error in production when Redis unavailable
             await expect(initializeSessionStore()).rejects.toThrow('Redis connection required in production mode');
-        }, 10000); // 10 second timeout for connection failure
+        }, 3000); // 3 second timeout for connection failure
     });
 
     describe('Development mode (NODE_ENV=development)', () => {
@@ -69,7 +69,7 @@ describe('Session Startup Order', () => {
             expect(status.usingRedis).toBe(false);
             expect(status.storeType).toBe('memory');
             expect(status.initialized).toBe(true);
-        }, 10000); // 10 second timeout for connection failure + fallback
+        }, 4000); // 4 second timeout for connection failure + fallback
     });
 
     describe('Test mode (NODE_ENV=test)', () => {

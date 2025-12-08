@@ -19,7 +19,7 @@ let redisClient = null;
 let sessionStore = null;
 let useRedisStore = false;
 let sessionMiddleware = null;
-let redisInitialized = false;
+let sessionInitialized = false;
 
 // Function to create session middleware with given store
 function createSessionMiddleware(store) {
@@ -47,7 +47,7 @@ async function initializeRedisClient() {
     if (process.env.NODE_ENV === 'test') {
         console.log('[Session] Test environment detected - using memory store');
         useRedisStore = false;
-        redisInitialized = true;
+        sessionInitialized = true;
         sessionMiddleware = createSessionMiddleware(null);
         return;
     }
@@ -99,9 +99,6 @@ async function initializeRedisClient() {
 
         // Connect to Redis with timeout
         await redisClient.connect();
-
-        // Verify Redis is actually ready
-        await redisClient.ping();
         
         // Create RedisStore
         sessionStore = new RedisStore({
@@ -111,7 +108,7 @@ async function initializeRedisClient() {
         });
 
         useRedisStore = true;
-        redisInitialized = true;
+        sessionInitialized = true;
 
         console.log('[Session] ✓ Redis connected and ready for session persistence');
         console.log('[Session] Redis configuration:', {
@@ -175,7 +172,7 @@ async function initializeRedisClient() {
         useRedisStore = false;
         redisClient = null;
         sessionStore = null;
-        redisInitialized = true;
+        sessionInitialized = true;
         
         // Create session middleware with memory store
         sessionMiddleware = createSessionMiddleware(null);
@@ -221,7 +218,7 @@ function getSessionStoreStatus() {
         usingRedis: useRedisStore,
         redisConnected: redisClient?.isReady || false,
         storeType: useRedisStore ? 'redis' : 'memory',
-        initialized: redisInitialized,
+        initialized: sessionInitialized,
         warning: !useRedisStore ? 'Sessions will not persist across restarts' : null
     };
 }
