@@ -30,6 +30,53 @@ For targeted diagnostics or manual testing, you can run individual scripts:
 
 ## Scripts Overview
 
+### Summary Generation
+
+#### `generate-diagnostics-summary.sh` ⭐ **NEW**
+
+Master summary and report generation script (used by comprehensive workflow).
+
+**Purpose**: Generate all diagnostic summary reports and documentation
+
+**Usage**:
+```bash
+# Called automatically by workflow, but can be run manually:
+export OUTPUT_DIR="./comprehensive-summary"
+export RUN_NUMBER="123"
+export CONSOLE_URL="http://localhost:3000"
+export TIMESTAMP="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+# Configure what was run
+export RUN_BROWSER_DIAGNOSTICS="true"
+export RUN_BACKEND_DIAGNOSTICS="true"
+export RUN_API_PROFILING="true"
+export RUN_RESOURCE_MONITORING="true"
+
+# Configure secrets status
+export HAS_SERVER_HOST="true"
+export HAS_SSH_KEY="true"
+export CAN_SSH="true"
+
+./scripts/generate-diagnostics-summary.sh
+```
+
+**Outputs**:
+- `MASTER-SUMMARY.txt` - Complete diagnostic results with triage guide
+- `README.md` - GitHub-friendly markdown summary
+- `SECRETS-GUIDE.txt` - Detailed secret configuration instructions
+
+**Features**:
+- Environment-based configuration (no hardcoded values)
+- Aggregates results from all diagnostic types
+- Includes secrets status and configuration guidance
+- Explains which diagnostics ran vs. skipped
+- Provides rapid triage guide and common problem patterns
+- Fully extensible - easy to add new diagnostic types
+
+**Documentation**: See workflow `.github/workflows/comprehensive-plugin-manager-diagnostics.yml` and [Extending the Diagnostics Platform](../docs/DIAGNOSTICS-GUIDE.md#extending-the-diagnostics-platform)
+
+---
+
 ### Browser Automation
 
 #### `browser-diagnostics.js`
