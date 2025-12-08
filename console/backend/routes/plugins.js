@@ -69,7 +69,7 @@ router.post('/parse-url', async (req, res) => {
  */
 router.post('/install', async (req, res) => {
     // Log the incoming request for debugging with CSRF details
-    console.log('[PLUGIN_INSTALL_API] Install request received:', {
+    const logInfo = {
         url: req.body.url,
         customName: req.body.customName,
         selectedOption: req.body.selectedOption,
@@ -83,7 +83,25 @@ router.post('/install', async (req, res) => {
             cookiePresent: !!(req.cookies && req.cookies['csrf-token'])
         },
         timestamp: new Date().toISOString()
-    });
+    };
+    
+    // Development-only: Log detailed diagnostic information
+    if (process.env.NODE_ENV === 'development') {
+        logInfo.sessionData = req.session;
+        logInfo.cookies = req.cookies;
+        logInfo.headers = {
+            'csrf-token': req.headers['csrf-token'],
+            'x-csrf-token': req.headers['x-csrf-token'],
+            'cookie': req.headers.cookie,
+            'content-type': req.headers['content-type'],
+            'user-agent': req.headers['user-agent'],
+            host: req.headers.host,
+            origin: req.headers.origin,
+            referer: req.headers.referer
+        };
+    }
+    
+    console.log('[PLUGIN_INSTALL_API] Install request received:', logInfo);
     
     try {
         const { url, customName, selectedOption } = req.body;
