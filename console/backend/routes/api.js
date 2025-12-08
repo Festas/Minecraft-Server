@@ -18,6 +18,17 @@ router.post('/login', loginLimiter, validations.login, async (req, res) => {
         timestamp: new Date().toISOString()
     });
 
+    // Defensive check: Ensure session middleware is initialized
+    if (!req.session) {
+        console.error('[LOGIN] FATAL: Session middleware not initialized - req.session is undefined');
+        console.error('[LOGIN] This indicates session middleware was not applied before routes');
+        console.error('[LOGIN] Check server.js initialization order');
+        return res.status(500).json({ 
+            error: 'Session system not available',
+            message: 'The session system is not properly initialized. Please contact the administrator.'
+        });
+    }
+
     if (!username || !password) {
         console.log('[LOGIN] Login failed: Missing credentials');
         return res.status(400).json({ error: 'Username and password required' });
