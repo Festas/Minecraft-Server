@@ -2,6 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize all features
+    initVersionDisplay();
     initThemeToggle();
     initAnimatedBackground();
     initCopyButton();
@@ -12,6 +13,37 @@ document.addEventListener('DOMContentLoaded', function() {
     initFAQAccordion();
     initScrollAnimations();
 });
+
+/**
+ * Initialize version display from config
+ */
+function initVersionDisplay() {
+    if (typeof window.MC_CONFIG !== 'undefined') {
+        // Update version banner
+        const versionNumber = document.getElementById('minecraftVersion');
+        const serverSoftware = document.getElementById('serverSoftware');
+        
+        if (versionNumber && window.MC_CONFIG.minecraftVersion) {
+            versionNumber.textContent = window.MC_CONFIG.minecraftVersion;
+        }
+        
+        if (serverSoftware && window.MC_CONFIG.serverSoftware) {
+            serverSoftware.textContent = window.MC_CONFIG.serverSoftware;
+        }
+        
+        // Update footer version
+        const footerVersion = document.getElementById('footerVersion');
+        const footerSoftware = document.getElementById('footerSoftware');
+        
+        if (footerVersion && window.MC_CONFIG.minecraftVersion) {
+            footerVersion.textContent = window.MC_CONFIG.minecraftVersion;
+        }
+        
+        if (footerSoftware && window.MC_CONFIG.serverSoftware) {
+            footerSoftware.textContent = window.MC_CONFIG.serverSoftware;
+        }
+    }
+}
 
 /**
  * Theme toggle functionality with localStorage persistence

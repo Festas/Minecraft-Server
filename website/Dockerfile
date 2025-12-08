@@ -1,6 +1,10 @@
 # Use nginx alpine for minimal footprint
 FROM nginx:alpine
 
+# Build arguments for environment variables
+ARG MINECRAFT_VERSION=1.21.10
+ARG SERVER_SOFTWARE=Paper
+
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
@@ -9,6 +13,12 @@ COPY index.html /usr/share/nginx/html/
 COPY css/ /usr/share/nginx/html/css/
 COPY js/ /usr/share/nginx/html/js/
 COPY images/ /usr/share/nginx/html/images/
+
+# Copy config template and generate config.js with environment variables
+COPY js/config.template.js /tmp/config.template.js
+RUN export MINECRAFT_VERSION="${MINECRAFT_VERSION}" SERVER_SOFTWARE="${SERVER_SOFTWARE}" && \
+    envsubst '${MINECRAFT_VERSION} ${SERVER_SOFTWARE}' < /tmp/config.template.js > /usr/share/nginx/html/js/config.js && \
+    rm /tmp/config.template.js
 
 # Create cache directory for nginx
 RUN mkdir -p /var/cache/nginx

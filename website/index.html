@@ -40,6 +40,7 @@
     
     <!-- Preload Critical Assets -->
     <link rel="preload" href="css/style.css" as="style">
+    <link rel="preload" href="js/config.js" as="script">
     <link rel="preload" href="js/main.js" as="script">
     
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
@@ -70,6 +71,16 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
+            <!-- Version Banner -->
+            <div class="version-banner" id="versionBanner">
+                <span class="version-icon">⚡</span>
+                <span class="version-text">
+                    Running <span class="version-software" id="serverSoftware">Paper</span> 
+                    <span class="version-number" id="minecraftVersion">1.21.10</span>
+                </span>
+                <span class="version-icon">⚡</span>
+            </div>
+            
             <h1 class="server-title">
                 <span class="highlight-gold">✦</span> 
                 <span class="highlight-blue">festas_builds</span> 
@@ -643,8 +654,8 @@
                 <div class="footer-section">
                     <h4>Server-Info</h4>
                     <ul>
-                        <li>Version: 1.20.4</li>
-                        <li>Software: Paper</li>
+                        <li>Version: <span id="footerVersion">1.21.10</span></li>
+                        <li>Software: <span id="footerSoftware">Paper</span></li>
                         <li>Max. Spieler: 20</li>
                         <li>Plattformübergreifend: ✓</li>
                     </ul>
@@ -673,6 +684,7 @@
     <script defer data-domain="mc.festas-builds.com" src="https://plausible.io/js/script.js"></script>
     -->
 
+    <script src="js/config.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
