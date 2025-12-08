@@ -102,11 +102,10 @@ app.use(cookieParser());
 // Initialize session middleware synchronously BEFORE routes are defined
 // This ensures req.session is available in all route handlers including /api/login
 // The actual session store (Redis/Memory) is initialized asynchronously during startup
-let sessionMiddleware;
 if (process.env.NODE_ENV === 'test') {
     // Test mode: Create and apply session middleware immediately with memory store
     const session = require('express-session');
-    sessionMiddleware = session({
+    const sessionMiddleware = session({
         secret: process.env.SESSION_SECRET || 'test-session-secret',
         resave: false,
         saveUninitialized: false,
@@ -119,19 +118,19 @@ if (process.env.NODE_ENV === 'test') {
         }
     });
     app.use(sessionMiddleware);
+    // Apply session middleware to Socket.io for WebSocket authentication
+    io.engine.use(sessionMiddleware);
     console.log('[Test] Session middleware initialized (memory store)');
 } else {
     // Production/Development: Initialize session middleware with temporary MemoryStore
     // This ensures session middleware is applied BEFORE routes are defined
     // Redis store will be initialized asynchronously during server startup
-    sessionMiddleware = initializeSessionMiddleware();
+    const sessionMiddleware = initializeSessionMiddleware();
     app.use(sessionMiddleware);
+    // Apply session middleware to Socket.io for WebSocket authentication
+    io.engine.use(sessionMiddleware);
     console.log('[Startup] Session middleware applied (will upgrade to Redis if available)');
 }
-
-// Apply session middleware to Socket.io for WebSocket authentication
-io.engine.use(sessionMiddleware);
-console.log('[Startup] Session middleware applied to Socket.io');
 
 // Log session initialization status with environment info
 console.log('[Session] Initialization status:', {

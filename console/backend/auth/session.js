@@ -47,8 +47,12 @@ if (!SESSION_SECRET || SESSION_SECRET === 'your-secure-random-session-secret') {
 
 // Function to create session middleware with given store
 function createSessionMiddleware(store) {
+    // In test mode, allow fallback to test secret since validation is skipped
+    // In production/development, SESSION_SECRET is validated and guaranteed to be set
+    const sessionSecret = SESSION_SECRET || (process.env.NODE_ENV === 'test' ? 'test-session-secret' : SESSION_SECRET);
+    
     return session({
-        secret: SESSION_SECRET || 'test-session-secret', // Use validated SESSION_SECRET
+        secret: sessionSecret,
         resave: false,
         saveUninitialized: false,
         store: store || undefined, // Use provided store or undefined for memory store
