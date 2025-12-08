@@ -545,8 +545,10 @@ async function startServer() {
     }
 }
 
-// Start the server
-startServer();
+// Start the server (skip in test environment)
+if (require.main === module) {
+    startServer();
+}
 
 // Handle server startup errors
 server.on('error', (error) => {
