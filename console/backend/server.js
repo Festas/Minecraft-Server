@@ -16,6 +16,7 @@ const { shouldUseSecureCookies, logCookieConfiguration } = require('./utils/cook
 // Import services
 const rconService = require('./services/rcon');
 const logsService = require('./services/logs');
+const playerTracker = require('./services/playerTracker');
 const { initializeUsers } = require('./auth/auth');
 const { initializeSessionMiddleware, initializeSessionStore, getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
 
@@ -65,7 +66,7 @@ app.use((req, res, next) => {
                 defaultSrc: ["'self'"],
                 scriptSrc: ["'self'", `'nonce-${res.locals.nonce}'`],
                 styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`],
-                imgSrc: ["'self'", "data:", "https://crafatar.com"], // Allow Crafatar for player avatars
+                imgSrc: ["'self'", "data:", "https://crafatar.com", "https://mc-heads.net"], // Allow Crafatar and mc-heads.net for player avatars
                 connectSrc: ["'self'", "ws:", "wss:"], // Allow WebSocket connections
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],
@@ -485,6 +486,18 @@ async function initializeServices() {
     // Initialize admin users
     await initializeUsers();
 
+    // Initialize player tracker
+    await playerTracker.initialize();
+
+    // Connect player tracker to log events
+    logsService.on('player-joined', ({ username }) => {
+        playerTracker.playerJoined(username);
+    });
+
+    logsService.on('player-left', ({ username }) => {
+        playerTracker.playerLeft(username);
+    });
+
     // Connect to RCON
     await rconService.connect();
 
@@ -612,6 +625,7 @@ process.on('SIGTERM', async () => {
     
     logsService.stopStreaming();
     await rconService.disconnect();
+    await playerTracker.shutdown();
     await shutdownSessionStore();
     
     server.close(() => {
@@ -625,6 +639,7 @@ process.on('SIGINT', async () => {
     
     logsService.stopStreaming();
     await rconService.disconnect();
+    await playerTracker.shutdown();
     await shutdownSessionStore();
     
     server.close(() => {

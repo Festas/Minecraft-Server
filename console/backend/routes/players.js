@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../auth/auth');
 const rconService = require('../services/rcon');
+const playerTracker = require('../services/playerTracker');
 
 // All player routes require authentication
 router.use(requireAuth);
@@ -17,6 +18,39 @@ router.get('/list', async (req, res) => {
     } catch (error) {
         console.error('Error getting players:', error);
         res.status(500).json({ error: 'Failed to get player list' });
+    }
+});
+
+/**
+ * GET /players/all
+ * Get all players who have ever joined with their stats
+ */
+router.get('/all', async (req, res) => {
+    try {
+        const allPlayers = playerTracker.getAllPlayers();
+        const onlinePlayers = playerTracker.getOnlinePlayers();
+        
+        // Sort by total playtime (descending)
+        const sortedPlayers = allPlayers.sort((a, b) => 
+            b.totalPlaytimeMs - a.totalPlaytimeMs
+        );
+        
+        // Add online status and format playtime
+        const playersWithStatus = sortedPlayers.map(player => ({
+            ...player,
+            isOnline: onlinePlayers.includes(player.username),
+            formattedPlaytime: playerTracker.formatDuration(player.totalPlaytimeMs)
+        }));
+        
+        res.json({
+            success: true,
+            players: playersWithStatus,
+            totalPlayers: playersWithStatus.length,
+            onlineCount: onlinePlayers.length
+        });
+    } catch (error) {
+        console.error('Error getting all players:', error);
+        res.status(500).json({ error: 'Failed to get player statistics' });
     }
 });
 
