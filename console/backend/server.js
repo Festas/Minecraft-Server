@@ -255,10 +255,23 @@ app.use('/api', (req, res, next) => {
     
     // Explicitly decode token values and extract first segment if pipe separator exists
     const headerToken = csrfHeaderValue ? String(csrfHeaderValue).trim() : null;
-    const cookieToken = csrfCookieValue ? String(csrfCookieValue).split('|')[0].trim() : null;
-    const cookieHash = csrfCookieValue && csrfCookieValue.includes('|') 
-        ? String(csrfCookieValue).split('|')[1].trim() 
-        : null;
+    
+    // Split cookie value once and reuse
+    let cookieToken = null;
+    let cookieHash = null;
+    if (csrfCookieValue) {
+        const cookieParts = String(csrfCookieValue).split('|');
+        cookieToken = cookieParts[0] ? cookieParts[0].trim() : null;
+        cookieHash = cookieParts[1] ? cookieParts[1].trim() : null;
+    }
+    
+    // Determine header source for logging
+    let headerSource = 'NONE';
+    if (req.headers['csrf-token']) {
+        headerSource = 'CSRF-Token';
+    } else if (req.headers['x-csrf-token']) {
+        headerSource = 'X-CSRF-Token';
+    }
     
     // Log all token values and session details for every authenticated API call
     const logInfo = {
@@ -268,7 +281,7 @@ app.use('/api', (req, res, next) => {
         tokens: {
             headerPresent: !!headerToken,
             cookiePresent: !!csrfCookieValue,
-            headerSource: req.headers['csrf-token'] ? 'CSRF-Token' : req.headers['x-csrf-token'] ? 'X-CSRF-Token' : 'NONE',
+            headerSource: headerSource,
             cookieHasPipeSeparator: csrfCookieValue ? csrfCookieValue.includes('|') : false
         }
     };
@@ -321,7 +334,7 @@ app.use('/api', (req, res, next) => {
                 failureInfo.failureReason = 'CSRF cookie missing from request';
             } else if (!cookieToken) {
                 failureInfo.failureReason = 'CSRF cookie does not contain token segment (no pipe separator or empty token)';
-            } else if (headerToken !== cookieToken) {
+            } else if (headerToken && cookieToken && headerToken !== cookieToken) {
                 failureInfo.failureReason = 'CSRF token mismatch: header token does not match cookie token (first segment comparison)';
             } else {
                 failureInfo.failureReason = 'CSRF hash validation failed (token matches but hash is invalid - possible secret mismatch or tampering)';
