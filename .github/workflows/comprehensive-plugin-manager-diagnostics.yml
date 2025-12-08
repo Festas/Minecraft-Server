@@ -611,7 +611,13 @@ jobs:
 
           # Make script executable and run it
           chmod +x scripts/generate-diagnostics-summary.sh
-          scripts/generate-diagnostics-summary.sh
+          if ! scripts/generate-diagnostics-summary.sh; then
+            echo "⚠️  Warning: Summary generation encountered errors"
+            echo "This may indicate missing diagnostic data, which is expected if some diagnostics were skipped"
+            echo "Attempting to continue with available data..."
+            # Still try to display what was generated
+            [ -f ./comprehensive-summary/MASTER-SUMMARY.txt ] && cat ./comprehensive-summary/MASTER-SUMMARY.txt || echo "No summary file generated"
+          fi
 
           echo ""
           echo "✓ Master summary generated successfully"

@@ -15,6 +15,7 @@
 ################################################################################
 
 set -euo pipefail
+IFS=$'\n\t'
 
 # ============================================================================
 # CONFIGURATION
@@ -69,6 +70,13 @@ log_warning() {
 
 log_error() {
     echo "❌ $*"
+}
+
+# Find first matching file in a directory
+find_first_file() {
+    local dir="$1"
+    local pattern="$2"
+    find "${dir}" -name "${pattern}" 2>/dev/null | head -1
 }
 
 # ============================================================================
@@ -151,7 +159,7 @@ EOF
     # Include backend diagnostics summary
     if [ -d "${BACKEND_BASIC_DIR}" ]; then
         local summary_file
-        summary_file=$(find "${BACKEND_BASIC_DIR}" -name "summary.log" 2>/dev/null | head -1)
+        summary_file=$(find_first_file "${BACKEND_BASIC_DIR}" "summary.log")
         if [ -f "${summary_file}" ]; then
             cat >> "${output_file}" << 'EOF'
 ┌─ BACKEND DIAGNOSTICS (BASIC) ─────────────────────────────────┐
@@ -165,7 +173,7 @@ EOF
 
         # Show issues if any
         local issues_file
-        issues_file=$(find "${BACKEND_BASIC_DIR}" -name "issues.log" 2>/dev/null | head -1)
+        issues_file=$(find_first_file "${BACKEND_BASIC_DIR}" "issues.log")
         if [ -f "${issues_file}" ] && [ -s "${issues_file}" ]; then
             cat >> "${output_file}" << 'EOF'
 ┌─ BACKEND ISSUES FOUND ────────────────────────────────────────┐
@@ -179,7 +187,7 @@ EOF
 
         # Show fixes if any
         local fixes_file
-        fixes_file=$(find "${BACKEND_BASIC_DIR}" -name "fixes.log" 2>/dev/null | head -1)
+        fixes_file=$(find_first_file "${BACKEND_BASIC_DIR}" "fixes.log")
         if [ -f "${fixes_file}" ] && [ -s "${fixes_file}" ]; then
             cat >> "${output_file}" << 'EOF'
 ┌─ BACKEND AUTO-FIXES APPLIED ──────────────────────────────────┐
@@ -195,7 +203,7 @@ EOF
     # Advanced backend diagnostics summary
     if [ -d "${BACKEND_ADVANCED_DIR}" ]; then
         local adv_summary_file
-        adv_summary_file=$(find "${BACKEND_ADVANCED_DIR}" -name "summary.log" 2>/dev/null | head -1)
+        adv_summary_file=$(find_first_file "${BACKEND_ADVANCED_DIR}" "summary.log")
         if [ -f "${adv_summary_file}" ]; then
             cat >> "${output_file}" << 'EOF'
 ┌─ BACKEND DIAGNOSTICS (ADVANCED) ──────────────────────────────┐
@@ -223,7 +231,7 @@ EOF
     # Resource monitoring summary
     if [ -d "${RESOURCES_DIR}" ]; then
         local resource_summary
-        resource_summary=$(find "${RESOURCES_DIR}" -name "SUMMARY.txt" -type f 2>/dev/null | head -1)
+        resource_summary=$(find_first_file "${RESOURCES_DIR}" "SUMMARY.txt")
         if [ -f "${resource_summary}" ]; then
             cat >> "${output_file}" << 'EOF'
 ┌─ RESOURCE MONITORING ─────────────────────────────────────────┐
@@ -995,6 +1003,6 @@ main() {
 }
 
 # Run main if executed directly
-if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi
