@@ -134,7 +134,7 @@ jobs:
             fi
           fi
 
-          echo "Console URL: $(cat $GITHUB_OUTPUT | grep url | cut -d'=' -f2-)"
+          echo "Console URL: $(grep url "$GITHUB_OUTPUT" | cut -d'=' -f2-)"
 
       - name: Setup SSH (if testing deployed console)
         if: secrets.SERVER_HOST != '' && secrets.SSH_PRIVATE_KEY != ''
