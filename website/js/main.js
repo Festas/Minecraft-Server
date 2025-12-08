@@ -42,6 +42,12 @@ function initVersionDisplay() {
         if (footerSoftware && window.MC_CONFIG.serverSoftware) {
             footerSoftware.textContent = window.MC_CONFIG.serverSoftware;
         }
+        
+        // Update Discord link
+        const discordLink = document.getElementById('discordLink');
+        if (discordLink && window.MC_CONFIG.discordURL) {
+            discordLink.href = window.MC_CONFIG.discordURL;
+        }
     }
 }
 

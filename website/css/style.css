@@ -158,7 +158,6 @@ code {
     margin-bottom: var(--spacing-md);
     animation: fadeInDown 1s ease, glow 2s ease-in-out infinite alternate;
     box-shadow: 0 4px 15px rgba(125, 189, 84, 0.3);
-    will-change: box-shadow;
 }
 
 .version-icon {
