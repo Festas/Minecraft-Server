@@ -242,45 +242,117 @@ app.use('/api', (req, res, next) => {
         return next();
     }
     
-    // Extract CSRF token from headers and cookies
+    // Extract CSRF token from headers (supporting both 'CSRF-Token' and 'X-CSRF-Token')
     const csrfHeaderValue = req.headers['csrf-token'] || req.headers['x-csrf-token'];
     const csrfCookieValue = req.cookies['csrf-token'];
     
-    console.log('[CSRF] Applying CSRF protection:', {
+    // Extract session details for logging
+    const sessionInfo = {
+        sessionID: req.sessionID,
+        authenticated: req.session?.authenticated || false,
+        username: req.session?.username || 'NOT_SET'
+    };
+    
+    // Explicitly decode token values and extract first segment if pipe separator exists
+    const headerToken = csrfHeaderValue ? String(csrfHeaderValue).trim() : null;
+    
+    // Split cookie value once and reuse
+    let cookieToken = null;
+    let cookieHash = null;
+    if (csrfCookieValue) {
+        const cookieParts = String(csrfCookieValue).split('|');
+        cookieToken = cookieParts[0] ? cookieParts[0].trim() : null;
+        cookieHash = cookieParts[1] ? cookieParts[1].trim() : null;
+    }
+    
+    // Determine header source for logging
+    let headerSource = 'NONE';
+    if (req.headers['csrf-token']) {
+        headerSource = 'CSRF-Token';
+    } else if (req.headers['x-csrf-token']) {
+        headerSource = 'X-CSRF-Token';
+    }
+    
+    // Log all token values and session details for every authenticated API call
+    const logInfo = {
         path: req.path,
         method: req.method,
-        csrfHeader: csrfHeaderValue ? 'PRESENT' : 'MISSING',
-        csrfCookie: csrfCookieValue ? 'PRESENT' : 'MISSING',
-        sessionID: req.sessionID
-    });
+        session: sessionInfo,
+        tokens: {
+            headerPresent: !!headerToken,
+            cookiePresent: !!csrfCookieValue,
+            headerSource: headerSource,
+            cookieHasPipeSeparator: csrfCookieValue ? csrfCookieValue.includes('|') : false
+        }
+    };
+    
+    // In development mode, log exact token values for debugging
+    if (process.env.NODE_ENV === 'development') {
+        logInfo.tokens.headerValue = headerToken || 'NONE';
+        logInfo.tokens.cookieValue = csrfCookieValue || 'NONE';
+        logInfo.tokens.cookieTokenSegment = cookieToken || 'NONE';
+        logInfo.tokens.cookieHashSegment = cookieHash || 'NONE';
+        logInfo.tokens.firstSegmentMatch = headerToken === cookieToken;
+        logInfo.session.fullData = req.session;
+        logInfo.allCookies = req.cookies;
+        logInfo.allHeaders = {
+            'csrf-token': req.headers['csrf-token'],
+            'x-csrf-token': req.headers['x-csrf-token'],
+            'cookie': req.headers.cookie,
+            'user-agent': req.headers['user-agent'],
+            'origin': req.headers.origin,
+            'referer': req.headers.referer
+        };
+    }
+    
+    console.log('[CSRF] Applying CSRF protection:', logInfo);
     
     // Apply CSRF to all other API routes
     doubleCsrfProtection(req, res, (err) => {
         if (err) {
             // Enhanced diagnostic logging for CSRF validation failures
-            const diagnosticInfo = {
+            // Log ALL received values and the reason for failure
+            const failureInfo = {
                 path: req.path,
                 method: req.method,
                 error: err.message,
-                csrfHeader: csrfHeaderValue ? 'PRESENT' : 'MISSING',
-                csrfCookie: csrfCookieValue ? 'PRESENT' : 'MISSING',
-                sessionID: req.sessionID,
-                allCookies: Object.keys(req.cookies || {}),
-                sessionAuthenticated: req.session?.authenticated || false,
-                sessionUsername: req.session?.username || 'NOT_SET'
+                errorCode: err.code || 'UNKNOWN',
+                session: sessionInfo,
+                validation: {
+                    headerTokenPresent: !!headerToken,
+                    cookieTokenPresent: !!cookieToken,
+                    cookieHashPresent: !!cookieHash,
+                    sessionAuthenticated: sessionInfo.authenticated,
+                    allCookiesPresent: Object.keys(req.cookies || {})
+                }
             };
+            
+            // Determine specific failure reason
+            if (!headerToken) {
+                failureInfo.failureReason = 'CSRF token missing from request header (neither CSRF-Token nor X-CSRF-Token present)';
+            } else if (!csrfCookieValue) {
+                failureInfo.failureReason = 'CSRF cookie missing from request';
+            } else if (!cookieToken) {
+                failureInfo.failureReason = 'CSRF cookie does not contain token segment (no pipe separator or empty token)';
+            } else if (headerToken && cookieToken && headerToken !== cookieToken) {
+                failureInfo.failureReason = 'CSRF token mismatch: header token does not match cookie token (first segment comparison)';
+            } else {
+                failureInfo.failureReason = 'CSRF hash validation failed (token matches but hash is invalid - possible secret mismatch or tampering)';
+            }
             
             // Development-only: Log actual token values for diagnostics
             if (process.env.NODE_ENV === 'development') {
-                diagnosticInfo.csrfHeaderValue = csrfHeaderValue || 'NONE';
-                diagnosticInfo.csrfCookieValue = csrfCookieValue || 'NONE';
-                diagnosticInfo.tokensMatch = csrfHeaderValue === csrfCookieValue;
-                diagnosticInfo.allCookieValues = req.cookies;
-                diagnosticInfo.sessionData = req.session;
-                diagnosticInfo.allHeaders = req.headers;
+                failureInfo.validation.headerTokenValue = headerToken || 'NONE';
+                failureInfo.validation.cookieFullValue = csrfCookieValue || 'NONE';
+                failureInfo.validation.cookieTokenSegment = cookieToken || 'NONE';
+                failureInfo.validation.cookieHashSegment = cookieHash || 'NONE';
+                failureInfo.validation.firstSegmentMatch = headerToken === cookieToken;
+                failureInfo.validation.allCookieValues = req.cookies;
+                failureInfo.validation.sessionData = req.session;
+                failureInfo.validation.allHeaders = req.headers;
             }
             
-            console.error('[CSRF] CSRF validation failed:', diagnosticInfo);
+            console.error('[CSRF] CSRF validation failed:', failureInfo);
             
             // Return 403 Forbidden for CSRF validation failures
             return res.status(403).json({ 
@@ -288,11 +360,27 @@ app.use('/api', (req, res, next) => {
                 message: 'CSRF token validation failed. Please refresh and try again.'
             });
         }
-        console.log('[CSRF] CSRF validation passed:', {
+        
+        // Log successful validation with token comparison details
+        const successInfo = {
             path: req.path,
             method: req.method,
-            sessionID: req.sessionID
-        });
+            session: sessionInfo,
+            validation: {
+                passed: true,
+                headerTokenMatched: true,
+                hashValidated: true
+            }
+        };
+        
+        // Development-only: Log token values on success
+        if (process.env.NODE_ENV === 'development') {
+            successInfo.validation.headerTokenValue = headerToken || 'NONE';
+            successInfo.validation.cookieTokenSegment = cookieToken || 'NONE';
+            successInfo.validation.firstSegmentMatch = headerToken === cookieToken;
+        }
+        
+        console.log('[CSRF] CSRF validation passed:', successInfo);
         next();
     });
 });

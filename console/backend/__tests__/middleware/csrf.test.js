@@ -168,5 +168,131 @@ describe('CSRF Protection Middleware', () => {
             
             consoleErrorSpy.mockRestore();
         });
+
+        it('should log session details in CSRF validation logs', async () => {
+            const consoleSpy = jest.spyOn(console, 'log');
+            
+            await request(app)
+                .post('/api/logout')
+                .set('Cookie', cookies)
+                .set('CSRF-Token', csrfToken);
+            
+            // Find the CSRF validation log
+            const csrfLogs = consoleSpy.mock.calls.filter(call => 
+                call[0] && call[0].includes('[CSRF] Applying CSRF protection')
+            );
+            expect(csrfLogs.length).toBeGreaterThan(0);
+            
+            // Verify session details are logged
+            const logData = csrfLogs[0][1];
+            expect(logData).toHaveProperty('session');
+            expect(logData.session).toHaveProperty('sessionID');
+            expect(logData.session).toHaveProperty('authenticated');
+            expect(logData.session).toHaveProperty('username');
+            
+            consoleSpy.mockRestore();
+        });
+
+        it('should log token presence and header source', async () => {
+            const consoleSpy = jest.spyOn(console, 'log');
+            
+            await request(app)
+                .post('/api/logout')
+                .set('Cookie', cookies)
+                .set('X-CSRF-Token', csrfToken);
+            
+            // Find the CSRF validation log
+            const csrfLogs = consoleSpy.mock.calls.filter(call => 
+                call[0] && call[0].includes('[CSRF] Applying CSRF protection')
+            );
+            expect(csrfLogs.length).toBeGreaterThan(0);
+            
+            // Verify token details are logged
+            const logData = csrfLogs[0][1];
+            expect(logData).toHaveProperty('tokens');
+            expect(logData.tokens).toHaveProperty('headerPresent');
+            expect(logData.tokens).toHaveProperty('cookiePresent');
+            expect(logData.tokens).toHaveProperty('headerSource');
+            expect(logData.tokens).toHaveProperty('cookieHasPipeSeparator');
+            expect(logData.tokens.headerSource).toBe('X-CSRF-Token');
+            
+            consoleSpy.mockRestore();
+        });
+
+        it('should log specific failure reason when CSRF validation fails', async () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error');
+            
+            await request(app)
+                .post('/api/logout')
+                .set('Cookie', cookies)
+                .set('CSRF-Token', 'invalid-token');
+            
+            // Find the CSRF failure log
+            const csrfErrorLogs = consoleErrorSpy.mock.calls.filter(call => 
+                call[0] && call[0].includes('[CSRF] CSRF validation failed')
+            );
+            expect(csrfErrorLogs.length).toBeGreaterThan(0);
+            
+            // Verify failure reason is logged
+            const logData = csrfErrorLogs[0][1];
+            expect(logData).toHaveProperty('failureReason');
+            expect(typeof logData.failureReason).toBe('string');
+            expect(logData.failureReason.length).toBeGreaterThan(0);
+            
+            consoleErrorSpy.mockRestore();
+        });
+
+        it('should log missing header as failure reason', async () => {
+            const consoleErrorSpy = jest.spyOn(console, 'error');
+            
+            await request(app)
+                .post('/api/logout')
+                .set('Cookie', cookies);
+            
+            // Find the CSRF failure log
+            const csrfErrorLogs = consoleErrorSpy.mock.calls.filter(call => 
+                call[0] && call[0].includes('[CSRF] CSRF validation failed')
+            );
+            expect(csrfErrorLogs.length).toBeGreaterThan(0);
+            
+            // Verify failure reason mentions missing header
+            const logData = csrfErrorLogs[0][1];
+            expect(logData.failureReason).toMatch(/header/i);
+            expect(logData.failureReason).toMatch(/missing/i);
+            
+            consoleErrorSpy.mockRestore();
+        });
+
+        it('should support both CSRF-Token and X-CSRF-Token headers', async () => {
+            const consoleSpy = jest.spyOn(console, 'log');
+            
+            // Test CSRF-Token header
+            await request(app)
+                .post('/api/logout')
+                .set('Cookie', cookies)
+                .set('CSRF-Token', csrfToken);
+            
+            const csrfTokenLogs = consoleSpy.mock.calls.filter(call => 
+                call[0] && call[0].includes('[CSRF] Applying CSRF protection')
+            );
+            expect(csrfTokenLogs.length).toBeGreaterThan(0);
+            let logData = csrfTokenLogs[csrfTokenLogs.length - 1][1];
+            expect(logData.tokens.headerSource).toBe('CSRF-Token');
+            
+            // Test X-CSRF-Token header
+            await request(app)
+                .post('/api/logout')
+                .set('Cookie', cookies)
+                .set('X-CSRF-Token', csrfToken);
+            
+            const xCsrfTokenLogs = consoleSpy.mock.calls.filter(call => 
+                call[0] && call[0].includes('[CSRF] Applying CSRF protection')
+            );
+            expect(xCsrfTokenLogs.length).toBeGreaterThan(1);
+            logData = xCsrfTokenLogs[xCsrfTokenLogs.length - 1][1];
+            expect(logData.tokens.headerSource).toBe('X-CSRF-Token');
+            
+            consoleSpy.mockRestore();
+        });
     });
 });
