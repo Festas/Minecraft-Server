@@ -180,12 +180,38 @@ async function initializeRedisClient() {
 }
 
 /**
- * Initialize session system and wait for it to be ready
- * MUST be called before starting the server to ensure session store is available
+ * Initialize session system and wait for it to be ready.
+ * MUST be called before starting the HTTP server to ensure session store is available.
  * 
- * In production: Requires Redis connection (fails if Redis unavailable)
- * In development: Falls back to memory store if Redis unavailable
- * In test: Uses memory store (skips Redis)
+ * This function ensures proper initialization order:
+ * 1. Attempts to connect to Redis (with timeout and retry logic)
+ * 2. Creates session middleware with appropriate store (Redis or Memory)
+ * 3. Sets up all necessary session configuration
+ * 
+ * Environment-specific behavior:
+ * - Production (NODE_ENV=production): 
+ *   * Requires Redis connection
+ *   * Throws error if Redis unavailable (server will not start)
+ *   * Prevents session reliability issues in production
+ * 
+ * - Development (NODE_ENV=development):
+ *   * Attempts Redis connection
+ *   * Falls back to memory store if Redis unavailable
+ *   * Logs clear warnings about fallback implications
+ * 
+ * - Test (NODE_ENV=test):
+ *   * Uses memory store without attempting Redis connection
+ *   * Fast startup for test execution
+ * 
+ * @async
+ * @throws {Error} In production mode if Redis connection fails
+ * @returns {Promise<void>}
+ * 
+ * @example
+ * // In server.js startup sequence:
+ * await initializeSessionStore();  // Step 1: Initialize session store
+ * app.use(getSessionMiddleware());  // Step 2: Apply middleware
+ * server.listen(PORT);              // Step 3: Start accepting requests
  */
 async function initializeSessionStore() {
     await initializeRedisClient();
