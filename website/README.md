@@ -5,6 +5,8 @@ Modern, responsive landing page for the festas_builds Minecraft server.
 ## Features
 
 - 🎮 Server IP with click-to-copy functionality
+- ⚡ Dynamic Minecraft version display (managed via environment variables)
+- 🎨 Enhanced visual design with gradients, animations, and modern effects
 - ✨ Feature showcase
 - 📖 How-to-join instructions for Java and Bedrock Edition
 - 🔌 Plugin highlights
@@ -28,8 +30,11 @@ python3 -m http.server 8000
 ### Docker Build
 
 ```bash
-# Build the image
+# Build the image with default version
 docker build -t minecraft-web .
+
+# Build with custom Minecraft version
+docker build --build-arg MINECRAFT_VERSION=1.21.10 --build-arg SERVER_SOFTWARE=Paper -t minecraft-web .
 
 # Run locally
 docker run -p 8080:80 minecraft-web
@@ -41,19 +46,36 @@ docker run -p 8080:80 minecraft-web
 
 ```
 website/
-├── index.html          # Main page
+├── index.html              # Main page
 ├── css/
-│   └── style.css      # Minecraft-themed styles
+│   └── style.css          # Minecraft-themed styles with enhanced visuals
 ├── js/
-│   └── main.js        # Interactive features
+│   ├── main.js            # Interactive features
+│   └── config.template.js # Configuration template (generates config.js at build time)
 ├── images/
-│   └── favicon.svg    # Site favicon
-├── Dockerfile         # Container build
-├── nginx.conf         # Web server config
-└── .dockerignore      # Build exclusions
+│   └── favicon.svg        # Site favicon
+├── Dockerfile             # Container build with env var injection
+├── nginx.conf             # Web server config
+└── .dockerignore          # Build exclusions
 ```
 
 ## Customization
+
+### Update Minecraft Version
+
+The Minecraft version and server software are managed via environment variables that are injected at Docker build time.
+
+To update the version, edit `.github/workflows/deploy-website.yml`:
+
+```yaml
+build-args: |
+  MINECRAFT_VERSION=1.21.10
+  SERVER_SOFTWARE=Paper
+```
+
+The version will be automatically displayed in:
+- The version banner at the top of the page
+- The footer "Server-Info" section
 
 ### Update Server IP
 
