@@ -445,21 +445,16 @@ io.on('connection', (socket) => {
 
 // Initialize services
 async function initializeServices() {
-    try {
-        // Initialize admin users
-        await initializeUsers();
+    // Initialize admin users
+    await initializeUsers();
 
-        // Connect to RCON
-        await rconService.connect();
+    // Connect to RCON
+    await rconService.connect();
 
-        // Start log streaming
-        await logsService.startStreaming();
+    // Start log streaming
+    await logsService.startStreaming();
 
-        console.log('[Startup] ✓ All services initialized successfully');
-    } catch (error) {
-        console.error('[Startup] Error initializing services:', error);
-        throw error;
-    }
+    console.log('[Startup] ✓ All services initialized successfully');
 }
 
 // Async startup function to ensure proper initialization order
@@ -547,7 +542,12 @@ async function startServer() {
 
 // Start the server (skip in test environment)
 if (require.main === module) {
-    startServer();
+    startServer().catch((error) => {
+        // This should never happen since startServer handles its own errors
+        // But just in case, log and exit
+        console.error('Unhandled error in startServer:', error);
+        process.exit(1);
+    });
 }
 
 // Handle server startup errors
