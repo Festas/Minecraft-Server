@@ -4,6 +4,37 @@
 
 This repository includes a comprehensive suite of diagnostic tools designed to troubleshoot issues across the entire stack - from frontend rendering to backend APIs, RCON connectivity, and Minecraft server health.
 
+## ✨ NEW: Enhanced Comprehensive Diagnostics (v2.0)
+
+The Comprehensive Plugin Manager Diagnostics workflow has been upgraded with:
+
+**🚀 Fully Self-Dispatchable**
+- Run directly from GitHub Actions UI - no manual file edits required
+- No `if: secrets.*` errors that prevent workflow execution
+- Graceful handling of missing secrets with clear explanations
+
+**🔐 Smart Secret Detection**
+- Runtime detection of available secrets using shell logic
+- Automatic fallback for missing credentials
+- Detailed reporting of which secrets are configured/missing
+- Step-by-step guide for adding missing secrets securely
+
+**📊 Enhanced Reporting**
+- Comprehensive MASTER-SUMMARY.txt with secrets status
+- Dedicated SECRETS-GUIDE.txt with detailed setup instructions
+- Clear indication of which diagnostics ran vs. skipped
+- Explanations for each skipped component
+
+**🔒 Security Best Practices**
+- Secrets used safely via shell/env runtime (never in YAML conditions)
+- SSH key generation and management guidance
+- Password strength recommendations
+- Access monitoring and rotation advice
+
+**Documentation**: See enhanced workflow at `.github/workflows/comprehensive-plugin-manager-diagnostics.yml`
+
+---
+
 ## Diagnostic Tools Matrix
 
 | Tool | Purpose | Scope | When to Use |
@@ -180,12 +211,41 @@ The **Comprehensive Plugin Manager Diagnostics** workflow (`.github/workflows/co
 - Rapid triage guide with prioritized debugging steps
 - Common problem patterns with solutions
 - Cross-referenced artifacts
+- **NEW**: Secrets configuration status and usage documentation
+- **NEW**: Detailed SECRETS-GUIDE.txt with setup instructions
 
 **Smart Defaults**:
 - All diagnostics enabled by default
 - Headless browser mode
 - 90-second resource monitoring
 - Diagnose-only backend mode (safe)
+
+**🆕 Self-Dispatchable (v2.0)**:
+- **No manual workflow file changes required**
+- **No `if: secrets.*` errors preventing execution**
+- Runtime secret detection with graceful fallback
+- Clear explanations for skipped steps
+- Secure secrets management guidance
+
+### Secrets Configuration
+
+The workflow requires certain GitHub repository secrets for full functionality:
+
+**For Browser & API Diagnostics**:
+- `CONSOLE_ADMIN_USER` (optional - defaults to "admin")
+- `CONSOLE_ADMIN_PASSWORD` (optional - defaults to "admin")
+
+**For Backend & Resource Monitoring**:
+- `SERVER_HOST` (required for remote access)
+- `SERVER_USER` (required for remote access)
+- `SSH_PRIVATE_KEY` (required for remote access)
+
+**What happens without secrets?**
+- Workflow still runs successfully ✅
+- Local diagnostics (browser, API) work with defaults
+- Remote diagnostics (backend, resources) are skipped
+- Summary explains what was skipped and why
+- SECRETS-GUIDE.txt provides step-by-step setup instructions
 
 ### How to Use
 
@@ -213,7 +273,8 @@ When the comprehensive workflow completes, you'll get these artifacts:
 ```
 comprehensive-summary-{run-number}/
 ├── MASTER-SUMMARY.txt          # Start here - complete overview
-└── README.md                    # Markdown version for GitHub
+├── README.md                    # Markdown version for GitHub
+└── SECRETS-GUIDE.txt            # 🆕 Detailed secrets configuration guide
 
 browser-diagnostics-{run-number}/
 ├── SUMMARY.txt                  # Browser test results
