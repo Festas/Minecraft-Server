@@ -616,9 +616,10 @@ echo -e "\n=== Workflow Complete ==="
 
 ## Additional Resources
 
-- [PLUGIN-MANAGER.md](../PLUGIN-MANAGER.md) - Plugin manager features and usage
-- [SESSION-CSRF-DEBUG-IMPLEMENTATION.md](SESSION-CSRF-DEBUG-IMPLEMENTATION.md) - Technical implementation details
-- [REDIS-SESSION-TESTING.md](REDIS-SESSION-TESTING.md) - Redis session store setup
+- [PLUGIN-MANAGER.md](PLUGIN-MANAGER.md) - Plugin manager features and usage
+- [SESSION-CSRF-DEBUG-IMPLEMENTATION.md](docs/SESSION-CSRF-DEBUG-IMPLEMENTATION.md) - Technical implementation details
+- [REDIS-SESSION-TESTING.md](docs/REDIS-SESSION-TESTING.md) - Redis session store setup
+- [PLUGIN-INSTALL-DIAGNOSTICS.md](docs/PLUGIN-INSTALL-DIAGNOSTICS.md) - Diagnostic workflow for plugin installation
 
 ---
 
@@ -628,5 +629,5 @@ If you encounter issues not covered in this guide:
 
 1. Check server logs for detailed error messages
 2. Use `NODE_ENV=development` for verbose logging
-3. Review [PLUGIN-INSTALL-DIAGNOSTICS.md](PLUGIN-INSTALL-DIAGNOSTICS.md) for diagnostic workflow
+3. Review the diagnostic workflow documentation
 4. Check `/api/debug/logs` endpoint (requires authentication)
