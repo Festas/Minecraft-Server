@@ -209,7 +209,7 @@ test_auth_flow() {
             return 1
         fi
     else
-        print_info "Step 5: Skipped (basic test mode - use './test-integration.sh full' for full test)"
+        print_info "Step 5: Skipped (basic test mode - use './scripts/test-api-integration.sh full' for full test)"
     fi
     
     # Step 6: Test CSRF validation (should fail without token)
@@ -255,7 +255,7 @@ test_auth_flow() {
 main() {
     print_header "API Authentication Integration Test"
     
-    print_info "Test Mode: $TEST_MODE (use './test-integration.sh full' for plugin install test)"
+    print_info "Test Mode: $TEST_MODE (use './scripts/test-api-integration.sh full' for plugin install test)"
     print_info "Admin User: $DEFAULT_ADMIN_USER"
     print_info "Port: $DEFAULT_PORT"
     
