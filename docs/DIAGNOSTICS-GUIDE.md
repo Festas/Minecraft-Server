@@ -8,6 +8,7 @@ This repository includes a comprehensive suite of diagnostic tools designed to t
 
 | Tool | Purpose | Scope | When to Use |
 |------|---------|-------|-------------|
+| **Comprehensive Diagnostics** | **All-in-one testing** | **Full stack** | **Complex issues, complete health checks, production validation** |
 | **Browser Diagnostics** | Frontend debugging | Plugin Manager UI | Unresponsive pages, JS errors, rendering issues |
 | **API Profiling** | Backend API testing | REST endpoints | API failures, slow responses, CSRF issues |
 | **Plugin Install Diagnostics** | Plugin system testing | Plugin installation | Plugin install failures, permission issues |
@@ -15,6 +16,40 @@ This repository includes a comprehensive suite of diagnostic tools designed to t
 | **Resource Monitoring** | System resource tracking | Infrastructure | Performance issues, resource exhaustion |
 
 ## Quick Start
+
+### For Complete System Diagnostics (Recommended)
+
+**Symptoms**: Any issue, production health check, post-deployment validation, complex problems
+
+**Use**: Comprehensive Plugin Manager Diagnostics ⭐ **NEW**
+```bash
+# Via GitHub Actions (Recommended)
+Actions → Comprehensive Plugin Manager Diagnostics → Run workflow
+
+# Toggleable features:
+# - Browser diagnostics (Puppeteer automation)
+# - Backend diagnostics (plugin manager checks)
+# - API profiling (endpoint performance)
+# - Resource monitoring (CPU, memory, Docker)
+```
+
+**What it provides**:
+- Master summary with rapid triage guide
+- All diagnostic artifacts in one run
+- Cross-referenced findings
+- Actionable debugging recommendations
+- Complete health snapshot
+
+**When to use**:
+- You're not sure where the problem is
+- Need comprehensive production validation
+- Post-deployment health check
+- Before major changes
+- Complex issues requiring multiple perspectives
+
+**Documentation**: See workflow at `.github/workflows/comprehensive-plugin-manager-diagnostics.yml`
+
+---
 
 ### For Frontend/Plugin Manager Issues
 
@@ -122,6 +157,149 @@ Issue reported
         ├─ High memory
         ├─ Slow page load
         └─ Container crashes
+```
+
+## NEW: Comprehensive Diagnostics Workflow
+
+The **Comprehensive Plugin Manager Diagnostics** workflow (`.github/workflows/comprehensive-plugin-manager-diagnostics.yml`) combines all diagnostic tools into a single, coordinated run. This is the **recommended starting point** for most troubleshooting scenarios.
+
+### Features
+
+**Unified Execution**:
+- All diagnostics run in a coordinated sequence
+- Resource monitoring captures activity from all tests
+- Single workflow run = complete diagnostic picture
+
+**Toggleable Components**:
+- Enable/disable individual diagnostic types via workflow inputs
+- Customize monitoring duration and intervals
+- Choose backend diagnostic mode (diagnose vs fix)
+
+**Master Aggregation**:
+- Comprehensive master summary combining all results
+- Rapid triage guide with prioritized debugging steps
+- Common problem patterns with solutions
+- Cross-referenced artifacts
+
+**Smart Defaults**:
+- All diagnostics enabled by default
+- Headless browser mode
+- 90-second resource monitoring
+- Diagnose-only backend mode (safe)
+
+### How to Use
+
+1. **Navigate to GitHub Actions**
+   - Go to repository → Actions tab
+   - Select "Comprehensive Plugin Manager Diagnostics"
+   - Click "Run workflow"
+
+2. **Configure Options** (optional)
+   - Console URL (defaults to deployed console)
+   - Toggle diagnostic components (browser, backend, API, resources)
+   - Set backend mode (diagnose or fix)
+   - Configure monitoring duration/interval
+
+3. **Review Results**
+   - Download `comprehensive-summary-{run-number}` artifact first
+   - Read `MASTER-SUMMARY.txt` for rapid triage guide
+   - Follow debugging recommendations
+   - Review specific artifacts as directed
+
+### Artifact Structure
+
+When the comprehensive workflow completes, you'll get these artifacts:
+
+```
+comprehensive-summary-{run-number}/
+├── MASTER-SUMMARY.txt          # Start here - complete overview
+└── README.md                    # Markdown version for GitHub
+
+browser-diagnostics-{run-number}/
+├── SUMMARY.txt                  # Browser test results
+├── console-errors.json          # JavaScript errors
+├── network-requests.json        # API calls and timing
+├── performance-metrics.json     # Load times, FPS
+├── dom-analysis.json            # DOM complexity
+└── screenshots/                 # Visual state captures
+
+backend-diagnostics-basic-{run-number}/
+├── summary.log                  # Basic diagnostic results
+├── issues.log                   # Detected problems
+├── fixes.log                    # Auto-fixes applied (if mode=fix)
+└── manual-actions.log           # Manual steps required
+
+backend-diagnostics-advanced-{run-number}/
+├── summary.log                  # Advanced diagnostic results
+├── dependency-analysis.json     # Plugin dependencies
+└── config-validation.log        # Configuration checks
+
+api-profiling-{run-number}/
+├── SUMMARY.txt                  # API performance overview
+├── *-response.json              # Endpoint responses
+├── *-timing.txt                 # Timing breakdowns
+└── cookies.txt                  # Session/CSRF state
+
+resource-monitoring-{run-number}/
+├── SUMMARY.txt                  # Resource usage overview
+├── system-resources.log         # CPU/memory over time
+├── container-stats.log          # Docker container metrics
+└── network-connections.log      # Network activity
+```
+
+### Rapid Triage Guide
+
+The master summary includes a prioritized debugging workflow:
+
+1. **Frontend Issues** → Start with browser-diagnostics
+2. **Backend Issues** → Start with backend-diagnostics-basic
+3. **API Issues** → Start with api-profiling
+4. **Resource Issues** → Start with resource-monitoring
+
+Each section provides:
+- What to check first
+- What to look for
+- Where to find the data
+- How to interpret results
+
+### Example Scenarios
+
+**Scenario 1: Complete Production Health Check**
+```yaml
+Inputs:
+  - run_browser_diagnostics: true
+  - run_backend_diagnostics: true
+  - run_api_profiling: true
+  - run_resource_monitoring: true
+  - backend_mode: diagnose
+  - monitor_duration: 120
+
+Result: Complete system snapshot with no modifications
+```
+
+**Scenario 2: Fix Backend Issues**
+```yaml
+Inputs:
+  - run_browser_diagnostics: false
+  - run_backend_diagnostics: true
+  - run_api_profiling: false
+  - run_resource_monitoring: false
+  - backend_mode: fix
+
+Result: Backend diagnostics with auto-fix applied
+```
+
+**Scenario 3: Performance Investigation**
+```yaml
+Inputs:
+  - run_browser_diagnostics: true
+  - run_backend_diagnostics: false
+  - run_api_profiling: true
+  - run_resource_monitoring: true
+  - monitor_duration: 180
+  - monitor_interval: 1
+
+Result: Detailed performance and resource data
 ```
 
 ## Integration Between Tools
