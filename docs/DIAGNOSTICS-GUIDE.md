@@ -4,9 +4,9 @@
 
 This repository includes a comprehensive suite of diagnostic tools designed to troubleshoot issues across the entire stack - from frontend rendering to backend APIs, RCON connectivity, and Minecraft server health.
 
-## ✨ NEW: Enhanced Comprehensive Diagnostics (v2.0)
+## ✨ NEW: Enhanced Comprehensive Diagnostics (v3.0 - Script-Based)
 
-The Comprehensive Plugin Manager Diagnostics workflow has been upgraded with:
+The Comprehensive Plugin Manager Diagnostics workflow has been completely refactored for maintainability and extensibility:
 
 **🚀 Fully Self-Dispatchable**
 - Run directly from GitHub Actions UI - no manual file edits required
@@ -19,11 +19,21 @@ The Comprehensive Plugin Manager Diagnostics workflow has been upgraded with:
 - Detailed reporting of which secrets are configured/missing
 - Step-by-step guide for adding missing secrets securely
 
-**📊 Enhanced Reporting**
+**📊 Enhanced Reporting (Now Script-Based!)**
+- All summary generation logic moved to `scripts/generate-diagnostics-summary.sh`
+- Workflow reduced by 775+ lines - much cleaner and maintainable
+- Never hits YAML expression limits
 - Comprehensive MASTER-SUMMARY.txt with secrets status
 - Dedicated SECRETS-GUIDE.txt with detailed setup instructions
 - Clear indication of which diagnostics ran vs. skipped
 - Explanations for each skipped component
+
+**🛠️ Extensible & Scriptable**
+- All diagnostic logic in standalone scripts (no inline YAML)
+- Easy to test, modify, and extend
+- Environment-based configuration
+- Can be run locally or in CI/CD
+- Modular design allows adding new diagnostic types
 
 **🔒 Security Best Practices**
 - Secrets used safely via shell/env runtime (never in YAML conditions)
@@ -31,7 +41,7 @@ The Comprehensive Plugin Manager Diagnostics workflow has been upgraded with:
 - Password strength recommendations
 - Access monitoring and rotation advice
 
-**Documentation**: See enhanced workflow at `.github/workflows/comprehensive-plugin-manager-diagnostics.yml`
+**Documentation**: See enhanced workflow at `.github/workflows/comprehensive-plugin-manager-diagnostics.yml` and script at `scripts/generate-diagnostics-summary.sh`
 
 ---
 
@@ -572,6 +582,321 @@ Use diagnostics for regression testing:
 - Redact sensitive data before sharing
 - Use artifacts only for authorized debugging
 - Clean up artifacts after issue resolution
+
+## Extending the Diagnostics Platform
+
+The diagnostics workflow is designed to be easily extensible. All diagnostic logic is in standalone scripts, making it simple to add new diagnostic types or modify existing ones.
+
+### Architecture Overview
+
+```
+.github/workflows/
+  └── comprehensive-plugin-manager-diagnostics.yml  # Main workflow (orchestration only)
+
+scripts/
+  ├── browser-diagnostics.js                       # Browser automation
+  ├── api-profiler.sh                              # API endpoint testing
+  ├── resource-monitor.sh                          # System resource monitoring
+  ├── diagnose-plugins.sh                          # Basic plugin diagnostics
+  ├── diagnose-plugins-advanced.sh                 # Advanced plugin diagnostics
+  └── generate-diagnostics-summary.sh              # Summary/report generation
+```
+
+**Key Principles**:
+1. **Workflow = Orchestration**: The YAML file only coordinates, never contains business logic
+2. **Scripts = Logic**: All diagnostic and reporting logic lives in scripts
+3. **Environment = Configuration**: Scripts read config from environment variables
+4. **Shell = Secret Checks**: Runtime secret detection in shell, never in YAML `if:` conditions
+
+### Adding a New Diagnostic Type
+
+**Example**: Adding database diagnostics
+
+**Step 1: Create the diagnostic script**
+
+```bash
+# scripts/database-diagnostics.sh
+#!/bin/bash
+set -euo pipefail
+
+# Configuration from environment
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+OUTPUT_DIR="${OUTPUT_DIR:-/tmp/database-diagnostics-${RUN_NUMBER}}"
+
+mkdir -p "${OUTPUT_DIR}"
+
+# Run diagnostics
+echo "Testing database connection..."
+pg_isready -h "${DB_HOST}" -p "${DB_PORT}" > "${OUTPUT_DIR}/connection-test.txt"
+
+echo "Checking database size..."
+psql -h "${DB_HOST}" -p "${DB_PORT}" -c "SELECT pg_database_size('minecraft');" \
+  > "${OUTPUT_DIR}/database-size.txt"
+
+# Generate summary
+{
+  echo "Database Diagnostics Summary"
+  echo "============================="
+  echo ""
+  echo "Connection: $(cat "${OUTPUT_DIR}/connection-test.txt")"
+  echo "Size: $(cat "${OUTPUT_DIR}/database-size.txt")"
+} > "${OUTPUT_DIR}/SUMMARY.txt"
+
+echo "✓ Database diagnostics complete"
+```
+
+**Step 2: Add workflow input**
+
+```yaml
+# In comprehensive-plugin-manager-diagnostics.yml
+on:
+  workflow_dispatch:
+    inputs:
+      # ... existing inputs ...
+      
+      run_database_diagnostics:
+        description: 'Run database diagnostics'
+        required: true
+        type: boolean
+        default: true
+```
+
+**Step 3: Add workflow step**
+
+```yaml
+# In workflow jobs
+- name: Run database diagnostics
+  if: github.event.inputs.run_database_diagnostics == 'true'
+  env:
+    DB_HOST: ${{ secrets.DB_HOST || 'localhost' }}
+    DB_PORT: ${{ secrets.DB_PORT || '5432' }}
+    OUTPUT_DIR: /tmp/comprehensive-database-diagnostics-${{ github.run_number }}
+  run: |
+    echo "╔════════════════════════════════════════════════════════════════╗"
+    echo "║                 DATABASE DIAGNOSTICS                           ║"
+    echo "╚════════════════════════════════════════════════════════════════╝"
+    echo ""
+    
+    chmod +x scripts/database-diagnostics.sh
+    scripts/database-diagnostics.sh || true
+    
+    echo "✓ Database diagnostics completed"
+```
+
+**Step 4: Add artifact upload**
+
+```yaml
+- name: Upload database diagnostics artifact
+  uses: actions/upload-artifact@v4
+  if: always() && github.event.inputs.run_database_diagnostics == 'true'
+  with:
+    name: database-diagnostics-${{ github.run_number }}
+    path: /tmp/comprehensive-database-diagnostics-${{ github.run_number }}/
+    retention-days: 30
+```
+
+**Step 5: Update summary script**
+
+Edit `scripts/generate-diagnostics-summary.sh`:
+
+```bash
+# Add environment variable
+RUN_DATABASE_DIAGNOSTICS="${RUN_DATABASE_DIAGNOSTICS:-true}"
+DATABASE_DIAGNOSTICS_DIR="${DATABASE_DIAGNOSTICS_DIR:-/tmp/comprehensive-database-diagnostics-${RUN_NUMBER}}"
+
+# In generate_master_summary():
+if [ "${RUN_DATABASE_DIAGNOSTICS}" = "true" ]; then
+    echo "✓ Database Diagnostics" >> "${output_file}"
+else
+    echo "○ Database Diagnostics (skipped)" >> "${output_file}"
+fi
+
+# Include database summary
+if [ -f "${DATABASE_DIAGNOSTICS_DIR}/SUMMARY.txt" ]; then
+    cat >> "${output_file}" << 'EOF'
+┌─ DATABASE DIAGNOSTICS ────────────────────────────────────────┐
+EOF
+    cat "${DATABASE_DIAGNOSTICS_DIR}/SUMMARY.txt" >> "${output_file}"
+    cat >> "${output_file}" << 'EOF'
+└───────────────────────────────────────────────────────────────┘
+
+EOF
+fi
+```
+
+### Customizing Summary Generation
+
+The `scripts/generate-diagnostics-summary.sh` script is modular and easy to customize:
+
+**Add custom sections**:
+```bash
+# In generate_master_summary()
+cat >> "${output_file}" << 'EOF'
+════════════════════════════════════════════════════════════════
+CUSTOM ANALYSIS SECTION
+════════════════════════════════════════════════════════════════
+
+Your custom analysis here...
+
+EOF
+```
+
+**Add conditional content**:
+```bash
+# Only include if certain condition met
+if [ "${CUSTOM_FEATURE_ENABLED}" = "true" ]; then
+    echo "Custom feature results..." >> "${output_file}"
+fi
+```
+
+**Include external data**:
+```bash
+# Pull data from external sources
+curl -s "https://api.example.com/status" >> "${output_file}"
+```
+
+### Running Diagnostics Locally
+
+All diagnostic scripts can be run locally for testing:
+
+```bash
+# Browser diagnostics
+cd /path/to/repo
+export CONSOLE_URL="http://localhost:3000"
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="admin"
+export OUTPUT_DIR="/tmp/my-diagnostics"
+export HEADLESS="true"
+node scripts/browser-diagnostics.js
+
+# API profiling
+export CONSOLE_URL="http://localhost:3000"
+export ADMIN_USERNAME="admin"
+export ADMIN_PASSWORD="admin"
+export OUTPUT_DIR="/tmp/my-api-tests"
+bash scripts/api-profiler.sh
+
+# Summary generation
+export OUTPUT_DIR="/tmp/my-summary"
+export RUN_NUMBER="local-test"
+export CONSOLE_URL="http://localhost:3000"
+export RUN_BROWSER_DIAGNOSTICS="true"
+export RUN_BACKEND_DIAGNOSTICS="false"
+export RUN_API_PROFILING="true"
+bash scripts/generate-diagnostics-summary.sh
+```
+
+### Testing Script Changes
+
+Before committing changes to diagnostic scripts:
+
+1. **Test locally**: Run the script with various configurations
+2. **Verify output**: Check that all expected files are generated
+3. **Test error cases**: Ensure graceful handling of failures
+4. **Check summary**: Verify the summary includes your changes
+
+```bash
+# Example test sequence
+cd /path/to/repo
+
+# Test with full config
+export RUN_NUMBER="test-001"
+export OUTPUT_DIR="/tmp/test-diagnostics-001"
+bash scripts/generate-diagnostics-summary.sh
+
+# Verify files created
+ls -lh "${OUTPUT_DIR}"
+
+# Check summary content
+cat "${OUTPUT_DIR}/MASTER-SUMMARY.txt"
+
+# Test with minimal config
+unset RUN_BROWSER_DIAGNOSTICS
+export RUN_NUMBER="test-002"
+export OUTPUT_DIR="/tmp/test-diagnostics-002"
+bash scripts/generate-diagnostics-summary.sh
+```
+
+### Best Practices for Extensibility
+
+1. **Keep scripts independent**: Each script should work standalone
+2. **Use environment variables**: All config via env vars, no hardcoded values
+3. **Generate structured output**: JSON/YAML for machine-readable, TXT for human-readable
+4. **Include summaries**: Every diagnostic should produce a SUMMARY.txt
+5. **Handle errors gracefully**: Use `|| true` for non-critical failures
+6. **Document environment variables**: Comment required/optional vars in script headers
+7. **Follow naming conventions**:
+   - Scripts: `kebab-case.sh` or `.js`
+   - Output dirs: `/tmp/comprehensive-{type}-diagnostics-${RUN_NUMBER}`
+   - Artifacts: `{type}-diagnostics-${RUN_NUMBER}`
+8. **Version your changes**: Update version in script comments when making changes
+
+### Example: Custom Report Format
+
+Want PDF reports? JSON export? Email notifications? Easy!
+
+```bash
+# scripts/generate-diagnostics-pdf.sh
+#!/bin/bash
+set -euo pipefail
+
+# Read the text summary
+SUMMARY="/tmp/comprehensive-summary/MASTER-SUMMARY.txt"
+
+# Convert to PDF using pandoc or similar
+pandoc "${SUMMARY}" -o "/tmp/diagnostics-report.pdf" \
+  --pdf-engine=wkhtmltopdf \
+  --variable geometry:margin=1in
+
+echo "✓ PDF report generated: /tmp/diagnostics-report.pdf"
+```
+
+```yaml
+# Add to workflow
+- name: Generate PDF report
+  if: always()
+  run: |
+    sudo apt-get update && sudo apt-get install -y pandoc wkhtmltopdf
+    chmod +x scripts/generate-diagnostics-pdf.sh
+    scripts/generate-diagnostics-pdf.sh
+
+- name: Upload PDF report
+  uses: actions/upload-artifact@v4
+  if: always()
+  with:
+    name: diagnostics-report-pdf-${{ github.run_number }}
+    path: /tmp/diagnostics-report.pdf
+```
+
+### Integrating with External Tools
+
+**Send to Slack**:
+```bash
+# In workflow or script
+curl -X POST -H 'Content-type: application/json' \
+  --data "{\"text\":\"Diagnostics completed: View at ${WORKFLOW_URL}\"}" \
+  "${SLACK_WEBHOOK_URL}"
+```
+
+**Upload to S3**:
+```bash
+# Archive and upload
+aws s3 cp ./comprehensive-summary/ \
+  "s3://diagnostics-bucket/run-${RUN_NUMBER}/" \
+  --recursive
+```
+
+**Create GitHub Issue**:
+```bash
+# If critical errors found
+if grep -q "CRITICAL" "${OUTPUT_DIR}/SUMMARY.txt"; then
+  gh issue create \
+    --title "Critical diagnostic findings in run #${RUN_NUMBER}" \
+    --body-file "${OUTPUT_DIR}/SUMMARY.txt" \
+    --label "bug,diagnostics"
+fi
+```
 
 ## Future Enhancements
 
