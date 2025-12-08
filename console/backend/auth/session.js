@@ -20,7 +20,6 @@ let sessionStore = null;
 let useRedisStore = false;
 let sessionMiddleware = null;
 let redisInitialized = false;
-let redisInitPromise = null;
 
 // Function to create session middleware with given store
 function createSessionMiddleware(store) {
@@ -49,10 +48,16 @@ async function initializeRedisClient() {
         console.log('[Session] Test environment detected - using memory store');
         useRedisStore = false;
         redisInitialized = true;
+        sessionMiddleware = createSessionMiddleware(null);
         return;
     }
 
+    // In production, Redis is REQUIRED - no fallback to memory store
+    const isProduction = process.env.NODE_ENV === 'production';
+    
     try {
+        console.log('[Session] Initializing Redis connection...');
+        
         // Create Redis client with configuration
         const clientConfig = REDIS_URL 
             ? { url: REDIS_URL }
@@ -95,6 +100,9 @@ async function initializeRedisClient() {
         // Connect to Redis with timeout
         await redisClient.connect();
 
+        // Verify Redis is actually ready
+        await redisClient.ping();
+        
         // Create RedisStore
         sessionStore = new RedisStore({
             client: redisClient,
@@ -105,7 +113,7 @@ async function initializeRedisClient() {
         useRedisStore = true;
         redisInitialized = true;
 
-        console.log('[Session] ✓ Using Redis store for session persistence');
+        console.log('[Session] ✓ Redis connected and ready for session persistence');
         console.log('[Session] Redis configuration:', {
             host: REDIS_URL ? 'from REDIS_URL' : REDIS_HOST,
             port: REDIS_URL ? 'from REDIS_URL' : REDIS_PORT,
@@ -114,38 +122,93 @@ async function initializeRedisClient() {
             ttl: '24h'
         });
 
-        // Update session middleware with Redis store
+        // Create session middleware with Redis store
         sessionMiddleware = createSessionMiddleware(sessionStore);
 
     } catch (err) {
         console.error('[Session] Failed to connect to Redis:', err.message);
-        console.warn('[Session] ⚠ WARNING: Falling back to memory store');
-        console.warn('[Session] ⚠ WARNING: Sessions will NOT persist across process restarts');
-        console.warn('[Session] ⚠ WARNING: CSRF tokens may fail in CI/Docker environments');
-        console.warn('[Session] To fix: Ensure Redis is running and configure REDIS_HOST/REDIS_PORT or REDIS_URL');
+        
+        // In production, fail fast - do NOT use memory store
+        if (isProduction) {
+            console.error('');
+            console.error('═══════════════════════════════════════════════════════════');
+            console.error('✗ FATAL: Redis connection required in production');
+            console.error('═══════════════════════════════════════════════════════════');
+            console.error('Production mode requires persistent session storage via Redis.');
+            console.error('Memory store fallback is disabled to prevent session reliability issues.');
+            console.error('');
+            console.error('Solutions:');
+            console.error('  1. Ensure Redis service is running and accessible');
+            console.error('  2. Verify REDIS_HOST and REDIS_PORT environment variables');
+            console.error('  3. Check Redis container: docker ps | grep redis');
+            console.error('  4. Check Redis logs: docker logs <redis-container>');
+            console.error('  5. For Docker Compose, Redis is auto-injected in deployments');
+            console.error('');
+            console.error('Current Redis configuration:');
+            console.error(`  Host: ${REDIS_URL ? 'from REDIS_URL' : REDIS_HOST}`);
+            console.error(`  Port: ${REDIS_URL ? 'from REDIS_URL' : REDIS_PORT}`);
+            console.error(`  Password: ${REDIS_PASSWORD ? 'configured' : 'not set'}`);
+            console.error('═══════════════════════════════════════════════════════════');
+            console.error('');
+            throw new Error('Redis connection required in production mode');
+        }
+        
+        // In development, allow fallback to memory store
+        console.warn('');
+        console.warn('[Session] ═══════════════════════════════════════════════════');
+        console.warn('[Session] ⚠ WARNING: Using memory store fallback (development only)');
+        console.warn('[Session] ═══════════════════════════════════════════════════');
+        console.warn('[Session] Redis is not available - falling back to memory store.');
+        console.warn('[Session] This is only allowed in development mode.');
+        console.warn('[Session] ');
+        console.warn('[Session] Impact:');
+        console.warn('[Session]   - Sessions will NOT persist across server restarts');
+        console.warn('[Session]   - CSRF tokens may become invalid on restart');
+        console.warn('[Session]   - Not suitable for production use');
+        console.warn('[Session] ');
+        console.warn('[Session] To fix:');
+        console.warn('[Session]   - Start Redis: docker run -d -p 6379:6379 redis:7-alpine');
+        console.warn('[Session]   - Or configure REDIS_HOST/REDIS_PORT if Redis is remote');
+        console.warn('[Session] ═══════════════════════════════════════════════════');
+        console.warn('');
         
         useRedisStore = false;
         redisClient = null;
         sessionStore = null;
         redisInitialized = true;
+        
+        // Create session middleware with memory store
+        sessionMiddleware = createSessionMiddleware(null);
     }
 }
 
-// Start Redis initialization immediately (non-blocking)
-redisInitPromise = initializeRedisClient().catch(err => {
-    console.error('[Session] Redis initialization error:', err);
-    redisInitialized = true;
-});
-
-// Create initial session middleware with memory store
-// This will be replaced with Redis-backed middleware if Redis connects successfully
-sessionMiddleware = createSessionMiddleware(null);
+/**
+ * Initialize session system and wait for it to be ready
+ * MUST be called before starting the server to ensure session store is available
+ * 
+ * In production: Requires Redis connection (fails if Redis unavailable)
+ * In development: Falls back to memory store if Redis unavailable
+ * In test: Uses memory store (skips Redis)
+ */
+async function initializeSessionStore() {
+    await initializeRedisClient();
+    
+    if (!sessionMiddleware) {
+        throw new Error('Session middleware failed to initialize');
+    }
+    
+    console.log('[Session] ✓ Session store initialized and ready');
+}
 
 /**
  * Get the session middleware instance
  * This is a singleton so it can be shared between Express and Socket.io
+ * NOTE: Call initializeSessionStore() before using this in production
  */
 function getSessionMiddleware() {
+    if (!sessionMiddleware) {
+        throw new Error('Session middleware not initialized. Call initializeSessionStore() first.');
+    }
     return sessionMiddleware;
 }
 
@@ -164,25 +227,6 @@ function getSessionStoreStatus() {
 }
 
 /**
- * Wait for Redis initialization to complete (if needed)
- * This can be called during server startup to ensure Redis is initialized
- * before handling requests. However, this is optional - the server can start
- * immediately with memory store and upgrade to Redis when ready.
- * 
- * @example
- * // Optional: Wait for Redis before starting server
- * const { waitForRedisInit } = require('./auth/session');
- * await waitForRedisInit();
- * server.listen(PORT);
- */
-async function waitForRedisInit() {
-    if (redisInitialized) {
-        return;
-    }
-    await redisInitPromise;
-}
-
-/**
  * Gracefully shutdown Redis connection
  * Should be called when server is shutting down
  */
@@ -198,9 +242,8 @@ async function shutdownSessionStore() {
 }
 
 module.exports = {
+    initializeSessionStore,
     getSessionMiddleware,
-    sessionMiddleware,
     getSessionStoreStatus,
-    waitForRedisInit,
     shutdownSessionStore
 };
