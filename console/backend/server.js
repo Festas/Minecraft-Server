@@ -535,6 +535,15 @@ async function initializeServices() {
     await automationService.initialize();
     console.log('[Startup] ✓ Automation service initialized');
     
+    // Initialize webhook services
+    const webhookService = require('./services/webhookService');
+    await webhookService.initialize();
+    console.log('[Startup] ✓ Webhook service initialized');
+    
+    const inboundWebhookService = require('./services/inboundWebhookService');
+    await inboundWebhookService.initialize();
+    console.log('[Startup] ✓ Inbound webhook service initialized');
+    
     // Initialize event logger
     const { eventLogger } = require('./services/eventLogger');
     eventLogger.initialize();
@@ -544,6 +553,16 @@ async function initializeServices() {
     const notificationService = require('./services/notificationService');
     notificationService.initialize();
     console.log('[Startup] ✓ Notification service initialized');
+    
+    // Connect event logger to webhook service
+    eventLogger.on('event', async (event) => {
+        // Emit to webhooks
+        try {
+            await webhookService.emitEvent(event.eventType, event);
+        } catch (error) {
+            console.error('[Webhooks] Error emitting event to webhooks:', error);
+        }
+    });
     
     // Connect event logger to notification service
     eventLogger.on('event', async (event) => {
