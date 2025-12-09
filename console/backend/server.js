@@ -43,6 +43,7 @@ const userRoutes = require('./routes/users');
 const auditRoutes = require('./routes/audit');
 const automationRoutes = require('./routes/automation');
 const loggingRoutes = require('./routes/logging');
+const webhookRoutes = require('./routes/webhooks');
 
 
 // Initialize Express app
@@ -448,6 +449,7 @@ app.use('/api/plugins', pluginIntegrationsRoutes); // Plugin integrations (Dynma
 app.use('/api/users', userRoutes); // User management
 app.use('/api/audit', auditRoutes); // Audit logs
 app.use('/api/automation', automationRoutes); // Automation & Scheduler
+app.use('/api/webhooks', webhookRoutes); // Webhooks & Integrations
 app.use('/api', loggingRoutes); // Event logging and notifications
 
 // Health check endpoint
@@ -533,6 +535,15 @@ async function initializeServices() {
     await automationService.initialize();
     console.log('[Startup] ✓ Automation service initialized');
     
+    // Initialize webhook services
+    const webhookService = require('./services/webhookService');
+    await webhookService.initialize();
+    console.log('[Startup] ✓ Webhook service initialized');
+    
+    const inboundWebhookService = require('./services/inboundWebhookService');
+    await inboundWebhookService.initialize();
+    console.log('[Startup] ✓ Inbound webhook service initialized');
+    
     // Initialize event logger
     const { eventLogger } = require('./services/eventLogger');
     eventLogger.initialize();
@@ -542,6 +553,16 @@ async function initializeServices() {
     const notificationService = require('./services/notificationService');
     notificationService.initialize();
     console.log('[Startup] ✓ Notification service initialized');
+    
+    // Connect event logger to webhook service
+    eventLogger.on('event', async (event) => {
+        // Emit to webhooks
+        try {
+            await webhookService.emitEvent(event.eventType, event);
+        } catch (error) {
+            console.error('[Webhooks] Error emitting event to webhooks:', error);
+        }
+    });
     
     // Connect event logger to notification service
     eventLogger.on('event', async (event) => {

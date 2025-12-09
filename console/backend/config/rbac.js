@@ -111,6 +111,18 @@ const PERMISSIONS = {
     AUTOMATION_VIEW: 'automation:view',
     AUTOMATION_HISTORY: 'automation:history',
     
+    // Webhooks & Integrations
+    WEBHOOK_CREATE: 'webhook:create',
+    WEBHOOK_EDIT: 'webhook:edit',
+    WEBHOOK_DELETE: 'webhook:delete',
+    WEBHOOK_VIEW: 'webhook:view',
+    WEBHOOK_TRIGGER: 'webhook:trigger',
+    WEBHOOK_LOGS: 'webhook:logs',
+    INBOUND_WEBHOOK_CREATE: 'inbound_webhook:create',
+    INBOUND_WEBHOOK_EDIT: 'inbound_webhook:edit',
+    INBOUND_WEBHOOK_DELETE: 'inbound_webhook:delete',
+    INBOUND_WEBHOOK_VIEW: 'inbound_webhook:view',
+    
     // Event Logging & Notifications
     LOG_VIEW: 'log:view',
     LOG_EXPORT: 'log:export',
@@ -199,6 +211,18 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.AUTOMATION_VIEW,
         PERMISSIONS.AUTOMATION_HISTORY,
         
+        // Webhooks & Integrations
+        PERMISSIONS.WEBHOOK_CREATE,
+        PERMISSIONS.WEBHOOK_EDIT,
+        PERMISSIONS.WEBHOOK_DELETE,
+        PERMISSIONS.WEBHOOK_VIEW,
+        PERMISSIONS.WEBHOOK_TRIGGER,
+        PERMISSIONS.WEBHOOK_LOGS,
+        PERMISSIONS.INBOUND_WEBHOOK_CREATE,
+        PERMISSIONS.INBOUND_WEBHOOK_EDIT,
+        PERMISSIONS.INBOUND_WEBHOOK_DELETE,
+        PERMISSIONS.INBOUND_WEBHOOK_VIEW,
+        
         // Event Logging & Notifications
         PERMISSIONS.LOG_VIEW,
         PERMISSIONS.LOG_EXPORT,
@@ -257,6 +281,12 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.AUTOMATION_VIEW,
         PERMISSIONS.AUTOMATION_HISTORY,
         
+        // Webhooks & Integrations (read-only + trigger)
+        PERMISSIONS.WEBHOOK_VIEW,
+        PERMISSIONS.WEBHOOK_TRIGGER,
+        PERMISSIONS.WEBHOOK_LOGS,
+        PERMISSIONS.INBOUND_WEBHOOK_VIEW,
+        
         // Event Logging & Notifications
         PERMISSIONS.LOG_VIEW,
         PERMISSIONS.NOTIFICATION_MANAGE,
@@ -293,6 +323,11 @@ const ROLE_PERMISSIONS = {
         // Automation & Scheduler (view-only)
         PERMISSIONS.AUTOMATION_VIEW,
         PERMISSIONS.AUTOMATION_HISTORY,
+        
+        // Webhooks & Integrations (view-only)
+        PERMISSIONS.WEBHOOK_VIEW,
+        PERMISSIONS.WEBHOOK_LOGS,
+        PERMISSIONS.INBOUND_WEBHOOK_VIEW,
         
         // Event Logging & Notifications (view-only)
         PERMISSIONS.LOG_VIEW,

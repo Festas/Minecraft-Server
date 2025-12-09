@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhooks & Integrations - Minecraft Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/minecraft-theme.css">
+    <link rel="stylesheet" href="css/theme-light.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+    <style>
+        .webhook-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .webhook-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .webhook-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .webhook-card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .webhook-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .webhook-card-body {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            color: var(--text-color);
+        }
+
+        .webhook-info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .webhook-info-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+
+        .webhook-info-value {
+            font-size: 14px;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-enabled {
+            background: var(--success-bg, #d4edda);
+            color: var(--success-color, #155724);
+        }
+
+        .badge-disabled {
+            background: var(--warning-bg, #fff3cd);
+            color: var(--warning-color, #856404);
+        }
+
+        .badge-success {
+            background: var(--success-bg, #d4edda);
+            color: var(--success-color, #155724);
+        }
+
+        .badge-error {
+            background: var(--danger-bg, #f8d7da);
+            color: var(--danger-color, #721c24);
+        }
+
+        .event-type-tag {
+            display: inline-block;
+            background: var(--primary-color);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin: 2px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .close-modal {
+            font-size: 28px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--text-color);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            margin-bottom: -2px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .template-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .template-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .template-card.selected {
+            border-color: var(--primary-color);
+            background: var(--primary-bg, #e7f3ff);
+        }
+
+        .log-entry {
+            padding: 12px;
+            border-left: 3px solid var(--border-color);
+            margin-bottom: 8px;
+            background: var(--card-bg);
+        }
+
+        .log-entry.success {
+            border-left-color: var(--success-color, #28a745);
+        }
+
+        .log-entry.error {
+            border-left-color: var(--danger-color, #dc3545);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="skip-nav">
+        <a href="#main-content">Skip to main content</a>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>⚙️ Webhooks & Integrations</h1>
+                <div class="header-actions">
+                    <button id="theme-toggle" class="btn btn-icon" aria-label="Toggle theme">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                    <button onclick="window.location.href='index.html'" class="btn btn-secondary">
+                        ← Back to Console
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <!-- Stats Overview -->
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-webhooks">0</div>
+                    <div class="stat-label">Total Webhooks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-enabled-webhooks">0</div>
+                    <div class="stat-label">Enabled</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-deliveries">0</div>
+                    <div class="stat-label">Total Deliveries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-recent-failures">0</div>
+                    <div class="stat-label">Recent Failures</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="outbound">Outbound Webhooks</button>
+                <button class="tab" data-tab="inbound">Inbound Webhooks</button>
+                <button class="tab" data-tab="logs">Delivery Logs</button>
+            </div>
+
+            <!-- Outbound Webhooks Tab -->
+            <div class="tab-content active" id="tab-outbound">
+                <div class="section-header">
+                    <h2>Outbound Webhooks</h2>
+                    <button id="create-webhook-btn" class="btn btn-primary">
+                        + Create Webhook
+                    </button>
+                </div>
+
+                <div id="webhooks-list">
+                    <!-- Webhooks will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Inbound Webhooks Tab -->
+            <div class="tab-content" id="tab-inbound">
+                <div class="section-header">
+                    <h2>Inbound Webhooks</h2>
+                    <button id="create-inbound-webhook-btn" class="btn btn-primary">
+                        + Create Inbound Webhook
+                    </button>
+                </div>
+
+                <div id="inbound-webhooks-list">
+                    <!-- Inbound webhooks will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Delivery Logs Tab -->
+            <div class="tab-content" id="tab-logs">
+                <div class="section-header">
+                    <h2>Delivery Logs</h2>
+                    <div class="filter-controls">
+                        <select id="log-filter-success" class="form-control">
+                            <option value="">All</option>
+                            <option value="true">Success</option>
+                            <option value="false">Failed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="delivery-logs-list">
+                    <!-- Logs will be loaded here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create/Edit Webhook Modal -->
+    <div id="webhook-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="webhook-modal-title">Create Webhook</h2>
+                <button class="close-modal" aria-label="Close">&times;</button>
+            </div>
+
+            <form id="webhook-form">
+                <input type="hidden" id="webhook-id">
+
+                <div class="form-group">
+                    <label for="webhook-template">Template (Optional)</label>
+                    <select id="webhook-template" class="form-control">
+                        <option value="">Custom Webhook</option>
+                        <option value="discord">Discord</option>
+                        <option value="slack">Slack</option>
+                        <option value="generic">Generic JSON</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="webhook-name">Name *</label>
+                    <input type="text" id="webhook-name" required maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="webhook-description">Description</label>
+                    <textarea id="webhook-description"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="webhook-url">Webhook URL *</label>
+                    <input type="url" id="webhook-url" required placeholder="https://...">
+                </div>
+
+                <div class="form-group">
+                    <label for="webhook-method">HTTP Method</label>
+                    <select id="webhook-method" class="form-control">
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="PATCH">PATCH</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Event Types *</label>
+                    <div class="checkbox-group" id="event-types-checkboxes">
+                        <!-- Event type checkboxes will be populated by JS -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="webhook-enabled" checked>
+                        Enabled
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="webhook-verify-ssl" checked>
+                        Verify SSL Certificate
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Webhook</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create/Edit Inbound Webhook Modal -->
+    <div id="inbound-webhook-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="inbound-webhook-modal-title">Create Inbound Webhook</h2>
+                <button class="close-modal" aria-label="Close">&times;</button>
+            </div>
+
+            <form id="inbound-webhook-form">
+                <input type="hidden" id="inbound-webhook-id">
+
+                <div class="form-group">
+                    <label for="inbound-webhook-name">Name *</label>
+                    <input type="text" id="inbound-webhook-name" required maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="inbound-webhook-description">Description</label>
+                    <textarea id="inbound-webhook-description"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="inbound-webhook-actions">Actions *</label>
+                    <div class="checkbox-group" id="inbound-actions-checkboxes">
+                        <!-- Action checkboxes will be populated by JS -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="inbound-webhook-allowed-ips">Allowed IPs (comma-separated, leave empty for all)</label>
+                    <input type="text" id="inbound-webhook-allowed-ips" placeholder="192.168.1.100, 10.0.0.* or leave empty">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="inbound-webhook-enabled" checked>
+                        Enabled
+                    </label>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Webhook</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Webhook Details Modal -->
+    <div id="webhook-details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Webhook Details</h2>
+                <button class="close-modal" aria-label="Close">&times;</button>
+            </div>
+            <div id="webhook-details-content">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/themeManager.js"></script>
+    <script src="js/accessibility.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/webhooks.js"></script>
+</body>
+</html>
