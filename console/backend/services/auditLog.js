@@ -112,6 +112,7 @@ async function logAuditEvent(eventType, username, details = {}, ipAddress = null
 function getClientIp(req) {
     return req.ip || 
            req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+           req.socket?.remoteAddress ||
            req.connection?.remoteAddress || 
            'unknown';
 }

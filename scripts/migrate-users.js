@@ -19,7 +19,7 @@ const rl = readline.createInterface({
     output: process.stdout
 });
 
-function question(prompt) {
+function askQuestion(prompt) {
     return new Promise((resolve) => {
         rl.question(prompt, resolve);
     });
@@ -72,7 +72,7 @@ async function migrateUsers() {
         });
         console.log('');
         
-        const answer = await question('Proceed with migration? (yes/no): ');
+        const answer = await askQuestion('Proceed with migration? (yes/no): ');
         if (answer.toLowerCase() !== 'yes') {
             console.log('Migration cancelled.');
             rl.close();
@@ -104,7 +104,7 @@ async function migrateUsers() {
             
             let role;
             while (!role) {
-                const roleInput = await question('Select role (1-4) or type role name: ');
+                const roleInput = await askQuestion('Select role (1-4) or type role name: ');
                 
                 switch (roleInput.toLowerCase()) {
                     case '1':
@@ -150,7 +150,7 @@ async function migrateUsers() {
             console.log('');
             
             const firstUser = migratedUsers.users[0];
-            const makeOwner = await question(`Make ${firstUser.username} an owner? (yes/no): `);
+            const makeOwner = await askQuestion(`Make ${firstUser.username} an owner? (yes/no): `);
             
             if (makeOwner.toLowerCase() === 'yes') {
                 firstUser.role = 'owner';

@@ -151,14 +151,23 @@ function displayUsers(users) {
             <td>${formatDate(user.createdAt)}</td>
             <td>${user.lastLogin ? formatDate(user.lastLogin) : 'Never'}</td>
             <td>
-                <button class="btn btn-sm btn-primary" onclick="editUser('${escapeHtml(user.username)}')">Edit</button>
+                <button class="btn btn-sm btn-primary edit-user-btn" data-username="${escapeHtml(user.username)}">Edit</button>
                 ${user.username !== window.currentUser.username ? 
-                    `<button class="btn btn-sm btn-danger" onclick="deleteUser('${escapeHtml(user.username)}')">Delete</button>` :
+                    `<button class="btn btn-sm btn-danger delete-user-btn" data-username="${escapeHtml(user.username)}">Delete</button>` :
                     '<span class="text-muted">You</span>'
                 }
             </td>
         </tr>
     `).join('');
+    
+    // Add event listeners for edit and delete buttons
+    document.querySelectorAll('.edit-user-btn').forEach(btn => {
+        btn.addEventListener('click', () => editUser(btn.dataset.username));
+    });
+    
+    document.querySelectorAll('.delete-user-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteUser(btn.dataset.username));
+    });
 }
 
 function showCreateUserModal() {
@@ -377,15 +386,19 @@ function displayAuditLogs(logs) {
         return;
     }
     
-    tbody.innerHTML = logs.map(log => `
+    tbody.innerHTML = logs.map(log => {
+        const detailsJson = JSON.stringify(log.details, null, 2);
+        const escapedDetails = escapeHtml(detailsJson);
+        return `
         <tr>
             <td>${formatDateTime(log.timestamp)}</td>
             <td><span class="event-badge">${log.eventType}</span></td>
             <td>${escapeHtml(log.username)}</td>
             <td>${escapeHtml(log.ipAddress || 'N/A')}</td>
-            <td><pre>${JSON.stringify(log.details, null, 2)}</pre></td>
+            <td><pre>${escapedDetails}</pre></td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 }
 
 async function exportAuditLogs() {
