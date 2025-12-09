@@ -337,4 +337,58 @@ router.get('/health', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/plugins/:pluginName/updates
+ * Check for updates for a specific plugin
+ */
+router.get('/:pluginName/updates', async (req, res) => {
+    try {
+        const { pluginName } = req.params;
+        
+        if (!pluginName) {
+            return res.status(400).json({ error: 'Plugin name is required' });
+        }
+        
+        const updateInfo = await pluginManager.checkForUpdates(pluginName);
+        res.json({ success: true, ...updateInfo });
+    } catch (error) {
+        console.error('Error checking for updates:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/plugins/updates/check-all
+ * Check for updates for all installed plugins
+ */
+router.get('/updates/check-all', async (req, res) => {
+    try {
+        const updates = await pluginManager.checkAllUpdates();
+        res.json({ success: true, updates });
+    } catch (error) {
+        console.error('Error checking all updates:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/plugins/:pluginName/config
+ * Get plugin configuration preview
+ */
+router.get('/:pluginName/config', async (req, res) => {
+    try {
+        const { pluginName } = req.params;
+        
+        if (!pluginName) {
+            return res.status(400).json({ error: 'Plugin name is required' });
+        }
+        
+        const config = await pluginManager.getPluginConfig(pluginName);
+        res.json({ success: true, ...config });
+    } catch (error) {
+        console.error('Error getting plugin config:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;

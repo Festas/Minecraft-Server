@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugin Marketplace - Minecraft Server Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/minecraft-theme.css">
+    <link rel="stylesheet" href="css/theme-light.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+    <link rel="stylesheet" href="css/plugins.css">
+    <link rel="stylesheet" href="css/marketplace.css">
+</head>
+<body>
+    <div class="console-wrapper">
+        <!-- Header -->
+        <header class="console-header">
+            <div class="header-left">
+                <h1>🎮 Festas Builds - Plugin Marketplace</h1>
+            </div>
+            <div class="header-right">
+                <button id="themeToggle" aria-label="Toggle theme">
+                    <span class="theme-icon">☀️</span>
+                    <span class="theme-text">Light Mode</span>
+                </button>
+                <span id="currentUser" class="user-badge">Admin</span>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="console-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav>
+                    <button class="nav-item" data-section="dashboard" data-href="/console/">
+                        <span>📊</span> Dashboard
+                    </button>
+                    <button class="nav-item" data-section="console" data-href="/console/">
+                        <span>💻</span> Console
+                    </button>
+                    <button class="nav-item" data-section="players" data-href="/console/">
+                        <span>👥</span> Players
+                    </button>
+                    <button class="nav-item" data-section="controls" data-href="/console/">
+                        <span>⚙️</span> Controls
+                    </button>
+                    <button class="nav-item" data-section="backups" data-href="/console/">
+                        <span>📦</span> Backups
+                    </button>
+                    <button class="nav-item" data-section="plugins" data-href="/console/plugins.html">
+                        <span>🔌</span> Plugins
+                    </button>
+                    <button class="nav-item active" data-section="marketplace">
+                        <span>🏪</span> Marketplace
+                    </button>
+                    <button class="nav-item" data-section="settings" data-href="/console/">
+                        <span>🔧</span> Settings
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Marketplace Section -->
+                <section id="marketplace" class="content-section active">
+                    <!-- Search and Filters -->
+                    <div class="card marketplace-search-card">
+                        <h3>🔍 Search Plugins</h3>
+                        <div class="search-form">
+                            <div class="form-row">
+                                <div class="form-group flex-grow">
+                                    <input 
+                                        type="text" 
+                                        id="searchQuery" 
+                                        placeholder="Search plugins..." 
+                                        class="input"
+                                    >
+                                </div>
+                                <div class="form-group">
+                                    <select id="platformFilter" class="input">
+                                        <option value="all">All Platforms</option>
+                                        <option value="modrinth">Modrinth</option>
+                                        <option value="hangar">Hangar</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <select id="categoryFilter" class="input">
+                                        <option value="">All Categories</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <select id="sortFilter" class="input">
+                                        <option value="relevance">Relevance</option>
+                                        <option value="downloads">Downloads</option>
+                                        <option value="updated">Recently Updated</option>
+                                        <option value="newest">Newest</option>
+                                    </select>
+                                </div>
+                                <button id="searchBtn" class="btn btn-primary">
+                                    Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Featured Plugins -->
+                    <div class="card" id="featuredSection">
+                        <div class="card-header">
+                            <h3>⭐ Featured Plugins</h3>
+                        </div>
+                        <div id="featuredPlugins" class="plugin-grid">
+                            <div class="loading">Loading featured plugins...</div>
+                        </div>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div class="card" id="resultsSection" style="display: none;">
+                        <div class="card-header">
+                            <h3>📋 Search Results <span id="resultsCount" class="badge">0</span></h3>
+                            <button id="clearSearchBtn" class="btn btn-sm">Clear Search</button>
+                        </div>
+                        <div id="searchResults" class="plugin-grid">
+                            <!-- Results populated by JS -->
+                        </div>
+                        <div id="loadMoreContainer" class="load-more-container" style="display: none;">
+                            <button id="loadMoreBtn" class="btn btn-secondary">Load More</button>
+                        </div>
+                    </div>
+
+                    <!-- Installed Plugins Quick View -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🔌 Installed Plugins <span id="installedCount" class="badge">0</span></h3>
+                            <div class="card-actions">
+                                <button id="checkUpdatesBtn" class="btn btn-sm">
+                                    🔄 Check Updates
+                                </button>
+                                <button id="viewAllPluginsBtn" class="btn btn-sm" data-href="/console/plugins.html">
+                                    View All →
+                                </button>
+                            </div>
+                        </div>
+                        <div id="installedPlugins" class="plugins-compact-list">
+                            <div class="loading">Loading installed plugins...</div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Plugin Details Modal -->
+    <div id="pluginDetailsModal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="modalPluginName">Plugin Details</h3>
+                <button class="modal-close" id="closeDetailsModal">×</button>
+            </div>
+            <div id="pluginDetailsContent" class="plugin-details">
+                <div class="loading">Loading plugin details...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/themeManager.js"></script>
+    <script src="js/accessibility.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/marketplace.js"></script>
+</body>
+</html>
