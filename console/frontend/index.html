@@ -142,9 +142,17 @@
                 <!-- Players Section -->
                 <section id="players" class="content-section">
                     <div class="card">
-                        <h3>All Players <span id="onlinePlayersCount">(0 online)</span></h3>
-                        <p class="section-description">Showing all players who have ever joined, sorted by playtime</p>
-                        <div id="playersList" class="players-list">
+                        <h3>Online Players <span id="onlinePlayersCount">(0 online)</span></h3>
+                        <p class="section-description">Currently connected players</p>
+                        <div id="onlinePlayersList" class="players-list">
+                            <p class="no-players">No players are currently online</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>All Players <span id="totalPlayersCount">(0 total)</span></h3>
+                        <p class="section-description">All players who have ever joined, sorted by total playtime</p>
+                        <div id="allPlayersList" class="players-list">
                             <p class="no-players">No players have joined yet</p>
                         </div>
                     </div>
