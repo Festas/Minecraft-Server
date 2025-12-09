@@ -514,12 +514,29 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// Initialize whitelist and action history when players tab is loaded
-if (typeof initializePlayers !== 'undefined') {
-    const originalInitializePlayers = initializePlayers;
-    initializePlayers = function() {
-        originalInitializePlayers();
-        loadWhitelist();
-        loadActionHistory();
-    };
-}
+// Initialize player management features when navigating to players section
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we're on the main console page (has players section)
+    if (document.getElementById('players')) {
+        // Load whitelist and history when players section becomes active
+        const playersSection = document.getElementById('players');
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    if (playersSection.classList.contains('active')) {
+                        loadWhitelist();
+                        loadActionHistory();
+                    }
+                }
+            });
+        });
+        
+        observer.observe(playersSection, { attributes: true });
+        
+        // Also load on initial page load if section is already active
+        if (playersSection.classList.contains('active')) {
+            loadWhitelist();
+            loadActionHistory();
+        }
+    }
+});

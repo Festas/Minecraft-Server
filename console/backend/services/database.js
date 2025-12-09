@@ -345,6 +345,8 @@ class DatabaseService {
             ON CONFLICT(player_uuid) DO UPDATE SET
                 is_active = 1,
                 player_username = excluded.player_username,
+                added_by = excluded.added_by,
+                added_at = excluded.added_at,
                 notes = excluded.notes
         `);
 

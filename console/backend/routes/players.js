@@ -340,8 +340,16 @@ router.post('/warn', checkPermission(PERMISSIONS.PLAYER_WARN), async (req, res) 
     }
 
     try {
-        // Send warning message to player
-        const message = `§eYou have been warned: §f${reason}`;
+        // Send warning message to player - properly escape the reason for JSON
+        // Escape quotes, backslashes, and newlines
+        const escapedReason = reason
+            .replace(/\\/g, '\\\\')
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '\\r')
+            .replace(/\t/g, '\\t');
+        
+        const message = `You have been warned: ${escapedReason}`;
         const result = await rconService.executeCommand(`tellraw ${player} {"text":"${message}","color":"yellow"}`);
         
         // Record action in history
