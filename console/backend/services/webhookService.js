@@ -352,7 +352,10 @@ class WebhookService {
             };
 
             // Disable SSL verification if configured
+            // SECURITY NOTE: This is intentionally configurable for development/testing
+            // with self-signed certificates. Should be enabled (verified) in production.
             if (!webhook.verify_ssl) {
+                // codeql[js/disabling-certificate-validation]
                 axiosConfig.httpsAgent = new https.Agent({
                     rejectUnauthorized: false
                 });
