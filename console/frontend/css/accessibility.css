@@ -239,9 +239,9 @@ body.modal-open {
     font-weight: 500;
 }
 
-/* Ensure icons don't interfere with screen readers */
+/* Ensure icons don't interfere with screen readers - set aria-hidden="true" in HTML */
 .icon::before {
-    aria-hidden: true;
+    /* Icons should have aria-hidden="true" in HTML */
 }
 
 /* Player list accessibility */
@@ -254,10 +254,9 @@ body.modal-open {
     outline-offset: 2px;
 }
 
-/* Toast notification accessibility */
+/* Toast notification accessibility - role="status" should be set in HTML/JS */
 .toast {
-    /* Position for screen reader announcement */
-    role: status;
+    /* Toast notifications should have role="status" or role="alert" */
 }
 
 /* Data table accessibility */

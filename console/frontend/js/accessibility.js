@@ -212,7 +212,7 @@ class AccessibilityManager {
      * Generate unique ID for element
      */
     generateId(element) {
-        const id = 'a11y-' + Math.random().toString(36).substr(2, 9);
+        const id = 'a11y-' + Math.random().toString(36).substring(2, 11);
         element.id = id;
         return id;
     }
@@ -238,7 +238,9 @@ class AccessibilityManager {
             // Convert camelCase to readable text
             return id.replace(/([A-Z])/g, ' $1')
                      .replace(/Btn$/, '')
-                     .trim();
+                     .trim()
+                     .toLowerCase()
+                     .replace(/^\w/, c => c.toUpperCase());
         }
         
         return 'Button';
