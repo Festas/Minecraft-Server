@@ -24,11 +24,32 @@ router.get('/list', async (req, res) => {
 /**
  * GET /players/all
  * Get all players who have ever joined with their stats
+ * 
+ * Response format:
+ * {
+ *   success: true,
+ *   players: [
+ *     {
+ *       uuid: string,
+ *       username: string,
+ *       avatar: string (URL),
+ *       first_seen: ISO timestamp,
+ *       last_seen: ISO timestamp,
+ *       total_playtime_ms: number,
+ *       session_count: number,
+ *       isOnline: boolean,
+ *       formattedPlaytime: string
+ *     }
+ *   ],
+ *   totalPlayers: number,
+ *   onlineCount: number,
+ *   maxPlayers: number
+ * }
  */
 router.get('/all', async (req, res) => {
     try {
         const allPlayers = playerTracker.getAllPlayers();
-        const onlinePlayers = playerTracker.getOnlinePlayers();
+        const onlinePlayerUuids = playerTracker.getOnlinePlayers();
         
         // Get current server info for max players
         let maxPlayers = 20; // Default fallback
@@ -39,23 +60,24 @@ router.get('/all', async (req, res) => {
             console.warn('Could not get max players from RCON, using default:', error.message);
         }
         
-        // Sort by total playtime (descending)
-        const sortedPlayers = allPlayers.sort((a, b) => 
-            b.totalPlaytimeMs - a.totalPlaytimeMs
-        );
-        
-        // Add online status and format playtime
-        const playersWithStatus = sortedPlayers.map(player => ({
-            ...player,
-            isOnline: onlinePlayers.includes(player.username),
-            formattedPlaytime: playerTracker.formatDuration(player.totalPlaytimeMs)
+        // Add online status, format playtime, and add avatar URLs
+        const playersWithStatus = allPlayers.map(player => ({
+            uuid: player.uuid,
+            username: player.username,
+            avatar: `https://mc-heads.net/avatar/${player.username}/48`,
+            first_seen: player.first_seen,
+            last_seen: player.last_seen,
+            total_playtime_ms: player.total_playtime_ms,
+            session_count: player.session_count,
+            isOnline: onlinePlayerUuids.includes(player.uuid),
+            formattedPlaytime: playerTracker.formatDuration(player.total_playtime_ms)
         }));
         
         res.json({
             success: true,
             players: playersWithStatus,
             totalPlayers: playersWithStatus.length,
-            onlineCount: onlinePlayers.length,
+            onlineCount: onlinePlayerUuids.length,
             maxPlayers: maxPlayers
         });
     } catch (error) {
