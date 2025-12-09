@@ -20,6 +20,7 @@ const playerTracker = require('./services/playerTracker');
 const jobQueue = require('./services/jobQueue');
 const jobWorker = require('./services/jobWorker');
 const automationService = require('./services/automationService');
+const analyticsService = require('./services/analyticsService');
 const { initializeUsers } = require('./auth/auth');
 const { initializeSessionMiddleware, initializeSessionStore, getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
 const { validateTokenConfiguration } = require('./auth/bearerAuth');
@@ -45,6 +46,7 @@ const auditRoutes = require('./routes/audit');
 const automationRoutes = require('./routes/automation');
 const loggingRoutes = require('./routes/logging');
 const webhookRoutes = require('./routes/webhooks');
+const analyticsRoutes = require('./routes/analytics');
 
 
 // Initialize Express app
@@ -453,6 +455,7 @@ app.use('/api/audit', auditRoutes); // Audit logs
 app.use('/api/automation', automationRoutes); // Automation & Scheduler
 app.use('/api/webhooks', webhookRoutes); // Webhooks & Integrations
 app.use('/api', loggingRoutes); // Event logging and notifications
+app.use('/api/analytics', analyticsRoutes); // Analytics & Insights
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -556,6 +559,10 @@ async function initializeServices() {
     notificationService.initialize();
     console.log('[Startup] ✓ Notification service initialized');
     
+    // Initialize analytics service
+    analyticsService.initialize();
+    console.log('[Startup] ✓ Analytics service initialized');
+    
     // Connect event logger to webhook service
     eventLogger.on('event', async (event) => {
         // Emit to webhooks
@@ -605,6 +612,64 @@ async function initializeServices() {
                 }
             }
         });
+    });
+    
+    // Connect event logger to analytics service for player events
+    eventLogger.on('event', async (event) => {
+        try {
+            // Record player events
+            if (event.category === 'player' && event.metadata?.playerUuid) {
+                analyticsService.recordPlayerEvent(
+                    event.metadata.playerUuid,
+                    event.metadata.playerUsername || event.metadata.username || 'Unknown',
+                    event.eventType,
+                    event.metadata
+                );
+            }
+            
+            // Record plugin events
+            if (event.category === 'plugin' && event.metadata?.pluginName) {
+                analyticsService.recordPluginUsage(
+                    event.metadata.pluginName,
+                    event.metadata.pluginVersion,
+                    event.eventType
+                );
+            }
+        } catch (error) {
+            console.error('[Analytics] Error recording event:', error);
+        }
+    });
+    
+    // Start periodic server metrics collection (every 5 minutes)
+    const statsService = require('./services/stats');
+    setInterval(async () => {
+        try {
+            const stats = await statsService.getServerStats();
+            if (stats.status !== 'error') {
+                analyticsService.recordServerMetrics({
+                    cpu_percent: stats.cpu?.percent || null,
+                    memory_used_mb: stats.memory?.used ? stats.memory.used / (1024 * 1024) : null,
+                    memory_total_mb: stats.memory?.total ? stats.memory.total / (1024 * 1024) : null,
+                    memory_percent: stats.memory?.percent || null,
+                    tps: stats.tps || null,
+                    player_count: stats.players?.online || 0,
+                    world_size_mb: null // Would need to parse worldSize string
+                });
+            }
+        } catch (error) {
+            console.error('[Analytics] Error collecting server metrics:', error);
+        }
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    // Run daily cleanup of old analytics data (at midnight)
+    const cron = require('node-cron');
+    cron.schedule('0 0 * * *', () => {
+        try {
+            console.log('[Analytics] Running daily cleanup...');
+            analyticsService.cleanOldData();
+        } catch (error) {
+            console.error('[Analytics] Error during cleanup:', error);
+        }
     });
 
     // Initialize plugin gateway and adapters
