@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "username": "Festas",
+    "firstSeen": "2024-12-01T10:00:00.000Z",
+    "lastSeen": "2024-12-09T09:00:00.000Z",
+    "totalPlaytimeMs": 5580000,
+    "sessionCount": 13
+  },
+  {
+    "username": "Steve",
+    "firstSeen": "2024-12-02T12:00:00.000Z",
+    "lastSeen": "2024-12-09T09:45:00.000Z",
+    "totalPlaytimeMs": 7200000,
+    "sessionCount": 9
+  },
+  {
+    "username": "Alex",
+    "firstSeen": "2024-12-03T14:00:00.000Z",
+    "lastSeen": "2024-12-08T18:00:00.000Z",
+    "totalPlaytimeMs": 3600000,
+    "sessionCount": 5
+  },
+  {
+    "username": "Notch",
+    "firstSeen": "2024-11-15T08:00:00.000Z",
+    "lastSeen": "2024-12-07T22:00:00.000Z",
+    "totalPlaytimeMs": 10800000,
+    "sessionCount": 20
+  }
+]

@@ -20,57 +20,83 @@ async function loadPlayers() {
  * Render all players list with stats
  */
 function renderAllPlayersList(data) {
-    const playersList = document.getElementById('playersList');
+    const onlinePlayersList = document.getElementById('onlinePlayersList');
+    const allPlayersList = document.getElementById('allPlayersList');
     const onlinePlayersCount = document.getElementById('onlinePlayersCount');
+    const totalPlayersCount = document.getElementById('totalPlayersCount');
     
-    if (!playersList) return;
-    
-    // Update online count display
+    // Update counts
     if (onlinePlayersCount) {
         onlinePlayersCount.textContent = `(${data.onlineCount} online)`;
     }
     
-    if (!data.players || data.players.length === 0) {
-        playersList.innerHTML = '<p class="no-players">No players have joined yet</p>';
-        return;
+    if (totalPlayersCount) {
+        totalPlayersCount.textContent = `(${data.totalPlayers} total)`;
     }
     
-    playersList.innerHTML = '';
+    // Render online players list
+    if (onlinePlayersList) {
+        const onlinePlayers = data.players ? data.players.filter(p => p.isOnline) : [];
+        
+        if (onlinePlayers.length === 0) {
+            onlinePlayersList.innerHTML = '<p class="no-players">No players are currently online</p>';
+        } else {
+            onlinePlayersList.innerHTML = '';
+            onlinePlayers.forEach(player => {
+                onlinePlayersList.appendChild(createPlayerItem(player));
+            });
+        }
+    }
     
-    data.players.forEach(player => {
-        const playerItem = document.createElement('div');
-        playerItem.className = 'player-item' + (player.isOnline ? ' player-online' : '');
-        
-        // Format last seen date
-        const lastSeenDate = new Date(player.lastSeen);
-        const lastSeenStr = player.isOnline ? 'Online now' : formatRelativeTime(lastSeenDate);
-        
-        playerItem.innerHTML = `
-            <div class="player-info">
-                <img 
-                    src="https://mc-heads.net/avatar/${player.username}/48" 
-                    alt="${player.username}" 
-                    class="player-avatar"
-                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23666%22 width=%2248%22 height=%2248%22/></svg>'"
-                >
-                <div class="player-details">
-                    <div class="player-name">
-                        ${player.username}
-                        ${player.isOnline ? '<span class="online-badge">●</span>' : ''}
-                    </div>
-                    <div class="player-stats">
-                        <span class="stat-item">⏱️ ${player.formattedPlaytime}</span>
-                        <span class="stat-item">👋 ${lastSeenStr}</span>
-                    </div>
+    // Render all players list (sorted by playtime)
+    if (allPlayersList) {
+        if (!data.players || data.players.length === 0) {
+            allPlayersList.innerHTML = '<p class="no-players">No players have joined yet</p>';
+        } else {
+            allPlayersList.innerHTML = '';
+            data.players.forEach(player => {
+                allPlayersList.appendChild(createPlayerItem(player));
+            });
+        }
+    }
+}
+
+/**
+ * Create a player item element
+ */
+function createPlayerItem(player) {
+    const playerItem = document.createElement('div');
+    playerItem.className = 'player-item' + (player.isOnline ? ' player-online' : '');
+    
+    // Format last seen date
+    const lastSeenDate = new Date(player.lastSeen);
+    const lastSeenStr = player.isOnline ? 'Online now' : formatRelativeTime(lastSeenDate);
+    
+    playerItem.innerHTML = `
+        <div class="player-info">
+            <img 
+                src="https://mc-heads.net/avatar/${player.username}/48" 
+                alt="${player.username}" 
+                class="player-avatar"
+                onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23666%22 width=%2248%22 height=%2248%22/></svg>'"
+            >
+            <div class="player-details">
+                <div class="player-name">
+                    ${player.username}
+                    ${player.isOnline ? '<span class="online-badge">●</span>' : ''}
+                </div>
+                <div class="player-stats">
+                    <span class="stat-item">⏱️ ${player.formattedPlaytime}</span>
+                    <span class="stat-item">👋 ${lastSeenStr}</span>
                 </div>
             </div>
-            <div class="player-actions">
-                ${player.isOnline ? '<button class="btn btn-sm player-kick-btn" data-player="' + player.username + '">Kick</button>' : ''}
-            </div>
-        `;
-        
-        playersList.appendChild(playerItem);
-    });
+        </div>
+        <div class="player-actions">
+            ${player.isOnline ? '<button class="btn btn-sm player-kick-btn" data-player="' + player.username + '">Kick</button>' : ''}
+        </div>
+    `;
+    
+    return playerItem;
 }
 
 /**
