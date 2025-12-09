@@ -135,9 +135,47 @@ All plugins are managed through a unified interface with RBAC-controlled access,
 
 #### Custom Upload:
 
+**Via Web UI:**
+
 1. Go to the "Plugins" page
-2. Use the URL installation with a direct link to your JAR file
-3. Or use the V2 plugin API for file uploads (see API Reference)
+2. Scroll to the "Upload Plugin File" section
+3. Click "Select File" or drag and drop a .jar file
+4. Wait for validation and upload
+5. Plugin will be installed automatically
+
+**Upload Features:**
+- Drag and drop support
+- Real-time upload progress
+- JAR file validation
+- Automatic metadata extraction from plugin.yml
+- Duplicate detection and backup
+- Maximum file size: 100MB
+
+**Via API:**
+
+```bash
+curl -X POST http://localhost:3001/api/plugins/upload \
+  -H "CSRF-Token: YOUR_CSRF_TOKEN" \
+  -b cookies.txt \
+  -F "plugin=@/path/to/plugin.jar"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "status": "installed",
+  "pluginName": "MyPlugin",
+  "version": "1.0.0",
+  "message": "Plugin MyPlugin installed successfully via upload",
+  "metadata": {
+    "name": "MyPlugin",
+    "version": "1.0.0",
+    "description": "Plugin description",
+    "author": "Author Name"
+  }
+}
+```
 
 ### Viewing Plugin Details
 
@@ -394,6 +432,63 @@ GET /api/plugins/:pluginName/config
   ]
 }
 ```
+
+#### Upload Plugin
+
+```http
+POST /api/plugins/upload
+```
+
+**Headers:**
+- `CSRF-Token` - CSRF token (required)
+- `Content-Type` - multipart/form-data
+
+**Body (multipart/form-data):**
+- `plugin` - JAR file (required)
+
+**Response:**
+```json
+{
+  "success": true,
+  "status": "installed",
+  "pluginName": "MyPlugin",
+  "version": "1.0.0",
+  "message": "Plugin MyPlugin installed successfully via upload",
+  "metadata": {
+    "name": "MyPlugin",
+    "version": "1.0.0",
+    "description": "Plugin description",
+    "author": "Author Name",
+    "api-version": "1.20"
+  }
+}
+```
+
+**Error Responses:**
+
+- `400` - No file uploaded / Invalid file type
+  ```json
+  {
+    "error": "No file uploaded",
+    "details": "Please select a .jar file to upload"
+  }
+  ```
+
+- `400` - Invalid plugin file
+  ```json
+  {
+    "error": "Invalid plugin file",
+    "details": "The uploaded file is not a valid Minecraft plugin JAR file. It must contain a valid plugin.yml."
+  }
+  ```
+
+- `400` - File too large
+  ```json
+  {
+    "error": "File too large",
+    "details": "Plugin file must be smaller than 100MB"
+  }
+  ```
 
 ### Authentication
 
