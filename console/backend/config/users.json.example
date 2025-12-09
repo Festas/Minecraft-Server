@@ -2,7 +2,11 @@
   "users": [
     {
       "username": "admin",
-      "password": "$2a$10$EXAMPLE.HASH.REPLACE.WITH.ACTUAL.BCRYPT.HASH"
+      "password": "$2a$10$EXAMPLE.HASH.REPLACE.WITH.ACTUAL.BCRYPT.HASH",
+      "role": "owner",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "createdBy": "system",
+      "enabled": true
     }
   ]
 }

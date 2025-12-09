@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
+const { ROLES, isValidRole } = require('../config/rbac');
 
 const USERS_FILE = path.join(__dirname, '../config/users.json');
 const PASSWORD_HASH_FILE = path.join(__dirname, '../config/.password_hash');
@@ -55,10 +56,27 @@ async function verifyCredentials(username, password) {
     const user = userData.users.find(u => u.username === username);
     
     if (!user) {
-        return false;
+        return null;
     }
     
-    return await bcrypt.compare(password, user.password);
+    // Check if user is enabled
+    if (user.enabled === false) {
+        return null;
+    }
+    
+    const valid = await bcrypt.compare(password, user.password);
+    
+    if (valid) {
+        // Return user object with role information (excluding password)
+        return {
+            username: user.username,
+            role: user.role || ROLES.VIEWER,
+            lastLogin: user.lastLogin,
+            createdAt: user.createdAt
+        };
+    }
+    
+    return null;
 }
 
 /**
@@ -148,7 +166,11 @@ async function initializeUsers() {
                 users: [
                     {
                         username: process.env.ADMIN_USERNAME || 'admin',
-                        password: await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
+                        password: await bcrypt.hash(process.env.ADMIN_PASSWORD, 10),
+                        role: ROLES.OWNER,
+                        createdAt: new Date().toISOString(),
+                        createdBy: 'system',
+                        enabled: true
                     }
                 ]
             };
@@ -165,14 +187,182 @@ async function initializeUsers() {
             users: [
                 {
                     username: process.env.ADMIN_USERNAME || 'admin',
-                    password: await bcrypt.hash(process.env.ADMIN_PASSWORD, 10)
+                    password: await bcrypt.hash(process.env.ADMIN_PASSWORD, 10),
+                    role: ROLES.OWNER,
+                    createdAt: new Date().toISOString(),
+                    createdBy: 'system',
+                    enabled: true
                 }
             ]
         };
         await saveUsers(defaultUsers);
         await savePasswordHash(process.env.ADMIN_PASSWORD);
-        console.log('Created default admin user. Please keep your password secure!');
+        console.log('Created default admin user with Owner role. Please keep your password secure!');
     }
+}
+
+/**
+ * Update last login timestamp for a user
+ */
+async function updateLastLogin(username) {
+    try {
+        const userData = await loadUsers();
+        const user = userData.users.find(u => u.username === username);
+        
+        if (user) {
+            user.lastLogin = new Date().toISOString();
+            await saveUsers(userData);
+        }
+    } catch (error) {
+        console.error('Error updating last login:', error);
+    }
+}
+
+/**
+ * Get user by username (excluding password)
+ */
+async function getUser(username) {
+    const userData = await loadUsers();
+    const user = userData.users.find(u => u.username === username);
+    
+    if (!user) {
+        return null;
+    }
+    
+    // Return user without password
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+}
+
+/**
+ * Get all users (excluding passwords)
+ */
+async function getAllUsers() {
+    const userData = await loadUsers();
+    
+    // Return users without passwords
+    return userData.users.map(user => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+    });
+}
+
+/**
+ * Create a new user
+ */
+async function createUser(username, password, role, createdBy) {
+    if (!isValidRole(role)) {
+        throw new Error('Invalid role');
+    }
+    
+    const userData = await loadUsers();
+    
+    // Check if user already exists
+    if (userData.users.find(u => u.username === username)) {
+        throw new Error('User already exists');
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = {
+        username,
+        password: hashedPassword,
+        role: role.toLowerCase(),
+        createdAt: new Date().toISOString(),
+        createdBy,
+        enabled: true
+    };
+    
+    userData.users.push(newUser);
+    await saveUsers(userData);
+    
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = newUser;
+    return userWithoutPassword;
+}
+
+/**
+ * Update user role
+ */
+async function updateUserRole(username, newRole) {
+    if (!isValidRole(newRole)) {
+        throw new Error('Invalid role');
+    }
+    
+    const userData = await loadUsers();
+    const user = userData.users.find(u => u.username === username);
+    
+    if (!user) {
+        throw new Error('User not found');
+    }
+    
+    user.role = newRole.toLowerCase();
+    await saveUsers(userData);
+    
+    // Return updated user without password
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+}
+
+/**
+ * Update user password
+ */
+async function updateUserPassword(username, newPassword) {
+    const userData = await loadUsers();
+    const user = userData.users.find(u => u.username === username);
+    
+    if (!user) {
+        throw new Error('User not found');
+    }
+    
+    user.password = await bcrypt.hash(newPassword, 10);
+    await saveUsers(userData);
+    
+    return true;
+}
+
+/**
+ * Enable or disable a user
+ */
+async function updateUserStatus(username, enabled) {
+    const userData = await loadUsers();
+    const user = userData.users.find(u => u.username === username);
+    
+    if (!user) {
+        throw new Error('User not found');
+    }
+    
+    user.enabled = enabled;
+    await saveUsers(userData);
+    
+    // Return updated user without password
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+}
+
+/**
+ * Delete a user
+ */
+async function deleteUser(username) {
+    const userData = await loadUsers();
+    const userIndex = userData.users.findIndex(u => u.username === username);
+    
+    if (userIndex === -1) {
+        throw new Error('User not found');
+    }
+    
+    // Prevent deleting the last owner
+    const user = userData.users[userIndex];
+    if (user.role === ROLES.OWNER) {
+        const ownerCount = userData.users.filter(u => u.role === ROLES.OWNER).length;
+        if (ownerCount <= 1) {
+            throw new Error('Cannot delete the last owner account');
+        }
+    }
+    
+    userData.users.splice(userIndex, 1);
+    await saveUsers(userData);
+    
+    return true;
 }
 
 module.exports = {
@@ -180,5 +370,13 @@ module.exports = {
     requireAuth,
     initializeUsers,
     loadUsers,
-    saveUsers
+    saveUsers,
+    updateLastLogin,
+    getUser,
+    getAllUsers,
+    createUser,
+    updateUserRole,
+    updateUserPassword,
+    updateUserStatus,
+    deleteUser
 };
