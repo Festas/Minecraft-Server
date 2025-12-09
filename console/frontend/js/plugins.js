@@ -75,6 +75,57 @@ function initializeEventListeners() {
     document.getElementById('confirmNo').addEventListener('click', hideConfirmModal);
     document.getElementById('optionsCancel').addEventListener('click', hideOptionsModal);
     
+    // File upload handlers
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('pluginFile');
+    const selectFileBtn = document.getElementById('selectFileBtn');
+    
+    if (selectFileBtn && fileInput && uploadArea) {
+        // Select file button
+        selectFileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileInput.click();
+        });
+        
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+        
+        // Drag and drop
+        uploadArea.addEventListener('click', () => {
+            if (!uploadArea.classList.contains('uploading')) {
+                fileInput.click();
+            }
+        });
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const file = e.dataTransfer.files[0];
+                if (file.name.endsWith('.jar')) {
+                    handleFileUpload(file);
+                } else {
+                    showToast('Please upload a .jar file', 'error');
+                }
+            }
+        });
+    }
+    
     // Event delegation for plugin actions (CSP compliant)
     document.addEventListener('click', function(e) {
         // Handle plugin rollback
@@ -792,5 +843,122 @@ function showToast(message, type = 'info') {
         window.showNotification(message, type);
     } else {
         console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+}
+
+// Handle file upload
+async function handleFileUpload(file) {
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadContent = uploadArea.querySelector('.upload-content');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('uploadProgressBar');
+    const uploadStatus = document.getElementById('uploadStatus');
+    
+    // Validate file
+    if (!file.name.endsWith('.jar')) {
+        showToast('Please select a .jar file', 'error');
+        return;
+    }
+    
+    if (file.size > 100 * 1024 * 1024) { // 100MB
+        showToast('File size exceeds 100MB limit', 'error');
+        return;
+    }
+    
+    // Show progress
+    uploadArea.classList.add('uploading');
+    uploadContent.classList.add('hidden');
+    uploadProgress.classList.remove('hidden');
+    uploadStatus.textContent = 'Uploading...';
+    progressBar.style.width = '0%';
+    
+    try {
+        const formData = new FormData();
+        formData.append('plugin', file);
+        
+        const xhr = new XMLHttpRequest();
+        
+        // Upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                progressBar.style.width = percentComplete + '%';
+                uploadStatus.textContent = `Uploading... ${Math.round(percentComplete)}%`;
+            }
+        });
+        
+        // Upload complete
+        xhr.addEventListener('load', async () => {
+            if (xhr.status === 200) {
+                uploadStatus.textContent = 'Processing...';
+                progressBar.style.width = '100%';
+                
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    
+                    if (response.success || response.status) {
+                        showToast(`Plugin ${response.pluginName} ${response.status} successfully!`, 'success');
+                        await loadPlugins();
+                        await loadHistory();
+                        
+                        // Reset upload area
+                        setTimeout(() => {
+                            resetUploadArea();
+                        }, 2000);
+                    } else {
+                        throw new Error(response.error || response.details || 'Upload failed');
+                    }
+                } catch (parseError) {
+                    throw new Error('Failed to parse server response');
+                }
+            } else {
+                let errorMessage = 'Upload failed';
+                try {
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    errorMessage = errorResponse.details || errorResponse.error || errorMessage;
+                } catch (e) {
+                    errorMessage = xhr.statusText || errorMessage;
+                }
+                throw new Error(errorMessage);
+            }
+        });
+        
+        // Upload error
+        xhr.addEventListener('error', () => {
+            throw new Error('Upload failed. Network error.');
+        });
+        
+        // Upload abort
+        xhr.addEventListener('abort', () => {
+            throw new Error('Upload cancelled');
+        });
+        
+        // Send request
+        xhr.open('POST', '/api/plugins/upload');
+        xhr.setRequestHeader('CSRF-Token', csrfToken);
+        xhr.send(formData);
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        showToast(error.message || 'Upload failed', 'error');
+        resetUploadArea();
+    }
+}
+
+// Reset upload area
+function resetUploadArea() {
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadContent = uploadArea.querySelector('.upload-content');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('uploadProgressBar');
+    const fileInput = document.getElementById('pluginFile');
+    
+    uploadArea.classList.remove('uploading');
+    uploadContent.classList.remove('hidden');
+    uploadProgress.classList.add('hidden');
+    progressBar.style.width = '0%';
+    
+    if (fileInput) {
+        fileInput.value = '';
     }
 }
