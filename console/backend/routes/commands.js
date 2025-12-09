@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../auth/auth');
+const { requirePermission } = require('../middleware/rbac');
+const { PERMISSIONS } = require('../config/rbac');
+const { logAuditEvent, AUDIT_EVENTS, getClientIp } = require('../services/auditLog');
 const rconService = require('../services/rcon');
 const { commandLimiter } = require('../middleware/rateLimiter');
 const { validations } = require('../middleware/validation');
@@ -15,7 +18,7 @@ router.use(commandLimiter);
  * POST /commands/execute
  * Execute a Minecraft command via RCON
  */
-router.post('/execute', validations.executeCommand, async (req, res) => {
+router.post('/execute', requirePermission(PERMISSIONS.COMMAND_EXECUTE), validations.executeCommand, async (req, res) => {
     const { command } = req.body;
 
     if (!command) {
@@ -40,6 +43,17 @@ router.post('/execute', validations.executeCommand, async (req, res) => {
 
     try {
         const result = await rconService.executeCommand(sanitizedCommand);
+        
+        // Log command execution for critical commands
+        if (isDangerous) {
+            await logAuditEvent(
+                AUDIT_EVENTS.COMMAND_EXECUTED,
+                req.session.username,
+                { command: sanitizedCommand },
+                getClientIp(req)
+            );
+        }
+        
         res.json(result);
     } catch (error) {
         console.error('Error executing command:', error);

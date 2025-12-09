@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../auth/auth');
+const { requirePermission } = require('../middleware/rbac');
+const { PERMISSIONS } = require('../config/rbac');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs').promises;
 const path = require('path');
@@ -25,7 +27,7 @@ const BACKUPS_DIR = process.env.BACKUPS_DIR || path.join(process.cwd(), '../../b
  * GET /backups/list
  * Get list of available backups
  */
-router.get('/list', async (req, res) => {
+router.get('/list', requirePermission(PERMISSIONS.BACKUP_VIEW), async (req, res) => {
     try {
         try {
             const files = await fs.readdir(BACKUPS_DIR);
