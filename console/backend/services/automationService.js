@@ -10,6 +10,7 @@ const cron = require('node-cron');
 const crypto = require('crypto');
 const database = require('./database');
 const auditLog = require('./auditLog');
+const { eventLogger, EVENT_TYPES, EVENT_CATEGORIES, EVENT_SEVERITY } = require('./eventLogger');
 const rconService = require('./rcon');
 const dockerService = require('./docker');
 const { exec } = require('child_process');
@@ -133,6 +134,23 @@ class AutomationService {
             createdBy,
             { task_id: createdTask.id, task_name: createdTask.name, task_type: createdTask.task_type }
         );
+
+        // Log event
+        eventLogger.logEvent({
+            eventType: EVENT_TYPES.AUTOMATION_TASK_CREATED,
+            category: EVENT_CATEGORIES.AUTOMATION,
+            severity: EVENT_SEVERITY.INFO,
+            title: `Automation task created: ${createdTask.name}`,
+            message: `Created ${createdTask.task_type} task with schedule: ${createdTask.cron_expression}`,
+            actor: createdBy,
+            target: createdTask.name,
+            metadata: {
+                task_id: createdTask.id,
+                task_type: createdTask.task_type,
+                cron_expression: createdTask.cron_expression,
+                enabled: createdTask.enabled
+            }
+        });
 
         return createdTask;
     }
@@ -328,6 +346,25 @@ class AutomationService {
                 duration_ms: duration
             }
         );
+
+        // Log event
+        eventLogger.logEvent({
+            eventType: status === STATUS.SUCCESS ? EVENT_TYPES.AUTOMATION_TASK_EXECUTED : EVENT_TYPES.AUTOMATION_TASK_FAILED,
+            category: EVENT_CATEGORIES.AUTOMATION,
+            severity: status === STATUS.SUCCESS ? EVENT_SEVERITY.INFO : EVENT_SEVERITY.ERROR,
+            title: `Automation task ${status === STATUS.SUCCESS ? 'executed' : 'failed'}: ${task.name}`,
+            message: errorMessage || `Task completed in ${duration}ms`,
+            actor: executedBy,
+            target: task.name,
+            metadata: {
+                task_id: task.id,
+                task_type: task.task_type,
+                execution_type: executionType,
+                status,
+                duration_ms: duration,
+                ...resultDetails
+            }
+        });
 
         return {
             status,
