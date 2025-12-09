@@ -217,7 +217,7 @@ jobs:
             # Create .env file from secrets (no leading whitespace)
             # Track missing optional secrets for deployment summary
             MISSING_OPTIONAL_SECRETS=()
-            
+
             {
               printf 'ADMIN_USERNAME=%s\n' "${CONSOLE_ADMIN_USER}"
               printf 'ADMIN_PASSWORD=%s\n' "${CONSOLE_ADMIN_PASSWORD}"
@@ -235,21 +235,21 @@ jobs:
               # Allow cookies over HTTP for CI testing (secure: false)
               # Without this, session cookies won't be sent over HTTP and auth will fail
               echo 'COOKIE_SECURE=false'
-              
+
               # Add optional secrets with fallbacks
               if [ -n "${PLUGIN_ADMIN_TOKEN}" ]; then
                 printf 'PLUGIN_ADMIN_TOKEN=%s\n' "${PLUGIN_ADMIN_TOKEN}"
               else
                 MISSING_OPTIONAL_SECRETS+=("PLUGIN_ADMIN_TOKEN")
               fi
-              
+
               if [ -n "${DOMAIN}" ]; then
                 printf 'DOMAIN=%s\n' "${DOMAIN}"
               else
                 MISSING_OPTIONAL_SECRETS+=("DOMAIN")
                 echo 'DOMAIN=mc.festas-builds.com'
               fi
-              
+
               if [ -n "${MINECRAFT_VERSION}" ]; then
                 printf 'MINECRAFT_VERSION=%s\n' "${MINECRAFT_VERSION}"
               else
@@ -258,7 +258,7 @@ jobs:
               fi
             } > .env
             chmod 600 .env
-            
+
             # Write missing secrets report for deployment summary
             if [ ${#MISSING_OPTIONAL_SECRETS[@]} -gt 0 ]; then
               echo "MISSING_OPTIONAL_SECRETS=${MISSING_OPTIONAL_SECRETS[*]}" >> /tmp/deployment-status.txt
@@ -269,19 +269,19 @@ jobs:
             # ================================================================
             # This deployment workflow automatically injects the Redis service
             # and redis_data volume into the generated docker-compose.yml.
-            # 
+            #
             # Why Redis is auto-injected:
             # - Ensures reliable session persistence across restarts
             # - Guarantees CSRF token validity in all deployments
             # - Prevents session-related issues in CI/CD workflows
-            # 
+            #
             # The Redis service includes:
             # - Image: redis:7-alpine (recommended version)
             # - Health check: ensures Redis is ready before console starts
             # - Volume: redis_data for persistent session storage
             # - Network: caddy-network for service communication
             # ================================================================
-            
+
             # Create docker-compose.yml with auto-injected Redis service
             # Redis is automatically included to ensure reliable session and CSRF support
             cat > docker-compose.yml <<EOF
@@ -810,7 +810,7 @@ jobs:
         if: success()
         run: |
           echo "Downloading deployment status..."
-          
+
           scp -i ~/.ssh/id_rsa \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/deployment-status.txt \
             ./deployment-status.txt 2>/dev/null || echo "No deployment status file found"
@@ -826,7 +826,7 @@ jobs:
             echo "**Docker Image:** ghcr.io/festas/minecraft-console:${{ needs.build-and-push.outputs.image_sha }}"
             echo "**Console URL:** https://mc.festas-builds.com/console"
             echo ""
-            
+
             # Check for missing optional secrets
             if [ -f ./deployment-status.txt ]; then
               MISSING_SECRETS=$(grep "MISSING_OPTIONAL_SECRETS=" ./deployment-status.txt | cut -d= -f2)
