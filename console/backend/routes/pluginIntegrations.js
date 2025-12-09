@@ -11,6 +11,7 @@ const { requireAuthOrToken, skipCsrfForBearer } = require('../auth/bearerAuth');
 const rateLimit = require('express-rate-limit');
 const pluginGateway = require('../services/pluginGateway');
 const { logAuditEvent, AUDIT_EVENTS, getClientIp } = require('../services/auditLog');
+const playerTracker = require('../services/playerTracker');
 
 // Rate limiter for plugin integration endpoints
 const pluginIntegrationRateLimiter = rateLimit({
@@ -203,8 +204,6 @@ router.get('/dynmap/configuration', async (req, res) => {
  */
 router.get('/dynmap/players-enriched', async (req, res) => {
     try {
-        const playerTracker = require('../services/playerTracker');
-        
         // Get players from Dynmap (positions, world, health, etc.)
         const dynmapPlayers = await pluginGateway.call('dynmap', 'getPlayers');
         

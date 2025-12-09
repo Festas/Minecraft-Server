@@ -7,6 +7,24 @@ let currentWorld = 'world';
 let mapConfig = null;
 let autoRefresh = true;
 
+// Constants
+const FALLBACK_AVATAR_32 = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>';
+const FALLBACK_AVATAR_64 = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect fill=%22%23666%22 width=%2264%22 height=%2264%22/></svg>';
+
+/**
+ * Utility function to format coordinates
+ */
+function formatCoordinates(x, y, z) {
+    return `${Math.round(x)} ${Math.round(y)} ${Math.round(z)}`;
+}
+
+/**
+ * Utility function to format coordinate display
+ */
+function formatCoordinateDisplay(x, y, z) {
+    return `X: ${Math.round(x)}, Y: ${Math.round(y)}, Z: ${Math.round(z)}`;
+}
+
 // Initialize map dashboard on page load
 document.addEventListener('DOMContentLoaded', () => {
     // Check authentication
@@ -380,7 +398,7 @@ function createMapPlayerItem(player) {
     avatar.src = player.avatar;
     avatar.alt = player.name;
     avatar.onerror = function() {
-        this.src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>';
+        this.src = FALLBACK_AVATAR_32;
     };
     
     const nameDiv = document.createElement('div');
@@ -389,7 +407,8 @@ function createMapPlayerItem(player) {
     
     const locationDiv = document.createElement('div');
     locationDiv.className = 'map-player-location';
-    locationDiv.textContent = `${player.world} (${Math.round(player.x)}, ${Math.round(player.y)}, ${Math.round(player.z)})`;
+    locationDiv.textContent = `${player.world} (${formatCoordinateDisplay(player.x, player.y, player.z)})`;
+
     
     item.appendChild(avatar);
     const detailsDiv = document.createElement('div');
@@ -435,7 +454,7 @@ function showPlayerInfo(player) {
     
     modalBody.innerHTML = `
         <div class="player-info-header">
-            <img src="${player.avatar}" alt="${player.name}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect fill=%22%23666%22 width=%2264%22 height=%2264%22/></svg>'">
+            <img src="${player.avatar}" alt="${player.name}" onerror="this.src='${FALLBACK_AVATAR_64}'">
             <div class="player-info-details">
                 <h4>${player.displayName || player.name}</h4>
                 <div class="player-status">● Online</div>
@@ -465,7 +484,7 @@ function showPlayerInfo(player) {
             <h5>Current Location</h5>
             <div><strong>World:</strong> ${player.world}</div>
             <div class="location-coords">
-                <strong>Coordinates:</strong> X: ${Math.round(player.x)}, Y: ${Math.round(player.y)}, Z: ${Math.round(player.z)}
+                <strong>Coordinates:</strong> ${formatCoordinateDisplay(player.x, player.y, player.z)}
             </div>
         </div>
         
@@ -560,7 +579,7 @@ async function kickPlayerFromMap(playerName) {
  * Copy coordinates to clipboard
  */
 function copyCoordinates(x, y, z) {
-    const coords = `${Math.round(x)} ${Math.round(y)} ${Math.round(z)}`;
+    const coords = formatCoordinates(x, y, z);
     
     // Use modern clipboard API
     if (navigator.clipboard && navigator.clipboard.writeText) {
