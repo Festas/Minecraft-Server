@@ -43,14 +43,33 @@ async function checkAuth() {
             return;
         }
         
+        // Store user info globally for RBAC checks
+        window.currentUser = {
+            username: data.username,
+            role: data.role
+        };
+        
         const userBadge = document.getElementById('currentUser');
         if (userBadge) {
-            userBadge.textContent = data.username || 'Admin';
+            const roleDisplay = data.role ? ` (${capitalizeFirstLetter(data.role)})` : '';
+            userBadge.textContent = (data.username || 'Admin') + roleDisplay;
+        }
+        
+        // Show user management button for Owners only
+        if (data.role === 'owner') {
+            const userMgmtBtn = document.getElementById('userManagementBtn');
+            if (userMgmtBtn) {
+                userMgmtBtn.classList.remove('hidden');
+            }
         }
     } catch (error) {
         console.error('Auth check failed:', error);
         window.location.href = '/console/login.html';
     }
+}
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 function setupNavigation() {

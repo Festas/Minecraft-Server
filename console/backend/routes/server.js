@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../auth/auth');
+const { requirePermission } = require('../middleware/rbac');
+const { PERMISSIONS } = require('../config/rbac');
 const { serverControlLimiter, backupLimiter } = require('../middleware/rateLimiter');
+const { logAuditEvent, AUDIT_EVENTS, getClientIp } = require('../services/auditLog');
 const dockerService = require('../services/docker');
 const rconService = require('../services/rcon');
 const statsService = require('../services/stats');
@@ -34,12 +37,20 @@ router.get('/status', async (req, res) => {
  * POST /server/start
  * Start the Minecraft server
  */
-router.post('/start', async (req, res) => {
+router.post('/start', requirePermission(PERMISSIONS.SERVER_START), async (req, res) => {
     try {
         const result = await dockerService.startServer();
         
         // Clear stats cache
         statsService.clearCache();
+        
+        // Log audit event
+        await logAuditEvent(
+            AUDIT_EVENTS.SERVER_START,
+            req.session.username,
+            {},
+            getClientIp(req)
+        );
         
         res.json(result);
     } catch (error) {
@@ -52,7 +63,7 @@ router.post('/start', async (req, res) => {
  * POST /server/stop
  * Stop the Minecraft server gracefully
  */
-router.post('/stop', async (req, res) => {
+router.post('/stop', requirePermission(PERMISSIONS.SERVER_STOP), async (req, res) => {
     if (!req.body.confirmed) {
         return res.status(400).json({ 
             requiresConfirmation: true,
@@ -70,6 +81,14 @@ router.post('/stop', async (req, res) => {
         // Clear stats cache
         statsService.clearCache();
         
+        // Log audit event
+        await logAuditEvent(
+            AUDIT_EVENTS.SERVER_STOP,
+            req.session.username,
+            {},
+            getClientIp(req)
+        );
+        
         res.json({ success: true, message: 'Server stopping...' });
     } catch (error) {
         console.error('Error stopping server:', error);
@@ -81,7 +100,7 @@ router.post('/stop', async (req, res) => {
  * POST /server/restart
  * Restart the Minecraft server
  */
-router.post('/restart', async (req, res) => {
+router.post('/restart', requirePermission(PERMISSIONS.SERVER_RESTART), async (req, res) => {
     if (!req.body.confirmed) {
         return res.status(400).json({ 
             requiresConfirmation: true,
@@ -99,6 +118,14 @@ router.post('/restart', async (req, res) => {
         // Clear stats cache
         statsService.clearCache();
         
+        // Log audit event
+        await logAuditEvent(
+            AUDIT_EVENTS.SERVER_RESTART,
+            req.session.username,
+            {},
+            getClientIp(req)
+        );
+        
         res.json(result);
     } catch (error) {
         console.error('Error restarting server:', error);
@@ -110,7 +137,7 @@ router.post('/restart', async (req, res) => {
  * POST /server/kill
  * Force kill the Minecraft server (emergency only)
  */
-router.post('/kill', async (req, res) => {
+router.post('/kill', requirePermission(PERMISSIONS.SERVER_KILL), async (req, res) => {
     if (!req.body.confirmed) {
         return res.status(400).json({ 
             requiresConfirmation: true,
@@ -123,6 +150,14 @@ router.post('/kill', async (req, res) => {
         
         // Clear stats cache
         statsService.clearCache();
+        
+        // Log audit event
+        await logAuditEvent(
+            AUDIT_EVENTS.SERVER_KILL,
+            req.session.username,
+            {},
+            getClientIp(req)
+        );
         
         res.json(result);
     } catch (error) {
@@ -177,7 +212,7 @@ router.post('/save-on', async (req, res) => {
  * POST /server/backup
  * Trigger manual backup
  */
-router.post('/backup', backupLimiter, async (req, res) => {
+router.post('/backup', requirePermission(PERMISSIONS.BACKUP_CREATE), backupLimiter, async (req, res) => {
     try {
         // Disable auto-save
         await rconService.saveOff();
@@ -189,6 +224,14 @@ router.post('/backup', backupLimiter, async (req, res) => {
         
         // Re-enable auto-save
         await rconService.saveOn();
+        
+        // Log audit event
+        await logAuditEvent(
+            AUDIT_EVENTS.BACKUP_CREATED,
+            req.session.username,
+            { method: 'manual' },
+            getClientIp(req)
+        );
         
         res.json({ success: true, message: 'Backup completed successfully' });
     } catch (error) {

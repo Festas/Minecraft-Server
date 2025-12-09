@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Minecraft Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/minecraft-theme.css">
+</head>
+<body>
+    <div class="console-wrapper">
+        <!-- Header -->
+        <header class="console-header">
+            <div class="header-left">
+                <h1>🎮 Festas Builds - User Management</h1>
+            </div>
+            <div class="header-right">
+                <span id="currentUser" class="user-badge">Loading...</span>
+                <button id="backBtn" class="btn btn-secondary">Back to Console</button>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="console-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav>
+                    <button class="nav-item active" data-section="users">
+                        <span>👥</span> Users
+                    </button>
+                    <button class="nav-item" data-section="audit">
+                        <span>📋</span> Audit Logs
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Access Denied Banner (hidden by default) -->
+                <div id="accessDenied" class="error-banner hidden">
+                    ⚠️ Access Denied - This page is restricted to Owner role only.
+                    <br>
+                    <button id="goBackBtn" class="btn btn-primary" style="margin-top: 10px;">Return to Console</button>
+                </div>
+
+                <!-- Users Section -->
+                <section id="users" class="content-section active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>User Management</h3>
+                            <button id="createUserBtn" class="btn btn-success">➕ Create User</button>
+                        </div>
+                        
+                        <div id="usersTable">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Last Login</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center;">Loading users...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Audit Logs Section -->
+                <section id="audit" class="content-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Audit Logs</h3>
+                            <div class="audit-filters">
+                                <input type="text" id="filterUsername" placeholder="Filter by username">
+                                <select id="filterEventType">
+                                    <option value="">All Events</option>
+                                    <option value="auth.login.success">Login Success</option>
+                                    <option value="auth.login.failure">Login Failure</option>
+                                    <option value="auth.logout">Logout</option>
+                                    <option value="user.created">User Created</option>
+                                    <option value="user.deleted">User Deleted</option>
+                                    <option value="user.role.changed">Role Changed</option>
+                                    <option value="server.start">Server Start</option>
+                                    <option value="server.stop">Server Stop</option>
+                                </select>
+                                <button id="applyFiltersBtn" class="btn btn-primary">Apply</button>
+                                <button id="exportLogsBtn" class="btn btn-secondary">Export</button>
+                            </div>
+                        </div>
+                        
+                        <div id="auditLogsTable">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Event</th>
+                                        <th>Username</th>
+                                        <th>IP Address</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditLogsTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center;">Loading audit logs...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Create New User</h3>
+            <form id="createUserForm">
+                <div class="form-group">
+                    <label for="newUsername">Username</label>
+                    <input type="text" id="newUsername" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9_-]+">
+                    <small>3-32 characters, letters, numbers, - and _ only</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPassword">Password</label>
+                    <input type="password" id="newPassword" required minlength="8">
+                    <small>Minimum 8 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newRole">Role</label>
+                    <select id="newRole" required>
+                        <option value="viewer">Viewer - Read-only access</option>
+                        <option value="moderator">Moderator - Player management</option>
+                        <option value="admin">Admin - Server management</option>
+                        <option value="owner">Owner - Full access</option>
+                    </select>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" id="cancelCreateBtn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-success">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Edit User: <span id="editUsername"></span></h3>
+            <form id="editUserForm">
+                <div class="form-group">
+                    <label for="editRole">Role</label>
+                    <select id="editRole" required>
+                        <option value="viewer">Viewer</option>
+                        <option value="moderator">Moderator</option>
+                        <option value="admin">Admin</option>
+                        <option value="owner">Owner</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editPassword">New Password (optional)</label>
+                    <input type="password" id="editPassword" minlength="8">
+                    <small>Leave blank to keep current password</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editEnabled">
+                        Account Enabled
+                    </label>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/user-management.js"></script>
+</body>
+</html>

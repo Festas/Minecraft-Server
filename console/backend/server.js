@@ -37,6 +37,8 @@ const fileRoutes = require('./routes/files');
 const backupRoutes = require('./routes/backups');
 const pluginRoutes = require('./routes/plugins');
 const pluginsV2Routes = require('./routes/pluginsV2');
+const userRoutes = require('./routes/users');
+const auditRoutes = require('./routes/audit');
 
 // Initialize Express app
 const app = express();
@@ -437,6 +439,8 @@ app.use('/api/files', fileRoutes);
 app.use('/api/backups', backupRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/v2/plugins', pluginsV2Routes); // New job-based plugin API
+app.use('/api/users', userRoutes); // User management
+app.use('/api/audit', auditRoutes); // Audit logs
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -497,6 +501,11 @@ io.on('connection', (socket) => {
 async function initializeServices() {
     // Initialize admin users
     await initializeUsers();
+    
+    // Initialize audit logging
+    const { initializeAuditLog } = require('./services/auditLog');
+    await initializeAuditLog();
+    console.log('[Startup] ✓ Audit logging initialized');
     
     // Validate Bearer token configuration
     validateTokenConfiguration();

@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { verifyCredentials } = require('../auth/auth');
+const { verifyCredentials, updateLastLogin } = require('../auth/auth');
 const { loginLimiter } = require('../middleware/rateLimiter');
 const { validations } = require('../middleware/validation');
+const { logAuditEvent, AUDIT_EVENTS, getClientIp } = require('../services/auditLog');
 
 /**
  * POST /api/login
@@ -35,11 +36,23 @@ router.post('/login', loginLimiter, validations.login, async (req, res) => {
     }
 
     try {
-        const valid = await verifyCredentials(username, password);
+        const user = await verifyCredentials(username, password);
         
-        if (valid) {
+        if (user) {
             req.session.authenticated = true;
-            req.session.username = username;
+            req.session.username = user.username;
+            req.session.role = user.role;
+            
+            // Update last login timestamp
+            await updateLastLogin(user.username);
+            
+            // Log successful login
+            await logAuditEvent(
+                AUDIT_EVENTS.LOGIN_SUCCESS,
+                user.username,
+                { role: user.role },
+                getClientIp(req)
+            );
             
             // Force session save to ensure it's persisted before responding
             req.session.save((err) => {
@@ -49,7 +62,8 @@ router.post('/login', loginLimiter, validations.login, async (req, res) => {
                 }
                 
                 console.log('[LOGIN] Login successful:', {
-                    username,
+                    username: user.username,
+                    role: user.role,
                     sessionID: process.env.NODE_ENV === 'development' ? req.sessionID : '[REDACTED]',
                     authenticated: req.session.authenticated,
                     cookieMaxAge: req.session.cookie.maxAge,
@@ -58,12 +72,24 @@ router.post('/login', loginLimiter, validations.login, async (req, res) => {
                 
                 res.json({ 
                     success: true, 
-                    message: 'Login successful'
-                    // sessionID removed for security - only logged server-side
+                    message: 'Login successful',
+                    user: {
+                        username: user.username,
+                        role: user.role
+                    }
                 });
             });
         } else {
             console.log('[LOGIN] Login failed: Invalid credentials for user:', username);
+            
+            // Log failed login attempt
+            await logAuditEvent(
+                AUDIT_EVENTS.LOGIN_FAILURE,
+                username,
+                { reason: 'invalid_credentials' },
+                getClientIp(req)
+            );
+            
             res.status(401).json({ error: 'Invalid credentials' });
         }
     } catch (error) {
@@ -76,7 +102,19 @@ router.post('/login', loginLimiter, validations.login, async (req, res) => {
  * POST /api/logout
  * Logout user
  */
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
+    const username = req.session?.username;
+    
+    // Log logout event
+    if (username) {
+        await logAuditEvent(
+            AUDIT_EVENTS.LOGOUT,
+            username,
+            {},
+            getClientIp(req)
+        );
+    }
+    
     req.session.destroy((err) => {
         if (err) {
             return res.status(500).json({ error: 'Failed to logout' });
@@ -93,13 +131,15 @@ router.get('/session', (req, res) => {
     console.log('[SESSION] Session check:', {
         sessionID: req.sessionID,
         authenticated: req.session?.authenticated || false,
-        username: req.session?.username
+        username: req.session?.username,
+        role: req.session?.role
     });
     
     if (req.session && req.session.authenticated) {
         res.json({ 
             authenticated: true, 
-            username: req.session.username 
+            username: req.session.username,
+            role: req.session.role
         });
     } else {
         res.json({ authenticated: false });
