@@ -69,13 +69,16 @@ function createPlayerItem(player) {
     playerItem.className = 'player-item' + (player.isOnline ? ' player-online' : '');
     
     // Format last seen date
-    const lastSeenDate = new Date(player.lastSeen);
+    const lastSeenDate = new Date(player.last_seen);
     const lastSeenStr = player.isOnline ? 'Online now' : formatRelativeTime(lastSeenDate);
+    
+    // Use avatar URL from API response if available, otherwise construct from username
+    const avatarUrl = player.avatar || `https://mc-heads.net/avatar/${player.username}/48`;
     
     playerItem.innerHTML = `
         <div class="player-info">
             <img 
-                src="https://mc-heads.net/avatar/${player.username}/48" 
+                src="${avatarUrl}" 
                 alt="${player.username}" 
                 class="player-avatar"
                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23666%22 width=%2248%22 height=%2248%22/></svg>'"

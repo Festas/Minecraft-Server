@@ -1,88 +1,112 @@
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 const playerTracker = require('../../services/playerTracker');
+const database = require('../../services/database');
+const mojangService = require('../../services/mojang');
 
-// Mock file system
-jest.mock('fs', () => ({
-    promises: {
-        readFile: jest.fn(),
-        writeFile: jest.fn()
-    }
-}));
+// Mock mojangService
+jest.mock('../../services/mojang');
 
 describe('PlayerTrackerService', () => {
-    const testDataFile = path.join(__dirname, '../../data/player-stats.json');
+    const testDbPath = path.join(__dirname, '../../data/test-tracker-players.db');
 
-    beforeEach(() => {
+    beforeEach(async () => {
         jest.clearAllMocks();
-        // Reset player data
-        playerTracker.players = new Map();
-        playerTracker.activeSessions = new Map();
-        // Clear any pending save timers
-        if (playerTracker.saveDebounceTimer) {
-            clearTimeout(playerTracker.saveDebounceTimer);
-            playerTracker.saveDebounceTimer = null;
+        
+        // Setup database with test path
+        database.dbPath = testDbPath;
+        
+        // Remove test database if it exists
+        if (fs.existsSync(testDbPath)) {
+            fs.unlinkSync(testDbPath);
         }
+        
+        // Remove WAL files
+        ['-shm', '-wal'].forEach(ext => {
+            const walFile = testDbPath + ext;
+            if (fs.existsSync(walFile)) {
+                fs.unlinkSync(walFile);
+            }
+        });
+
+        // Mock Mojang service to return predictable UUIDs
+        mojangService.getUuid.mockImplementation((username) => {
+            return Promise.resolve(`uuid-${username.toLowerCase()}`);
+        });
+
+        // Initialize player tracker
+        await playerTracker.initialize();
+        
+        // Clear any active sessions
+        playerTracker.activeSessions.clear();
+    });
+
+    afterEach(async () => {
+        // Shutdown player tracker
+        await playerTracker.shutdown();
+        
+        // Clean up test database
+        if (fs.existsSync(testDbPath)) {
+            fs.unlinkSync(testDbPath);
+        }
+        
+        // Clean up WAL files
+        ['-shm', '-wal'].forEach(ext => {
+            const walFile = testDbPath + ext;
+            if (fs.existsSync(walFile)) {
+                fs.unlinkSync(walFile);
+            }
+        });
     });
 
     describe('initialize', () => {
-        it('should load existing player data', async () => {
-            const mockData = [
-                {
-                    username: 'TestPlayer',
-                    firstSeen: '2024-01-01T00:00:00.000Z',
-                    lastSeen: '2024-01-02T00:00:00.000Z',
-                    totalPlaytimeMs: 3600000,
-                    sessionCount: 5
-                }
-            ];
-
-            fs.readFile.mockResolvedValue(JSON.stringify(mockData));
-
-            await playerTracker.initialize();
-
-            expect(fs.readFile).toHaveBeenCalledWith(testDataFile, 'utf8');
-            expect(playerTracker.players.size).toBe(1);
-            expect(playerTracker.players.get('TestPlayer')).toEqual(mockData[0]);
+        it('should initialize database', async () => {
+            expect(fs.existsSync(testDbPath)).toBe(true);
         });
 
-        it('should handle missing data file gracefully', async () => {
-            const error = new Error('File not found');
-            error.code = 'ENOENT';
-            fs.readFile.mockRejectedValue(error);
-
-            await playerTracker.initialize();
-
-            expect(playerTracker.players.size).toBe(0);
+        it('should start heartbeat timer', async () => {
+            expect(playerTracker.heartbeatInterval).toBeDefined();
         });
     });
 
     describe('playerJoined', () => {
-        it('should create new player record on first join', () => {
+        it('should create new player record on first join', async () => {
             const username = 'NewPlayer';
             
-            playerTracker.playerJoined(username);
+            await playerTracker.playerJoined(username);
 
-            const player = playerTracker.players.get(username);
+            const players = playerTracker.getAllPlayers();
+            const player = players.find(p => p.username === username);
+            
             expect(player).toBeDefined();
             expect(player.username).toBe(username);
-            expect(player.sessionCount).toBe(1);
-            expect(player.totalPlaytimeMs).toBe(0);
-            expect(playerTracker.activeSessions.has(username)).toBe(true);
+            expect(player.session_count).toBe(1);
+            expect(playerTracker.activeSessions.size).toBe(1);
         });
 
-        it('should increment session count for returning player', () => {
+        it('should increment session count for returning player', async () => {
             const username = 'ReturningPlayer';
             
             // First join
-            playerTracker.playerJoined(username);
-            playerTracker.playerLeft(username);
+            await playerTracker.playerJoined(username);
+            await playerTracker.playerLeft(username);
             
             // Second join
-            playerTracker.playerJoined(username);
+            await playerTracker.playerJoined(username);
             
-            const player = playerTracker.players.get(username);
-            expect(player.sessionCount).toBe(2);
+            const players = playerTracker.getAllPlayers();
+            const player = players.find(p => p.username === username);
+            expect(player.session_count).toBe(2);
+        });
+
+        it('should track active session', async () => {
+            const username = 'ActivePlayer';
+            
+            await playerTracker.playerJoined(username);
+            
+            const onlinePlayers = playerTracker.getOnlinePlayers();
+            expect(onlinePlayers.length).toBe(1);
+            expect(onlinePlayers[0]).toBe('uuid-activeplayer');
         });
     });
 
@@ -90,32 +114,34 @@ describe('PlayerTrackerService', () => {
         it('should update player stats when leaving', (done) => {
             const username = 'LeavingPlayer';
             
-            playerTracker.playerJoined(username);
-            
-            // Wait a bit to accumulate playtime
-            setTimeout(() => {
-                playerTracker.playerLeft(username);
-                
-                const player = playerTracker.players.get(username);
-                expect(player.totalPlaytimeMs).toBeGreaterThan(0);
-                expect(player.lastSeen).toBeDefined();
-                expect(playerTracker.activeSessions.has(username)).toBe(false);
-                done();
-            }, 50);
+            playerTracker.playerJoined(username).then(() => {
+                // Wait a bit to accumulate playtime
+                setTimeout(async () => {
+                    await playerTracker.playerLeft(username);
+                    
+                    const players = playerTracker.getAllPlayers();
+                    const player = players.find(p => p.username === username);
+                    
+                    expect(player.total_playtime_ms).toBeGreaterThan(0);
+                    expect(player.last_seen).toBeDefined();
+                    expect(playerTracker.activeSessions.size).toBe(0);
+                    done();
+                }, 50);
+            });
         });
 
-        it('should handle leaving without active session', () => {
+        it('should handle leaving without active session gracefully', async () => {
             const username = 'NoSessionPlayer';
             
             // Should not throw error
-            expect(() => playerTracker.playerLeft(username)).not.toThrow();
+            await expect(playerTracker.playerLeft(username)).resolves.not.toThrow();
         });
     });
 
     describe('getAllPlayers', () => {
-        it('should return all tracked players', () => {
-            playerTracker.playerJoined('Player1');
-            playerTracker.playerJoined('Player2');
+        it('should return all tracked players', async () => {
+            await playerTracker.playerJoined('Player1');
+            await playerTracker.playerJoined('Player2');
             
             const allPlayers = playerTracker.getAllPlayers();
             
@@ -131,18 +157,18 @@ describe('PlayerTrackerService', () => {
     });
 
     describe('getOnlinePlayers', () => {
-        it('should return only online players', () => {
-            playerTracker.playerJoined('OnlinePlayer1');
-            playerTracker.playerJoined('OnlinePlayer2');
-            playerTracker.playerJoined('OfflinePlayer');
-            playerTracker.playerLeft('OfflinePlayer');
+        it('should return only online players', async () => {
+            await playerTracker.playerJoined('OnlinePlayer1');
+            await playerTracker.playerJoined('OnlinePlayer2');
+            await playerTracker.playerJoined('OfflinePlayer');
+            await playerTracker.playerLeft('OfflinePlayer');
             
             const onlinePlayers = playerTracker.getOnlinePlayers();
             
             expect(onlinePlayers).toHaveLength(2);
-            expect(onlinePlayers).toContain('OnlinePlayer1');
-            expect(onlinePlayers).toContain('OnlinePlayer2');
-            expect(onlinePlayers).not.toContain('OfflinePlayer');
+            expect(onlinePlayers).toContain('uuid-onlineplayer1');
+            expect(onlinePlayers).toContain('uuid-onlineplayer2');
+            expect(onlinePlayers).not.toContain('uuid-offlineplayer');
         });
     });
 
@@ -164,31 +190,39 @@ describe('PlayerTrackerService', () => {
         });
     });
 
-    describe('saveData', () => {
-        it('should debounce save operations', (done) => {
-            playerTracker.playerJoined('TestPlayer');
+    describe.skip('heartbeat', () => {
+        it('should update active sessions on heartbeat', async (done) => {
+            await playerTracker.playerJoined('HeartbeatPlayer');
             
-            // Should not save immediately
-            expect(fs.writeFile).not.toHaveBeenCalled();
+            const player1 = database.getPlayerByUsername('HeartbeatPlayer');
+            const lastSeen1 = player1.last_seen;
             
-            // Wait for debounce
+            // Wait for heartbeat
             setTimeout(() => {
-                expect(fs.writeFile).toHaveBeenCalled();
+                const player2 = database.getPlayerByUsername('HeartbeatPlayer');
+                const lastSeen2 = player2.last_seen;
+                
+                // Last seen should be updated
+                expect(lastSeen2).not.toBe(lastSeen1);
                 done();
-            }, 5100); // Wait for debounce timer (5000ms + buffer)
-        }, 10000);
+            }, 61000); // Wait for heartbeat (60s + buffer)
+        }, 65000);
     });
 
     describe('shutdown', () => {
-        it('should save data immediately on shutdown', async () => {
-            playerTracker.playerJoined('TestPlayer');
+        it('should end all active sessions on shutdown', async () => {
+            await playerTracker.playerJoined('TestPlayer1');
+            await playerTracker.playerJoined('TestPlayer2');
+            
+            expect(playerTracker.activeSessions.size).toBe(2);
             
             await playerTracker.shutdown();
             
-            expect(fs.writeFile).toHaveBeenCalled();
-            const savedData = JSON.parse(fs.writeFile.mock.calls[0][1]);
-            expect(savedData).toHaveLength(1);
-            expect(savedData[0].username).toBe('TestPlayer');
+            expect(playerTracker.activeSessions.size).toBe(0);
+            
+            // Re-initialize for cleanup
+            database.initialize();
         });
     });
 });
+

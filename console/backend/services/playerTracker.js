@@ -1,141 +1,152 @@
-const fs = require('fs').promises;
-const path = require('path');
 const EventEmitter = require('events');
+const database = require('./database');
+const mojangService = require('./mojang');
 
 /**
  * Player Tracking Service
  * Tracks all players who have joined the server, their playtime, and last seen timestamp
+ * Uses SQLite database for persistence and Mojang API for UUID tracking
  */
 class PlayerTrackerService extends EventEmitter {
     constructor() {
         super();
-        this.players = new Map(); // username -> player data
-        this.activeSessions = new Map(); // username -> join timestamp
-        this.dataFile = path.join(__dirname, '../data/player-stats.json');
-        this.saveDebounceTimer = null;
-        this.saveDebounceMs = 5000; // Save 5 seconds after last change
+        this.activeSessions = new Map(); // uuid -> { username, startTime }
+        this.heartbeatInterval = null;
+        this.heartbeatIntervalMs = 60000; // 60 seconds
     }
 
     /**
-     * Initialize the player tracker - load existing data
+     * Initialize the player tracker
      */
     async initialize() {
         try {
-            await this.loadData();
-            console.log(`Player tracker initialized with ${this.players.size} players`);
+            // Initialize database
+            database.initialize();
+            
+            // Start heartbeat timer
+            this.startHeartbeat();
+            
+            const playerCount = database.getPlayerCount();
+            console.log(`Player tracker initialized with ${playerCount} players`);
         } catch (error) {
             console.error('Error initializing player tracker:', error);
-            // Continue with empty player list if file doesn't exist
+            throw error;
         }
     }
 
     /**
-     * Load player data from JSON file
+     * Start periodic heartbeat to update active sessions
      */
-    async loadData() {
-        try {
-            const data = await fs.readFile(this.dataFile, 'utf8');
-            const playersArray = JSON.parse(data);
-            
-            // Convert array to Map for efficient lookups
-            this.players = new Map(
-                playersArray.map(player => [player.username, player])
-            );
-        } catch (error) {
-            if (error.code === 'ENOENT') {
-                // File doesn't exist yet - start fresh
-                this.players = new Map();
-            } else {
-                throw error;
-            }
+    startHeartbeat() {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+        }
+
+        this.heartbeatInterval = setInterval(() => {
+            this.updateActiveSessions();
+        }, this.heartbeatIntervalMs);
+
+        console.log(`Player heartbeat started (interval: ${this.heartbeatIntervalMs}ms)`);
+    }
+
+    /**
+     * Stop heartbeat timer
+     */
+    stopHeartbeat() {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = null;
         }
     }
 
     /**
-     * Save player data to JSON file (debounced)
+     * Update all active sessions (called by heartbeat)
      */
-    async saveData() {
-        // Clear existing debounce timer
-        if (this.saveDebounceTimer) {
-            clearTimeout(this.saveDebounceTimer);
-        }
-
-        // Set new debounce timer
-        this.saveDebounceTimer = setTimeout(async () => {
+    updateActiveSessions() {
+        for (const [uuid, session] of this.activeSessions) {
             try {
-                // Convert Map to array for JSON serialization
-                const playersArray = Array.from(this.players.values());
-                await fs.writeFile(
-                    this.dataFile,
-                    JSON.stringify(playersArray, null, 2),
-                    'utf8'
-                );
+                database.updateLastSeen(uuid);
             } catch (error) {
-                console.error('Error saving player data:', error);
+                console.error(`Error updating session for ${session.username}:`, error);
             }
-        }, this.saveDebounceMs);
+        }
+
+        if (this.activeSessions.size > 0) {
+            console.log(`Heartbeat: Updated ${this.activeSessions.size} active session(s)`);
+        }
     }
 
     /**
      * Handle player join event
      * @param {string} username - Player username
      */
-    playerJoined(username) {
-        const now = new Date().toISOString();
-        
-        // Get or create player record
-        let player = this.players.get(username);
-        if (!player) {
-            player = {
-                username,
-                firstSeen: now,
-                lastSeen: now,
-                totalPlaytimeMs: 0,
-                sessionCount: 0
-            };
-            this.players.set(username, player);
-        }
+    async playerJoined(username) {
+        try {
+            // Get UUID from Mojang API
+            const uuid = await mojangService.getUuid(username);
+            if (!uuid) {
+                console.error(`Failed to get UUID for ${username}`);
+                return;
+            }
 
-        // Start tracking this session
-        this.activeSessions.set(username, Date.now());
-        player.sessionCount++;
-        
-        this.saveData();
-        this.emit('player-joined', { username, player });
-        
-        console.log(`Player joined: ${username}`);
+            const now = new Date().toISOString();
+            const sessionStart = Date.now();
+
+            // Upsert player record
+            database.upsertPlayer(uuid, username, now);
+
+            // Start session
+            database.startSession(uuid, sessionStart);
+
+            // Track active session
+            this.activeSessions.set(uuid, { username, startTime: sessionStart });
+
+            this.emit('player-joined', { username, uuid });
+
+            console.log(`Player joined: ${username} (UUID: ${uuid})`);
+        } catch (error) {
+            console.error(`Error handling player join for ${username}:`, error);
+        }
     }
 
     /**
      * Handle player leave event
      * @param {string} username - Player username
      */
-    playerLeft(username) {
-        const now = new Date().toISOString();
-        const sessionStart = this.activeSessions.get(username);
-        
-        if (!sessionStart) {
-            console.warn(`Player left but no active session found: ${username}`);
-            return;
-        }
+    async playerLeft(username) {
+        try {
+            // Find UUID from active sessions or database
+            let uuid = null;
+            for (const [sessionUuid, session] of this.activeSessions) {
+                if (session.username === username) {
+                    uuid = sessionUuid;
+                    break;
+                }
+            }
 
-        // Calculate session duration
-        const sessionDuration = Date.now() - sessionStart;
-        
-        // Update player record
-        const player = this.players.get(username);
-        if (player) {
-            player.lastSeen = now;
-            player.totalPlaytimeMs += sessionDuration;
-            
-            this.saveData();
-            this.emit('player-left', { username, player, sessionDuration });
-        }
+            if (!uuid) {
+                // Try to get from database
+                const player = database.getPlayerByUsername(username);
+                if (player) {
+                    uuid = player.uuid;
+                } else {
+                    console.warn(`Player left but no session found: ${username}`);
+                    return;
+                }
+            }
 
-        // Remove active session
-        this.activeSessions.delete(username);
-        
-        console.log(`Player left: ${username} (session: ${this.formatDuration(sessionDuration)})`);
+            // End session and calculate duration
+            const sessionDuration = database.endSession(uuid);
+
+            // Remove from active sessions
+            this.activeSessions.delete(uuid);
+
+            this.emit('player-left', { username, uuid, sessionDuration });
+
+            console.log(`Player left: ${username} (session: ${this.formatDuration(sessionDuration)})`);
+        } catch (error) {
+            console.error(`Error handling player leave for ${username}:`, error);
+        }
     }
 
     /**
@@ -143,24 +154,32 @@ class PlayerTrackerService extends EventEmitter {
      * @returns {Array} Array of player objects
      */
     getAllPlayers() {
-        return Array.from(this.players.values());
+        return database.getAllPlayers();
     }
 
     /**
-     * Get currently online players
-     * @returns {Array} Array of usernames currently online
+     * Get currently online players (by UUID)
+     * @returns {Array} Array of UUIDs currently online
      */
     getOnlinePlayers() {
         return Array.from(this.activeSessions.keys());
     }
 
     /**
-     * Get player statistics
+     * Get currently online player usernames
+     * @returns {Array} Array of usernames currently online
+     */
+    getOnlinePlayerUsernames() {
+        return Array.from(this.activeSessions.values()).map(s => s.username);
+    }
+
+    /**
+     * Get player statistics by username
      * @param {string} username - Player username
      * @returns {Object|null} Player data or null if not found
      */
     getPlayerStats(username) {
-        return this.players.get(username) || null;
+        return database.getPlayerByUsername(username);
     }
 
     /**
@@ -186,25 +205,32 @@ class PlayerTrackerService extends EventEmitter {
     }
 
     /**
-     * Shutdown - save any pending data
+     * Shutdown - close database and stop heartbeat
      */
     async shutdown() {
-        // Clear debounce timer and save immediately
-        if (this.saveDebounceTimer) {
-            clearTimeout(this.saveDebounceTimer);
-            this.saveDebounceTimer = null;
-        }
-
         try {
-            const playersArray = Array.from(this.players.values());
-            await fs.writeFile(
-                this.dataFile,
-                JSON.stringify(playersArray, null, 2),
-                'utf8'
-            );
-            console.log('Player tracker data saved on shutdown');
+            // Stop heartbeat
+            this.stopHeartbeat();
+
+            // End all active sessions
+            for (const [uuid, session] of this.activeSessions) {
+                try {
+                    database.endSession(uuid);
+                    console.log(`Ended session for ${session.username}`);
+                } catch (error) {
+                    console.error(`Error ending session for ${session.username}:`, error);
+                }
+            }
+
+            // Clear active sessions
+            this.activeSessions.clear();
+
+            // Close database
+            database.close();
+
+            console.log('Player tracker shutdown complete');
         } catch (error) {
-            console.error('Error saving player data on shutdown:', error);
+            console.error('Error during player tracker shutdown:', error);
         }
     }
 }
