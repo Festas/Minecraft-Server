@@ -11,6 +11,7 @@ const { requireAuthOrToken, skipCsrfForBearer } = require('../auth/bearerAuth');
 const rateLimit = require('express-rate-limit');
 const pluginGateway = require('../services/pluginGateway');
 const { logAuditEvent, AUDIT_EVENTS, getClientIp } = require('../services/auditLog');
+const playerTracker = require('../services/playerTracker');
 
 // Rate limiter for plugin integration endpoints
 const pluginIntegrationRateLimiter = rateLimit({
@@ -165,6 +166,111 @@ router.get('/dynmap/health', async (req, res) => {
         console.error('[PluginIntegrations] Dynmap health error:', error.message);
         
         res.status(500).json({
+            success: false,
+            error: error.message,
+            plugin: 'dynmap'
+        });
+    }
+});
+
+/**
+ * GET /api/plugins/dynmap/configuration
+ * Get Dynmap configuration for embedding map
+ */
+router.get('/dynmap/configuration', async (req, res) => {
+    try {
+        const config = await pluginGateway.call('dynmap', 'getConfiguration');
+        
+        res.json({
+            success: true,
+            plugin: 'dynmap',
+            data: config,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[PluginIntegrations] Dynmap configuration error:', error.message);
+        
+        res.status(error.message.includes('not ready') ? 503 : 500).json({
+            success: false,
+            error: error.message,
+            plugin: 'dynmap'
+        });
+    }
+});
+
+/**
+ * GET /api/plugins/dynmap/players-enriched
+ * Get enriched player data combining Dynmap positions with player tracker stats
+ */
+router.get('/dynmap/players-enriched', async (req, res) => {
+    try {
+        // Get players from Dynmap (positions, world, health, etc.)
+        const dynmapPlayers = await pluginGateway.call('dynmap', 'getPlayers');
+        
+        // Get all player stats from tracker
+        const allPlayers = playerTracker.getAllPlayers();
+        const onlinePlayerUuids = playerTracker.getOnlinePlayers();
+        
+        // Create a map of username to player stats
+        const statsMap = {};
+        allPlayers.forEach(player => {
+            statsMap[player.username.toLowerCase()] = {
+                uuid: player.uuid,
+                avatar: `https://mc-heads.net/avatar/${player.username}/48`,
+                totalPlaytime: player.total_playtime_ms,
+                formattedPlaytime: playerTracker.formatDuration(player.total_playtime_ms),
+                sessionCount: player.session_count,
+                firstSeen: player.first_seen,
+                lastSeen: player.last_seen,
+                isOnline: onlinePlayerUuids.includes(player.uuid)
+            };
+        });
+        
+        // Enrich Dynmap player data with stats
+        const enrichedPlayers = dynmapPlayers.map(player => {
+            const stats = statsMap[player.name.toLowerCase()] || {};
+            return {
+                name: player.name,
+                displayName: player.displayName || player.name,
+                world: player.world,
+                x: player.x,
+                y: player.y,
+                z: player.z,
+                health: player.health,
+                armor: player.armor,
+                // Add enriched data
+                avatar: stats.avatar || `https://mc-heads.net/avatar/${player.name}/48`,
+                uuid: stats.uuid || null,
+                totalPlaytime: stats.totalPlaytime || 0,
+                formattedPlaytime: stats.formattedPlaytime || '0s',
+                sessionCount: stats.sessionCount || 0,
+                firstSeen: stats.firstSeen || null,
+                lastSeen: stats.lastSeen || null,
+                isOnline: stats.isOnline || false
+            };
+        });
+        
+        // Log access
+        await logAuditEvent(
+            AUDIT_EVENTS.API_ACCESS,
+            req.session?.username || 'api',
+            { endpoint: '/api/plugins/dynmap/players-enriched', playerCount: enrichedPlayers.length },
+            getClientIp(req)
+        );
+        
+        res.json({
+            success: true,
+            plugin: 'dynmap',
+            data: {
+                players: enrichedPlayers,
+                count: enrichedPlayers.length
+            },
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('[PluginIntegrations] Dynmap enriched players error:', error.message);
+        
+        res.status(error.message.includes('not ready') ? 503 : 500).json({
             success: false,
             error: error.message,
             plugin: 'dynmap'
