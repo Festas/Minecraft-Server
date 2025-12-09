@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map & Dashboard - Minecraft Server Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/minecraft-theme.css">
+    <link rel="stylesheet" href="css/theme-light.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+    <link rel="stylesheet" href="css/map.css">
+</head>
+<body>
+    <div class="console-wrapper">
+        <!-- Header -->
+        <header class="console-header">
+            <div class="header-left">
+                <h1>🗺️ Map & Player Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <button id="themeToggle" aria-label="Toggle theme">
+                    <span class="theme-icon">☀️</span>
+                    <span class="theme-text">Light Mode</span>
+                </button>
+                <span id="currentUser" class="user-badge">Admin</span>
+                <button id="backToConsole" class="btn btn-secondary">← Back to Console</button>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="map-layout">
+            <!-- Map Configuration Panel (collapsible on mobile) -->
+            <aside class="map-sidebar" id="mapSidebar">
+                <div class="sidebar-header">
+                    <h3>Map Controls</h3>
+                    <button class="btn btn-sm" id="toggleSidebar" aria-label="Toggle sidebar">◀</button>
+                </div>
+                
+                <!-- Map Source Selection -->
+                <div class="card">
+                    <h4>Map Source</h4>
+                    <div id="mapSourceStatus" class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Checking...</span>
+                    </div>
+                    <select id="mapSourceSelect" class="select">
+                        <option value="dynmap">Dynmap</option>
+                        <option value="bluemap">BlueMap</option>
+                    </select>
+                    <p class="help-text">Select your preferred map plugin</p>
+                </div>
+
+                <!-- World Selection -->
+                <div class="card">
+                    <h4>World</h4>
+                    <select id="worldSelect" class="select">
+                        <option value="">Loading worlds...</option>
+                    </select>
+                </div>
+
+                <!-- Player List -->
+                <div class="card">
+                    <h4>Online Players <span id="onlineCount">(0)</span></h4>
+                    <div id="mapPlayersList" class="map-players-list">
+                        <p class="no-players">No players online</p>
+                    </div>
+                </div>
+
+                <!-- Refresh Controls -->
+                <div class="card">
+                    <h4>Auto-Refresh</h4>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="autoRefreshToggle" checked>
+                        <span>Update player positions every 5s</span>
+                    </label>
+                    <button id="refreshNowBtn" class="btn btn-primary btn-block">
+                        🔄 Refresh Now
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Map Display Area -->
+            <main class="map-content">
+                <!-- Map iframe container -->
+                <div id="mapContainer" class="map-container">
+                    <div id="mapPlaceholder" class="map-placeholder">
+                        <div class="placeholder-content">
+                            <h2>🗺️ Map & Player Dashboard</h2>
+                            <p>Configure Dynmap or BlueMap integration to view your world map</p>
+                            <div id="setupInstructions" class="setup-instructions">
+                                <h3>Setup Instructions:</h3>
+                                <ol>
+                                    <li>Install Dynmap or BlueMap plugin on your server</li>
+                                    <li>Configure the plugin to enable web access</li>
+                                    <li>Set environment variables in .env:
+                                        <ul>
+                                            <li><code>DYNMAP_ENABLED=true</code></li>
+                                            <li><code>DYNMAP_BASE_URL=http://your-server:8123</code></li>
+                                        </ul>
+                                    </li>
+                                    <li>Restart the console backend</li>
+                                </ol>
+                                <p class="help-text">See <a href="../docs/map-dashboard.md" target="_blank">documentation</a> for detailed setup instructions.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <iframe 
+                        id="mapFrame" 
+                        class="map-frame hidden"
+                        title="Minecraft World Map"
+                        sandbox="allow-scripts allow-same-origin"
+                    ></iframe>
+                </div>
+
+                <!-- Player Info Modal -->
+                <div id="playerModal" class="modal hidden" role="dialog" aria-labelledby="playerModalTitle">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="playerModalTitle">Player Information</h3>
+                            <button class="modal-close" aria-label="Close modal">&times;</button>
+                        </div>
+                        <div class="modal-body" id="playerModalBody">
+                            <!-- Player info will be dynamically inserted here -->
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="closeModalBtn">Close</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Player Overlay (for clickable markers on top of iframe) -->
+                <div id="playerOverlay" class="player-overlay hidden">
+                    <!-- Player markers will be positioned absolutely here -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts - Load in correct order for dependencies -->
+    <script src="js/themeManager.js"></script>
+    <script src="js/accessibility.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/map.js"></script>
+</body>
+</html>

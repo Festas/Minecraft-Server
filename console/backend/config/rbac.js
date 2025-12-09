@@ -89,7 +89,12 @@ const PERMISSIONS = {
     
     // Audit Logs
     AUDIT_VIEW: 'audit:view',
-    AUDIT_EXPORT: 'audit:export'
+    AUDIT_EXPORT: 'audit:export',
+    
+    // Map & Dashboard
+    MAP_VIEW: 'map:view',
+    MAP_PLAYER_TELEPORT: 'map:player:teleport',
+    MAP_PLAYER_INFO: 'map:player:info'
 };
 
 /**
@@ -154,6 +159,11 @@ const ROLE_PERMISSIONS = {
         // View users but cannot manage
         PERMISSIONS.USER_VIEW,
         
+        // Map & Dashboard
+        PERMISSIONS.MAP_VIEW,
+        PERMISSIONS.MAP_PLAYER_TELEPORT,
+        PERMISSIONS.MAP_PLAYER_INFO,
+        
         // No audit log access
     ],
     
@@ -190,6 +200,11 @@ const ROLE_PERMISSIONS = {
         
         // Configuration (read-only)
         PERMISSIONS.CONFIG_VIEW,
+        
+        // Map & Dashboard (limited - can view and teleport)
+        PERMISSIONS.MAP_VIEW,
+        PERMISSIONS.MAP_PLAYER_TELEPORT,
+        PERMISSIONS.MAP_PLAYER_INFO,
     ],
     
     [ROLES.VIEWER]: [
@@ -214,6 +229,10 @@ const ROLE_PERMISSIONS = {
         
         // Configuration (view-only)
         PERMISSIONS.CONFIG_VIEW,
+        
+        // Map & Dashboard (view-only, no teleport)
+        PERMISSIONS.MAP_VIEW,
+        PERMISSIONS.MAP_PLAYER_INFO,
     ]
 };
 
