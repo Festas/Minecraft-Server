@@ -11,7 +11,6 @@ const pluginManager = require('../services/pluginManager');
 
 // Configure multer for file uploads
 const UPLOAD_DIR = process.env.PLUGIN_UPLOAD_DIR || path.join(__dirname, '../data/plugin-uploads');
-const fs = require('fs').promises;
 
 // Ensure upload directory exists
 (async () => {

@@ -126,7 +126,12 @@ const PERMISSIONS = {
     // Event Logging & Notifications
     LOG_VIEW: 'log:view',
     LOG_EXPORT: 'log:export',
-    NOTIFICATION_MANAGE: 'notification:manage'
+    NOTIFICATION_MANAGE: 'notification:manage',
+    
+    // Analytics & Insights
+    ANALYTICS_VIEW: 'analytics:view',
+    ANALYTICS_EXPORT: 'analytics:export',
+    ANALYTICS_MANAGE: 'analytics:manage'
 };
 
 /**
@@ -228,6 +233,11 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.LOG_EXPORT,
         PERMISSIONS.NOTIFICATION_MANAGE,
         
+        // Analytics & Insights
+        PERMISSIONS.ANALYTICS_VIEW,
+        PERMISSIONS.ANALYTICS_EXPORT,
+        PERMISSIONS.ANALYTICS_MANAGE,
+        
         // No audit log access
     ],
     
@@ -290,6 +300,9 @@ const ROLE_PERMISSIONS = {
         // Event Logging & Notifications
         PERMISSIONS.LOG_VIEW,
         PERMISSIONS.NOTIFICATION_MANAGE,
+        
+        // Analytics & Insights (view only)
+        PERMISSIONS.ANALYTICS_VIEW,
     ],
     
     [ROLES.VIEWER]: [
@@ -332,6 +345,9 @@ const ROLE_PERMISSIONS = {
         // Event Logging & Notifications (view-only)
         PERMISSIONS.LOG_VIEW,
         PERMISSIONS.NOTIFICATION_MANAGE,
+        
+        // Analytics & Insights (view only)
+        PERMISSIONS.ANALYTICS_VIEW,
     ]
 };
 
