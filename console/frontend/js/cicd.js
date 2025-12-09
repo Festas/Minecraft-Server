@@ -9,6 +9,20 @@ let currentStatus = '';
 let autoRefreshInterval = null;
 
 /**
+ * Helper function to get step status icon
+ */
+function getStepStatusIcon(conclusion) {
+    switch (conclusion) {
+        case 'success':
+            return '✅';
+        case 'failure':
+            return '❌';
+        default:
+            return '⏳';
+    }
+}
+
+/**
  * Helper function to escape HTML to prevent XSS
  */
 function escapeHtml(text) {
@@ -292,7 +306,7 @@ async function viewRunDetails(runId) {
                             <div class="steps-list">
                                 ${job.steps.map(step => `
                                     <div class="step-item">
-                                        <span class="step-status">${step.conclusion === 'success' ? '✅' : step.conclusion === 'failure' ? '❌' : '⏳'}</span>
+                                        <span class="step-status">${getStepStatusIcon(step.conclusion)}</span>
                                         <span class="step-name">${escapeHtml(step.name)}</span>
                                     </div>
                                 `).join('')}

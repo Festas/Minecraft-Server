@@ -62,6 +62,14 @@ router.get('/status', requireAuth, requirePermission(PERMISSIONS.CICD_VIEW), cic
             `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs?per_page=10`
         );
 
+        // Calculate statistics in a single pass
+        const stats = (runs.workflow_runs || []).reduce((acc, run) => {
+            if (run.conclusion === 'success') acc.success++;
+            if (run.conclusion === 'failure') acc.failed++;
+            if (run.status === 'in_progress') acc.inProgress++;
+            return acc;
+        }, { success: 0, failed: 0, inProgress: 0 });
+
         const overview = {
             totalRuns: runs.total_count || 0,
             recentRuns: runs.workflow_runs?.slice(0, 5).map(run => ({
@@ -76,9 +84,7 @@ router.get('/status', requireAuth, requirePermission(PERMISSIONS.CICD_VIEW), cic
                 runNumber: run.run_number,
                 url: run.html_url
             })) || [],
-            success: runs.workflow_runs?.filter(r => r.conclusion === 'success').length || 0,
-            failed: runs.workflow_runs?.filter(r => r.conclusion === 'failure').length || 0,
-            inProgress: runs.workflow_runs?.filter(r => r.status === 'in_progress').length || 0
+            ...stats
         };
 
         res.json(overview);
