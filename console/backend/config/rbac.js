@@ -109,7 +109,12 @@ const PERMISSIONS = {
     AUTOMATION_DELETE: 'automation:delete',
     AUTOMATION_EXECUTE: 'automation:execute',
     AUTOMATION_VIEW: 'automation:view',
-    AUTOMATION_HISTORY: 'automation:history'
+    AUTOMATION_HISTORY: 'automation:history',
+    
+    // Event Logging & Notifications
+    LOG_VIEW: 'log:view',
+    LOG_EXPORT: 'log:export',
+    NOTIFICATION_MANAGE: 'notification:manage'
 };
 
 /**
@@ -194,6 +199,11 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.AUTOMATION_VIEW,
         PERMISSIONS.AUTOMATION_HISTORY,
         
+        // Event Logging & Notifications
+        PERMISSIONS.LOG_VIEW,
+        PERMISSIONS.LOG_EXPORT,
+        PERMISSIONS.NOTIFICATION_MANAGE,
+        
         // No audit log access
     ],
     
@@ -246,6 +256,10 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.AUTOMATION_EXECUTE,
         PERMISSIONS.AUTOMATION_VIEW,
         PERMISSIONS.AUTOMATION_HISTORY,
+        
+        // Event Logging & Notifications
+        PERMISSIONS.LOG_VIEW,
+        PERMISSIONS.NOTIFICATION_MANAGE,
     ],
     
     [ROLES.VIEWER]: [
@@ -279,6 +293,10 @@ const ROLE_PERMISSIONS = {
         // Automation & Scheduler (view-only)
         PERMISSIONS.AUTOMATION_VIEW,
         PERMISSIONS.AUTOMATION_HISTORY,
+        
+        // Event Logging & Notifications (view-only)
+        PERMISSIONS.LOG_VIEW,
+        PERMISSIONS.NOTIFICATION_MANAGE,
     ]
 };
 

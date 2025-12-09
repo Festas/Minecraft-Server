@@ -42,6 +42,8 @@ const pluginIntegrationsRoutes = require('./routes/pluginIntegrations');
 const userRoutes = require('./routes/users');
 const auditRoutes = require('./routes/audit');
 const automationRoutes = require('./routes/automation');
+const loggingRoutes = require('./routes/logging');
+
 
 // Initialize Express app
 const app = express();
@@ -446,6 +448,7 @@ app.use('/api/plugins', pluginIntegrationsRoutes); // Plugin integrations (Dynma
 app.use('/api/users', userRoutes); // User management
 app.use('/api/audit', auditRoutes); // Audit logs
 app.use('/api/automation', automationRoutes); // Automation & Scheduler
+app.use('/api', loggingRoutes); // Event logging and notifications
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -529,6 +532,57 @@ async function initializeServices() {
     // Initialize automation service
     await automationService.initialize();
     console.log('[Startup] ✓ Automation service initialized');
+    
+    // Initialize event logger
+    const { eventLogger } = require('./services/eventLogger');
+    eventLogger.initialize();
+    console.log('[Startup] ✓ Event logger initialized');
+    
+    // Initialize notification service
+    const notificationService = require('./services/notificationService');
+    notificationService.initialize();
+    console.log('[Startup] ✓ Notification service initialized');
+    
+    // Connect event logger to notification service
+    eventLogger.on('event', async (event) => {
+        try {
+            // Get active users from authentication service
+            const { getAllUsers } = require('./auth/auth');
+            const allUsers = await getAllUsers();
+            
+            // Filter users by role if needed (e.g., only notify admins for critical events)
+            let targetUsers = allUsers.map(u => u.username);
+            
+            // For critical events, notify all users; for others, notify only admin/owner roles
+            if (event.severity !== 'critical') {
+                targetUsers = allUsers
+                    .filter(u => ['owner', 'admin'].includes(u.role))
+                    .map(u => u.username);
+            }
+            
+            // Create notifications for target users
+            for (const userId of targetUsers) {
+                notificationService.createNotification(userId, event);
+            }
+        } catch (error) {
+            console.error('[Notifications] Error creating notifications for event:', error);
+        }
+    });
+    
+    // Connect notification service to WebSocket
+    notificationService.on('notification', ({ userId, notification, channels }) => {
+        // Send notification to user via WebSocket
+        io.sockets.sockets.forEach((socket) => {
+            if (socket.request.session?.username === userId) {
+                if (channels.includes('toast')) {
+                    socket.emit('toast-notification', notification);
+                }
+                if (channels.includes('web')) {
+                    socket.emit('notification', notification);
+                }
+            }
+        });
+    });
 
     // Initialize plugin gateway and adapters
     await initializePluginGateway();
