@@ -191,7 +191,7 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.COMMAND_EXECUTE,
         PERMISSIONS.COMMAND_VIEW,
         
-        // Player Management (no OP/DEOP)
+        // Player Management (no OP/DEOP, no inventory view)
         PERMISSIONS.PLAYER_KICK,
         PERMISSIONS.PLAYER_BAN,
         PERMISSIONS.PLAYER_PARDON,
@@ -202,7 +202,6 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.PLAYER_UNMUTE,
         PERMISSIONS.PLAYER_TELEPORT,
         PERMISSIONS.PLAYER_VIEW_DETAILS,
-        PERMISSIONS.PLAYER_VIEW_INVENTORY,
         PERMISSIONS.PLAYER_ACTION_HISTORY,
         
         // Backup Management (read-only)
