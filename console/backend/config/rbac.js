@@ -131,7 +131,12 @@ const PERMISSIONS = {
     // Analytics & Insights
     ANALYTICS_VIEW: 'analytics:view',
     ANALYTICS_EXPORT: 'analytics:export',
-    ANALYTICS_MANAGE: 'analytics:manage'
+    ANALYTICS_MANAGE: 'analytics:manage',
+    
+    // CI/CD Dashboard
+    CICD_VIEW: 'cicd:view',
+    CICD_TRIGGER: 'cicd:trigger',
+    CICD_DOWNLOAD_ARTIFACTS: 'cicd:download_artifacts'
 };
 
 /**
@@ -238,6 +243,11 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.ANALYTICS_EXPORT,
         PERMISSIONS.ANALYTICS_MANAGE,
         
+        // CI/CD Dashboard
+        PERMISSIONS.CICD_VIEW,
+        PERMISSIONS.CICD_TRIGGER,
+        PERMISSIONS.CICD_DOWNLOAD_ARTIFACTS,
+        
         // No audit log access
     ],
     
@@ -303,6 +313,9 @@ const ROLE_PERMISSIONS = {
         
         // Analytics & Insights (view only)
         PERMISSIONS.ANALYTICS_VIEW,
+        
+        // CI/CD Dashboard (view only)
+        PERMISSIONS.CICD_VIEW,
     ],
     
     [ROLES.VIEWER]: [
@@ -348,6 +361,9 @@ const ROLE_PERMISSIONS = {
         
         // Analytics & Insights (view only)
         PERMISSIONS.ANALYTICS_VIEW,
+        
+        // CI/CD Dashboard (view only)
+        PERMISSIONS.CICD_VIEW,
     ]
 };
 

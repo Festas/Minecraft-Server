@@ -55,7 +55,7 @@ async function githubRequest(endpoint, options = {}) {
 /**
  * Get CI/CD status overview
  */
-router.get('/status', requireAuth, cicdLimiter, async (req, res) => {
+router.get('/status', requireAuth, requirePermission(PERMISSIONS.CICD_VIEW), cicdLimiter, async (req, res) => {
     try {
         // Get recent workflow runs
         const runs = await githubRequest(
@@ -94,7 +94,7 @@ router.get('/status', requireAuth, cicdLimiter, async (req, res) => {
 /**
  * Get workflow runs with filtering
  */
-router.get('/runs', requireAuth, cicdLimiter, async (req, res) => {
+router.get('/runs', requireAuth, requirePermission(PERMISSIONS.CICD_VIEW), cicdLimiter, async (req, res) => {
     try {
         const { 
             workflow, 
@@ -151,7 +151,7 @@ router.get('/runs', requireAuth, cicdLimiter, async (req, res) => {
 /**
  * Get specific workflow run details
  */
-router.get('/runs/:runId', requireAuth, cicdLimiter, async (req, res) => {
+router.get('/runs/:runId', requireAuth, requirePermission(PERMISSIONS.CICD_VIEW), cicdLimiter, async (req, res) => {
     try {
         const { runId } = req.params;
 
@@ -213,7 +213,7 @@ router.get('/runs/:runId', requireAuth, cicdLimiter, async (req, res) => {
 /**
  * Get artifacts for a workflow run
  */
-router.get('/runs/:runId/artifacts', requireAuth, cicdLimiter, async (req, res) => {
+router.get('/runs/:runId/artifacts', requireAuth, requirePermission(PERMISSIONS.CICD_VIEW), cicdLimiter, async (req, res) => {
     try {
         const { runId } = req.params;
 
@@ -249,7 +249,7 @@ router.get('/runs/:runId/artifacts', requireAuth, cicdLimiter, async (req, res) 
  */
 router.get('/artifacts/:artifactId/download', 
     requireAuth, 
-    requirePermission(PERMISSIONS.SERVER_RESTART), 
+    requirePermission(PERMISSIONS.CICD_DOWNLOAD_ARTIFACTS), 
     cicdLimiter, 
     async (req, res) => {
     try {
@@ -291,7 +291,7 @@ router.get('/artifacts/:artifactId/download',
 /**
  * Get list of workflows
  */
-router.get('/workflows', requireAuth, cicdLimiter, async (req, res) => {
+router.get('/workflows', requireAuth, requirePermission(PERMISSIONS.CICD_VIEW), cicdLimiter, async (req, res) => {
     try {
         const workflows = await githubRequest(
             `/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows`
@@ -326,7 +326,7 @@ router.get('/workflows', requireAuth, cicdLimiter, async (req, res) => {
  */
 router.post('/workflows/:workflowId/dispatch',
     requireAuth,
-    requirePermission(PERMISSIONS.SERVER_RESTART),
+    requirePermission(PERMISSIONS.CICD_TRIGGER),
     cicdLimiter,
     async (req, res) => {
     try {
@@ -366,7 +366,7 @@ router.post('/workflows/:workflowId/dispatch',
 /**
  * Get deployment history
  */
-router.get('/deployments', requireAuth, cicdLimiter, async (req, res) => {
+router.get('/deployments', requireAuth, requirePermission(PERMISSIONS.CICD_VIEW), cicdLimiter, async (req, res) => {
     try {
         const { per_page = 10, page = 1 } = req.query;
 
