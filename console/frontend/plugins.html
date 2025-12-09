@@ -63,31 +63,65 @@
                 <section id="pluginManager" class="content-section active">
                     <!-- Quick Install -->
                     <div class="card plugin-install-card">
-                        <h3>📦 Quick Install</h3>
+                        <h3>📦 Install Plugin</h3>
                         <div class="install-form">
-                            <div class="form-group">
-                                <input 
-                                    type="text" 
-                                    id="pluginUrl" 
-                                    placeholder="Paste plugin URL here (Direct JAR, GitHub release, Modrinth)..." 
-                                    class="input url-input"
-                                >
+                            <!-- URL Installation -->
+                            <div class="form-section">
+                                <h4>Install from URL</h4>
+                                <div class="form-group">
+                                    <input 
+                                        type="text" 
+                                        id="pluginUrl" 
+                                        placeholder="Paste plugin URL here (Direct JAR, GitHub release, Modrinth)..." 
+                                        class="input url-input"
+                                    >
+                                </div>
+                                <div class="form-group">
+                                    <input 
+                                        type="text" 
+                                        id="customName" 
+                                        placeholder="Custom name (optional - auto-detected from plugin.yml)" 
+                                        class="input"
+                                    >
+                                </div>
+                                <div class="form-actions">
+                                    <button id="installBtn" class="btn btn-primary">
+                                        ⬇️ Install from URL
+                                    </button>
+                                    <button id="bulkInstallBtn" class="btn btn-secondary">
+                                        📋 Bulk Install
+                                    </button>
+                                    <a href="/console/marketplace.html" class="btn btn-success">
+                                        🏪 Browse Marketplace
+                                    </a>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <input 
-                                    type="text" 
-                                    id="customName" 
-                                    placeholder="Custom name (optional - auto-detected from plugin.yml)" 
-                                    class="input"
-                                >
-                            </div>
-                            <div class="form-actions">
-                                <button id="installBtn" class="btn btn-primary">
-                                    ⬇️ Install Plugin
-                                </button>
-                                <button id="bulkInstallBtn" class="btn btn-secondary">
-                                    📋 Bulk Install
-                                </button>
+                            
+                            <!-- File Upload -->
+                            <div class="form-section">
+                                <h4>Upload Plugin File</h4>
+                                <div class="upload-area" id="uploadArea">
+                                    <input 
+                                        type="file" 
+                                        id="pluginFile" 
+                                        accept=".jar" 
+                                        style="display: none;"
+                                    >
+                                    <div class="upload-content">
+                                        <p>📁 Drag & drop a .jar file here</p>
+                                        <p>or</p>
+                                        <button id="selectFileBtn" class="btn btn-secondary">
+                                            Select File
+                                        </button>
+                                    </div>
+                                    <div id="uploadProgress" class="upload-progress hidden">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" id="uploadProgressBar"></div>
+                                        </div>
+                                        <p id="uploadStatus">Uploading...</p>
+                                    </div>
+                                </div>
+                                <p class="help-text">Maximum file size: 100MB. Only .jar files are accepted.</p>
                             </div>
                         </div>
                     </div>

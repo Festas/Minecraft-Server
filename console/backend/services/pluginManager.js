@@ -846,6 +846,170 @@ async function checkHealth() {
     return health;
 }
 
+/**
+ * Check for plugin updates
+ * @param {string} pluginName - Plugin name
+ * @returns {Promise<object>} Update information
+ */
+async function checkForUpdates(pluginName) {
+    try {
+        const plugin = await findPlugin(pluginName);
+        if (!plugin) {
+            throw new Error('Plugin not found');
+        }
+
+        // If plugin has marketplace metadata, check for updates
+        if (plugin.marketplace && plugin.marketplace.platform && plugin.marketplace.id) {
+            const marketplaceService = require('./marketplaceService');
+            const versions = await marketplaceService.getPluginVersions(
+                plugin.marketplace.id,
+                plugin.marketplace.platform
+            );
+
+            if (versions && versions.length > 0) {
+                const latestVersion = versions[0]; // Versions are sorted by date
+                const currentVersion = plugin.version;
+
+                // Compare versions
+                let hasUpdate = false;
+                try {
+                    // Try semver comparison if both are valid semver
+                    if (semver.valid(currentVersion) && semver.valid(latestVersion.versionNumber)) {
+                        hasUpdate = semver.gt(latestVersion.versionNumber, currentVersion);
+                    } else {
+                        // Fallback to string comparison
+                        hasUpdate = latestVersion.versionNumber !== currentVersion;
+                    }
+                } catch (e) {
+                    // If semver fails, compare as strings
+                    hasUpdate = latestVersion.versionNumber !== currentVersion;
+                }
+
+                return {
+                    hasUpdate,
+                    currentVersion,
+                    latestVersion: latestVersion.versionNumber,
+                    downloadUrl: latestVersion.files[0]?.url || null,
+                    changelog: latestVersion.changelog || null,
+                    releaseDate: latestVersion.datePublished
+                };
+            }
+        }
+
+        // No marketplace metadata or no versions found
+        return {
+            hasUpdate: false,
+            currentVersion: plugin.version,
+            message: 'Update checking not available for this plugin'
+        };
+    } catch (error) {
+        console.error('Error checking for updates:', error);
+        throw new Error(`Failed to check for updates: ${error.message}`);
+    }
+}
+
+/**
+ * Get plugin configuration preview
+ * @param {string} pluginName - Plugin name
+ * @returns {Promise<object>} Configuration information
+ */
+async function getPluginConfig(pluginName) {
+    try {
+        const plugin = await findPlugin(pluginName);
+        if (!plugin) {
+            throw new Error('Plugin not found');
+        }
+
+        // Build config directory path
+        const configDir = path.join(PLUGINS_DIR, pluginName);
+        
+        const result = {
+            pluginName,
+            hasConfig: false,
+            configFiles: [],
+            configDir
+        };
+
+        // Check if config directory exists
+        try {
+            await fs.access(configDir);
+            result.hasConfig = true;
+
+            // List config files
+            const files = await fs.readdir(configDir);
+            for (const file of files) {
+                const filePath = path.join(configDir, file);
+                const stats = await fs.stat(filePath);
+                
+                if (stats.isFile()) {
+                    // Only include common config file types
+                    if (file.match(/\.(yml|yaml|json|properties|txt|conf|cfg)$/i)) {
+                        const fileInfo = {
+                            name: file,
+                            path: filePath,
+                            size: stats.size,
+                            modified: stats.mtime,
+                            type: path.extname(file).substring(1)
+                        };
+
+                        // For small text files, include preview content
+                        if (stats.size < 50000) { // 50KB limit
+                            try {
+                                const content = await fs.readFile(filePath, 'utf8');
+                                fileInfo.preview = content.substring(0, 1000); // First 1000 chars
+                                fileInfo.lines = content.split('\n').length;
+                            } catch (readError) {
+                                fileInfo.preview = 'Unable to read file';
+                            }
+                        }
+
+                        result.configFiles.push(fileInfo);
+                    }
+                }
+            }
+        } catch (accessError) {
+            // Config directory doesn't exist
+            result.hasConfig = false;
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Error getting plugin config:', error);
+        throw new Error(`Failed to get plugin config: ${error.message}`);
+    }
+}
+
+/**
+ * Check for updates for all installed plugins
+ * @returns {Promise<Array>} Array of update information
+ */
+async function checkAllUpdates() {
+    try {
+        const plugins = await getAllPlugins();
+        const updateChecks = [];
+
+        for (const plugin of plugins) {
+            try {
+                const updateInfo = await checkForUpdates(plugin.name);
+                if (updateInfo.hasUpdate) {
+                    updateChecks.push({
+                        pluginName: plugin.name,
+                        ...updateInfo
+                    });
+                }
+            } catch (error) {
+                // Continue checking other plugins even if one fails
+                console.error(`Failed to check updates for ${plugin.name}:`, error.message);
+            }
+        }
+
+        return updateChecks;
+    } catch (error) {
+        console.error('Error checking all updates:', error);
+        throw new Error(`Failed to check updates: ${error.message}`);
+    }
+}
+
 module.exports = {
     getAllPlugins,
     findPlugin,
@@ -857,5 +1021,8 @@ module.exports = {
     hasBackup,
     getHistory,
     parseUrl,
-    checkHealth
+    checkHealth,
+    checkForUpdates,
+    checkAllUpdates,
+    getPluginConfig
 };

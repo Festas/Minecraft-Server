@@ -1,8 +1,42 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
 const { requireAuth } = require('../auth/auth');
+const { checkPermission } = require('../middleware/rbac');
+const { PERMISSIONS } = require('../config/rbac');
 const rateLimit = require('express-rate-limit');
 const pluginManager = require('../services/pluginManager');
+
+// Configure multer for file uploads
+const UPLOAD_DIR = process.env.PLUGIN_UPLOAD_DIR || path.join(__dirname, '../data/plugin-uploads');
+const fs = require('fs').promises;
+
+// Ensure upload directory exists
+(async () => {
+    try {
+        await fs.mkdir(UPLOAD_DIR, { recursive: true });
+    } catch (error) {
+        console.error('Failed to create upload directory:', error);
+    }
+})();
+
+const upload = multer({
+    dest: UPLOAD_DIR,
+    limits: {
+        fileSize: 100 * 1024 * 1024, // 100MB max file size
+        files: 1 // Only one file at a time
+    },
+    fileFilter: (req, file, cb) => {
+        // Only accept .jar files
+        if (path.extname(file.originalname).toLowerCase() === '.jar') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only .jar files are allowed'), false);
+        }
+    }
+});
 
 // Rate limiter for plugin operations
 const pluginRateLimiter = rateLimit({
@@ -333,6 +367,243 @@ router.get('/health', async (req, res) => {
         res.status(500).json({
             status: 'error',
             error: error.message
+        });
+    }
+});
+
+/**
+ * GET /api/plugins/:pluginName/updates
+ * Check for updates for a specific plugin
+ */
+router.get('/:pluginName/updates', async (req, res) => {
+    try {
+        const { pluginName } = req.params;
+        
+        if (!pluginName) {
+            return res.status(400).json({ error: 'Plugin name is required' });
+        }
+        
+        const updateInfo = await pluginManager.checkForUpdates(pluginName);
+        res.json({ success: true, ...updateInfo });
+    } catch (error) {
+        console.error('Error checking for updates:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/plugins/updates/check-all
+ * Check for updates for all installed plugins
+ */
+router.get('/updates/check-all', async (req, res) => {
+    try {
+        const updates = await pluginManager.checkAllUpdates();
+        res.json({ success: true, updates });
+    } catch (error) {
+        console.error('Error checking all updates:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/plugins/:pluginName/config
+ * Get plugin configuration preview
+ */
+router.get('/:pluginName/config', async (req, res) => {
+    try {
+        const { pluginName } = req.params;
+        
+        if (!pluginName) {
+            return res.status(400).json({ error: 'Plugin name is required' });
+        }
+        
+        const config = await pluginManager.getPluginConfig(pluginName);
+        res.json({ success: true, ...config });
+    } catch (error) {
+        console.error('Error getting plugin config:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/plugins/upload
+ * Upload a custom plugin JAR file
+ * Requires PLUGIN_INSTALL permission
+ * Note: CSRF protection is applied via express middleware before this route
+ */
+router.post('/upload', checkPermission(PERMISSIONS.PLUGIN_INSTALL), upload.single('plugin'), async (req, res) => {
+    let uploadedFilePath = null;
+    
+    try {
+        // Check if file was uploaded
+        if (!req.file) {
+            return res.status(400).json({ 
+                error: 'No file uploaded',
+                details: 'Please select a .jar file to upload'
+            });
+        }
+        
+        uploadedFilePath = req.file.path;
+        const originalName = req.file.originalname;
+        
+        console.log('[PLUGIN_UPLOAD] File uploaded:', {
+            originalName,
+            size: req.file.size,
+            path: uploadedFilePath,
+            user: req.session.username
+        });
+        
+        // Validate JAR file
+        const { isValidJar } = require('../services/pluginParser');
+        const isValid = await isValidJar(uploadedFilePath);
+        
+        if (!isValid) {
+            // Clean up uploaded file
+            await fs.unlink(uploadedFilePath);
+            return res.status(400).json({
+                error: 'Invalid plugin file',
+                details: 'The uploaded file is not a valid Minecraft plugin JAR file. It must contain a valid plugin.yml.'
+            });
+        }
+        
+        // Parse plugin metadata
+        const { parsePluginYml } = require('../services/pluginParser');
+        const metadata = await parsePluginYml(uploadedFilePath);
+        
+        if (!metadata || !metadata.name) {
+            // Clean up uploaded file
+            await fs.unlink(uploadedFilePath);
+            return res.status(400).json({
+                error: 'Invalid plugin metadata',
+                details: 'The plugin.yml file is missing required fields (name is required).'
+            });
+        }
+        
+        console.log('[PLUGIN_UPLOAD] Plugin validated:', metadata);
+        
+        // Install the plugin using pluginManager
+        const PLUGINS_DIR = process.env.PLUGINS_DIR || path.join(process.cwd(), '../../plugins');
+        const targetPath = path.join(PLUGINS_DIR, `${metadata.name}.jar`);
+        
+        // Check if plugin already exists
+        const existingPlugin = await pluginManager.findPlugin(metadata.name);
+        
+        if (existingPlugin) {
+            // Create backup before overwriting
+            const backupPath = path.join(PLUGINS_DIR, `${metadata.name}.jar.backup.${Date.now()}`);
+            const currentPath = path.join(PLUGINS_DIR, `${metadata.name}.jar`);
+            
+            try {
+                await fs.copyFile(currentPath, backupPath);
+                console.log('[PLUGIN_UPLOAD] Backup created:', backupPath);
+            } catch (backupError) {
+                console.warn('[PLUGIN_UPLOAD] Backup failed (file may not exist):', backupError.message);
+            }
+        }
+        
+        // Move uploaded file to plugins directory
+        await fs.rename(uploadedFilePath, targetPath);
+        console.log('[PLUGIN_UPLOAD] Plugin moved to:', targetPath);
+        
+        // Update plugins.json
+        const PLUGINS_JSON = process.env.PLUGINS_JSON || path.join(process.cwd(), '../../plugins.json');
+        let pluginsData = { plugins: [] };
+        
+        try {
+            const data = await fs.readFile(PLUGINS_JSON, 'utf8');
+            pluginsData = JSON.parse(data);
+        } catch (error) {
+            console.warn('[PLUGIN_UPLOAD] plugins.json not found or invalid, creating new');
+        }
+        
+        // Update or add plugin entry
+        const pluginIndex = pluginsData.plugins.findIndex(p => p.name === metadata.name);
+        const pluginEntry = {
+            name: metadata.name,
+            version: metadata.version || 'unknown',
+            description: metadata.description || '',
+            author: metadata.author || (metadata.authors ? metadata.authors.join(', ') : ''),
+            enabled: true,
+            category: 'custom',
+            source: 'upload',
+            uploaded_at: new Date().toISOString(),
+            uploaded_by: req.session.username,
+            ...metadata
+        };
+        
+        if (pluginIndex >= 0) {
+            pluginsData.plugins[pluginIndex] = pluginEntry;
+        } else {
+            pluginsData.plugins.push(pluginEntry);
+        }
+        
+        await fs.writeFile(PLUGINS_JSON, JSON.stringify(pluginsData, null, 2));
+        
+        // Add to history
+        const HISTORY_FILE = path.join(__dirname, '../data/plugin-history.json');
+        let history = [];
+        
+        try {
+            const historyData = await fs.readFile(HISTORY_FILE, 'utf8');
+            history = JSON.parse(historyData);
+        } catch (error) {
+            // History file doesn't exist or is invalid
+        }
+        
+        history.unshift({
+            pluginName: metadata.name,
+            action: existingPlugin ? 'update_upload' : 'install_upload',
+            timestamp: new Date().toISOString(),
+            user: req.session.username,
+            version: metadata.version,
+            status: 'success'
+        });
+        
+        // Keep only last 100 entries
+        history = history.slice(0, 100);
+        
+        await fs.writeFile(HISTORY_FILE, JSON.stringify(history, null, 2));
+        
+        res.json({
+            success: true,
+            status: existingPlugin ? 'updated' : 'installed',
+            pluginName: metadata.name,
+            version: metadata.version,
+            message: existingPlugin 
+                ? `Plugin ${metadata.name} updated successfully via upload`
+                : `Plugin ${metadata.name} installed successfully via upload`,
+            metadata
+        });
+        
+    } catch (error) {
+        // Clean up uploaded file on error
+        if (uploadedFilePath) {
+            try {
+                await fs.unlink(uploadedFilePath);
+            } catch (cleanupError) {
+                console.error('[PLUGIN_UPLOAD] Failed to cleanup uploaded file:', cleanupError);
+            }
+        }
+        
+        console.error('[PLUGIN_UPLOAD] Upload failed:', error);
+        
+        // Handle multer errors
+        if (error instanceof multer.MulterError) {
+            if (error.code === 'LIMIT_FILE_SIZE') {
+                return res.status(400).json({
+                    error: 'File too large',
+                    details: 'Plugin file must be smaller than 100MB'
+                });
+            }
+            return res.status(400).json({
+                error: 'Upload error',
+                details: error.message
+            });
+        }
+        
+        res.status(500).json({ 
+            error: 'Upload failed',
+            details: error.message
         });
     }
 });

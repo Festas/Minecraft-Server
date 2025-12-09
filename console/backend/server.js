@@ -39,6 +39,7 @@ const backupRoutes = require('./routes/backups');
 const pluginRoutes = require('./routes/plugins');
 const pluginsV2Routes = require('./routes/pluginsV2');
 const pluginIntegrationsRoutes = require('./routes/pluginIntegrations');
+const marketplaceRoutes = require('./routes/marketplace');
 const userRoutes = require('./routes/users');
 const auditRoutes = require('./routes/audit');
 const automationRoutes = require('./routes/automation');
@@ -446,6 +447,7 @@ app.use('/api/backups', backupRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/v2/plugins', pluginsV2Routes); // New job-based plugin API
 app.use('/api/plugins', pluginIntegrationsRoutes); // Plugin integrations (Dynmap, EssentialsX)
+app.use('/api/marketplace', marketplaceRoutes); // Plugin marketplace
 app.use('/api/users', userRoutes); // User management
 app.use('/api/audit', auditRoutes); // Audit logs
 app.use('/api/automation', automationRoutes); // Automation & Scheduler
