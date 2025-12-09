@@ -1,11 +1,14 @@
 // Player management
 async function loadPlayers() {
     try {
-        const response = await apiRequest('/api/players/list');
+        // Fetch all players with stats
+        const response = await apiRequest('/api/players/all');
         const data = await response.json();
         
-        renderPlayersList(data);
-        updatePlayerCount(data.online, data.max);
+        if (data.success) {
+            renderAllPlayersList(data);
+            updatePlayerCount(data.onlineCount, data.maxPlayers || 20);
+        }
     } catch (error) {
         console.error('Error loading players:', error);
         // Add fallback on error
@@ -13,13 +16,22 @@ async function loadPlayers() {
     }
 }
 
-function renderPlayersList(data) {
+/**
+ * Render all players list with stats
+ */
+function renderAllPlayersList(data) {
     const playersList = document.getElementById('playersList');
+    const onlinePlayersCount = document.getElementById('onlinePlayersCount');
     
     if (!playersList) return;
     
+    // Update online count display
+    if (onlinePlayersCount) {
+        onlinePlayersCount.textContent = `(${data.onlineCount} online)`;
+    }
+    
     if (!data.players || data.players.length === 0) {
-        playersList.innerHTML = '<p class="no-players">No players online</p>';
+        playersList.innerHTML = '<p class="no-players">No players have joined yet</p>';
         return;
     }
     
@@ -27,25 +39,61 @@ function renderPlayersList(data) {
     
     data.players.forEach(player => {
         const playerItem = document.createElement('div');
-        playerItem.className = 'player-item';
+        playerItem.className = 'player-item' + (player.isOnline ? ' player-online' : '');
+        
+        // Format last seen date
+        const lastSeenDate = new Date(player.lastSeen);
+        const lastSeenStr = player.isOnline ? 'Online now' : formatRelativeTime(lastSeenDate);
         
         playerItem.innerHTML = `
             <div class="player-info">
                 <img 
-                    src="https://mc-heads.net/avatar/${player}/32" 
-                    alt="${player}" 
+                    src="https://mc-heads.net/avatar/${player.username}/48" 
+                    alt="${player.username}" 
                     class="player-avatar"
-                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23666%22 width=%2232%22 height=%2232%22/></svg>'"
+                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23666%22 width=%2248%22 height=%2248%22/></svg>'"
                 >
-                <span>${player}</span>
+                <div class="player-details">
+                    <div class="player-name">
+                        ${player.username}
+                        ${player.isOnline ? '<span class="online-badge">●</span>' : ''}
+                    </div>
+                    <div class="player-stats">
+                        <span class="stat-item">⏱️ ${player.formattedPlaytime}</span>
+                        <span class="stat-item">👋 ${lastSeenStr}</span>
+                    </div>
+                </div>
             </div>
             <div class="player-actions">
-                <button class="btn btn-sm player-kick-btn" data-player="${player}">Kick</button>
+                ${player.isOnline ? '<button class="btn btn-sm player-kick-btn" data-player="' + player.username + '">Kick</button>' : ''}
             </div>
         `;
         
         playersList.appendChild(playerItem);
     });
+}
+
+/**
+ * Format relative time (e.g., "2 hours ago", "3 days ago")
+ */
+function formatRelativeTime(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    if (diffMins < 1) {
+        return 'Just now';
+    } else if (diffMins < 60) {
+        return `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
+    } else if (diffHours < 24) {
+        return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    } else if (diffDays < 30) {
+        return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    } else {
+        return date.toLocaleDateString();
+    }
 }
 
 function updatePlayerCount(online, max) {

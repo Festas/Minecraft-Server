@@ -31,6 +31,9 @@ class LogsService extends EventEmitter {
                     timestamp: new Date().toISOString(),
                     message: logLine
                 });
+
+                // Parse and emit player join/leave events
+                this.parsePlayerEvents(logLine);
             });
 
             console.log('Log streaming started');
@@ -69,6 +72,29 @@ class LogsService extends EventEmitter {
         if (logLine.includes('left the game')) return 'leave';
         if (logLine.match(/<[^>]+>/)) return 'chat';
         return 'info';
+    }
+
+    /**
+     * Parse player join/leave events from log line
+     * @param {string} logLine - Log line to parse
+     */
+    parsePlayerEvents(logLine) {
+        // Match player joined: "PlayerName joined the game"
+        // Minecraft usernames: 3-16 chars, alphanumeric and underscores only
+        const joinMatch = logLine.match(/([a-zA-Z0-9_]{3,16}) joined the game/);
+        if (joinMatch) {
+            const username = joinMatch[1];
+            this.emit('player-joined', { username });
+            return;
+        }
+
+        // Match player left: "PlayerName left the game"
+        const leaveMatch = logLine.match(/([a-zA-Z0-9_]{3,16}) left the game/);
+        if (leaveMatch) {
+            const username = leaveMatch[1];
+            this.emit('player-left', { username });
+            return;
+        }
     }
 
     /**
