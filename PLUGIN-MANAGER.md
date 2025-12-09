@@ -2,6 +2,193 @@
 
 A comprehensive web-based plugin management system for the Minecraft server console that allows installing, updating, and managing plugins through a user-friendly interface with **zero-downtime self-healing capabilities**.
 
+## 🆕 Version 2 - Job Queue System (Recommended)
+
+**Version 2** introduces a modern, asynchronous job queue system with **stateless Bearer token authentication** for improved reliability and user experience.
+
+### Why V2?
+
+- ✅ **No more frozen UI** - All operations are asynchronous
+- ✅ **Real-time progress tracking** - Watch jobs execute with live logs
+- ✅ **Stateless authentication** - Simple Bearer token, no sessions/CSRF needed
+- ✅ **Job queue** - Multiple operations can be queued and processed in order
+- ✅ **Better error handling** - Detailed diagnostics and error logs for each job
+- ✅ **API-first design** - Perfect for automation and scripting
+
+### Quick Start (V2)
+
+1. **Generate a Bearer token** for plugin operations:
+   ```bash
+   openssl rand -base64 48
+   ```
+
+2. **Add to your `.env` file**:
+   ```bash
+   PLUGIN_ADMIN_TOKEN=your-generated-token-here
+   ```
+
+3. **Access the V2 interface**:
+   - Navigate to `/console/plugins-v2.html`
+   - Enter your Bearer token when prompted
+   - The token is stored in browser localStorage for convenience
+
+4. **Use the API** (example with curl):
+   ```bash
+   # Install a plugin
+   curl -X POST http://localhost:3001/api/v2/plugins/job \
+     -H "Authorization: Bearer YOUR_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"action":"install","url":"https://github.com/owner/repo/releases/latest"}'
+   
+   # Check job status
+   curl http://localhost:3001/api/v2/plugins/jobs \
+     -H "Authorization: Bearer YOUR_TOKEN"
+   ```
+
+### V2 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v2/plugins/job` | Submit a plugin job (install/uninstall/update/enable/disable) |
+| GET | `/api/v2/plugins/jobs` | List recent plugin jobs with status and logs |
+| GET | `/api/v2/plugins/jobs/:id` | Get details of a specific job |
+| PUT | `/api/v2/plugins/job/:id/cancel` | Cancel a running or queued job |
+| GET | `/api/v2/plugins/list` | List all plugins and their states |
+| GET | `/api/v2/plugins/health` | Health check including job worker status |
+
+### V2 Authentication
+
+V2 uses **stateless Bearer token authentication** - no sessions or CSRF tokens required!
+
+**Setup:**
+1. Generate a secure token (minimum 32 characters):
+   ```bash
+   openssl rand -base64 48
+   ```
+
+2. Set `PLUGIN_ADMIN_TOKEN` in your `.env` file
+
+3. Include token in API requests:
+   ```bash
+   Authorization: Bearer YOUR_TOKEN
+   ```
+
+**Security Notes:**
+- Token should be at least 32 characters (48+ recommended)
+- Store securely - never commit to git
+- Rotate regularly for security
+- Token validation uses constant-time comparison to prevent timing attacks
+
+### Job Queue Workflow
+
+1. **Submit Job** - POST to `/api/v2/plugins/job` with action and parameters
+2. **Job Queued** - Job is added to queue with status `queued`
+3. **Job Processing** - Worker picks up job, status changes to `running`
+4. **Job Completion** - Status changes to `completed`, `failed`, or `cancelled`
+5. **View Results** - Check job logs and results via API or UI
+
+**Job States:**
+- `queued` - Waiting to be processed
+- `running` - Currently being executed
+- `completed` - Successfully finished
+- `failed` - Encountered an error
+- `cancelled` - Cancelled by user
+
+### V2 Example Usage
+
+**Install a plugin:**
+```bash
+curl -X POST http://localhost:3001/api/v2/plugins/job \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "install",
+    "url": "https://github.com/PluginOwner/PluginRepo/releases/latest"
+  }'
+
+# Response:
+{
+  "success": true,
+  "job": {
+    "id": "job-1701234567890-abc123",
+    "action": "install",
+    "status": "queued",
+    "createdAt": "2024-12-09T10:30:00.000Z"
+  }
+}
+```
+
+**Check job status:**
+```bash
+curl http://localhost:3001/api/v2/plugins/jobs \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Response:
+{
+  "success": true,
+  "jobs": [
+    {
+      "id": "job-1701234567890-abc123",
+      "action": "install",
+      "pluginName": "MyPlugin",
+      "status": "completed",
+      "logs": [
+        {"timestamp": "2024-12-09T10:30:01Z", "message": "Started install operation"},
+        {"timestamp": "2024-12-09T10:30:02Z", "message": "Installing plugin from: https://..."},
+        {"timestamp": "2024-12-09T10:30:05Z", "message": "Download progress: 100%"},
+        {"timestamp": "2024-12-09T10:30:06Z", "message": "Completed successfully"}
+      ],
+      "result": {
+        "status": "installed",
+        "pluginName": "MyPlugin",
+        "version": "1.2.3"
+      },
+      "createdAt": "2024-12-09T10:30:00Z",
+      "startedAt": "2024-12-09T10:30:01Z",
+      "completedAt": "2024-12-09T10:30:06Z"
+    }
+  ],
+  "currentJobId": null
+}
+```
+
+**Enable/Disable a plugin:**
+```bash
+# Enable
+curl -X POST http://localhost:3001/api/v2/plugins/job \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"action": "enable", "name": "MyPlugin"}'
+
+# Disable
+curl -X POST http://localhost:3001/api/v2/plugins/job \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"action": "disable", "name": "MyPlugin"}'
+```
+
+**Uninstall a plugin:**
+```bash
+curl -X POST http://localhost:3001/api/v2/plugins/job \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "uninstall",
+    "name": "MyPlugin",
+    "options": {"deleteConfigs": false}
+  }'
+```
+
+**Cancel a job:**
+```bash
+curl -X PUT http://localhost:3001/api/v2/plugins/job/job-123/cancel \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
+## Version 1 - Legacy (Session-based)
+
 ## Features
 
 ### Installation

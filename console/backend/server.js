@@ -17,8 +17,11 @@ const { shouldUseSecureCookies, logCookieConfiguration } = require('./utils/cook
 const rconService = require('./services/rcon');
 const logsService = require('./services/logs');
 const playerTracker = require('./services/playerTracker');
+const jobQueue = require('./services/jobQueue');
+const jobWorker = require('./services/jobWorker');
 const { initializeUsers } = require('./auth/auth');
 const { initializeSessionMiddleware, initializeSessionStore, getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
+const { validateTokenConfiguration } = require('./auth/bearerAuth');
 
 // Import middleware
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -33,6 +36,7 @@ const serverRoutes = require('./routes/server');
 const fileRoutes = require('./routes/files');
 const backupRoutes = require('./routes/backups');
 const pluginRoutes = require('./routes/plugins');
+const pluginsV2Routes = require('./routes/pluginsV2');
 
 // Initialize Express app
 const app = express();
@@ -253,7 +257,14 @@ app.get('/api/csrf-token', (req, res) => {
 // Apply CSRF protection to all API routes except login and session check
 // Double-submit pattern: cookie value === header value + session.authenticated === true
 // No hash validation or pipe separator required
+// NOTE: Bearer token requests are exempted from CSRF via skipCsrf flag set by skipCsrfForBearer middleware
 app.use('/api', (req, res, next) => {
+    // Skip CSRF for Bearer token requests (stateless API authentication)
+    if (req.skipCsrf) {
+        console.log('[CSRF] Skipping CSRF check for Bearer token request');
+        return next();
+    }
+    
     // Skip CSRF for login endpoint (it's the first request)
     if (req.path === '/login' && req.method === 'POST') {
         console.log('[CSRF] Skipping CSRF check for login');
@@ -425,6 +436,7 @@ app.use('/api/server', serverRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/backups', backupRoutes);
 app.use('/api/plugins', pluginRoutes);
+app.use('/api/v2/plugins', pluginsV2Routes); // New job-based plugin API
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -485,6 +497,17 @@ io.on('connection', (socket) => {
 async function initializeServices() {
     // Initialize admin users
     await initializeUsers();
+    
+    // Validate Bearer token configuration
+    validateTokenConfiguration();
+    
+    // Initialize job queue
+    await jobQueue.initializeJobsFile();
+    console.log('[Startup] ✓ Job queue initialized');
+    
+    // Start job worker
+    jobWorker.startWorker();
+    console.log('[Startup] ✓ Job worker started');
 
     // Initialize player tracker
     await playerTracker.initialize();
@@ -623,6 +646,7 @@ server.on('error', (error) => {
 process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down gracefully...');
     
+    jobWorker.stopWorker();
     logsService.stopStreaming();
     await rconService.disconnect();
     await playerTracker.shutdown();
@@ -637,6 +661,7 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
     console.log('SIGINT received, shutting down gracefully...');
     
+    jobWorker.stopWorker();
     logsService.stopStreaming();
     await rconService.disconnect();
     await playerTracker.shutdown();

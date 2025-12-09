@@ -1,0 +1,49 @@
+{
+  "jobs": [
+    {
+      "id": "job-1765278428427-d43c037a",
+      "action": "install",
+      "pluginName": "TestPlugin",
+      "url": "https://example.com/test-plugin.jar",
+      "options": {},
+      "status": "completed",
+      "logs": [
+        {
+          "timestamp": "2025-12-09T11:07:08.429Z",
+          "message": "Test log message"
+        },
+        {
+          "timestamp": "2025-12-09T11:07:08.436Z",
+          "message": "Job completed successfully"
+        }
+      ],
+      "error": null,
+      "result": {
+        "pluginName": "TestPlugin",
+        "version": "1.0.0"
+      },
+      "createdAt": "2025-12-09T11:07:08.427Z",
+      "startedAt": "2025-12-09T11:07:08.430Z",
+      "completedAt": "2025-12-09T11:07:08.435Z"
+    },
+    {
+      "id": "job-1765278428433-038b1ac2",
+      "action": "enable",
+      "pluginName": "TestPlugin",
+      "url": null,
+      "options": {},
+      "status": "cancelled",
+      "logs": [
+        {
+          "timestamp": "2025-12-09T11:07:08.438Z",
+          "message": "Job cancelled by user request"
+        }
+      ],
+      "error": "Job cancelled by user",
+      "result": null,
+      "createdAt": "2025-12-09T11:07:08.433Z",
+      "startedAt": null,
+      "completedAt": "2025-12-09T11:07:08.437Z"
+    }
+  ]
+}

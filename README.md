@@ -104,6 +104,9 @@ See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
 - **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** - Web console setup and management guide
 - **[PLUGINS.md](PLUGINS.md)** - Comprehensive plugin guide with installation instructions
 - **[PLUGIN-MANAGER.md](PLUGIN-MANAGER.md)** - Web-based plugin manager with diagnostics ⭐
+  - **🆕 V2: Job Queue System** - Async operations, Bearer token auth, real-time job tracking
+  - **[docs/PLUGIN-MANAGER-V2.md](docs/PLUGIN-MANAGER-V2.md)** - V2 architecture and API reference
+  - **[docs/PLUGIN-MANAGER-V2-QUICKSTART.md](docs/PLUGIN-MANAGER-V2-QUICKSTART.md)** - Quick setup guide for V2
 - **[BEDROCK-SETUP.md](BEDROCK-SETUP.md)** - Cross-platform play setup guide (Geyser + Floodgate)
 - **[WEBSITE.md](WEBSITE.md)** - Website deployment and customization guide
 - **[server-icon-instructions.md](server-icon-instructions.md)** - Custom server icon setup
