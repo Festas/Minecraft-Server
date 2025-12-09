@@ -101,7 +101,15 @@ const PERMISSIONS = {
     // Map & Dashboard
     MAP_VIEW: 'map:view',
     MAP_PLAYER_TELEPORT: 'map:player:teleport',
-    MAP_PLAYER_INFO: 'map:player:info'
+    MAP_PLAYER_INFO: 'map:player:info',
+    
+    // Automation & Scheduler
+    AUTOMATION_CREATE: 'automation:create',
+    AUTOMATION_EDIT: 'automation:edit',
+    AUTOMATION_DELETE: 'automation:delete',
+    AUTOMATION_EXECUTE: 'automation:execute',
+    AUTOMATION_VIEW: 'automation:view',
+    AUTOMATION_HISTORY: 'automation:history'
 };
 
 /**
@@ -178,6 +186,14 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.MAP_PLAYER_TELEPORT,
         PERMISSIONS.MAP_PLAYER_INFO,
         
+        // Automation & Scheduler
+        PERMISSIONS.AUTOMATION_CREATE,
+        PERMISSIONS.AUTOMATION_EDIT,
+        PERMISSIONS.AUTOMATION_DELETE,
+        PERMISSIONS.AUTOMATION_EXECUTE,
+        PERMISSIONS.AUTOMATION_VIEW,
+        PERMISSIONS.AUTOMATION_HISTORY,
+        
         // No audit log access
     ],
     
@@ -225,6 +241,11 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.MAP_VIEW,
         PERMISSIONS.MAP_PLAYER_TELEPORT,
         PERMISSIONS.MAP_PLAYER_INFO,
+        
+        // Automation & Scheduler (limited - can execute and view)
+        PERMISSIONS.AUTOMATION_EXECUTE,
+        PERMISSIONS.AUTOMATION_VIEW,
+        PERMISSIONS.AUTOMATION_HISTORY,
     ],
     
     [ROLES.VIEWER]: [
@@ -254,6 +275,10 @@ const ROLE_PERMISSIONS = {
         // Map & Dashboard (view-only, no teleport)
         PERMISSIONS.MAP_VIEW,
         PERMISSIONS.MAP_PLAYER_INFO,
+        
+        // Automation & Scheduler (view-only)
+        PERMISSIONS.AUTOMATION_VIEW,
+        PERMISSIONS.AUTOMATION_HISTORY,
     ]
 };
 
