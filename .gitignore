@@ -38,6 +38,8 @@ id_rsa*
 console/backend/node_modules/
 console/backend/config/users.json
 console/backend/coverage/
+console/backend/data/players.db*
+console/backend/data/player-stats.json
 .env
 *.env
 !.env.example
