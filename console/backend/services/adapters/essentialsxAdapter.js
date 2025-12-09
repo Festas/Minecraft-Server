@@ -144,10 +144,11 @@ class EssentialsXAdapter extends BasePluginAdapter {
 
     /**
      * Get information about a specific player
-     * @param {string} playerIdentifier - Player name or UUID
+     * @param {object} params - Parameters object
+     * @param {string} params.playerIdentifier - Player name or UUID
      * @returns {Promise<object>} Player information
      */
-    async getPlayer(playerIdentifier) {
+    async getPlayer({ playerIdentifier }) {
         try {
             const response = await this.makeRequest('GET', `/v1/players/${playerIdentifier}`, {}, { retries: 1 });
             
@@ -201,12 +202,13 @@ class EssentialsXAdapter extends BasePluginAdapter {
 
     /**
      * Get player balance
-     * @param {string} playerIdentifier - Player name or UUID
+     * @param {object} params - Parameters object
+     * @param {string} params.playerIdentifier - Player name or UUID
      * @returns {Promise<number>} Player balance
      */
-    async getPlayerBalance(playerIdentifier) {
+    async getPlayerBalance({ playerIdentifier }) {
         try {
-            const player = await this.getPlayer(playerIdentifier);
+            const player = await this.getPlayer({ playerIdentifier });
             return player.balance || 0;
         } catch (error) {
             console.error('[EssentialsX] Error fetching player balance:', error.message);

@@ -84,10 +84,11 @@ class DynmapAdapter extends BasePluginAdapter {
 
     /**
      * Get current world data and player positions
-     * @param {string} worldName - Optional world name to filter
+     * @param {object} params - Parameters object
+     * @param {string} params.worldName - Optional world name to filter
      * @returns {Promise<object>} World and player data
      */
-    async getWorldData(worldName = null) {
+    async getWorldData({ worldName = null } = {}) {
         const endpoint = worldName 
             ? `/up/world/${worldName}`
             : '/up/world/world'; // Default world
@@ -194,10 +195,11 @@ class DynmapAdapter extends BasePluginAdapter {
 
     /**
      * Get markers for a specific world
-     * @param {string} worldName - World name
+     * @param {object} params - Parameters object
+     * @param {string} params.worldName - World name
      * @returns {Promise<object>} Marker data
      */
-    async getMarkers(worldName = 'world') {
+    async getMarkers({ worldName = 'world' } = {}) {
         const endpoint = `/tiles/_markers_/marker_${worldName}.json`;
         
         try {

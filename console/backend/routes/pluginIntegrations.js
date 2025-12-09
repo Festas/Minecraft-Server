@@ -10,8 +10,6 @@ const router = express.Router();
 const { requireAuthOrToken, skipCsrfForBearer } = require('../auth/bearerAuth');
 const rateLimit = require('express-rate-limit');
 const pluginGateway = require('../services/pluginGateway');
-const dynmapAdapter = require('../services/adapters/dynmapAdapter');
-const essentialsxAdapter = require('../services/adapters/essentialsxAdapter');
 const { logAuditEvent, AUDIT_EVENTS, getClientIp } = require('../services/auditLog');
 
 // Rate limiter for plugin integration endpoints
@@ -103,7 +101,7 @@ router.get('/dynmap/worlds', async (req, res) => {
 router.get('/dynmap/world/:worldName', async (req, res) => {
     try {
         const { worldName } = req.params;
-        const worldData = await dynmapAdapter.getWorldData(worldName);
+        const worldData = await pluginGateway.call('dynmap', 'getWorldData', { worldName });
         
         res.json({
             success: true,
@@ -129,7 +127,7 @@ router.get('/dynmap/world/:worldName', async (req, res) => {
 router.get('/dynmap/markers/:worldName?', async (req, res) => {
     try {
         const worldName = req.params.worldName || 'world';
-        const markers = await dynmapAdapter.getMarkers(worldName);
+        const markers = await pluginGateway.call('dynmap', 'getMarkers', { worldName });
         
         res.json({
             success: true,
@@ -274,7 +272,7 @@ router.get('/essentialsx/players/online', async (req, res) => {
 router.get('/essentialsx/player/:identifier', async (req, res) => {
     try {
         const { identifier } = req.params;
-        const player = await essentialsxAdapter.getPlayer(identifier);
+        const player = await pluginGateway.call('essentialsx', 'getPlayer', { playerIdentifier: identifier });
         
         res.json({
             success: true,
