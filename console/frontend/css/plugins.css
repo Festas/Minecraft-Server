@@ -377,3 +377,44 @@ input:checked + .toggle-slider:before {
         gap: 0.5rem;
     }
 }
+
+/* Activity List Styles */
+.activity-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    transition: background-color 0.2s;
+}
+
+.activity-item:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+/* Health Indicator */
+.health-indicator {
+    font-size: 0.9rem;
+    cursor: default;
+}
+
+.health-dot {
+    transition: background-color 0.3s;
+}
+
+/* Badge Variants */
+.badge-success {
+    background: #38a169;
+}
+
+.badge-error {
+    background: #e53e3e;
+}
+
+.badge-warning {
+    background: #dd6b20;
+}

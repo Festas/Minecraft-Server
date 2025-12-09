@@ -144,10 +144,10 @@ async function checkHealth() {
 
 // Start health polling
 function startHealthPolling() {
-    // Poll every 10 seconds
+    // Poll every 30 seconds to reduce server load
     healthCheckInterval = setInterval(() => {
         checkHealth();
-    }, 10000);
+    }, 30000);
 }
 
 // Load recent activity from backend
@@ -171,9 +171,7 @@ async function loadRecentActivity() {
         const data = await response.json();
         
         if (data.success && data.jobs && data.jobs.length > 0) {
-            const completedJobs = data.jobs.filter(job => 
-                job.status === 'completed' || job.status === 'failed'
-            );
+            const completedJobs = getCompletedJobs(data.jobs);
             
             if (completedJobs.length === 0) {
                 activityList.innerHTML = '<div class="empty-state">No recent activity</div>';
@@ -224,6 +222,13 @@ function formatDuration(ms) {
     } else {
         return `${seconds}s`;
     }
+}
+
+// Filter jobs by completion status
+function getCompletedJobs(jobs) {
+    return jobs.filter(job => 
+        job.status === 'completed' || job.status === 'failed'
+    );
 }
 
 // Prompt for Bearer token
