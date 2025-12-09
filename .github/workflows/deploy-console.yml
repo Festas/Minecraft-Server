@@ -319,7 +319,6 @@ jobs:
                   - ${MC_DIR}:/minecraft:rw
                   - /var/run/docker.sock:/var/run/docker.sock
                   - console_data:/app/data
-                  - console_config:/app/config
                 networks:
                   - caddy-network
                 depends_on:
@@ -334,7 +333,6 @@ jobs:
 
             volumes:
               console_data:
-              console_config:
               redis_data:
                 driver: local
 
