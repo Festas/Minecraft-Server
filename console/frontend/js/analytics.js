@@ -485,13 +485,19 @@ class AnalyticsDashboard {
     }
 
     showSuccess(message) {
-        // Simple alert for now - could be replaced with toast notification
-        alert(message);
+        if (typeof showNotification === 'function') {
+            showNotification(message, 'success');
+        } else {
+            alert(message);
+        }
     }
 
     showError(message) {
-        // Simple alert for now - could be replaced with toast notification
-        alert('Error: ' + message);
+        if (typeof showNotification === 'function') {
+            showNotification(message, 'error');
+        } else {
+            alert('Error: ' + message);
+        }
     }
 }
 
