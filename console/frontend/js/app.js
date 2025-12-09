@@ -88,6 +88,13 @@ function setupNavigation() {
             sections.forEach(section => {
                 if (section.id === targetSection) {
                     section.classList.add('active');
+                    
+                    // Load data when switching to players section
+                    if (targetSection === 'players') {
+                        loadPlayers();
+                        loadWhitelist();
+                        loadActionHistory();
+                    }
                 } else {
                     section.classList.remove('active');
                 }
@@ -179,7 +186,7 @@ function setupEventListeners() {
     const kickPlayerBtn = document.getElementById('kickPlayerBtn');
     if (kickPlayerBtn) {
         kickPlayerBtn.addEventListener('click', () => {
-            const player = document.getElementById('playerNameInput').value;
+            const player = document.getElementById('playerNameInput').value.trim();
             if (player) kickPlayer(player);
         });
     }
@@ -187,15 +194,31 @@ function setupEventListeners() {
     const banPlayerBtn = document.getElementById('banPlayerBtn');
     if (banPlayerBtn) {
         banPlayerBtn.addEventListener('click', () => {
-            const player = document.getElementById('playerNameInput').value;
+            const player = document.getElementById('playerNameInput').value.trim();
             if (player) banPlayer(player);
+        });
+    }
+    
+    const warnPlayerBtn = document.getElementById('warnPlayerBtn');
+    if (warnPlayerBtn) {
+        warnPlayerBtn.addEventListener('click', () => {
+            const player = document.getElementById('playerNameInput').value.trim();
+            if (player) warnPlayer(player);
+        });
+    }
+    
+    const mutePlayerBtn = document.getElementById('mutePlayerBtn');
+    if (mutePlayerBtn) {
+        mutePlayerBtn.addEventListener('click', () => {
+            const player = document.getElementById('playerNameInput').value.trim();
+            if (player) mutePlayer(player);
         });
     }
     
     const opPlayerBtn = document.getElementById('opPlayerBtn');
     if (opPlayerBtn) {
         opPlayerBtn.addEventListener('click', () => {
-            const player = document.getElementById('playerNameInput').value;
+            const player = document.getElementById('playerNameInput').value.trim();
             if (player) opPlayer(player);
         });
     }
@@ -203,8 +226,26 @@ function setupEventListeners() {
     const deopPlayerBtn = document.getElementById('deopPlayerBtn');
     if (deopPlayerBtn) {
         deopPlayerBtn.addEventListener('click', () => {
-            const player = document.getElementById('playerNameInput').value;
+            const player = document.getElementById('playerNameInput').value.trim();
             if (player) deopPlayer(player);
+        });
+    }
+    
+    // Whitelist management
+    const addToWhitelistBtn = document.getElementById('addToWhitelistBtn');
+    if (addToWhitelistBtn) {
+        addToWhitelistBtn.addEventListener('click', () => {
+            const player = document.getElementById('whitelistPlayerInput').value.trim();
+            const notes = document.getElementById('whitelistNotesInput').value.trim();
+            if (player) addToWhitelist(player, notes);
+        });
+    }
+    
+    // Action history refresh
+    const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
+    if (refreshHistoryBtn) {
+        refreshHistoryBtn.addEventListener('click', () => {
+            loadActionHistory();
         });
     }
     

@@ -77,10 +77,52 @@ class DatabaseService {
             CREATE INDEX IF NOT EXISTS idx_playtime ON players(total_playtime_ms DESC)
         `;
 
+        // Create table for player actions history
+        const createPlayerActionsTable = `
+            CREATE TABLE IF NOT EXISTS player_actions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_uuid TEXT NOT NULL,
+                player_username TEXT NOT NULL,
+                action_type TEXT NOT NULL,
+                action_details TEXT,
+                performed_by TEXT NOT NULL,
+                performed_at TEXT NOT NULL,
+                reason TEXT,
+                FOREIGN KEY (player_uuid) REFERENCES players(uuid)
+            )
+        `;
+
+        // Create index on player_uuid for action history lookups
+        const createActionPlayerIndex = `
+            CREATE INDEX IF NOT EXISTS idx_action_player ON player_actions(player_uuid, performed_at DESC)
+        `;
+
+        // Create table for whitelist management
+        const createWhitelistTable = `
+            CREATE TABLE IF NOT EXISTS whitelist (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                player_uuid TEXT UNIQUE NOT NULL,
+                player_username TEXT NOT NULL,
+                added_by TEXT NOT NULL,
+                added_at TEXT NOT NULL,
+                notes TEXT,
+                is_active INTEGER DEFAULT 1
+            )
+        `;
+
+        // Create index on player_uuid for whitelist lookups
+        const createWhitelistUuidIndex = `
+            CREATE INDEX IF NOT EXISTS idx_whitelist_uuid ON whitelist(player_uuid)
+        `;
+
         this.db.exec(createPlayersTable);
         this.db.exec(createUsernameIndex);
         this.db.exec(createLastSeenIndex);
         this.db.exec(createPlaytimeIndex);
+        this.db.exec(createPlayerActionsTable);
+        this.db.exec(createActionPlayerIndex);
+        this.db.exec(createWhitelistTable);
+        this.db.exec(createWhitelistUuidIndex);
     }
 
     /**
@@ -215,6 +257,142 @@ class DatabaseService {
         const stmt = this.db.prepare('SELECT COUNT(*) as count FROM players');
         const result = stmt.get();
         return result.count;
+    }
+
+    // ========================================================================
+    // PLAYER ACTIONS HISTORY METHODS
+    // ========================================================================
+
+    /**
+     * Record a player action for history tracking
+     * @param {string} playerUuid - Player UUID
+     * @param {string} playerUsername - Player username
+     * @param {string} actionType - Type of action (kick, ban, warn, mute, etc.)
+     * @param {string} performedBy - Username of admin/moderator
+     * @param {string} reason - Reason for the action
+     * @param {object} details - Additional action details
+     */
+    recordPlayerAction(playerUuid, playerUsername, actionType, performedBy, reason = null, details = null) {
+        const stmt = this.db.prepare(`
+            INSERT INTO player_actions 
+            (player_uuid, player_username, action_type, action_details, performed_by, performed_at, reason)
+            VALUES (?, ?, ?, ?, ?, datetime('now'), ?)
+        `);
+
+        const actionDetails = details ? JSON.stringify(details) : null;
+        stmt.run(playerUuid, playerUsername, actionType, actionDetails, performedBy, reason);
+    }
+
+    /**
+     * Get action history for a specific player
+     * @param {string} playerUuid - Player UUID
+     * @param {number} limit - Maximum number of actions to return
+     * @returns {Array} Array of action records
+     */
+    getPlayerActionHistory(playerUuid, limit = 50) {
+        const stmt = this.db.prepare(`
+            SELECT * FROM player_actions
+            WHERE player_uuid = ?
+            ORDER BY performed_at DESC
+            LIMIT ?
+        `);
+        
+        const actions = stmt.all(playerUuid, limit);
+        
+        // Parse JSON details
+        return actions.map(action => ({
+            ...action,
+            action_details: action.action_details ? JSON.parse(action.action_details) : null
+        }));
+    }
+
+    /**
+     * Get all player actions (for admin audit)
+     * @param {number} limit - Maximum number of actions to return
+     * @returns {Array} Array of action records
+     */
+    getAllPlayerActions(limit = 100) {
+        const stmt = this.db.prepare(`
+            SELECT * FROM player_actions
+            ORDER BY performed_at DESC
+            LIMIT ?
+        `);
+        
+        const actions = stmt.all(limit);
+        
+        // Parse JSON details
+        return actions.map(action => ({
+            ...action,
+            action_details: action.action_details ? JSON.parse(action.action_details) : null
+        }));
+    }
+
+    // ========================================================================
+    // WHITELIST MANAGEMENT METHODS
+    // ========================================================================
+
+    /**
+     * Add a player to the whitelist
+     * @param {string} playerUuid - Player UUID
+     * @param {string} playerUsername - Player username
+     * @param {string} addedBy - Username of admin who added them
+     * @param {string} notes - Optional notes
+     */
+    addToWhitelist(playerUuid, playerUsername, addedBy, notes = null) {
+        const stmt = this.db.prepare(`
+            INSERT INTO whitelist (player_uuid, player_username, added_by, added_at, notes, is_active)
+            VALUES (?, ?, ?, datetime('now'), ?, 1)
+            ON CONFLICT(player_uuid) DO UPDATE SET
+                is_active = 1,
+                player_username = excluded.player_username,
+                added_by = excluded.added_by,
+                added_at = excluded.added_at,
+                notes = excluded.notes
+        `);
+
+        stmt.run(playerUuid, playerUsername, addedBy, notes);
+    }
+
+    /**
+     * Remove a player from the whitelist
+     * @param {string} playerUuid - Player UUID
+     */
+    removeFromWhitelist(playerUuid) {
+        const stmt = this.db.prepare(`
+            UPDATE whitelist
+            SET is_active = 0
+            WHERE player_uuid = ?
+        `);
+
+        stmt.run(playerUuid);
+    }
+
+    /**
+     * Get all active whitelist entries
+     * @returns {Array} Array of whitelist records
+     */
+    getActiveWhitelist() {
+        const stmt = this.db.prepare(`
+            SELECT * FROM whitelist
+            WHERE is_active = 1
+            ORDER BY added_at DESC
+        `);
+
+        return stmt.all();
+    }
+
+    /**
+     * Check if a player is whitelisted
+     * @param {string} playerUuid - Player UUID
+     * @returns {boolean} True if player is whitelisted
+     */
+    isWhitelisted(playerUuid) {
+        const stmt = this.db.prepare(`
+            SELECT COUNT(*) as count FROM whitelist
+            WHERE player_uuid = ? AND is_active = 1
+        `);
+
+        return stmt.get(playerUuid).count > 0;
     }
 
     /**

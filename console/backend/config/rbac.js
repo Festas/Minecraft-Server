@@ -52,6 +52,13 @@ const PERMISSIONS = {
     PLAYER_DEOP: 'player:deop',
     PLAYER_VIEW: 'player:view',
     PLAYER_WHITELIST: 'player:whitelist',
+    PLAYER_WARN: 'player:warn',
+    PLAYER_MUTE: 'player:mute',
+    PLAYER_UNMUTE: 'player:unmute',
+    PLAYER_TELEPORT: 'player:teleport',
+    PLAYER_VIEW_DETAILS: 'player:view:details',
+    PLAYER_VIEW_INVENTORY: 'player:view:inventory',
+    PLAYER_ACTION_HISTORY: 'player:action:history',
     
     // Backup Management
     BACKUP_CREATE: 'backup:create',
@@ -128,6 +135,13 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.PLAYER_DEOP,
         PERMISSIONS.PLAYER_VIEW,
         PERMISSIONS.PLAYER_WHITELIST,
+        PERMISSIONS.PLAYER_WARN,
+        PERMISSIONS.PLAYER_MUTE,
+        PERMISSIONS.PLAYER_UNMUTE,
+        PERMISSIONS.PLAYER_TELEPORT,
+        PERMISSIONS.PLAYER_VIEW_DETAILS,
+        PERMISSIONS.PLAYER_VIEW_INVENTORY,
+        PERMISSIONS.PLAYER_ACTION_HISTORY,
         
         // Backup Management
         PERMISSIONS.BACKUP_CREATE,
@@ -177,12 +191,18 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.COMMAND_EXECUTE,
         PERMISSIONS.COMMAND_VIEW,
         
-        // Player Management (no OP/DEOP)
+        // Player Management (no OP/DEOP, no inventory view)
         PERMISSIONS.PLAYER_KICK,
         PERMISSIONS.PLAYER_BAN,
         PERMISSIONS.PLAYER_PARDON,
         PERMISSIONS.PLAYER_VIEW,
         PERMISSIONS.PLAYER_WHITELIST,
+        PERMISSIONS.PLAYER_WARN,
+        PERMISSIONS.PLAYER_MUTE,
+        PERMISSIONS.PLAYER_UNMUTE,
+        PERMISSIONS.PLAYER_TELEPORT,
+        PERMISSIONS.PLAYER_VIEW_DETAILS,
+        PERMISSIONS.PLAYER_ACTION_HISTORY,
         
         // Backup Management (read-only)
         PERMISSIONS.BACKUP_VIEW,
@@ -217,6 +237,7 @@ const ROLE_PERMISSIONS = {
         
         // Player Management (view-only)
         PERMISSIONS.PLAYER_VIEW,
+        PERMISSIONS.PLAYER_VIEW_DETAILS,
         
         // Backup Management (view-only)
         PERMISSIONS.BACKUP_VIEW,
