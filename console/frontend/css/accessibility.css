@@ -1,0 +1,391 @@
+/**
+ * Accessibility Styles
+ * Enhances focus indicators, keyboard navigation, and screen reader support
+ */
+
+/* Skip navigation link - visible on focus for keyboard users */
+.skip-navigation {
+    position: absolute;
+    top: -100px;
+    left: 0;
+    background: var(--accent-primary);
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    z-index: 9999;
+    border-radius: 0 0 4px 0;
+    font-weight: bold;
+    transition: top 0.3s;
+}
+
+.skip-navigation:focus {
+    top: 0;
+    outline: 3px solid var(--accent-warning);
+    outline-offset: 2px;
+}
+
+/* Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Enhanced focus indicators for all interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.nav-item:focus-visible {
+    outline: 3px solid var(--accent-primary);
+    outline-offset: 2px;
+    position: relative;
+    z-index: 1;
+}
+
+/* High contrast focus for dark theme */
+[data-theme="dark"] button:focus-visible,
+[data-theme="dark"] a:focus-visible,
+[data-theme="dark"] input:focus-visible,
+[data-theme="dark"] select:focus-visible,
+[data-theme="dark"] textarea:focus-visible,
+[data-theme="dark"] .nav-item:focus-visible {
+    outline-color: #4dd0e1;
+    outline-width: 3px;
+}
+
+/* High contrast focus for light theme */
+[data-theme="light"] button:focus-visible,
+[data-theme="light"] a:focus-visible,
+[data-theme="light"] input:focus-visible,
+[data-theme="light"] select:focus-visible,
+[data-theme="light"] textarea:focus-visible,
+[data-theme="light"] .nav-item:focus-visible {
+    outline-color: #1976d2;
+    outline-width: 3px;
+}
+
+/* Remove default focus outline but keep for keyboard users */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Keyboard navigation visual feedback */
+.nav-item {
+    position: relative;
+}
+
+.nav-item:focus-visible::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    animation: pulse-focus 1.5s infinite;
+}
+
+@keyframes pulse-focus {
+    0%, 100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: translateY(-50%) scale(1.2);
+    }
+}
+
+/* Ensure sufficient color contrast for text */
+.text-muted,
+.section-description,
+.player-stats {
+    /* Minimum contrast ratio of 4.5:1 for normal text (WCAG AA) */
+    color: var(--text-secondary);
+}
+
+/* Larger click/touch targets for better accessibility */
+button,
+.btn,
+.nav-item,
+a {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Exception for small buttons in appropriate contexts */
+.btn-sm {
+    min-height: 36px;
+    min-width: 36px;
+}
+
+/* Ensure modals are announced properly */
+.modal[role="dialog"] {
+    /* Will be added by JS */
+}
+
+.modal:not(.hidden) {
+    /* Prevent background scrolling when modal is open */
+    position: fixed;
+}
+
+/* Live regions for dynamic content updates */
+[aria-live="polite"],
+[aria-live="assertive"] {
+    /* Announced by screen readers */
+}
+
+/* Status indicators */
+.status-indicator[role="status"] {
+    /* Screen readers will announce changes */
+}
+
+/* Improve readability with proper line height and spacing */
+body {
+    line-height: 1.6;
+}
+
+p, li {
+    line-height: 1.8;
+}
+
+/* Ensure heading hierarchy is clear */
+h1 { font-size: 2em; }
+h2 { font-size: 1.75em; }
+h3 { font-size: 1.5em; }
+h4 { font-size: 1.25em; }
+h5 { font-size: 1.1em; }
+h6 { font-size: 1em; }
+
+/* Add visual indication for disabled elements */
+button[disabled],
+input[disabled],
+select[disabled],
+textarea[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Improve form label association */
+label {
+    cursor: pointer;
+}
+
+/* Checkbox and radio button sizing */
+input[type="checkbox"],
+input[type="radio"] {
+    min-width: 20px;
+    min-height: 20px;
+    cursor: pointer;
+}
+
+/* Focus trap indicator (when modal is active) */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Keyboard navigation helpers */
+.keyboard-nav-hint {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 5px;
+}
+
+/* Accessible tooltips */
+[data-tooltip] {
+    position: relative;
+}
+
+[data-tooltip]:hover::after,
+[data-tooltip]:focus::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+    border: 1px solid var(--border-color);
+}
+
+/* Error and warning accessibility */
+.error-message,
+.warning-banner {
+    /* Already have role="alert" from JS */
+    font-weight: 500;
+}
+
+/* Ensure icons don't interfere with screen readers - set aria-hidden="true" in HTML */
+.icon::before {
+    /* Icons should have aria-hidden="true" in HTML */
+}
+
+/* Player list accessibility */
+.players-list {
+    /* Ensure list semantics */
+}
+
+.player-item {
+    /* Each item should be focusable for keyboard navigation */
+    outline-offset: 2px;
+}
+
+/* Toast notification accessibility - role="status" should be set in HTML/JS */
+.toast {
+    /* Toast notifications should have role="status" or role="alert" */
+}
+
+/* Data table accessibility */
+.data-table {
+    /* Ensure proper table structure for screen readers */
+}
+
+.data-table th {
+    /* Headers are properly associated with data cells */
+    font-weight: 600;
+}
+
+/* Responsive focus indicators */
+@media (max-width: 768px) {
+    /* Larger touch targets on mobile */
+    button,
+    .btn,
+    .nav-item,
+    a {
+        min-height: 48px;
+        min-width: 48px;
+    }
+    
+    .btn-sm {
+        min-height: 40px;
+        min-width: 40px;
+    }
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .skip-navigation {
+        transition: none;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    button,
+    .btn,
+    .card,
+    input,
+    select,
+    textarea {
+        border-width: 2px;
+    }
+    
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+        outline-width: 4px;
+    }
+}
+
+/* Print accessibility */
+@media print {
+    .skip-navigation,
+    .sidebar,
+    .header-right,
+    button,
+    .btn {
+        display: none;
+    }
+    
+    .main-content {
+        width: 100%;
+    }
+    
+    .content-section {
+        display: block !important;
+    }
+}
+
+/* Theme toggle button styling */
+#themeToggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 40px;
+}
+
+.theme-toggle-login {
+    margin-top: 10px;
+}
+
+#themeToggle:hover {
+    background: var(--bg-hover, #4a4a4a);
+    border-color: var(--accent-primary);
+}
+
+#themeToggle:focus-visible {
+    outline: 3px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+.theme-icon {
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+.theme-text {
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+/* Responsive theme toggle */
+@media (max-width: 768px) {
+    .theme-text {
+        display: none;
+    }
+    
+    #themeToggle {
+        padding: 8px;
+        min-width: 40px;
+        justify-content: center;
+    }
+}
