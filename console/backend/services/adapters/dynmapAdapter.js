@@ -173,16 +173,19 @@ class DynmapAdapter extends BasePluginAdapter {
 
     /**
      * Get map tiles for a specific world and map
-     * @param {string} worldName - World name
-     * @param {string} mapName - Map name
-     * @param {object} params - Tile parameters (zoom, x, y, etc.)
+     * @param {object} params - Parameters object
+     * @param {string} params.worldName - World name
+     * @param {string} params.mapName - Map name
+     * @param {number} params.zoom - Zoom level (default 0)
+     * @param {number} params.x - X coordinate (default 0)
+     * @param {number} params.y - Y coordinate (default 0)
      * @returns {Promise<object>} Tile data
      */
-    async getMapTile(worldName, mapName, params = {}) {
-        const endpoint = `/tiles/${worldName}/${mapName}/${params.zoom || 0}/${params.x || 0}_${params.y || 0}.png`;
+    async getMapTile({ worldName, mapName, zoom = 0, x = 0, y = 0 }) {
+        const endpoint = `/tiles/${worldName}/${mapName}/${zoom}/${x}_${y}.png`;
         
         try {
-            const response = await this.makeRequest('GET', endpoint, params, { 
+            const response = await this.makeRequest('GET', endpoint, {}, { 
                 retries: 0,
                 responseType: 'arraybuffer'
             });
