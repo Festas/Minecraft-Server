@@ -19,6 +19,7 @@ const logsService = require('./services/logs');
 const playerTracker = require('./services/playerTracker');
 const jobQueue = require('./services/jobQueue');
 const jobWorker = require('./services/jobWorker');
+const automationService = require('./services/automationService');
 const { initializeUsers } = require('./auth/auth');
 const { initializeSessionMiddleware, initializeSessionStore, getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
 const { validateTokenConfiguration } = require('./auth/bearerAuth');
@@ -40,6 +41,7 @@ const pluginsV2Routes = require('./routes/pluginsV2');
 const pluginIntegrationsRoutes = require('./routes/pluginIntegrations');
 const userRoutes = require('./routes/users');
 const auditRoutes = require('./routes/audit');
+const automationRoutes = require('./routes/automation');
 
 // Initialize Express app
 const app = express();
@@ -443,6 +445,7 @@ app.use('/api/v2/plugins', pluginsV2Routes); // New job-based plugin API
 app.use('/api/plugins', pluginIntegrationsRoutes); // Plugin integrations (Dynmap, EssentialsX)
 app.use('/api/users', userRoutes); // User management
 app.use('/api/audit', auditRoutes); // Audit logs
+app.use('/api/automation', automationRoutes); // Automation & Scheduler
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -522,6 +525,10 @@ async function initializeServices() {
 
     // Initialize player tracker
     await playerTracker.initialize();
+
+    // Initialize automation service
+    await automationService.initialize();
+    console.log('[Startup] ✓ Automation service initialized');
 
     // Initialize plugin gateway and adapters
     await initializePluginGateway();
@@ -717,6 +724,7 @@ process.on('SIGTERM', async () => {
     const pluginGateway = require('./services/pluginGateway');
     await pluginGateway.shutdown();
     jobWorker.stopWorker();
+    await automationService.shutdown();
     logsService.stopStreaming();
     await rconService.disconnect();
     await playerTracker.shutdown();
@@ -734,6 +742,7 @@ process.on('SIGINT', async () => {
     const pluginGateway = require('./services/pluginGateway');
     await pluginGateway.shutdown();
     jobWorker.stopWorker();
+    await automationService.shutdown();
     logsService.stopStreaming();
     await rconService.disconnect();
     await playerTracker.shutdown();

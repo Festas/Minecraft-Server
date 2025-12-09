@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automation & Scheduler - Minecraft Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/minecraft-theme.css">
+    <link rel="stylesheet" href="css/theme-light.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+    <style>
+        .task-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .task-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .task-card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .task-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .task-card-body {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            color: var(--text-color);
+        }
+
+        .task-card-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .task-card-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .task-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .task-stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .task-stat-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .task-type-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .task-type-backup {
+            background: #3498db;
+            color: white;
+        }
+
+        .task-type-restart {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .task-type-broadcast {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .task-type-command {
+            background: #f39c12;
+            color: white;
+        }
+
+        .task-status-enabled {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .task-status-disabled {
+            color: #95a5a6;
+            font-weight: bold;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        .history-entry {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-status {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .status-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .status-failed {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .status-partial {
+            background: #f39c12;
+            color: white;
+        }
+
+        .cron-helper {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .cron-examples {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+
+        .cron-examples strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .cron-examples div {
+            margin: 4px 0;
+        }
+
+        .config-editor {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 8px;
+        }
+
+        .config-field {
+            margin-bottom: 12px;
+        }
+
+        .config-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="console-wrapper">
+        <!-- Header -->
+        <header class="console-header">
+            <div class="header-left">
+                <h1>🎮 Festas Builds - Automation & Scheduler</h1>
+            </div>
+            <div class="header-right">
+                <button id="themeToggle" aria-label="Toggle theme">
+                    <span class="theme-icon">☀️</span>
+                    <span class="theme-text">Light Mode</span>
+                </button>
+                <span id="currentUser" class="user-badge">Loading...</span>
+                <button id="backBtn" class="btn btn-secondary">Back to Console</button>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="console-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav>
+                    <button class="nav-item active" data-section="tasks">
+                        <span>📋</span> Scheduled Tasks
+                    </button>
+                    <button class="nav-item" data-section="history">
+                        <span>📊</span> History
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Access Denied Banner (hidden by default) -->
+                <div id="accessDenied" class="error-banner hidden">
+                    ⚠️ Access Denied - You don't have permission to view automation tasks.
+                    <br>
+                    <button id="goBackBtn" class="btn btn-primary" style="margin-top: 10px;">Return to Console</button>
+                </div>
+
+                <!-- Scheduled Tasks Section -->
+                <section id="tasks" class="content-section active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Scheduled Tasks</h3>
+                            <button id="createTaskBtn" class="btn btn-success hidden">➕ Create Task</button>
+                        </div>
+                        
+                        <div id="tasksContainer">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">⏰</div>
+                                <p>Loading scheduled tasks...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- History Section -->
+                <section id="history" class="content-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Execution History</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <select id="historyFilter" class="form-control">
+                                    <option value="">All Tasks</option>
+                                    <option value="backup">Backups</option>
+                                    <option value="restart">Restarts</option>
+                                    <option value="broadcast">Broadcasts</option>
+                                    <option value="command">Commands</option>
+                                </select>
+                                <button id="refreshHistoryBtn" class="btn btn-primary">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        
+                        <div id="historyContainer">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📊</div>
+                                <p>Loading execution history...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Container for Notifications -->
+    <div id="toastContainer"></div>
+
+    <!-- Create/Edit Task Modal -->
+    <div id="taskModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="taskModalTitle">Create Task</h2>
+                <button class="modal-close" id="closeTaskModal">&times;</button>
+            </div>
+            
+            <form id="taskForm">
+                <div class="form-group">
+                    <label for="taskName">Task Name *</label>
+                    <input type="text" id="taskName" name="name" required placeholder="e.g., Daily Backup">
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskDescription">Description</label>
+                    <textarea id="taskDescription" name="description" placeholder="Optional description"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskType">Task Type *</label>
+                    <select id="taskType" name="task_type" required>
+                        <option value="">Select task type...</option>
+                        <option value="backup">Backup</option>
+                        <option value="restart">Restart</option>
+                        <option value="broadcast">Broadcast</option>
+                        <option value="command">Custom Command</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cronExpression">Schedule (Cron Expression) *</label>
+                    <input type="text" id="cronExpression" name="cron_expression" required placeholder="0 */6 * * *">
+                    <div class="cron-helper">
+                        Format: minute hour day month weekday
+                    </div>
+                    <div class="cron-examples">
+                        <strong>Common Examples:</strong>
+                        <div><code>0 */6 * * *</code> - Every 6 hours</div>
+                        <div><code>0 0 * * *</code> - Daily at midnight</div>
+                        <div><code>0 3 * * 0</code> - Weekly on Sunday at 3 AM</div>
+                        <div><code>*/30 * * * *</code> - Every 30 minutes</div>
+                    </div>
+                </div>
+                
+                <div id="taskConfigContainer" class="config-editor" style="display: none;">
+                    <!-- Dynamic config fields will be inserted here -->
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="taskEnabled" name="enabled" checked>
+                        Enable this task
+                    </label>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelTaskBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveTaskBtn">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/themeManager.js"></script>
+    <script src="js/accessibility.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/automation.js"></script>
+</body>
+</html>

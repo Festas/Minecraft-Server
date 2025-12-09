@@ -115,6 +115,57 @@ class DatabaseService {
             CREATE INDEX IF NOT EXISTS idx_whitelist_uuid ON whitelist(player_uuid)
         `;
 
+        // Create table for scheduled automation tasks
+        const createAutomationTasksTable = `
+            CREATE TABLE IF NOT EXISTS automation_tasks (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                task_type TEXT NOT NULL,
+                cron_expression TEXT NOT NULL,
+                config TEXT NOT NULL,
+                enabled INTEGER DEFAULT 1,
+                created_by TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                last_run TEXT,
+                next_run TEXT,
+                run_count INTEGER DEFAULT 0
+            )
+        `;
+
+        // Create index on task_type for filtering
+        const createTaskTypeIndex = `
+            CREATE INDEX IF NOT EXISTS idx_task_type ON automation_tasks(task_type)
+        `;
+
+        // Create table for automation task execution history
+        const createAutomationHistoryTable = `
+            CREATE TABLE IF NOT EXISTS automation_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id TEXT,
+                task_name TEXT NOT NULL,
+                task_type TEXT NOT NULL,
+                execution_type TEXT NOT NULL,
+                executed_by TEXT NOT NULL,
+                executed_at TEXT NOT NULL,
+                status TEXT NOT NULL,
+                duration_ms INTEGER,
+                error_message TEXT,
+                result_details TEXT
+            )
+        `;
+
+        // Create index on task_id for history lookups
+        const createHistoryTaskIndex = `
+            CREATE INDEX IF NOT EXISTS idx_history_task ON automation_history(task_id, executed_at DESC)
+        `;
+
+        // Create index on executed_at for chronological queries
+        const createHistoryTimeIndex = `
+            CREATE INDEX IF NOT EXISTS idx_history_time ON automation_history(executed_at DESC)
+        `;
+
         this.db.exec(createPlayersTable);
         this.db.exec(createUsernameIndex);
         this.db.exec(createLastSeenIndex);
@@ -123,6 +174,11 @@ class DatabaseService {
         this.db.exec(createActionPlayerIndex);
         this.db.exec(createWhitelistTable);
         this.db.exec(createWhitelistUuidIndex);
+        this.db.exec(createAutomationTasksTable);
+        this.db.exec(createTaskTypeIndex);
+        this.db.exec(createAutomationHistoryTable);
+        this.db.exec(createHistoryTaskIndex);
+        this.db.exec(createHistoryTimeIndex);
     }
 
     /**
@@ -393,6 +449,231 @@ class DatabaseService {
         `);
 
         return stmt.get(playerUuid).count > 0;
+    }
+
+    // ========================================================================
+    // AUTOMATION TASKS METHODS
+    // ========================================================================
+
+    /**
+     * Create a new automation task
+     * @param {object} task - Task configuration
+     * @returns {object} Created task
+     */
+    createAutomationTask(task) {
+        const stmt = this.db.prepare(`
+            INSERT INTO automation_tasks 
+            (id, name, description, task_type, cron_expression, config, enabled, created_by, created_at, updated_at, next_run)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), ?)
+        `);
+
+        stmt.run(
+            task.id,
+            task.name,
+            task.description || null,
+            task.task_type,
+            task.cron_expression,
+            JSON.stringify(task.config),
+            task.enabled ? 1 : 0,
+            task.created_by,
+            task.next_run || null
+        );
+
+        return this.getAutomationTask(task.id);
+    }
+
+    /**
+     * Get automation task by ID
+     * @param {string} id - Task ID
+     * @returns {object|null} Task or null
+     */
+    getAutomationTask(id) {
+        const stmt = this.db.prepare('SELECT * FROM automation_tasks WHERE id = ?');
+        const task = stmt.get(id);
+        
+        if (task) {
+            task.config = JSON.parse(task.config);
+            task.enabled = Boolean(task.enabled);
+        }
+        
+        return task;
+    }
+
+    /**
+     * Get all automation tasks
+     * @param {boolean} enabledOnly - Only return enabled tasks
+     * @returns {Array} Array of tasks
+     */
+    getAllAutomationTasks(enabledOnly = false) {
+        const query = enabledOnly 
+            ? 'SELECT * FROM automation_tasks WHERE enabled = 1 ORDER BY created_at DESC'
+            : 'SELECT * FROM automation_tasks ORDER BY created_at DESC';
+        
+        const stmt = this.db.prepare(query);
+        const tasks = stmt.all();
+        
+        return tasks.map(task => ({
+            ...task,
+            config: JSON.parse(task.config),
+            enabled: Boolean(task.enabled)
+        }));
+    }
+
+    /**
+     * Update automation task
+     * @param {string} id - Task ID
+     * @param {object} updates - Fields to update
+     */
+    updateAutomationTask(id, updates) {
+        const fields = [];
+        const values = [];
+
+        if (updates.name !== undefined) {
+            fields.push('name = ?');
+            values.push(updates.name);
+        }
+        if (updates.description !== undefined) {
+            fields.push('description = ?');
+            values.push(updates.description);
+        }
+        if (updates.task_type !== undefined) {
+            fields.push('task_type = ?');
+            values.push(updates.task_type);
+        }
+        if (updates.cron_expression !== undefined) {
+            fields.push('cron_expression = ?');
+            values.push(updates.cron_expression);
+        }
+        if (updates.config !== undefined) {
+            fields.push('config = ?');
+            values.push(JSON.stringify(updates.config));
+        }
+        if (updates.enabled !== undefined) {
+            fields.push('enabled = ?');
+            values.push(updates.enabled ? 1 : 0);
+        }
+        if (updates.next_run !== undefined) {
+            fields.push('next_run = ?');
+            values.push(updates.next_run);
+        }
+
+        fields.push('updated_at = datetime(\'now\')');
+        values.push(id);
+
+        const stmt = this.db.prepare(`
+            UPDATE automation_tasks 
+            SET ${fields.join(', ')}
+            WHERE id = ?
+        `);
+
+        stmt.run(...values);
+        return this.getAutomationTask(id);
+    }
+
+    /**
+     * Delete automation task
+     * @param {string} id - Task ID
+     */
+    deleteAutomationTask(id) {
+        const stmt = this.db.prepare('DELETE FROM automation_tasks WHERE id = ?');
+        stmt.run(id);
+    }
+
+    /**
+     * Update task run statistics
+     * @param {string} id - Task ID
+     * @param {string} nextRun - Next run time (ISO string)
+     */
+    updateTaskRunStats(id, nextRun) {
+        const stmt = this.db.prepare(`
+            UPDATE automation_tasks
+            SET last_run = datetime('now'),
+                run_count = run_count + 1,
+                next_run = ?
+            WHERE id = ?
+        `);
+
+        stmt.run(nextRun, id);
+    }
+
+    // ========================================================================
+    // AUTOMATION HISTORY METHODS
+    // ========================================================================
+
+    /**
+     * Record automation task execution
+     * @param {object} execution - Execution details
+     */
+    recordAutomationExecution(execution) {
+        const stmt = this.db.prepare(`
+            INSERT INTO automation_history 
+            (task_id, task_name, task_type, execution_type, executed_by, executed_at, status, duration_ms, error_message, result_details)
+            VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, ?)
+        `);
+
+        stmt.run(
+            execution.task_id || null,
+            execution.task_name,
+            execution.task_type,
+            execution.execution_type, // 'scheduled' or 'manual'
+            execution.executed_by,
+            execution.status, // 'success', 'failed', 'partial'
+            execution.duration_ms || null,
+            execution.error_message || null,
+            execution.result_details ? JSON.stringify(execution.result_details) : null
+        );
+    }
+
+    /**
+     * Get automation execution history
+     * @param {object} options - Filter options
+     * @returns {Array} Array of execution records
+     */
+    getAutomationHistory(options = {}) {
+        let query = 'SELECT * FROM automation_history';
+        const conditions = [];
+        const values = [];
+
+        if (options.task_id) {
+            conditions.push('task_id = ?');
+            values.push(options.task_id);
+        }
+
+        if (options.task_type) {
+            conditions.push('task_type = ?');
+            values.push(options.task_type);
+        }
+
+        if (options.execution_type) {
+            conditions.push('execution_type = ?');
+            values.push(options.execution_type);
+        }
+
+        if (options.status) {
+            conditions.push('status = ?');
+            values.push(options.status);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += ' ORDER BY executed_at DESC';
+
+        if (options.limit) {
+            query += ' LIMIT ?';
+            values.push(options.limit);
+        } else {
+            query += ' LIMIT 100';
+        }
+
+        const stmt = this.db.prepare(query);
+        const history = stmt.all(...values);
+
+        return history.map(record => ({
+            ...record,
+            result_details: record.result_details ? JSON.parse(record.result_details) : null
+        }));
     }
 
     /**

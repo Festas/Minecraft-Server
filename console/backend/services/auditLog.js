@@ -61,7 +61,14 @@ const AUDIT_EVENTS = {
     FILE_EDITED: 'file.edited',
     
     // Critical commands
-    COMMAND_EXECUTED: 'command.executed'
+    COMMAND_EXECUTED: 'command.executed',
+    
+    // Automation events
+    AUTOMATION_TASK_CREATED: 'automation.task.created',
+    AUTOMATION_TASK_UPDATED: 'automation.task.updated',
+    AUTOMATION_TASK_DELETED: 'automation.task.deleted',
+    AUTOMATION_TASK_SCHEDULED: 'automation.task.scheduled',
+    AUTOMATION_TASK_MANUAL: 'automation.task.manual'
 };
 
 /**

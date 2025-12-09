@@ -1,0 +1,479 @@
+/**
+ * Automation Routes Tests
+ * 
+ * Tests for automation/scheduler API endpoints with RBAC enforcement
+ */
+
+const request = require('supertest');
+const express = require('express');
+
+// Mock the services before requiring routes
+jest.mock('../../services/automationService');
+jest.mock('../../services/database');
+jest.mock('../../services/auditLog');
+
+const automationService = require('../../services/automationService');
+
+// Mock the requireAuth middleware
+jest.mock('../../auth/auth', () => ({
+    requireAuth: (req, res, next) => {
+        req.session = { username: 'testuser', role: 'admin', authenticated: true };
+        next();
+    }
+}));
+
+// Mock the RBAC middleware
+jest.mock('../../middleware/rbac', () => ({
+    requirePermission: (permission) => (req, res, next) => {
+        // For testing, allow all permissions
+        next();
+    }
+}));
+
+// Mock rate limiter to avoid rate limiting in tests
+jest.mock('express-rate-limit', () => {
+    return jest.fn(() => (req, res, next) => next());
+});
+
+// Now require the routes after mocks are set up
+const automationRouter = require('../../routes/automation');
+
+// Create a test app
+const app = express();
+app.use(express.json());
+
+// Add automation router
+app.use('/api/automation', automationRouter);
+
+describe('Automation Routes', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    describe('GET /api/automation/tasks', () => {
+        it('should return list of tasks for authenticated user with view permission', async () => {
+            const mockTasks = [
+                {
+                    id: 'task-1',
+                    name: 'Daily Backup',
+                    task_type: 'backup',
+                    cron_expression: '0 0 * * *',
+                    enabled: true,
+                    created_by: 'admin',
+                    run_count: 5
+                }
+            ];
+
+            automationService.getAllTasks.mockReturnValue(mockTasks);
+
+            const response = await request(app)
+                .get('/api/automation/tasks');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('tasks');
+            expect(Array.isArray(response.body.tasks)).toBe(true);
+        });
+    });
+
+    describe('POST /api/automation/tasks', () => {
+        it('should validate required fields', async () => {
+            const response = await request(app)
+                .post('/api/automation/tasks')
+                .send({
+                    // Missing required fields
+                    description: 'Test description'
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty('error');
+        });
+
+        it('should create task with valid data', async () => {
+            const taskData = {
+                name: 'Test Backup',
+                description: 'Test backup task',
+                task_type: 'backup',
+                cron_expression: '0 */6 * * *',
+                config: {},
+                enabled: true
+            };
+
+            const mockCreatedTask = {
+                id: 'task-123',
+                ...taskData,
+                created_by: 'admin',
+                created_at: new Date().toISOString(),
+                run_count: 0
+            };
+
+            automationService.createTask.mockResolvedValue(mockCreatedTask);
+
+            const response = await request(app)
+                .post('/api/automation/tasks')
+                .send(taskData);
+
+            expect(response.status).toBe(201);
+            expect(response.body).toHaveProperty('success', true);
+            expect(response.body).toHaveProperty('task');
+            expect(automationService.createTask).toHaveBeenCalled();
+        });
+
+        it('should validate cron expression format', async () => {
+            automationService.createTask.mockRejectedValue(
+                new Error('Invalid cron expression')
+            );
+
+            const response = await request(app)
+                .post('/api/automation/tasks')
+                .send({
+                    name: 'Test Task',
+                    task_type: 'backup',
+                    cron_expression: 'invalid-cron'
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body).toHaveProperty('error');
+        });
+    });
+
+    describe('PUT /api/automation/tasks/:id', () => {
+        it('should update task with valid data', async () => {
+            const updates = {
+                name: 'Updated Task Name',
+                enabled: false
+            };
+
+            const mockUpdatedTask = {
+                id: 'task-123',
+                name: 'Updated Task Name',
+                task_type: 'backup',
+                cron_expression: '0 0 * * *',
+                enabled: false,
+                created_by: 'admin'
+            };
+
+            automationService.updateTask.mockResolvedValue(mockUpdatedTask);
+
+            const response = await agent
+                .put('/api/automation/tasks/task-123')
+                
+                .send(updates);
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('success', true);
+            expect(response.body.task.name).toBe('Updated Task Name');
+            expect(automationService.updateTask).toHaveBeenCalledWith(
+                'task-123',
+                updates,
+                expect.any(String)
+            );
+        });
+
+        it('should return 400 if no valid fields to update', async () => {
+            const response = await agent
+                .put('/api/automation/tasks/task-123')
+                
+                .send({
+                    invalid_field: 'value'
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toMatch(/No valid fields to update/);
+        });
+
+        it('should handle task not found', async () => {
+            automationService.updateTask.mockRejectedValue(
+                new Error('Task not found')
+            );
+
+            const response = await agent
+                .put('/api/automation/tasks/nonexistent')
+                
+                .send({ name: 'New Name' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toMatch(/Task not found/);
+        });
+    });
+
+    describe('DELETE /api/automation/tasks/:id', () => {
+        it('should delete task successfully', async () => {
+            automationService.deleteTask.mockResolvedValue({ success: true });
+
+            const response = await agent
+                .delete('/api/automation/tasks/task-123')
+                ;
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('success', true);
+            expect(automationService.deleteTask).toHaveBeenCalledWith(
+                'task-123',
+                expect.any(String)
+            );
+        });
+
+        it('should handle task not found on delete', async () => {
+            automationService.deleteTask.mockRejectedValue(
+                new Error('Task not found')
+            );
+
+            const response = await agent
+                .delete('/api/automation/tasks/nonexistent')
+                ;
+
+            expect(response.status).toBe(400);
+        });
+    });
+
+    describe('POST /api/automation/tasks/:id/execute', () => {
+        it('should execute task manually', async () => {
+            const mockResult = {
+                status: 'success',
+                duration_ms: 1234,
+                result_details: {
+                    message: 'Backup completed successfully'
+                }
+            };
+
+            automationService.executeTaskManually.mockResolvedValue(mockResult);
+
+            const response = await agent
+                .post('/api/automation/tasks/task-123/execute')
+                ;
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('success', true);
+            expect(response.body.result.status).toBe('success');
+            expect(automationService.executeTaskManually).toHaveBeenCalledWith(
+                'task-123',
+                expect.any(String)
+            );
+        });
+
+        it('should handle execution errors', async () => {
+            automationService.executeTaskManually.mockRejectedValue(
+                new Error('Execution failed')
+            );
+
+            const response = await agent
+                .post('/api/automation/tasks/task-123/execute')
+                ;
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toMatch(/Execution failed/);
+        });
+    });
+
+    describe('GET /api/automation/history', () => {
+        it('should return execution history', async () => {
+            const mockHistory = [
+                {
+                    id: 1,
+                    task_id: 'task-123',
+                    task_name: 'Daily Backup',
+                    task_type: 'backup',
+                    execution_type: 'scheduled',
+                    executed_by: 'system',
+                    executed_at: new Date().toISOString(),
+                    status: 'success',
+                    duration_ms: 1234
+                }
+            ];
+
+            automationService.getHistory.mockReturnValue(mockHistory);
+
+            const response = await agent
+                .get('/api/automation/history');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('history');
+            expect(Array.isArray(response.body.history)).toBe(true);
+        });
+
+        it('should filter history by task_type', async () => {
+            automationService.getHistory.mockReturnValue([]);
+
+            const response = await agent
+                .get('/api/automation/history?task_type=backup');
+
+            expect(response.status).toBe(200);
+            expect(automationService.getHistory).toHaveBeenCalledWith(
+                expect.objectContaining({ task_type: 'backup' })
+            );
+        });
+
+        it('should filter history by status', async () => {
+            automationService.getHistory.mockReturnValue([]);
+
+            const response = await agent
+                .get('/api/automation/history?status=failed');
+
+            expect(response.status).toBe(200);
+            expect(automationService.getHistory).toHaveBeenCalledWith(
+                expect.objectContaining({ status: 'failed' })
+            );
+        });
+
+        it('should limit history results', async () => {
+            automationService.getHistory.mockReturnValue([]);
+
+            const response = await agent
+                .get('/api/automation/history?limit=10');
+
+            expect(response.status).toBe(200);
+            expect(automationService.getHistory).toHaveBeenCalledWith(
+                expect.objectContaining({ limit: 10 })
+            );
+        });
+    });
+
+    describe('GET /api/automation/validate-cron', () => {
+        it('should validate cron expression', async () => {
+            automationService.validateCronExpression.mockReturnValue(true);
+
+            const response = await agent
+                .get('/api/automation/validate-cron?expression=0%200%20*%20*%20*');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('valid', true);
+        });
+
+        it('should return invalid for bad cron expression', async () => {
+            automationService.validateCronExpression.mockReturnValue(false);
+
+            const response = await agent
+                .get('/api/automation/validate-cron?expression=invalid');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('valid', false);
+        });
+
+        it('should require expression parameter', async () => {
+            const response = await agent
+                .get('/api/automation/validate-cron');
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toMatch(/Missing expression parameter/);
+        });
+    });
+
+    describe('Rate Limiting', () => {
+        it('should enforce rate limits on automation endpoints', async () => {
+            automationService.getAllTasks.mockReturnValue([]);
+
+            // Make multiple requests quickly
+            const requests = [];
+            for (let i = 0; i < 35; i++) {
+                requests.push(agent.get('/api/automation/tasks'));
+            }
+
+            const responses = await Promise.all(requests);
+            
+            // Some requests should be rate limited (429)
+            const rateLimited = responses.filter(r => r.status === 429);
+            expect(rateLimited.length).toBeGreaterThan(0);
+        });
+    });
+
+    describe('Task Type Validation', () => {
+        it('should accept valid task types', async () => {
+            const validTypes = ['backup', 'restart', 'broadcast', 'command'];
+
+            for (const type of validTypes) {
+                automationService.createTask.mockResolvedValue({
+                    id: 'task-test',
+                    name: 'Test',
+                    task_type: type,
+                    cron_expression: '0 0 * * *',
+                    enabled: true,
+                    created_by: 'admin'
+                });
+
+                const response = await agent
+                    .post('/api/automation/tasks')
+                    
+                    .send({
+                        name: `Test ${type}`,
+                        task_type: type,
+                        cron_expression: '0 0 * * *'
+                    });
+
+                expect(response.status).toBe(201);
+            }
+        });
+    });
+
+    describe('Config Validation', () => {
+        it('should accept valid config for broadcast tasks', async () => {
+            automationService.createTask.mockResolvedValue({
+                id: 'task-test',
+                name: 'Test Broadcast',
+                task_type: 'broadcast',
+                cron_expression: '0 * * * *',
+                config: { message: 'Test message' },
+                enabled: true,
+                created_by: 'admin'
+            });
+
+            const response = await agent
+                .post('/api/automation/tasks')
+                
+                .send({
+                    name: 'Test Broadcast',
+                    task_type: 'broadcast',
+                    cron_expression: '0 * * * *',
+                    config: { message: 'Test message' }
+                });
+
+            expect(response.status).toBe(201);
+        });
+
+        it('should accept valid config for restart tasks', async () => {
+            automationService.createTask.mockResolvedValue({
+                id: 'task-test',
+                name: 'Test Restart',
+                task_type: 'restart',
+                cron_expression: '0 3 * * *',
+                config: { warning_message: 'Restarting', warning_delay: 30 },
+                enabled: true,
+                created_by: 'admin'
+            });
+
+            const response = await agent
+                .post('/api/automation/tasks')
+                
+                .send({
+                    name: 'Test Restart',
+                    task_type: 'restart',
+                    cron_expression: '0 3 * * *',
+                    config: { warning_message: 'Restarting', warning_delay: 30 }
+                });
+
+            expect(response.status).toBe(201);
+        });
+
+        it('should accept valid config for command tasks', async () => {
+            automationService.createTask.mockResolvedValue({
+                id: 'task-test',
+                name: 'Test Command',
+                task_type: 'command',
+                cron_expression: '*/30 * * * *',
+                config: { command: 'weather clear' },
+                enabled: true,
+                created_by: 'admin'
+            });
+
+            const response = await agent
+                .post('/api/automation/tasks')
+                
+                .send({
+                    name: 'Test Command',
+                    task_type: 'command',
+                    cron_expression: '*/30 * * * *',
+                    config: { command: 'weather clear' }
+                });
+
+            expect(response.status).toBe(201);
+        });
+    });
+});
