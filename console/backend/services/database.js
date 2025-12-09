@@ -166,6 +166,91 @@ class DatabaseService {
             CREATE INDEX IF NOT EXISTS idx_history_time ON automation_history(executed_at DESC)
         `;
 
+        // Create table for outbound webhooks
+        const createWebhooksTable = `
+            CREATE TABLE IF NOT EXISTS webhooks (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                url TEXT NOT NULL,
+                method TEXT DEFAULT 'POST',
+                headers TEXT,
+                event_types TEXT NOT NULL,
+                enabled INTEGER DEFAULT 1,
+                secret TEXT,
+                verify_ssl INTEGER DEFAULT 1,
+                timeout_ms INTEGER DEFAULT 30000,
+                retry_count INTEGER DEFAULT 3,
+                created_by TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                last_triggered TEXT,
+                trigger_count INTEGER DEFAULT 0,
+                failure_count INTEGER DEFAULT 0
+            )
+        `;
+
+        // Create index on enabled status for filtering
+        const createWebhooksEnabledIndex = `
+            CREATE INDEX IF NOT EXISTS idx_webhooks_enabled ON webhooks(enabled)
+        `;
+
+        // Create table for webhook delivery logs
+        const createWebhookLogsTable = `
+            CREATE TABLE IF NOT EXISTS webhook_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                webhook_id TEXT NOT NULL,
+                webhook_name TEXT NOT NULL,
+                event_type TEXT NOT NULL,
+                event_data TEXT,
+                url TEXT NOT NULL,
+                request_payload TEXT,
+                request_headers TEXT,
+                response_status INTEGER,
+                response_body TEXT,
+                response_time_ms INTEGER,
+                attempt_number INTEGER DEFAULT 1,
+                success INTEGER DEFAULT 0,
+                error_message TEXT,
+                triggered_at TEXT NOT NULL,
+                FOREIGN KEY (webhook_id) REFERENCES webhooks(id)
+            )
+        `;
+
+        // Create index on webhook_id for log lookups
+        const createWebhookLogsWebhookIndex = `
+            CREATE INDEX IF NOT EXISTS idx_webhook_logs_webhook ON webhook_logs(webhook_id, triggered_at DESC)
+        `;
+
+        // Create index on triggered_at for chronological queries
+        const createWebhookLogsTimeIndex = `
+            CREATE INDEX IF NOT EXISTS idx_webhook_logs_time ON webhook_logs(triggered_at DESC)
+        `;
+
+        // Create table for inbound webhooks
+        const createInboundWebhooksTable = `
+            CREATE TABLE IF NOT EXISTS inbound_webhooks (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                secret TEXT NOT NULL,
+                allowed_ips TEXT,
+                actions TEXT NOT NULL,
+                permissions_required TEXT NOT NULL,
+                enabled INTEGER DEFAULT 1,
+                created_by TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                last_used TEXT,
+                use_count INTEGER DEFAULT 0
+            )
+        `;
+
+        // Create index on enabled status for filtering
+        const createInboundWebhooksEnabledIndex = `
+            CREATE INDEX IF NOT EXISTS idx_inbound_webhooks_enabled ON inbound_webhooks(enabled)
+        `;
+
         this.db.exec(createPlayersTable);
         this.db.exec(createUsernameIndex);
         this.db.exec(createLastSeenIndex);
@@ -179,6 +264,13 @@ class DatabaseService {
         this.db.exec(createAutomationHistoryTable);
         this.db.exec(createHistoryTaskIndex);
         this.db.exec(createHistoryTimeIndex);
+        this.db.exec(createWebhooksTable);
+        this.db.exec(createWebhooksEnabledIndex);
+        this.db.exec(createWebhookLogsTable);
+        this.db.exec(createWebhookLogsWebhookIndex);
+        this.db.exec(createWebhookLogsTimeIndex);
+        this.db.exec(createInboundWebhooksTable);
+        this.db.exec(createInboundWebhooksEnabledIndex);
     }
 
     /**
@@ -674,6 +766,434 @@ class DatabaseService {
             ...record,
             result_details: record.result_details ? JSON.parse(record.result_details) : null
         }));
+    }
+
+    // ========================================================================
+    // WEBHOOK METHODS
+    // ========================================================================
+
+    /**
+     * Create a new outbound webhook
+     * @param {object} webhook - Webhook data
+     * @returns {object} Created webhook
+     */
+    createWebhook(webhook) {
+        const stmt = this.db.prepare(`
+            INSERT INTO webhooks 
+            (id, name, description, url, method, headers, event_types, enabled, secret, verify_ssl, timeout_ms, retry_count, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+        `);
+
+        stmt.run(
+            webhook.id,
+            webhook.name,
+            webhook.description || null,
+            webhook.url,
+            webhook.method || 'POST',
+            webhook.headers ? JSON.stringify(webhook.headers) : null,
+            JSON.stringify(webhook.event_types),
+            webhook.enabled !== false ? 1 : 0,
+            webhook.secret || null,
+            webhook.verify_ssl !== false ? 1 : 0,
+            webhook.timeout_ms || 30000,
+            webhook.retry_count || 3,
+            webhook.created_by
+        );
+
+        return this.getWebhook(webhook.id);
+    }
+
+    /**
+     * Get webhook by ID
+     * @param {string} id - Webhook ID
+     * @returns {object|null} Webhook or null
+     */
+    getWebhook(id) {
+        const stmt = this.db.prepare('SELECT * FROM webhooks WHERE id = ?');
+        const webhook = stmt.get(id);
+        
+        if (webhook) {
+            webhook.enabled = Boolean(webhook.enabled);
+            webhook.verify_ssl = Boolean(webhook.verify_ssl);
+            webhook.headers = webhook.headers ? JSON.parse(webhook.headers) : {};
+            webhook.event_types = JSON.parse(webhook.event_types);
+        }
+        
+        return webhook;
+    }
+
+    /**
+     * Get all webhooks
+     * @param {boolean} enabledOnly - Return only enabled webhooks
+     * @returns {Array} Array of webhooks
+     */
+    getAllWebhooks(enabledOnly = false) {
+        let query = 'SELECT * FROM webhooks';
+        
+        if (enabledOnly) {
+            query += ' WHERE enabled = 1';
+        }
+        
+        query += ' ORDER BY created_at DESC';
+        
+        const stmt = this.db.prepare(query);
+        const webhooks = stmt.all();
+        
+        return webhooks.map(webhook => ({
+            ...webhook,
+            enabled: Boolean(webhook.enabled),
+            verify_ssl: Boolean(webhook.verify_ssl),
+            headers: webhook.headers ? JSON.parse(webhook.headers) : {},
+            event_types: JSON.parse(webhook.event_types)
+        }));
+    }
+
+    /**
+     * Update webhook
+     * @param {string} id - Webhook ID
+     * @param {object} updates - Fields to update
+     * @returns {object|null} Updated webhook or null
+     */
+    updateWebhook(id, updates) {
+        const fields = [];
+        const values = [];
+
+        if (updates.name !== undefined) {
+            fields.push('name = ?');
+            values.push(updates.name);
+        }
+
+        if (updates.description !== undefined) {
+            fields.push('description = ?');
+            values.push(updates.description);
+        }
+
+        if (updates.url !== undefined) {
+            fields.push('url = ?');
+            values.push(updates.url);
+        }
+
+        if (updates.method !== undefined) {
+            fields.push('method = ?');
+            values.push(updates.method);
+        }
+
+        if (updates.headers !== undefined) {
+            fields.push('headers = ?');
+            values.push(JSON.stringify(updates.headers));
+        }
+
+        if (updates.event_types !== undefined) {
+            fields.push('event_types = ?');
+            values.push(JSON.stringify(updates.event_types));
+        }
+
+        if (updates.enabled !== undefined) {
+            fields.push('enabled = ?');
+            values.push(updates.enabled ? 1 : 0);
+        }
+
+        if (updates.secret !== undefined) {
+            fields.push('secret = ?');
+            values.push(updates.secret);
+        }
+
+        if (updates.verify_ssl !== undefined) {
+            fields.push('verify_ssl = ?');
+            values.push(updates.verify_ssl ? 1 : 0);
+        }
+
+        if (updates.timeout_ms !== undefined) {
+            fields.push('timeout_ms = ?');
+            values.push(updates.timeout_ms);
+        }
+
+        if (updates.retry_count !== undefined) {
+            fields.push('retry_count = ?');
+            values.push(updates.retry_count);
+        }
+
+        if (fields.length === 0) {
+            return this.getWebhook(id);
+        }
+
+        fields.push('updated_at = datetime(\'now\')');
+        values.push(id);
+
+        const stmt = this.db.prepare(`
+            UPDATE webhooks 
+            SET ${fields.join(', ')}
+            WHERE id = ?
+        `);
+
+        stmt.run(...values);
+
+        return this.getWebhook(id);
+    }
+
+    /**
+     * Delete webhook
+     * @param {string} id - Webhook ID
+     * @returns {boolean} Success
+     */
+    deleteWebhook(id) {
+        const stmt = this.db.prepare('DELETE FROM webhooks WHERE id = ?');
+        const result = stmt.run(id);
+        return result.changes > 0;
+    }
+
+    /**
+     * Update webhook stats after trigger
+     * @param {string} id - Webhook ID
+     * @param {boolean} success - Whether the trigger was successful
+     */
+    updateWebhookStats(id, success) {
+        const stmt = this.db.prepare(`
+            UPDATE webhooks 
+            SET last_triggered = datetime('now'),
+                trigger_count = trigger_count + 1,
+                failure_count = failure_count + ${success ? 0 : 1}
+            WHERE id = ?
+        `);
+
+        stmt.run(id);
+    }
+
+    /**
+     * Create webhook delivery log
+     * @param {object} log - Log data
+     * @returns {number} Log ID
+     */
+    createWebhookLog(log) {
+        const stmt = this.db.prepare(`
+            INSERT INTO webhook_logs 
+            (webhook_id, webhook_name, event_type, event_data, url, request_payload, request_headers, response_status, response_body, response_time_ms, attempt_number, success, error_message, triggered_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        `);
+
+        const result = stmt.run(
+            log.webhook_id,
+            log.webhook_name,
+            log.event_type,
+            log.event_data ? JSON.stringify(log.event_data) : null,
+            log.url,
+            log.request_payload ? JSON.stringify(log.request_payload) : null,
+            log.request_headers ? JSON.stringify(log.request_headers) : null,
+            log.response_status || null,
+            log.response_body || null,
+            log.response_time_ms || null,
+            log.attempt_number || 1,
+            log.success ? 1 : 0,
+            log.error_message || null
+        );
+
+        return result.lastInsertRowid;
+    }
+
+    /**
+     * Get webhook logs
+     * @param {object} options - Filter options
+     * @returns {Array} Array of logs
+     */
+    getWebhookLogs(options = {}) {
+        let query = 'SELECT * FROM webhook_logs';
+        const conditions = [];
+        const values = [];
+
+        if (options.webhook_id) {
+            conditions.push('webhook_id = ?');
+            values.push(options.webhook_id);
+        }
+
+        if (options.success !== undefined) {
+            conditions.push('success = ?');
+            values.push(options.success ? 1 : 0);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += ' ORDER BY triggered_at DESC';
+
+        if (options.limit) {
+            query += ' LIMIT ?';
+            values.push(options.limit);
+        } else {
+            query += ' LIMIT 100';
+        }
+
+        const stmt = this.db.prepare(query);
+        const logs = stmt.all(...values);
+
+        return logs.map(log => ({
+            ...log,
+            event_data: log.event_data ? JSON.parse(log.event_data) : null,
+            request_payload: log.request_payload ? JSON.parse(log.request_payload) : null,
+            request_headers: log.request_headers ? JSON.parse(log.request_headers) : null,
+            success: Boolean(log.success)
+        }));
+    }
+
+    /**
+     * Create inbound webhook
+     * @param {object} webhook - Inbound webhook data
+     * @returns {object} Created webhook
+     */
+    createInboundWebhook(webhook) {
+        const stmt = this.db.prepare(`
+            INSERT INTO inbound_webhooks 
+            (id, name, description, secret, allowed_ips, actions, permissions_required, enabled, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+        `);
+
+        stmt.run(
+            webhook.id,
+            webhook.name,
+            webhook.description || null,
+            webhook.secret,
+            webhook.allowed_ips ? JSON.stringify(webhook.allowed_ips) : null,
+            JSON.stringify(webhook.actions),
+            JSON.stringify(webhook.permissions_required),
+            webhook.enabled !== false ? 1 : 0,
+            webhook.created_by
+        );
+
+        return this.getInboundWebhook(webhook.id);
+    }
+
+    /**
+     * Get inbound webhook by ID
+     * @param {string} id - Webhook ID
+     * @returns {object|null} Webhook or null
+     */
+    getInboundWebhook(id) {
+        const stmt = this.db.prepare('SELECT * FROM inbound_webhooks WHERE id = ?');
+        const webhook = stmt.get(id);
+        
+        if (webhook) {
+            webhook.enabled = Boolean(webhook.enabled);
+            webhook.allowed_ips = webhook.allowed_ips ? JSON.parse(webhook.allowed_ips) : null;
+            webhook.actions = JSON.parse(webhook.actions);
+            webhook.permissions_required = JSON.parse(webhook.permissions_required);
+        }
+        
+        return webhook;
+    }
+
+    /**
+     * Get all inbound webhooks
+     * @param {boolean} enabledOnly - Return only enabled webhooks
+     * @returns {Array} Array of inbound webhooks
+     */
+    getAllInboundWebhooks(enabledOnly = false) {
+        let query = 'SELECT * FROM inbound_webhooks';
+        
+        if (enabledOnly) {
+            query += ' WHERE enabled = 1';
+        }
+        
+        query += ' ORDER BY created_at DESC';
+        
+        const stmt = this.db.prepare(query);
+        const webhooks = stmt.all();
+        
+        return webhooks.map(webhook => ({
+            ...webhook,
+            enabled: Boolean(webhook.enabled),
+            allowed_ips: webhook.allowed_ips ? JSON.parse(webhook.allowed_ips) : null,
+            actions: JSON.parse(webhook.actions),
+            permissions_required: JSON.parse(webhook.permissions_required)
+        }));
+    }
+
+    /**
+     * Update inbound webhook
+     * @param {string} id - Webhook ID
+     * @param {object} updates - Fields to update
+     * @returns {object|null} Updated webhook or null
+     */
+    updateInboundWebhook(id, updates) {
+        const fields = [];
+        const values = [];
+
+        if (updates.name !== undefined) {
+            fields.push('name = ?');
+            values.push(updates.name);
+        }
+
+        if (updates.description !== undefined) {
+            fields.push('description = ?');
+            values.push(updates.description);
+        }
+
+        if (updates.secret !== undefined) {
+            fields.push('secret = ?');
+            values.push(updates.secret);
+        }
+
+        if (updates.allowed_ips !== undefined) {
+            fields.push('allowed_ips = ?');
+            values.push(updates.allowed_ips ? JSON.stringify(updates.allowed_ips) : null);
+        }
+
+        if (updates.actions !== undefined) {
+            fields.push('actions = ?');
+            values.push(JSON.stringify(updates.actions));
+        }
+
+        if (updates.permissions_required !== undefined) {
+            fields.push('permissions_required = ?');
+            values.push(JSON.stringify(updates.permissions_required));
+        }
+
+        if (updates.enabled !== undefined) {
+            fields.push('enabled = ?');
+            values.push(updates.enabled ? 1 : 0);
+        }
+
+        if (fields.length === 0) {
+            return this.getInboundWebhook(id);
+        }
+
+        fields.push('updated_at = datetime(\'now\')');
+        values.push(id);
+
+        const stmt = this.db.prepare(`
+            UPDATE inbound_webhooks 
+            SET ${fields.join(', ')}
+            WHERE id = ?
+        `);
+
+        stmt.run(...values);
+
+        return this.getInboundWebhook(id);
+    }
+
+    /**
+     * Delete inbound webhook
+     * @param {string} id - Webhook ID
+     * @returns {boolean} Success
+     */
+    deleteInboundWebhook(id) {
+        const stmt = this.db.prepare('DELETE FROM inbound_webhooks WHERE id = ?');
+        const result = stmt.run(id);
+        return result.changes > 0;
+    }
+
+    /**
+     * Update inbound webhook usage stats
+     * @param {string} id - Webhook ID
+     */
+    updateInboundWebhookStats(id) {
+        const stmt = this.db.prepare(`
+            UPDATE inbound_webhooks 
+            SET last_used = datetime('now'),
+                use_count = use_count + 1
+            WHERE id = ?
+        `);
+
+        stmt.run(id);
     }
 
     /**

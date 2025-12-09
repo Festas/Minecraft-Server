@@ -43,6 +43,7 @@ const userRoutes = require('./routes/users');
 const auditRoutes = require('./routes/audit');
 const automationRoutes = require('./routes/automation');
 const loggingRoutes = require('./routes/logging');
+const webhookRoutes = require('./routes/webhooks');
 
 
 // Initialize Express app
@@ -448,6 +449,7 @@ app.use('/api/plugins', pluginIntegrationsRoutes); // Plugin integrations (Dynma
 app.use('/api/users', userRoutes); // User management
 app.use('/api/audit', auditRoutes); // Audit logs
 app.use('/api/automation', automationRoutes); // Automation & Scheduler
+app.use('/api/webhooks', webhookRoutes); // Webhooks & Integrations
 app.use('/api', loggingRoutes); // Event logging and notifications
 
 // Health check endpoint
