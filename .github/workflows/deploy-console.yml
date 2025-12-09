@@ -191,11 +191,14 @@ jobs:
           CSRF_SECRET: ${{ secrets.CSRF_SECRET }}
           REDIS_HOST: ${{ secrets.REDIS_HOST }}
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          PLUGIN_ADMIN_TOKEN: ${{ secrets.PLUGIN_ADMIN_TOKEN }}
+          DOMAIN: ${{ secrets.DOMAIN }}
+          MINECRAFT_VERSION: ${{ secrets.MINECRAFT_VERSION }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: IMAGE_SHA,GHCR_PAT,GHCR_ACTOR,CONSOLE_ADMIN_USER,CONSOLE_ADMIN_PASSWORD,RCON_PASSWORD,SESSION_SECRET,CSRF_SECRET,REDIS_HOST,REDIS_PORT
+          envs: IMAGE_SHA,GHCR_PAT,GHCR_ACTOR,CONSOLE_ADMIN_USER,CONSOLE_ADMIN_PASSWORD,RCON_PASSWORD,SESSION_SECRET,CSRF_SECRET,REDIS_HOST,REDIS_PORT,PLUGIN_ADMIN_TOKEN,DOMAIN,MINECRAFT_VERSION
           script: |
             set -e
 
@@ -212,6 +215,9 @@ jobs:
             docker pull "ghcr.io/festas/minecraft-console:${IMAGE_SHA}"
 
             # Create .env file from secrets (no leading whitespace)
+            # Track missing optional secrets for deployment summary
+            MISSING_OPTIONAL_SECRETS=()
+
             {
               printf 'ADMIN_USERNAME=%s\n' "${CONSOLE_ADMIN_USER}"
               printf 'ADMIN_PASSWORD=%s\n' "${CONSOLE_ADMIN_PASSWORD}"
@@ -229,27 +235,53 @@ jobs:
               # Allow cookies over HTTP for CI testing (secure: false)
               # Without this, session cookies won't be sent over HTTP and auth will fail
               echo 'COOKIE_SECURE=false'
+
+              # Add optional secrets with fallbacks
+              if [ -n "${PLUGIN_ADMIN_TOKEN}" ]; then
+                printf 'PLUGIN_ADMIN_TOKEN=%s\n' "${PLUGIN_ADMIN_TOKEN}"
+              else
+                MISSING_OPTIONAL_SECRETS+=("PLUGIN_ADMIN_TOKEN")
+              fi
+
+              if [ -n "${DOMAIN}" ]; then
+                printf 'DOMAIN=%s\n' "${DOMAIN}"
+              else
+                MISSING_OPTIONAL_SECRETS+=("DOMAIN")
+                echo 'DOMAIN=mc.festas-builds.com'
+              fi
+
+              if [ -n "${MINECRAFT_VERSION}" ]; then
+                printf 'MINECRAFT_VERSION=%s\n' "${MINECRAFT_VERSION}"
+              else
+                MISSING_OPTIONAL_SECRETS+=("MINECRAFT_VERSION")
+                echo 'MINECRAFT_VERSION=Paper'
+              fi
             } > .env
             chmod 600 .env
+
+            # Write missing secrets report for deployment summary
+            if [ ${#MISSING_OPTIONAL_SECRETS[@]} -gt 0 ]; then
+              echo "MISSING_OPTIONAL_SECRETS=${MISSING_OPTIONAL_SECRETS[*]}" >> /tmp/deployment-status.txt
+            fi
 
             # ================================================================
             # DOCKER COMPOSE GENERATION WITH AUTO-INJECTED REDIS SERVICE
             # ================================================================
             # This deployment workflow automatically injects the Redis service
             # and redis_data volume into the generated docker-compose.yml.
-            # 
+            #
             # Why Redis is auto-injected:
             # - Ensures reliable session persistence across restarts
             # - Guarantees CSRF token validity in all deployments
             # - Prevents session-related issues in CI/CD workflows
-            # 
+            #
             # The Redis service includes:
             # - Image: redis:7-alpine (recommended version)
             # - Health check: ensures Redis is ready before console starts
             # - Volume: redis_data for persistent session storage
             # - Network: caddy-network for service communication
             # ================================================================
-            
+
             # Create docker-compose.yml with auto-injected Redis service
             # Redis is automatically included to ensure reliable session and CSRF support
             cat > docker-compose.yml <<EOF
@@ -774,6 +806,15 @@ jobs:
             echo "=== Recent Docker Events ==="
             docker events --since 5m --until 1s 2>&1 | grep minecraft-console || echo "No recent events"
 
+      - name: Download deployment status
+        if: success()
+        run: |
+          echo "Downloading deployment status..."
+
+          scp -i ~/.ssh/id_rsa \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/deployment-status.txt \
+            ./deployment-status.txt 2>/dev/null || echo "No deployment status file found"
+
       - name: Deployment summary
         if: success()
         run: |
@@ -785,6 +826,24 @@ jobs:
             echo "**Docker Image:** ghcr.io/festas/minecraft-console:${{ needs.build-and-push.outputs.image_sha }}"
             echo "**Console URL:** https://mc.festas-builds.com/console"
             echo ""
+
+            # Check for missing optional secrets
+            if [ -f ./deployment-status.txt ]; then
+              MISSING_SECRETS=$(grep "MISSING_OPTIONAL_SECRETS=" ./deployment-status.txt | cut -d= -f2)
+              if [ -n "$MISSING_SECRETS" ]; then
+                echo "### ⚠️ Missing Optional Secrets"
+                echo ""
+                echo "The following optional secrets were not configured and fallback values were used:"
+                echo ""
+                for secret in $MISSING_SECRETS; do
+                  echo "- **$secret**"
+                done
+                echo ""
+                echo "These secrets enhance functionality but are not required for basic operation."
+                echo "Add them in Settings > Secrets and variables > Actions for full features."
+                echo ""
+              fi
+            fi
 
             # Include post-deployment diagnostics summary if available
             if [ -d ./post-deploy-diagnostics ]; then
