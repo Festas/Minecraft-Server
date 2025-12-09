@@ -4,15 +4,21 @@ let bearerToken = '';
 let plugins = [];
 let jobs = [];
 let pollInterval = null;
+let healthCheckInterval = null;
+let filteredJobs = [];
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
+    await loadMetaInfo();
     await promptForBearerToken();
+    await checkHealth();
     await loadPlugins();
     await loadJobs();
+    await loadRecentActivity();
     initializeEventListeners();
     startJobPolling();
+    startHealthPolling();
 });
 
 // Check authentication (still needed for UI access)
@@ -29,9 +35,194 @@ async function checkAuth() {
         }
         
         document.getElementById('currentUser').textContent = data.username;
+        document.getElementById('currentUserInfo').textContent = `User: ${data.username}`;
     } catch (error) {
         console.error('Auth check failed:', error);
         window.location.href = '/console/login.html';
+    }
+}
+
+// Load meta information (Minecraft version, domain)
+async function loadMetaInfo() {
+    try {
+        // Try to get server info from server status endpoint
+        const response = await fetch('/api/server/status', {
+            credentials: 'same-origin'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update Minecraft version
+            const version = data.version || 'Unknown';
+            document.getElementById('minecraftVersion').textContent = `Minecraft: ${version}`;
+            
+            // Get domain from env variable or window location
+            // Domain should be injected into .env during deployment
+            const domain = window.location.hostname;
+            document.getElementById('domainInfo').textContent = `Domain: ${domain}`;
+        }
+    } catch (error) {
+        console.error('Error loading meta info:', error);
+        // Set defaults
+        document.getElementById('minecraftVersion').textContent = 'Minecraft: Unknown';
+        document.getElementById('domainInfo').textContent = `Domain: ${window.location.hostname}`;
+    }
+}
+
+// Check backend health
+async function checkHealth() {
+    try {
+        const response = await fetch('/api/v2/plugins/health', {
+            headers: bearerToken ? {
+                'Authorization': `Bearer ${bearerToken}`
+            } : {}
+        });
+        
+        const healthIndicator = document.getElementById('healthIndicator');
+        const healthDot = healthIndicator.querySelector('.health-dot');
+        const healthText = healthIndicator.querySelector('.health-text');
+        const backendWarning = document.getElementById('backendWarning');
+        const backendWarningMessage = document.getElementById('backendWarningMessage');
+        const missingSecretsWarning = document.getElementById('missingSecretsWarning');
+        const missingSecretsMessage = document.getElementById('missingSecretsMessage');
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.status === 'healthy') {
+                healthDot.style.background = '#48bb78'; // green
+                healthText.textContent = 'Healthy';
+                healthIndicator.title = 'Backend is healthy';
+                backendWarning.style.display = 'none';
+            } else {
+                healthDot.style.background = '#f6ad55'; // orange
+                healthText.textContent = 'Degraded';
+                healthIndicator.title = 'Backend is in degraded state';
+                
+                // Show warning
+                backendWarning.style.display = 'block';
+                const issues = [];
+                if (data.checks) {
+                    for (const [key, check] of Object.entries(data.checks)) {
+                        if (!check.healthy) {
+                            issues.push(`${key}: ${check.message || 'unhealthy'}`);
+                        }
+                    }
+                }
+                backendWarningMessage.textContent = `Backend checks failed: ${issues.join(', ')}`;
+            }
+            
+            // Check for missing PLUGIN_ADMIN_TOKEN
+            if (!bearerToken) {
+                missingSecretsWarning.style.display = 'block';
+                missingSecretsMessage.textContent = 'PLUGIN_ADMIN_TOKEN is not configured. Some features may be limited. Please set it in your .env file and refresh the page.';
+            }
+        } else if (response.status === 503) {
+            healthDot.style.background = '#f56565'; // red
+            healthText.textContent = 'Unhealthy';
+            healthIndicator.title = 'Backend is unhealthy';
+            
+            backendWarning.style.display = 'block';
+            backendWarningMessage.textContent = 'Plugin manager backend is unhealthy. Some operations may fail.';
+        } else {
+            healthDot.style.background = '#cbd5e0'; // gray
+            healthText.textContent = 'Unknown';
+            healthIndicator.title = 'Unable to check backend health';
+        }
+    } catch (error) {
+        console.error('Health check failed:', error);
+        const healthIndicator = document.getElementById('healthIndicator');
+        const healthDot = healthIndicator.querySelector('.health-dot');
+        const healthText = healthIndicator.querySelector('.health-text');
+        
+        healthDot.style.background = '#cbd5e0'; // gray
+        healthText.textContent = 'Error';
+        healthIndicator.title = 'Error checking backend health';
+    }
+}
+
+// Start health polling
+function startHealthPolling() {
+    // Poll every 10 seconds
+    healthCheckInterval = setInterval(() => {
+        checkHealth();
+    }, 10000);
+}
+
+// Load recent activity from backend
+async function loadRecentActivity() {
+    try {
+        const activityList = document.getElementById('recentActivityList');
+        
+        // For now, use recent jobs as activity
+        // In the future, this could pull from a dedicated history API
+        const response = await fetch('/api/v2/plugins/jobs?limit=10', {
+            headers: {
+                'Authorization': `Bearer ${bearerToken}`
+            }
+        });
+        
+        if (!response.ok) {
+            activityList.innerHTML = '<div class="empty-state">Unable to load activity</div>';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.jobs && data.jobs.length > 0) {
+            const completedJobs = data.jobs.filter(job => 
+                job.status === 'completed' || job.status === 'failed'
+            );
+            
+            if (completedJobs.length === 0) {
+                activityList.innerHTML = '<div class="empty-state">No recent activity</div>';
+                return;
+            }
+            
+            activityList.innerHTML = completedJobs.slice(0, 5).map(job => {
+                const duration = job.completedAt && job.startedAt 
+                    ? formatDuration(new Date(job.completedAt) - new Date(job.startedAt))
+                    : 'N/A';
+                
+                const statusIcon = job.status === 'completed' ? '✅' : '❌';
+                const statusClass = job.status === 'completed' ? 'success' : 'error';
+                
+                return `
+                    <div class="activity-item" style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <strong>${statusIcon} ${job.action}</strong>: ${job.pluginName || 'Unknown'}
+                            <div style="font-size: 0.85rem; opacity: 0.7; margin-top: 0.25rem;">
+                                ${new Date(job.completedAt).toLocaleString()} • Duration: ${duration}
+                            </div>
+                        </div>
+                        <span class="badge badge-${statusClass}">${job.status}</span>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            activityList.innerHTML = '<div class="empty-state">No recent activity</div>';
+        }
+    } catch (error) {
+        console.error('Error loading recent activity:', error);
+        document.getElementById('recentActivityList').innerHTML = '<div class="empty-state">Error loading activity</div>';
+    }
+}
+
+// Format duration in ms to human readable
+function formatDuration(ms) {
+    if (!ms || ms < 0) return 'N/A';
+    
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes % 60}m`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${seconds % 60}s`;
+    } else {
+        return `${seconds}s`;
     }
 }
 
@@ -110,6 +301,12 @@ function initializeEventListeners() {
     // Refresh buttons
     document.getElementById('refreshJobsBtn').addEventListener('click', loadJobs);
     document.getElementById('refreshPluginsBtn').addEventListener('click', loadPlugins);
+    document.getElementById('refreshActivityBtn').addEventListener('click', loadRecentActivity);
+    
+    // Job search/filter
+    document.getElementById('jobSearchInput').addEventListener('input', (e) => {
+        filterJobs(e.target.value);
+    });
     
     // Modal close
     document.getElementById('jobModalClose').addEventListener('click', hideJobModal);
@@ -203,11 +400,27 @@ async function loadJobs() {
         
         if (data.success) {
             jobs = data.jobs;
+            filteredJobs = jobs; // Initialize filtered jobs
             renderJobsLists();
         }
     } catch (error) {
         console.error('Error loading jobs:', error);
     }
+}
+
+// Filter jobs by search term
+function filterJobs(searchTerm) {
+    if (!searchTerm || searchTerm.trim() === '') {
+        filteredJobs = jobs;
+    } else {
+        const term = searchTerm.toLowerCase();
+        filteredJobs = jobs.filter(job => {
+            const pluginName = (job.pluginName || '').toLowerCase();
+            const action = (job.action || '').toLowerCase();
+            return pluginName.includes(term) || action.includes(term);
+        });
+    }
+    renderJobsLists();
 }
 
 // Handle install
@@ -455,9 +668,12 @@ function renderPluginsList() {
 
 // Render jobs lists
 function renderJobsLists() {
+    // Use filtered jobs or all jobs
+    const jobsToRender = filteredJobs || jobs;
+    
     // Split jobs into active and recent
-    const activeJobs = jobs.filter(j => ['queued', 'running'].includes(j.status));
-    const recentJobs = jobs.slice(0, 10);
+    const activeJobs = jobsToRender.filter(j => ['queued', 'running'].includes(j.status));
+    const recentJobs = jobsToRender.slice(0, 10);
     
     // Update active jobs count
     document.getElementById('activeJobsCount').textContent = activeJobs.length;
@@ -497,6 +713,16 @@ function renderJobItem(job) {
         cancelled: '🚫'
     };
     
+    // Calculate duration
+    let duration = 'N/A';
+    if (job.completedAt && job.startedAt) {
+        const durationMs = new Date(job.completedAt) - new Date(job.startedAt);
+        duration = formatDuration(durationMs);
+    } else if (job.startedAt && job.status === 'running') {
+        const durationMs = new Date() - new Date(job.startedAt);
+        duration = formatDuration(durationMs) + ' (running)';
+    }
+    
     return `
         <div class="job-item" data-status="${job.status}">
             <div class="job-info">
@@ -508,6 +734,7 @@ function renderJobItem(job) {
                 <div class="job-meta">
                     <span class="job-id" style="font-family: monospace; font-size: 0.75rem; color: #718096">${job.id}</span>
                     <span class="job-time">${formatDate(job.createdAt)}</span>
+                    ${duration !== 'N/A' ? `<span class="job-duration" style="color: #4a5568;">• Duration: ${duration}</span>` : ''}
                 </div>
                 ${job.error ? `<div class="job-error" style="color: #e53e3e; font-size: 0.875rem; margin-top: 0.25rem;">${escapeHtml(job.error)}</div>` : ''}
             </div>

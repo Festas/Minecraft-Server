@@ -15,8 +15,17 @@
         <header class="console-header">
             <div class="header-left">
                 <h1>🎮 Festas Builds - Plugin Manager V2 (Job Queue)</h1>
+                <div class="header-meta" id="headerMeta" style="font-size: 0.85rem; opacity: 0.9; margin-top: 0.25rem;">
+                    <span id="minecraftVersion">Loading...</span> • 
+                    <span id="domainInfo">Loading...</span> • 
+                    <span id="currentUserInfo">Admin</span>
+                </div>
             </div>
             <div class="header-right">
+                <div id="healthIndicator" class="health-indicator" style="display: inline-flex; align-items: center; margin-right: 1rem;" title="Backend health status">
+                    <span class="health-dot" style="width: 10px; height: 10px; border-radius: 50%; background: #888; display: inline-block; margin-right: 0.5rem;"></span>
+                    <span class="health-text">Checking...</span>
+                </div>
                 <span id="currentUser" class="user-badge">Admin</span>
                 <button id="logoutBtn" class="btn btn-secondary">Logout</button>
             </div>
@@ -58,6 +67,43 @@
             <main class="main-content">
                 <!-- Plugin Manager Section -->
                 <section id="pluginManager" class="content-section active">
+                    <!-- Missing Secrets Warning (hidden by default) -->
+                    <div id="missingSecretsWarning" class="card" style="display: none; background: #c53030; color: white; margin-bottom: 1rem;">
+                        <h4>⚠️ Configuration Warning</h4>
+                        <p id="missingSecretsMessage" style="margin: 0.5rem 0 0 0; opacity: 0.9;"></p>
+                    </div>
+                    
+                    <!-- Backend Degraded Warning (hidden by default) -->
+                    <div id="backendWarning" class="card" style="display: none; background: #dd6b20; color: white; margin-bottom: 1rem;">
+                        <h4>⚠️ Backend Status Warning</h4>
+                        <p id="backendWarningMessage" style="margin: 0.5rem 0 0 0; opacity: 0.9;"></p>
+                    </div>
+                    
+                    <!-- New Plugin Guidance Banner -->
+                    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 1rem;">
+                        <h4>🌟 Find New Plugins</h4>
+                        <p style="margin: 0.5rem 0 1rem 0; opacity: 0.95;">
+                            Discover thousands of quality plugins for your server from these trusted sources:
+                        </p>
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                            <a href="https://modrinth.com/plugins?g=bukkit" target="_blank" rel="noopener noreferrer" 
+                               class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                📦 Modrinth Plugins
+                            </a>
+                            <a href="https://dev.bukkit.org/bukkit-plugins" target="_blank" rel="noopener noreferrer" 
+                               class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                🔧 Bukkit Plugins
+                            </a>
+                            <a href="https://www.spigotmc.org/resources/categories/spigot.4/" target="_blank" rel="noopener noreferrer" 
+                               class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                🌊 Spigot Resources
+                            </a>
+                        </div>
+                        <p style="margin: 1rem 0 0 0; opacity: 0.85; font-size: 0.9rem;">
+                            💡 Tip: Copy the direct .jar download URL and paste it below for quick installation!
+                        </p>
+                    </div>
+                    
                     <!-- Info Banner -->
                     <div class="card info-banner" style="background: #2c5282; color: white; margin-bottom: 1rem;">
                         <h4>✨ Plugin Manager V2 - Job Queue System</h4>
@@ -113,11 +159,26 @@
                         <div class="card-header">
                             <h3>📜 Recent Jobs</h3>
                             <div class="card-actions">
+                                <input type="text" id="jobSearchInput" placeholder="Filter by plugin name or action..." 
+                                       class="search-input" style="width: 250px; margin-right: 0.5rem;">
                                 <button id="showAllJobsBtn" class="btn btn-sm">View All</button>
                             </div>
                         </div>
                         <div id="recentJobsList" class="jobs-list">
                             <div class="loading">Loading jobs...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📊 Recent Activity</h3>
+                            <div class="card-actions">
+                                <button id="refreshActivityBtn" class="btn btn-sm">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div id="recentActivityList" class="activity-list">
+                            <div class="loading">Loading activity...</div>
                         </div>
                     </div>
 
