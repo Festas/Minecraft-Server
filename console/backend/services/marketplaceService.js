@@ -10,6 +10,23 @@ const auditLog = require('./auditLog');
 const MODRINTH_API = 'https://api.modrinth.com/v2';
 const HANGAR_API = 'https://hangar.papermc.io/api/v1';
 
+// Axios configuration with timeout
+const axiosConfig = {
+    timeout: 10000, // 10 second timeout
+    maxRedirects: 3
+};
+
+/**
+ * Sanitize search query
+ */
+function sanitizeQuery(query) {
+    if (!query || typeof query !== 'string') {
+        return '';
+    }
+    // Remove potentially dangerous characters and limit length
+    return query.trim().substring(0, 200).replace(/[<>]/g, '');
+}
+
 /**
  * Search plugins across marketplaces
  * @param {string} query - Search query
@@ -17,6 +34,9 @@ const HANGAR_API = 'https://hangar.papermc.io/api/v1';
  * @returns {Promise<object>} Search results
  */
 async function searchPlugins(query, options = {}) {
+    // Sanitize query
+    query = sanitizeQuery(query);
+    
     const {
         platform = 'all', // all, modrinth, hangar
         category = null,
@@ -195,7 +215,7 @@ async function searchModrinth(query, options = {}) {
     };
     params.append('index', sortMap[options.sortBy] || 'relevance');
 
-    const response = await axios.get(`${MODRINTH_API}/search?${params.toString()}`);
+    const response = await axios.get(`${MODRINTH_API}/search?${params.toString()}`, axiosConfig);
     return response.data;
 }
 

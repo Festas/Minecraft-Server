@@ -492,7 +492,11 @@ function renderPluginDetails(plugin) {
                                     ${formatDate(version.datePublished)}
                                 </p>
                             </div>
-                            <button class="btn btn-sm btn-primary" onclick="installPluginVersion('${plugin.platform}', '${plugin.id}', '${version.id}', '${escapeHtml(version.files[0]?.url || '')}')">
+                            <button class="btn btn-sm btn-primary install-version-btn" 
+                                data-platform="${escapeHtml(plugin.platform)}" 
+                                data-plugin-id="${escapeHtml(plugin.id)}" 
+                                data-version-id="${escapeHtml(version.id)}" 
+                                data-download-url="${escapeHtml(version.files[0]?.url || '')}">
                                 Install
                             </button>
                         </div>
@@ -502,16 +506,47 @@ function renderPluginDetails(plugin) {
         </div>
         
         <div class="modal-actions">
-            <button class="btn btn-primary" onclick="installFromMarketplace({platform: '${plugin.platform}', id: '${plugin.id}', name: '${escapeHtml(plugin.name)}', versions: ${JSON.stringify(plugin.versions).replace(/"/g, '&quot;')}})">
+            <button class="btn btn-primary install-latest-btn" 
+                data-platform="${escapeHtml(plugin.platform)}" 
+                data-plugin-id="${escapeHtml(plugin.id)}" 
+                data-plugin-name="${escapeHtml(plugin.name)}">
                 Install Latest Version
             </button>
-            <button class="btn btn-secondary" onclick="hideDetailsModal()">
+            <button class="btn btn-secondary close-modal-btn">
                 Close
             </button>
         </div>
     `;
     
     content.innerHTML = html;
+    
+    // Add event listeners for install buttons
+    content.querySelectorAll('.install-version-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const platform = e.target.dataset.platform;
+            const pluginId = e.target.dataset.pluginId;
+            const versionId = e.target.dataset.versionId;
+            const downloadUrl = e.target.dataset.downloadUrl;
+            installPluginVersion(platform, pluginId, versionId, downloadUrl);
+        });
+    });
+    
+    const installLatestBtn = content.querySelector('.install-latest-btn');
+    if (installLatestBtn) {
+        installLatestBtn.addEventListener('click', () => {
+            installFromMarketplace({
+                platform: plugin.platform,
+                id: plugin.id,
+                name: plugin.name,
+                versions: plugin.versions
+            });
+        });
+    }
+    
+    const closeBtn = content.querySelector('.close-modal-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideDetailsModal);
+    }
 }
 
 // Install from marketplace
@@ -676,9 +711,18 @@ function formatDate(dateString) {
 }
 
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    if (!text) return '';
+    
+    const entityMap = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+        '/': '&#x2F;'
+    };
+    
+    return String(text).replace(/[&<>"'\/]/g, (s) => entityMap[s]);
 }
 
 function showToast(message, type = 'info') {

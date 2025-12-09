@@ -10,8 +10,20 @@ const rateLimit = require('express-rate-limit');
 const pluginManager = require('../services/pluginManager');
 
 // Configure multer for file uploads
+const UPLOAD_DIR = process.env.PLUGIN_UPLOAD_DIR || path.join(__dirname, '../data/plugin-uploads');
+const fs = require('fs').promises;
+
+// Ensure upload directory exists
+(async () => {
+    try {
+        await fs.mkdir(UPLOAD_DIR, { recursive: true });
+    } catch (error) {
+        console.error('Failed to create upload directory:', error);
+    }
+})();
+
 const upload = multer({
-    dest: '/tmp/plugin-uploads/',
+    dest: UPLOAD_DIR,
     limits: {
         fileSize: 100 * 1024 * 1024, // 100MB max file size
         files: 1 // Only one file at a time
@@ -417,6 +429,7 @@ router.get('/:pluginName/config', async (req, res) => {
  * POST /api/plugins/upload
  * Upload a custom plugin JAR file
  * Requires PLUGIN_INSTALL permission
+ * Note: CSRF protection is applied via express middleware before this route
  */
 router.post('/upload', checkPermission(PERMISSIONS.PLUGIN_INSTALL), upload.single('plugin'), async (req, res) => {
     let uploadedFilePath = null;
