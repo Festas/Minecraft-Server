@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugin Manager V2 - Minecraft Server Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/minecraft-theme.css">
+    <link rel="stylesheet" href="css/plugins.css">
+</head>
+<body>
+    <div class="console-wrapper">
+        <!-- Header -->
+        <header class="console-header">
+            <div class="header-left">
+                <h1>🎮 Festas Builds - Plugin Manager V2 (Job Queue)</h1>
+            </div>
+            <div class="header-right">
+                <span id="currentUser" class="user-badge">Admin</span>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="console-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav>
+                    <button class="nav-item" data-section="dashboard" data-href="/console/">
+                        <span>📊</span> Dashboard
+                    </button>
+                    <button class="nav-item" data-section="console" data-href="/console/">
+                        <span>💻</span> Console
+                    </button>
+                    <button class="nav-item" data-section="players" data-href="/console/">
+                        <span>👥</span> Players
+                    </button>
+                    <button class="nav-item" data-section="controls" data-href="/console/">
+                        <span>⚙️</span> Controls
+                    </button>
+                    <button class="nav-item" data-section="backups" data-href="/console/">
+                        <span>📦</span> Backups
+                    </button>
+                    <button class="nav-item active" data-section="plugins-v2">
+                        <span>🔌</span> Plugins V2
+                    </button>
+                    <button class="nav-item" data-section="plugins" data-href="/console/plugins.html">
+                        <span>🔌</span> Plugins (Legacy)
+                    </button>
+                    <button class="nav-item" data-section="settings" data-href="/console/">
+                        <span>🔧</span> Settings
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Plugin Manager Section -->
+                <section id="pluginManager" class="content-section active">
+                    <!-- Info Banner -->
+                    <div class="card info-banner" style="background: #2c5282; color: white; margin-bottom: 1rem;">
+                        <h4>✨ Plugin Manager V2 - Job Queue System</h4>
+                        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+                            This version uses a job queue for plugin operations. Jobs are processed asynchronously and you can monitor their status in real-time.
+                            No more frozen UI! All operations return immediately and you can track progress.
+                        </p>
+                    </div>
+
+                    <!-- Quick Install -->
+                    <div class="card plugin-install-card">
+                        <h3>📦 Quick Install</h3>
+                        <div class="install-form">
+                            <div class="form-group">
+                                <input 
+                                    type="text" 
+                                    id="pluginUrl" 
+                                    placeholder="Paste plugin URL here (Direct JAR, GitHub release, Modrinth)..." 
+                                    class="input url-input"
+                                >
+                            </div>
+                            <div class="form-group">
+                                <input 
+                                    type="text" 
+                                    id="customName" 
+                                    placeholder="Custom name (optional - auto-detected from plugin.yml)" 
+                                    class="input"
+                                >
+                            </div>
+                            <div class="form-actions">
+                                <button id="installBtn" class="btn btn-primary">
+                                    ⬇️ Install Plugin
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Jobs -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>⚙️ Active Jobs <span id="activeJobsCount" class="badge">0</span></h3>
+                            <div class="card-actions">
+                                <button id="refreshJobsBtn" class="btn btn-sm">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div id="activeJobsList" class="jobs-list">
+                            <div class="empty-state">No active jobs</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Jobs -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📜 Recent Jobs</h3>
+                            <div class="card-actions">
+                                <button id="showAllJobsBtn" class="btn btn-sm">View All</button>
+                            </div>
+                        </div>
+                        <div id="recentJobsList" class="jobs-list">
+                            <div class="loading">Loading jobs...</div>
+                        </div>
+                    </div>
+
+                    <!-- Installed Plugins -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🔌 Installed Plugins <span id="pluginCount" class="badge">0</span></h3>
+                            <div class="card-actions">
+                                <button id="refreshPluginsBtn" class="btn btn-sm">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div id="pluginsList" class="plugins-list">
+                            <div class="loading">Loading plugins...</div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Job Details Modal -->
+    <div id="jobModal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <h3 id="jobModalTitle">Job Details</h3>
+            <div id="jobModalContent">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-actions">
+                <button id="jobModalClose" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/pluginsV2.js"></script>
+</body>
+</html>
