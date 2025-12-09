@@ -42,6 +42,8 @@ const pluginIntegrationsRoutes = require('./routes/pluginIntegrations');
 const userRoutes = require('./routes/users');
 const auditRoutes = require('./routes/audit');
 const automationRoutes = require('./routes/automation');
+const loggingRoutes = require('./routes/logging');
+
 
 // Initialize Express app
 const app = express();
@@ -446,6 +448,7 @@ app.use('/api/plugins', pluginIntegrationsRoutes); // Plugin integrations (Dynma
 app.use('/api/users', userRoutes); // User management
 app.use('/api/audit', auditRoutes); // Audit logs
 app.use('/api/automation', automationRoutes); // Automation & Scheduler
+app.use('/api', loggingRoutes); // Event logging and notifications
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -529,6 +532,43 @@ async function initializeServices() {
     // Initialize automation service
     await automationService.initialize();
     console.log('[Startup] ✓ Automation service initialized');
+    
+    // Initialize event logger
+    const { eventLogger } = require('./services/eventLogger');
+    eventLogger.initialize();
+    console.log('[Startup] ✓ Event logger initialized');
+    
+    // Initialize notification service
+    const notificationService = require('./services/notificationService');
+    notificationService.initialize();
+    console.log('[Startup] ✓ Notification service initialized');
+    
+    // Connect event logger to notification service
+    eventLogger.on('event', (event) => {
+        // Get all authenticated users
+        // In a real implementation, you might want to filter by role or specific criteria
+        const users = ['owner', 'admin']; // Simplified - in production, get from user management
+        
+        // Create notifications for relevant users
+        for (const userId of users) {
+            notificationService.createNotification(userId, event);
+        }
+    });
+    
+    // Connect notification service to WebSocket
+    notificationService.on('notification', ({ userId, notification, channels }) => {
+        // Send notification to user via WebSocket
+        io.sockets.sockets.forEach((socket) => {
+            if (socket.request.session?.username === userId) {
+                if (channels.includes('toast')) {
+                    socket.emit('toast-notification', notification);
+                }
+                if (channels.includes('web')) {
+                    socket.emit('notification', notification);
+                }
+            }
+        });
+    });
 
     // Initialize plugin gateway and adapters
     await initializePluginGateway();
