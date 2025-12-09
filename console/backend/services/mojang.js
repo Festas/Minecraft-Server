@@ -91,7 +91,7 @@ class MojangService {
         return [
             hash.substring(0, 8),
             hash.substring(8, 12),
-            '4' + hash.substring(13, 16), // Version 4 UUID
+            '4' + hash.substring(12, 15), // Version 4 UUID (13th character must be '4')
             hash.substring(16, 20),
             hash.substring(20, 32)
         ].join('-');

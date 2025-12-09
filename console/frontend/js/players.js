@@ -68,9 +68,17 @@ function createPlayerItem(player) {
     const playerItem = document.createElement('div');
     playerItem.className = 'player-item' + (player.isOnline ? ' player-online' : '');
     
-    // Format last seen date
-    const lastSeenDate = new Date(player.last_seen);
-    const lastSeenStr = player.isOnline ? 'Online now' : formatRelativeTime(lastSeenDate);
+    // Format last seen date with validation
+    let lastSeenStr = 'Unknown';
+    if (player.isOnline) {
+        lastSeenStr = 'Online now';
+    } else if (player.last_seen) {
+        const lastSeenDate = new Date(player.last_seen);
+        // Check if date is valid
+        if (!isNaN(lastSeenDate.getTime())) {
+            lastSeenStr = formatRelativeTime(lastSeenDate);
+        }
+    }
     
     // Use avatar URL from API response if available, otherwise construct from username
     const avatarUrl = player.avatar || `https://mc-heads.net/avatar/${player.username}/48`;
