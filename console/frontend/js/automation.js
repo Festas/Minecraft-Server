@@ -618,12 +618,19 @@ function escapeHtml(text) {
 }
 
 function showSuccess(message) {
-    // Simple alert for now - can be replaced with toast notification
-    alert(message);
+    if (typeof showNotification === 'function') {
+        showNotification(message, 'success');
+    } else {
+        alert(message);
+    }
 }
 
 function showError(message) {
-    alert('Error: ' + message);
+    if (typeof showNotification === 'function') {
+        showNotification(message, 'error');
+    } else {
+        alert('Error: ' + message);
+    }
 }
 
 async function logout() {

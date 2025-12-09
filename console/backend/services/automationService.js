@@ -346,8 +346,9 @@ class AutomationService {
             await rconService.saveOff();
             await rconService.saveAll();
 
-            // Run backup script
-            const backupScript = path.join(__dirname, '../../../scripts/backup.sh');
+            // Run backup script - use environment variable if available
+            const backupScript = process.env.BACKUP_SCRIPT_PATH || 
+                                path.join(__dirname, '../../../scripts/backup.sh');
             const { stdout, stderr } = await execPromise(backupScript);
 
             // Re-enable auto-save
