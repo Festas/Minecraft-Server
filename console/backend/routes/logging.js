@@ -115,12 +115,15 @@ router.get('/logs/export',
     (req, res) => {
         try {
             const format = req.query.format || 'json';
+            // NOTE: Export limit of 10,000 records is a balance between usability and resource usage
+            // For very large datasets, users should use date filters to chunk exports
+            // Future enhancement: implement streaming exports for unlimited dataset sizes
             const result = eventLogger.queryEvents({
                 category: req.query.category,
                 severity: req.query.severity,
                 startDate: req.query.startDate,
                 endDate: req.query.endDate,
-                limit: 10000 // Higher limit for exports
+                limit: 10000 // Higher limit for exports, but bounded to prevent memory issues
             });
 
             if (format === 'csv') {

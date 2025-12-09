@@ -35,6 +35,8 @@ class NotificationService extends EventEmitter {
         this.db = null;
         this.dbPath = path.join(__dirname, '../data/notifications.db');
         this.userPreferences = new Map(); // Cache for user preferences
+        this.CACHE_MAX_SIZE = 100; // Limit cache size to prevent memory issues
+        this.CACHE_TTL = 5 * 60 * 1000; // 5 minutes TTL
     }
 
     /**
@@ -359,9 +361,10 @@ class NotificationService extends EventEmitter {
      * @returns {object} Preferences
      */
     getUserPreferences(userId) {
-        // Check cache first
-        if (this.userPreferences.has(userId)) {
-            return this.userPreferences.get(userId);
+        // Check cache first (with TTL)
+        const cached = this.userPreferences.get(userId);
+        if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+            return cached.data;
         }
 
         const stmt = this.db.prepare('SELECT * FROM notification_preferences WHERE user_id = ?');
@@ -378,8 +381,17 @@ class NotificationService extends EventEmitter {
             prefs.enabled = Boolean(prefs.enabled);
         }
 
-        // Cache preferences
-        this.userPreferences.set(userId, prefs);
+        // Cache preferences with TTL
+        // Implement simple LRU: if cache is full, remove oldest entry
+        if (this.userPreferences.size >= this.CACHE_MAX_SIZE) {
+            const firstKey = this.userPreferences.keys().next().value;
+            this.userPreferences.delete(firstKey);
+        }
+        
+        this.userPreferences.set(userId, {
+            data: prefs,
+            timestamp: Date.now()
+        });
 
         return prefs;
     }
@@ -465,8 +477,11 @@ class NotificationService extends EventEmitter {
         fields.push('updated_at = datetime(\'now\')');
         values.push(userId);
 
-        // Ensure preferences exist
-        this.getUserPreferences(userId);
+        // Ensure preferences exist (creates default if missing)
+        const exists = this.db.prepare('SELECT user_id FROM notification_preferences WHERE user_id = ?').get(userId);
+        if (!exists) {
+            this.createDefaultPreferences(userId);
+        }
 
         const stmt = this.db.prepare(`
             UPDATE notification_preferences 

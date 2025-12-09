@@ -544,14 +544,28 @@ async function initializeServices() {
     console.log('[Startup] ✓ Notification service initialized');
     
     // Connect event logger to notification service
-    eventLogger.on('event', (event) => {
-        // Get all authenticated users
-        // In a real implementation, you might want to filter by role or specific criteria
-        const users = ['owner', 'admin']; // Simplified - in production, get from user management
-        
-        // Create notifications for relevant users
-        for (const userId of users) {
-            notificationService.createNotification(userId, event);
+    eventLogger.on('event', async (event) => {
+        try {
+            // Get active users from authentication service
+            const { getAllUsers } = require('./auth/auth');
+            const allUsers = await getAllUsers();
+            
+            // Filter users by role if needed (e.g., only notify admins for critical events)
+            let targetUsers = allUsers.map(u => u.username);
+            
+            // For critical events, notify all users; for others, notify only admin/owner roles
+            if (event.severity !== 'critical') {
+                targetUsers = allUsers
+                    .filter(u => ['owner', 'admin'].includes(u.role))
+                    .map(u => u.username);
+            }
+            
+            // Create notifications for target users
+            for (const userId of targetUsers) {
+                notificationService.createNotification(userId, event);
+            }
+        } catch (error) {
+            console.error('[Notifications] Error creating notifications for event:', error);
         }
     });
     

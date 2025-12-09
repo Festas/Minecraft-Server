@@ -3,8 +3,12 @@
  * Handles notification listing, filtering, and preferences
  */
 
+// Constants
+const DEFAULT_CHANNELS = ['web', 'toast', 'inbox'];
+const PAGE_SIZE = 20;
+
 let currentPage = 0;
-const pageSize = 20;
+const pageSize = PAGE_SIZE;
 let currentFilters = {
     status: 'unread',
     category: '',
@@ -465,7 +469,7 @@ async function savePreferences() {
 
         const preferences = {
             enabled: document.getElementById('prefEnabled').checked,
-            channels: channels.length > 0 ? channels : ['web', 'toast', 'inbox'],
+            channels: channels.length > 0 ? channels : DEFAULT_CHANNELS,
             categories: categories.length > 0 ? categories : null,
             severity_filter: document.getElementById('prefSeverity').value,
             quiet_hours_start: document.getElementById('prefQuietStart').value || null,
