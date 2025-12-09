@@ -266,6 +266,236 @@ async function changeGamemode(player, mode) {
     }
 }
 
+async function warnPlayer(player, reason) {
+    if (!reason) {
+        reason = await showPrompt('Warn Player', 'Enter warning reason:');
+        if (!reason) return;
+    }
+
+    try {
+        const response = await apiRequest('/api/players/warn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player, reason })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Warned ${player}`, 'success');
+            loadActionHistory();
+        } else {
+            showNotification(data.error || 'Failed to warn player', 'error');
+        }
+    } catch (error) {
+        showNotification('Error warning player', 'error');
+    }
+}
+
+async function mutePlayer(player) {
+    const reason = await showPrompt('Mute Player', 'Enter reason for mute:');
+    if (!reason) return;
+    
+    const duration = await showPrompt('Mute Duration', 'Enter duration (e.g., 1h, 30m, leave blank for permanent):');
+
+    try {
+        const response = await apiRequest('/api/players/mute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player, reason, duration: duration || undefined })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Muted ${player}`, 'success');
+            loadActionHistory();
+        } else {
+            showNotification(data.error || 'Failed to mute player', 'error');
+        }
+    } catch (error) {
+        showNotification('Error muting player', 'error');
+    }
+}
+
+async function unmutePlayer(player) {
+    try {
+        const response = await apiRequest('/api/players/unmute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Unmuted ${player}`, 'success');
+            loadActionHistory();
+        } else {
+            showNotification(data.error || 'Failed to unmute player', 'error');
+        }
+    } catch (error) {
+        showNotification('Error unmuting player', 'error');
+    }
+}
+
+async function loadWhitelist() {
+    try {
+        const response = await apiRequest('/api/players/whitelist');
+        const data = await response.json();
+        
+        if (data.success) {
+            renderWhitelist(data.whitelist);
+        }
+    } catch (error) {
+        console.error('Error loading whitelist:', error);
+        const whitelistList = document.getElementById('whitelistList');
+        if (whitelistList) {
+            whitelistList.innerHTML = '<p class="loading-text" style="color: var(--error-color);">Failed to load whitelist</p>';
+        }
+    }
+}
+
+function renderWhitelist(whitelist) {
+    const whitelistList = document.getElementById('whitelistList');
+    if (!whitelistList) return;
+    
+    if (!whitelist || whitelist.length === 0) {
+        whitelistList.innerHTML = '<p class="loading-text">No players whitelisted</p>';
+        return;
+    }
+    
+    whitelistList.innerHTML = '';
+    whitelist.forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'whitelist-item';
+        
+        const addedDate = new Date(entry.added_at);
+        
+        item.innerHTML = `
+            <div class="whitelist-info">
+                <div class="whitelist-player">${entry.player_username}</div>
+                <div class="whitelist-meta">
+                    Added by ${entry.added_by} on ${addedDate.toLocaleDateString()}
+                </div>
+                ${entry.notes ? `<div class="whitelist-notes">${entry.notes}</div>` : ''}
+            </div>
+            <button class="btn btn-sm btn-danger whitelist-remove-btn" data-player="${entry.player_username}">Remove</button>
+        `;
+        
+        whitelistList.appendChild(item);
+    });
+}
+
+async function addToWhitelist(player, notes) {
+    try {
+        const response = await apiRequest('/api/players/whitelist/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player, notes })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Added ${player} to whitelist`, 'success');
+            loadWhitelist();
+            
+            // Clear inputs
+            const playerInput = document.getElementById('whitelistPlayerInput');
+            const notesInput = document.getElementById('whitelistNotesInput');
+            if (playerInput) playerInput.value = '';
+            if (notesInput) notesInput.value = '';
+        } else {
+            showNotification(data.error || 'Failed to add to whitelist', 'error');
+        }
+    } catch (error) {
+        showNotification('Error adding to whitelist', 'error');
+    }
+}
+
+async function removeFromWhitelist(player) {
+    const confirmed = await showConfirmation(
+        'Remove from Whitelist',
+        `Are you sure you want to remove ${player} from the whitelist?`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+        const response = await apiRequest('/api/players/whitelist/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ player })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showNotification(`Removed ${player} from whitelist`, 'success');
+            loadWhitelist();
+        } else {
+            showNotification(data.error || 'Failed to remove from whitelist', 'error');
+        }
+    } catch (error) {
+        showNotification('Error removing from whitelist', 'error');
+    }
+}
+
+async function loadActionHistory(playerUuid = null) {
+    try {
+        const endpoint = playerUuid 
+            ? `/api/players/${playerUuid}/history`
+            : '/api/players/actions/all';
+        
+        const response = await apiRequest(endpoint);
+        const data = await response.json();
+        
+        if (data.success) {
+            renderActionHistory(data.actions);
+        }
+    } catch (error) {
+        console.error('Error loading action history:', error);
+        const historyList = document.getElementById('actionHistoryList');
+        if (historyList) {
+            historyList.innerHTML = '<p class="loading-text" style="color: var(--error-color);">Failed to load action history</p>';
+        }
+    }
+}
+
+function renderActionHistory(actions) {
+    const historyList = document.getElementById('actionHistoryList');
+    if (!historyList) return;
+    
+    if (!actions || actions.length === 0) {
+        historyList.innerHTML = '<p class="loading-text">No action history</p>';
+        return;
+    }
+    
+    historyList.innerHTML = '';
+    actions.forEach(action => {
+        const item = document.createElement('div');
+        item.className = 'action-item';
+        item.setAttribute('data-action', action.action_type);
+        
+        const actionDate = new Date(action.performed_at);
+        const timeAgo = formatRelativeTime(actionDate);
+        
+        item.innerHTML = `
+            <div class="action-header">
+                <span class="action-type">${action.action_type.replace('_', ' ')}</span>
+                <span class="action-time">${timeAgo}</span>
+            </div>
+            <div class="action-details">
+                <strong>${action.player_username}</strong> by ${action.performed_by}
+            </div>
+            ${action.reason ? `<div class="action-reason">Reason: ${action.reason}</div>` : ''}
+        `;
+        
+        historyList.appendChild(item);
+    });
+}
+
 // Event delegation for player kick buttons (CSP compliant)
 document.addEventListener('click', function(e) {
     if (e.target && e.target.matches('.player-kick-btn')) {
@@ -274,5 +504,22 @@ document.addEventListener('click', function(e) {
             kickPlayer(player);
         }
     }
+    
+    // Whitelist remove buttons
+    if (e.target && e.target.matches('.whitelist-remove-btn')) {
+        var player = e.target.dataset.player;
+        if (player) {
+            removeFromWhitelist(player);
+        }
+    }
 });
 
+// Initialize whitelist and action history when players tab is loaded
+if (typeof initializePlayers !== 'undefined') {
+    const originalInitializePlayers = initializePlayers;
+    initializePlayers = function() {
+        originalInitializePlayers();
+        loadWhitelist();
+        loadActionHistory();
+    };
+}

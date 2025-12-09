@@ -173,15 +173,44 @@
                     </div>
                     
                     <div class="card">
-                        <h3>Player Actions</h3>
+                        <h3>Player Management</h3>
                         <div class="player-actions-form">
                             <input type="text" id="playerNameInput" placeholder="Player name" class="input">
                             <div class="action-buttons">
                                 <button class="btn" id="kickPlayerBtn">Kick</button>
                                 <button class="btn" id="banPlayerBtn">Ban</button>
+                                <button class="btn" id="warnPlayerBtn">Warn</button>
+                                <button class="btn" id="mutePlayerBtn">Mute</button>
                                 <button class="btn" id="opPlayerBtn">OP</button>
                                 <button class="btn" id="deopPlayerBtn">De-OP</button>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Whitelist Management</h3>
+                        <div class="whitelist-controls">
+                            <div class="whitelist-add-form">
+                                <input type="text" id="whitelistPlayerInput" placeholder="Player name" class="input">
+                                <input type="text" id="whitelistNotesInput" placeholder="Notes (optional)" class="input">
+                                <button class="btn btn-primary" id="addToWhitelistBtn">Add to Whitelist</button>
+                            </div>
+                            <div id="whitelistList" class="whitelist-list">
+                                <p class="loading-text">Loading whitelist...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Action History</h3>
+                        <div class="action-history-controls">
+                            <select id="actionHistoryFilter" class="input">
+                                <option value="all">All Players</option>
+                            </select>
+                            <button class="btn btn-sm" id="refreshHistoryBtn">Refresh</button>
+                        </div>
+                        <div id="actionHistoryList" class="action-history-list">
+                            <p class="loading-text">Loading action history...</p>
                         </div>
                     </div>
                 </section>
