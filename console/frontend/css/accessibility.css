@@ -354,6 +354,10 @@ body.modal-open {
     min-height: 40px;
 }
 
+.theme-toggle-login {
+    margin-top: 10px;
+}
+
 #themeToggle:hover {
     background: var(--bg-hover, #4a4a4a);
     border-color: var(--accent-primary);
