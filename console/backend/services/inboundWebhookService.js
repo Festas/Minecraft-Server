@@ -109,7 +109,7 @@ class InboundWebhookService {
             return true; // No IP restriction
         }
 
-        // Support CIDR notation and wildcards
+        // Support wildcards
         for (const allowedIp of allowedIps) {
             if (allowedIp === '*') {
                 return true;
@@ -121,9 +121,14 @@ class InboundWebhookService {
             }
 
             // Wildcard match (e.g., 192.168.1.*)
+            // Only allow wildcards in specific positions to prevent ReDoS
             if (allowedIp.includes('*')) {
-                const pattern = allowedIp.replace(/\*/g, '.*');
-                const regex = new RegExp(`^${pattern}$`);
+                // Escape special regex characters except *
+                const escapedPattern = allowedIp
+                    .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+                    .replace(/\*/g, '\\d+');
+                
+                const regex = new RegExp(`^${escapedPattern}$`);
                 if (regex.test(clientIp)) {
                     return true;
                 }

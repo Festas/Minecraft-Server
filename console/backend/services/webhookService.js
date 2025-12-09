@@ -417,7 +417,11 @@ class WebhookService {
             // Retry logic
             if (attemptNumber < webhook.retry_count) {
                 const delay = Math.min(1000 * Math.pow(2, attemptNumber - 1), 30000); // Exponential backoff
-                console.log(`[Webhook] Retrying webhook ${webhook.id} in ${delay}ms (attempt ${attemptNumber + 1}/${webhook.retry_count})`);
+                
+                // Only log in development or first retry attempt
+                if (process.env.NODE_ENV === 'development' || attemptNumber === 1) {
+                    console.log(`[Webhook] Retrying webhook ${webhook.id} in ${delay}ms (attempt ${attemptNumber + 1}/${webhook.retry_count})`);
+                }
                 
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return await this.executeWebhook(webhook, eventData, manual, attemptNumber + 1);

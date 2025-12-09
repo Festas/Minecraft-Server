@@ -33,8 +33,8 @@ const inboundWebhookRateLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req) => {
-        // Rate limit per webhook ID + IP
-        return `${req.params.id || 'unknown'}-${req.ip}`;
+        // Rate limit per IP only to prevent bypassing via invalid IDs
+        return req.ip;
     }
 });
 

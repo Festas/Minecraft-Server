@@ -216,20 +216,20 @@
         }
 
         container.innerHTML = webhooks.map(webhook => `
-            <div class="webhook-card" data-id="${webhook.id}">
+            <div class="webhook-card" data-id="${escapeHtml(webhook.id)}">
                 <div class="webhook-card-header">
                     <h3 class="webhook-card-title">${escapeHtml(webhook.name)}</h3>
                     <div class="webhook-card-actions">
                         <span class="badge ${webhook.enabled ? 'badge-enabled' : 'badge-disabled'}">
                             ${webhook.enabled ? 'Enabled' : 'Disabled'}
                         </span>
-                        <button class="btn btn-sm btn-secondary" onclick="webhooksModule.testWebhook('${webhook.id}')">
+                        <button class="btn btn-sm btn-secondary" onclick="webhooksModule.testWebhook('${escapeHtml(webhook.id)}')">
                             Test
                         </button>
-                        <button class="btn btn-sm btn-primary" onclick="webhooksModule.editWebhook('${webhook.id}')">
+                        <button class="btn btn-sm btn-primary" onclick="webhooksModule.editWebhook('${escapeHtml(webhook.id)}')">
                             Edit
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="webhooksModule.deleteWebhook('${webhook.id}')">
+                        <button class="btn btn-sm btn-danger" onclick="webhooksModule.deleteWebhook('${escapeHtml(webhook.id)}')">
                             Delete
                         </button>
                     </div>
@@ -241,13 +241,13 @@
                     </div>
                     <div class="webhook-info-item">
                         <div class="webhook-info-label">Method</div>
-                        <div class="webhook-info-value">${webhook.method}</div>
+                        <div class="webhook-info-value">${escapeHtml(webhook.method)}</div>
                     </div>
                     <div class="webhook-info-item">
                         <div class="webhook-info-label">Events</div>
                         <div class="webhook-info-value">
                             ${webhook.event_types.slice(0, 3).map(e => 
-                                `<span class="event-type-tag">${e}</span>`
+                                `<span class="event-type-tag">${escapeHtml(e)}</span>`
                             ).join('')}
                             ${webhook.event_types.length > 3 ? `<span class="event-type-tag">+${webhook.event_types.length - 3} more</span>` : ''}
                         </div>
@@ -292,19 +292,19 @@
         }
 
         container.innerHTML = inboundWebhooks.map(webhook => {
-            const webhookUrl = `${window.location.origin}/api/webhooks/receive/${webhook.id}`;
+            const webhookUrl = `${window.location.origin}/api/webhooks/receive/${escapeHtml(webhook.id)}`;
             return `
-                <div class="webhook-card" data-id="${webhook.id}">
+                <div class="webhook-card" data-id="${escapeHtml(webhook.id)}">
                     <div class="webhook-card-header">
                         <h3 class="webhook-card-title">${escapeHtml(webhook.name)}</h3>
                         <div class="webhook-card-actions">
                             <span class="badge ${webhook.enabled ? 'badge-enabled' : 'badge-disabled'}">
                                 ${webhook.enabled ? 'Enabled' : 'Disabled'}
                             </span>
-                            <button class="btn btn-sm btn-primary" onclick="webhooksModule.editInboundWebhook('${webhook.id}')">
+                            <button class="btn btn-sm btn-primary" onclick="webhooksModule.editInboundWebhook('${escapeHtml(webhook.id)}')">
                                 Edit
                             </button>
-                            <button class="btn btn-sm btn-danger" onclick="webhooksModule.deleteInboundWebhook('${webhook.id}')">
+                            <button class="btn btn-sm btn-danger" onclick="webhooksModule.deleteInboundWebhook('${escapeHtml(webhook.id)}')">
                                 Delete
                             </button>
                         </div>

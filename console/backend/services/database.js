@@ -948,15 +948,16 @@ class DatabaseService {
      * @param {boolean} success - Whether the trigger was successful
      */
     updateWebhookStats(id, success) {
+        const failureIncrement = success ? 0 : 1;
         const stmt = this.db.prepare(`
             UPDATE webhooks 
             SET last_triggered = datetime('now'),
                 trigger_count = trigger_count + 1,
-                failure_count = failure_count + ${success ? 0 : 1}
+                failure_count = failure_count + ?
             WHERE id = ?
         `);
 
-        stmt.run(id);
+        stmt.run(failureIncrement, id);
     }
 
     /**
