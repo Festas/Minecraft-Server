@@ -37,6 +37,7 @@ const fileRoutes = require('./routes/files');
 const backupRoutes = require('./routes/backups');
 const pluginRoutes = require('./routes/plugins');
 const pluginsV2Routes = require('./routes/pluginsV2');
+const pluginIntegrationsRoutes = require('./routes/pluginIntegrations');
 const userRoutes = require('./routes/users');
 const auditRoutes = require('./routes/audit');
 
@@ -439,6 +440,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/backups', backupRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/v2/plugins', pluginsV2Routes); // New job-based plugin API
+app.use('/api/plugins', pluginIntegrationsRoutes); // Plugin integrations (Dynmap, EssentialsX)
 app.use('/api/users', userRoutes); // User management
 app.use('/api/audit', auditRoutes); // Audit logs
 
@@ -521,6 +523,9 @@ async function initializeServices() {
     // Initialize player tracker
     await playerTracker.initialize();
 
+    // Initialize plugin gateway and adapters
+    await initializePluginGateway();
+
     // Connect player tracker to log events
     logsService.on('player-joined', ({ username }) => {
         playerTracker.playerJoined(username);
@@ -537,6 +542,60 @@ async function initializeServices() {
     await logsService.startStreaming();
 
     console.log('[Startup] ✓ All services initialized successfully');
+}
+
+// Initialize plugin gateway and register adapters
+async function initializePluginGateway() {
+    const pluginGateway = require('./services/pluginGateway');
+    const dynmapAdapter = require('./services/adapters/dynmapAdapter');
+    const essentialsxAdapter = require('./services/adapters/essentialsxAdapter');
+    
+    console.log('[PluginGateway] Initializing plugin integrations...');
+    
+    // Register adapters
+    pluginGateway.registerAdapter('dynmap', dynmapAdapter);
+    pluginGateway.registerAdapter('essentialsx', essentialsxAdapter);
+    
+    // Configure Dynmap
+    const dynmapEnabled = process.env.DYNMAP_ENABLED === 'true';
+    if (dynmapEnabled) {
+        pluginGateway.configure('dynmap', {
+            enabled: true,
+            baseUrl: process.env.DYNMAP_BASE_URL || 'http://localhost:8123',
+            apiToken: process.env.DYNMAP_API_TOKEN || null
+        });
+        
+        try {
+            await pluginGateway.initialize('dynmap');
+            console.log('[PluginGateway] ✓ Dynmap integration initialized');
+        } catch (error) {
+            console.error('[PluginGateway] ✗ Dynmap initialization failed:', error.message);
+        }
+    } else {
+        console.log('[PluginGateway] Dynmap integration disabled');
+    }
+    
+    // Configure EssentialsX
+    const essentialsxEnabled = process.env.ESSENTIALSX_ENABLED === 'true';
+    if (essentialsxEnabled) {
+        pluginGateway.configure('essentialsx', {
+            enabled: true,
+            baseUrl: process.env.ESSENTIALSX_BASE_URL || 'http://localhost:8080',
+            apiToken: process.env.ESSENTIALSX_API_TOKEN || null
+        });
+        
+        try {
+            await pluginGateway.initialize('essentialsx');
+            console.log('[PluginGateway] ✓ EssentialsX integration initialized');
+        } catch (error) {
+            console.error('[PluginGateway] ✗ EssentialsX initialization failed:', error.message);
+        }
+    } else {
+        console.log('[PluginGateway] EssentialsX integration disabled');
+    }
+    
+    const adapters = pluginGateway.getRegisteredAdapters();
+    console.log(`[PluginGateway] ✓ Plugin gateway initialized with ${adapters.length} adapter(s): ${adapters.join(', ')}`);
 }
 
 // Async startup function to ensure proper initialization order
@@ -655,6 +714,8 @@ server.on('error', (error) => {
 process.on('SIGTERM', async () => {
     console.log('SIGTERM received, shutting down gracefully...');
     
+    const pluginGateway = require('./services/pluginGateway');
+    await pluginGateway.shutdown();
     jobWorker.stopWorker();
     logsService.stopStreaming();
     await rconService.disconnect();
@@ -670,6 +731,8 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
     console.log('SIGINT received, shutting down gracefully...');
     
+    const pluginGateway = require('./services/pluginGateway');
+    await pluginGateway.shutdown();
     jobWorker.stopWorker();
     logsService.stopStreaming();
     await rconService.disconnect();
