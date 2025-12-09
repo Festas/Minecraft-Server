@@ -47,6 +47,7 @@ const automationRoutes = require('./routes/automation');
 const loggingRoutes = require('./routes/logging');
 const webhookRoutes = require('./routes/webhooks');
 const analyticsRoutes = require('./routes/analytics');
+const cicdRoutes = require('./routes/cicd');
 
 
 // Initialize Express app
@@ -456,6 +457,7 @@ app.use('/api/automation', automationRoutes); // Automation & Scheduler
 app.use('/api/webhooks', webhookRoutes); // Webhooks & Integrations
 app.use('/api', loggingRoutes); // Event logging and notifications
 app.use('/api/analytics', analyticsRoutes); // Analytics & Insights
+app.use('/api/cicd', cicdRoutes); // CI/CD Dashboard
 
 // Health check endpoint
 app.get('/health', (req, res) => {
