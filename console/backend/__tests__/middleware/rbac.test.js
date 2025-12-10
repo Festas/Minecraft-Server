@@ -2,7 +2,7 @@
  * RBAC Middleware Tests
  */
 
-const { requirePermission, requireRole, requireOwner } = require('../../middleware/rbac');
+const { requirePermission, checkPermission, requireRole, requireOwner } = require('../../middleware/rbac');
 const { PERMISSIONS, ROLES } = require('../../config/rbac');
 
 describe('RBAC Middleware', () => {
@@ -66,6 +66,23 @@ describe('RBAC Middleware', () => {
             
             expect(next).not.toHaveBeenCalled();
             expect(res.status).toHaveBeenCalledWith(403);
+        });
+    });
+    
+    describe('checkPermission (alias)', () => {
+        it('should be an alias for requirePermission', () => {
+            expect(checkPermission).toBe(requirePermission);
+        });
+        
+        it('should work the same as requirePermission', () => {
+            req.session.authenticated = true;
+            req.session.role = 'owner';
+            
+            const middleware = checkPermission(PERMISSIONS.SERVER_START);
+            middleware(req, res, next);
+            
+            expect(next).toHaveBeenCalled();
+            expect(res.status).not.toHaveBeenCalled();
         });
     });
     
