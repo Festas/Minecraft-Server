@@ -108,11 +108,14 @@
       setTimeout(closeSidebar, 100);
     }
 
-    // Handle navigation for items with data-href
-    const href = e.currentTarget.getAttribute('data-href');
-    if (href) {
-      e.preventDefault();
-      window.location.href = href;
+    // Only prevent default for buttons, not anchor tags
+    // Anchor tags handle navigation natively
+    if (e.currentTarget.tagName === 'BUTTON') {
+      const href = e.currentTarget.getAttribute('data-href');
+      if (href) {
+        e.preventDefault();
+        window.location.href = href;
+      }
     }
   }
 
