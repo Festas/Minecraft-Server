@@ -20,11 +20,11 @@ This section covers:
 
 ## 📚 Documents in This Section
 
-*Documents will be migrated to this section in upcoming pull requests.*
+- **[Quick Reference Guide](quick-reference.md)** - Command reference for server management
+- **[UI Screenshots](ui-screenshots.md)** - Visual documentation of the Plugin Manager interface
 
 **Coming Soon:**
-- Quick Reference Guide
-- Command Reference
+- Command Reference (comprehensive)
 - Configuration Options Reference
 - Launch Checklist
 - QA Checklist

@@ -1,8 +1,0 @@
-EssentialsX
-LuckPerms
-Vault
-WorldEdit
-WorldGuard
-GriefPrevention
-CoreProtect
-PlugManX

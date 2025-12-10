@@ -1,6 +1,16 @@
+← [Back to Reference](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Quick Reference Guide
 
-Quick command reference for managing your Minecraft server on Hetzner.
+Quick command reference for managing your Minecraft server.
+
+**Document Type:** ⭐ Easy (Reference)  
+**Target Audience:** Server Administrators  
+**Purpose:** Quick lookup for common commands and procedures
+
+---
 
 ## 🚀 Essential Commands
 
@@ -385,8 +395,14 @@ rm -rf /home/deploy/minecraft-server/*
 
 ---
 
-## 📞 Need More Help?
+## 🔗 Related Documents
 
-- **Full Guide**: See [docs/getting-started/deployment.md](docs/getting-started/deployment.md)
-- **Docker Alternative**: See [docs/getting-started/docker.md](docs/getting-started/docker.md)
-- **Minecraft Wiki**: https://minecraft.fandom.com/wiki/Server
+- **[Server Management](../admin/server-management.md)** - Detailed server administration guide
+- **[Docker Guide](../getting-started/docker.md)** - Docker-based deployment
+- **[Deployment Guide](../getting-started/deployment.md)** - Full deployment instructions
+- **[Admin Cheatsheet](../admin/cheatsheet.md)** - More quick reference commands
+- **[Troubleshooting](../troubleshooting/common-issues.md)** - Common problems and solutions
+
+---
+
+[← Back to Reference](./README.md) | [Documentation Home](../README.md)

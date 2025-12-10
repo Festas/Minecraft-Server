@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/Festas/Minecraft-Server/tree/main/docs
+    about: Check our documentation first
+  - name: 🗺️ Documentation Navigation
+    url: https://github.com/Festas/Minecraft-Server/blob/main/docs/NAVIGATION.md
+    about: Browse complete documentation sitemap

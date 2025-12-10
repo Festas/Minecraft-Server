@@ -24,6 +24,7 @@ backups/
 *.tmp
 *.log
 tmp/
+job-logs*.txt
 
 # System files
 .DS_Store
