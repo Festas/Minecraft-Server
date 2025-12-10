@@ -134,17 +134,23 @@ function formatRelativeTime(date) {
 }
 
 function updatePlayerCount(online, max) {
-    const playerCount = document.getElementById('playerCount');
+    const playerCurrent = document.getElementById('playerCurrent');
+    const playerMax = document.getElementById('playerMax');
     const onlinePlayersCount = document.getElementById('onlinePlayersCount');
     
     // Add null checks with fallback values using nullish coalescing
     const onlineCount = online ?? 0;
     const maxCount = max ?? 20;
     
-    if (playerCount) {
-        playerCount.textContent = `${onlineCount}/${maxCount}`;
+    // Update new player counter structure
+    if (playerCurrent) {
+        playerCurrent.textContent = onlineCount;
+    }
+    if (playerMax) {
+        playerMax.textContent = maxCount;
     }
     
+    // Update players section count
     if (onlinePlayersCount) {
         onlinePlayersCount.textContent = `(${onlineCount})`;
     }

@@ -425,6 +425,7 @@ function updateServerStatus(stats) {
     
     // Update TPS with null check and health colors
     const tpsEl = document.getElementById('tps');
+    const tpsFill = document.getElementById('tpsFill');
     if (tpsEl) {
         const tpsValue = stats.tps !== undefined ? stats.tps : DEFAULT_TPS;
         tpsEl.textContent = tpsValue.toFixed(1);
@@ -439,6 +440,26 @@ function updateServerStatus(stats) {
             tpsEl.classList.add('warning');
         } else {
             tpsEl.classList.add('critical');
+        }
+        
+        // Update TPS bar
+        if (tpsFill) {
+            const tpsPercentage = (tpsValue / 20) * 100;
+            tpsFill.style.width = `${Math.min(tpsPercentage, 100)}%`;
+            
+            // Remove all state classes
+            tpsFill.classList.remove('perfect', 'good', 'warning', 'critical');
+            
+            // Add appropriate state class
+            if (tpsValue >= 20) {
+                tpsFill.classList.add('perfect');
+            } else if (tpsValue >= TPS_HEALTHY_THRESHOLD) {
+                tpsFill.classList.add('good');
+            } else if (tpsValue >= TPS_WARNING_THRESHOLD) {
+                tpsFill.classList.add('warning');
+            } else {
+                tpsFill.classList.add('critical');
+            }
         }
     }
     
@@ -459,21 +480,25 @@ function updateServerStatus(stats) {
             if (memoryProgress) {
                 const percentage = (stats.memory.used / stats.memory.limit) * 100;
                 memoryProgress.style.width = `${percentage}%`;
+                memoryProgress.setAttribute('aria-valuenow', Math.round(percentage));
                 
                 // Remove all state classes
-                memoryProgress.classList.remove('warning', 'critical');
+                memoryProgress.classList.remove('low', 'medium', 'high');
                 
-                // Add appropriate state class
-                if (percentage >= RESOURCE_CRITICAL_THRESHOLD) {
-                    memoryProgress.classList.add('critical');
-                } else if (percentage >= RESOURCE_WARNING_THRESHOLD) {
-                    memoryProgress.classList.add('warning');
+                // Add appropriate state class based on thresholds
+                if (percentage >= 80) {
+                    memoryProgress.classList.add('high');
+                } else if (percentage >= 60) {
+                    memoryProgress.classList.add('medium');
+                } else {
+                    memoryProgress.classList.add('low');
                 }
             }
         } else {
             memoryEl.textContent = '-- / --';
             if (memoryProgress) {
                 memoryProgress.style.width = '0%';
+                memoryProgress.setAttribute('aria-valuenow', '0');
             }
         }
     }
@@ -488,15 +513,18 @@ function updateServerStatus(stats) {
         // Update progress bar
         if (cpuProgress) {
             cpuProgress.style.width = `${cpuValue}%`;
+            cpuProgress.setAttribute('aria-valuenow', cpuValue);
             
             // Remove all state classes
-            cpuProgress.classList.remove('warning', 'critical');
+            cpuProgress.classList.remove('low', 'medium', 'high');
             
-            // Add appropriate state class
-            if (cpuValue >= RESOURCE_CRITICAL_THRESHOLD) {
-                cpuProgress.classList.add('critical');
-            } else if (cpuValue >= RESOURCE_WARNING_THRESHOLD) {
-                cpuProgress.classList.add('warning');
+            // Add appropriate state class based on thresholds
+            if (cpuValue >= 80) {
+                cpuProgress.classList.add('high');
+            } else if (cpuValue >= 60) {
+                cpuProgress.classList.add('medium');
+            } else {
+                cpuProgress.classList.add('low');
             }
         }
     }

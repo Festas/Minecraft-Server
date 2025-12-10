@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/cards.css">
     <link rel="stylesheet" href="css/buttons.css">
+    <link rel="stylesheet" href="css/indicators.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
@@ -180,7 +181,7 @@
                     <div class="card status-card card-full">
                         <div class="card-header">
                             <h3 class="card-title">Server Status</h3>
-                            <span id="serverStatus" class="status-badge offline">
+                            <span id="serverStatus" class="status-indicator offline">
                                 <span class="status-dot"></span>
                                 <span id="serverStatusText">Offline</span>
                             </span>
@@ -190,37 +191,55 @@
                     <!-- Metrics Grid -->
                     <div class="card-grid">
                         <div class="card stat-card">
-                            <div class="stat-value healthy" id="tps">20.0</div>
+                            <div class="tps-meter">
+                                <div class="tps-value healthy" id="tps">20.0</div>
+                                <div class="tps-bar">
+                                    <div class="tps-fill perfect" id="tpsFill"></div>
+                                </div>
+                            </div>
                             <div class="stat-label">TPS</div>
                         </div>
                         <div class="card stat-card">
-                            <div class="stat-value" id="playerCount">0/20</div>
+                            <div class="player-counter">
+                                <span class="player-current" id="playerCurrent">0</span>
+                                <span class="player-separator">/</span>
+                                <span class="player-max" id="playerMax">20</span>
+                            </div>
                             <div class="stat-label">Players</div>
                         </div>
                         <div class="card stat-card">
-                            <div class="stat-value" id="uptime">0m</div>
+                            <div class="uptime-display">
+                                <svg class="uptime-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="uptime-value" id="uptime">0m</span>
+                            </div>
                             <div class="stat-label">Uptime</div>
                         </div>
                     </div>
 
                     <!-- Resource Usage -->
                     <div class="card-grid">
-                        <div class="card progress-card">
-                            <div class="progress-header">
-                                <span class="progress-label">Memory Usage</span>
-                                <span class="progress-value" id="memoryUsage">-- / --</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="memoryProgress" style="width: 0%"></div>
+                        <div class="card">
+                            <div class="usage-bar">
+                                <div class="usage-header">
+                                    <span class="usage-label">Memory Usage</span>
+                                    <span class="usage-value" id="memoryUsage">-- / --</span>
+                                </div>
+                                <div class="usage-track">
+                                    <div class="usage-fill low" id="memoryProgress" style="width: 0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="card progress-card">
-                            <div class="progress-header">
-                                <span class="progress-label">CPU Usage</span>
-                                <span class="progress-value" id="cpuUsage">--%</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="cpuProgress" style="width: 0%"></div>
+                        <div class="card">
+                            <div class="usage-bar">
+                                <div class="usage-header">
+                                    <span class="usage-label">CPU Usage</span>
+                                    <span class="usage-value" id="cpuUsage">--%</span>
+                                </div>
+                                <div class="usage-track">
+                                    <div class="usage-fill low" id="cpuProgress" style="width: 0%" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
                             </div>
                         </div>
                         <div class="card stat-card">
