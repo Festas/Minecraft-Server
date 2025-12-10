@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Minecraft Console</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="css/design-system.css">
-    <link rel="stylesheet" href="css/buttons.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
     <link rel="stylesheet" href="css/theme-light.css">
     <link rel="stylesheet" href="css/accessibility.css">
 </head>
 <body class="login-page">
+    <!-- Skip to Content Link for Accessibility -->
+    <a href="#login-form" class="skip-to-content">Skip to login form</a>
+
     <div class="login-container">
         <div class="login-box">
             <div class="login-header">
@@ -26,13 +26,14 @@
                 </button>
             </div>
             
-            <form id="loginForm" class="login-form">
+            <form id="login-form" class="login-form">
                 <div class="form-group">
-                    <label for="username">Username</label>
+                    <label for="username" class="form-label">Username</label>
                     <input 
                         type="text" 
                         id="username" 
                         name="username" 
+                        class="form-input"
                         required 
                         autocomplete="username"
                         autofocus
@@ -40,11 +41,12 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password" class="form-label">Password</label>
                     <input 
                         type="password" 
                         id="password" 
                         name="password" 
+                        class="form-input"
                         required 
                         autocomplete="current-password"
                     >

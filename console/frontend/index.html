@@ -5,13 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minecraft Server Console</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="css/design-system.css">
-    <link rel="stylesheet" href="css/sidebar.css">
-    <link rel="stylesheet" href="css/cards.css">
-    <link rel="stylesheet" href="css/buttons.css">
-    <link rel="stylesheet" href="css/indicators.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
@@ -19,6 +13,9 @@
     <link rel="stylesheet" href="css/accessibility.css">
 </head>
 <body>
+    <!-- Skip to Content Link for Accessibility -->
+    <a href="#main-content" class="skip-to-content">Skip to main content</a>
+
     <!-- Hamburger Menu Button (Mobile) -->
     <button class="hamburger-button" aria-label="Toggle navigation menu">
         <span class="hamburger-line"></span>
@@ -48,7 +45,7 @@
         <!-- Main Content -->
         <div class="console-layout">
             <!-- Sidebar -->
-            <aside class="sidebar">
+            <aside class="sidebar" role="navigation" aria-label="Main navigation">
                 <!-- Sidebar Header -->
                 <div class="sidebar-header">
                     <span class="sidebar-logo">🎮</span>
@@ -171,7 +168,7 @@
             </aside>
 
             <!-- Main Content Area -->
-            <main class="main-content">
+            <main id="main-content" class="main-content">
                 <!-- RCON Warning Banner (hidden by default) -->
                 <div id="rconWarning" class="warning-banner hidden">
                     ⚠️ RCON disconnected - Commands unavailable. Check server diagnostics.
