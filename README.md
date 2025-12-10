@@ -1,538 +1,235 @@
-# festas_builds Community Minecraft Server
+# 🎮 festas_builds Minecraft Server
 
-Welcome to the **festas_builds community server** - a scalable, well-moderated Minecraft community built on high-performance Paper server software.
+[![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Paper](https://img.shields.io/badge/Server-Paper-00A7E1?logo=minecraft&logoColor=white)](https://papermc.io/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/Docs-Available-blue)](docs/)
 
-This repository provides everything needed to deploy and manage the festas_builds Minecraft server using Docker containers with automated deployments via GitHub Actions.
+> A feature-rich, cross-platform Minecraft community server with automated deployment, web management console, and professional moderation tools.
 
 ---
 
-## 🎯 About This Server
+## ✨ Highlights
 
-The festas_builds server is growing from a friends-only server to a **full community server** for the festas_builds audience. We're building a thriving Minecraft community with professional features, strong anti-grief protection, and engaging events.
+- 🌍 **Cross-Platform** - Java & Bedrock Edition support (Geyser)
+- 🐳 **Docker-Based** - Containerized deployment with zero-downtime updates
+- 💻 **Web Console** - Full-featured management interface with RCON
+- 🌐 **Live Map** - Explore the world in your browser (BlueMap)
+- 🏆 **Build Competitions** - Weekly themed building contests
+- 🔐 **Secure** - RBAC, session management, CSRF protection
+- 🤖 **Automated** - GitHub Actions for CI/CD and scheduled backups
+- 📱 **Responsive** - Mobile-friendly admin console
 
-**Current Phase:** Foundation → Community Features  
-**Server Software:** Paper (high-performance Spigot fork)  
-**Target:** 50-100 concurrent players
+---
 
-📋 **[View Full Roadmap →](docs/features/roadmap.md)**
+## 🚀 Quick Start
+
+```bash
+# 1. Clone repository
+git clone https://github.com/Festas/Minecraft-Server.git
+cd Minecraft-Server
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your RCON password
+
+# 3. Create network for services
+docker network create caddy-network
+
+# 4. Start server
+docker compose up -d
+
+# 5. Connect at your-server-ip:25565
+```
+
+**First time deploying?** → **[Complete Deployment Guide](docs/getting-started/deployment.md)**
 
 ---
 
 ## 📚 Documentation
 
-**Comprehensive documentation is available in the [`docs/`](docs/) directory.** 
+### Quick Links
 
-All setup guides, administration procedures, troubleshooting resources, and reference materials have been organized into a structured documentation hub for easy navigation.
+| Section | Description |
+|---------|-------------|
+| **[🚀 Getting Started](docs/getting-started/)** | Deployment, quick start, Docker setup, Bedrock Edition |
+| **[🔧 Administration](docs/admin/)** | Server management, security, backups, plugin management |
+| **[✨ Features](docs/features/)** | BlueMap, competitions, cosmetics, creator tools, roadmap |
+| **[💻 Development](docs/development/)** | API docs, contributing guide, architecture, changelog |
+| **[🔍 Troubleshooting](docs/troubleshooting/)** | Common issues, diagnostics, debugging guides |
+| **[📖 Reference](docs/reference/)** | Quick reference, commands, UI screenshots |
 
-### 📖 **[→ Browse Full Documentation](docs/)**
+### Essential Guides
 
-**Quick Access:**
-- 🚀 [Getting Started](docs/getting-started/) - Deployment and first-time setup
-- 🔧 [Administration](docs/admin/) - Server management and security
-- ✨ [Features](docs/features/) - Plugins and gameplay features
-- 💻 [Development](docs/development/) - Contributing and API docs
-- 🔍 [Troubleshooting](docs/troubleshooting/) - Diagnostics and solutions
-- 📖 [Reference](docs/reference/) - Quick reference and checklists
+- **[Quick Start Guide](docs/getting-started/quickstart.md)** - Get running in 5 minutes
+- **[Docker Guide](docs/getting-started/docker.md)** - Container setup and management
+- **[Console Setup](docs/admin/console-setup.md)** - Web management interface
+- **[Plugin Manager](docs/admin/plugin-manager.md)** - Install and manage plugins
+- **[Admin Cheatsheet](docs/admin/cheatsheet.md)** - Quick command reference
+- **[Common Issues](docs/troubleshooting/common-issues.md)** - Solutions to frequent problems
 
-**Note:** While this README provides a quick overview, comprehensive documentation with detailed guides, troubleshooting steps, and reference materials is maintained in the `docs/` directory.
-
----
-
-## 🎮 Cross-Platform Play
-
-This server supports both **Java Edition** and **Bedrock Edition** players!
-
-| Edition | Address | Port | Protocol |
-|---------|---------|------|----------|
-| Java | your-server-ip | 25565 | TCP |
-| Bedrock | your-server-ip | 19132 | UDP |
-
-Bedrock players on mobile, console, and Windows 10/11 can play together with Java players thanks to [Geyser](https://geysermc.org/).
-
-See [docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md) for detailed setup instructions.
+**📍 [Full Documentation Sitemap](docs/NAVIGATION.md)** - Browse all 70+ documentation files
 
 ---
 
-## ✨ Server Features
+## 🗂️ Repository Structure
 
-This is a fully-featured community server with:
+```
+.
+├── config/                  # Server and plugin configurations
+│   ├── plugins/            # Plugin configuration files
+│   ├── server/             # Server configuration (plugins.json)
+│   └── templates/          # Competition themes and templates
+├── console/                # Web management console
+│   ├── backend/           # Node.js API server
+│   └── frontend/          # Web UI (HTML/CSS/JS)
+├── docs/                   # Complete documentation hub
+│   ├── getting-started/   # Deployment and setup guides
+│   ├── admin/             # Administration guides
+│   ├── features/          # Feature documentation
+│   ├── development/       # API and contribution docs
+│   ├── troubleshooting/   # Diagnostic guides
+│   ├── reference/         # Quick reference materials
+│   └── archive/           # Implementation history
+├── scripts/               # Automation and diagnostic scripts
+├── website/               # Static server website
+├── docker-compose.yml     # Main server container
+├── docker-compose.console.yml  # Web console container
+└── docker-compose.web.yml      # Website container
+```
 
-- 🌐 **Live Web Map** - Explore the world in your browser with BlueMap
-- 🏆 **Build Competitions** - Weekly themed building contests with PlotSquared
-- 🎭 **Cosmetics** - Unlock particles, hats, and more through gameplay
-- 📢 **Welcome System** - Interactive tutorial for new players
-- 🎬 **Creator Tools** - Filming and recording capabilities for content creators
-- 🛡️ **Land Protection** - GriefPrevention, WorldGuard, and CoreProtect
-- 🌍 **Cross-Platform** - Bedrock Edition support via Geyser
-- 💬 **Discord Integration** - Chat bridge and announcements
+---
 
-See [docs/features/overview.md](docs/features/overview.md) for complete details.
+## 🌐 Server Features
+
+### Gameplay Features
+- 🗺️ **Live 3D Map** - BlueMap web interface
+- 🏗️ **Build Competitions** - Weekly themed contests
+- 🎭 **Cosmetics** - Particles, hats, and rewards
+- 📢 **Welcome System** - Interactive new player tutorial
+- 🛡️ **Land Protection** - Claims, rollback, and anti-grief
+- 🎬 **Creator Tools** - Filming and recording features
+
+### Technical Features
+- ⚡ **Paper Server** - High-performance Spigot fork
+- 🐳 **Docker Deployment** - Isolated, reproducible containers
+- 🤖 **GitHub Actions** - Automated deployment and backups
+- 🔐 **RBAC Console** - Role-based access control
+- 📊 **Real-time Monitoring** - TPS, memory, CPU, players
+- 💬 **RCON Interface** - Execute commands via web console
+- 🔄 **Auto-Updates** - Version management via environment vars
+
+**See [Features Overview](docs/features/overview.md) for complete details.**
+
+---
 
 ## 💻 Web Console
 
-Manage your server with a powerful web-based console featuring:
+Manage your server through a powerful web interface:
 
-- 🔐 **Secure Authentication** - Session-based login with bcrypt encryption
-- 📊 **Real-time Dashboard** - Live stats, player count, TPS, memory/CPU
-- 💬 **Live Console** - Execute commands with RCON, view logs via WebSocket
-- 👥 **Player Management** - Kick, ban, OP, teleport, change gamemodes
-- ⚡ **Quick Actions** - Start, stop, restart, save, backup with one click
-- 📦 **Backup Management** - Create and manage server backups
-- 🎨 **Minecraft Theme** - Dark mode with blocky Minecraft-inspired design
-- 📱 **Responsive** - Works on desktop, tablet, and mobile
+**Access:** `http://your-server:3001/console`
 
-**Quick Setup:**
+**Features:**
+- 📊 Real-time dashboard with live stats
+- 💬 Live console with RCON command execution
+- 👥 Player management (kick, ban, OP, teleport)
+- ⚡ Quick actions (start, stop, restart, backup)
+- 🎨 Modern UI with Minecraft theming
+- 📱 Responsive design for mobile and desktop
+
+**Setup:** [Console Setup Guide](docs/admin/console-setup.md)
+
+---
+
+## 🎯 Deployment Options
+
+### Local Development
 ```bash
-# 1. Configure environment
-cp .env.example .env
-# Edit .env with your settings
-
-# 2. Start console
-docker compose -f docker-compose.console.yml up -d
-
-# 3. Access at http://your-server:3001/console
+docker compose up -d
 ```
 
-See **[Console Setup Guide](docs/admin/console-setup.md)** for detailed setup with SSL/HTTPS.
+### Production (GitHub Actions)
+1. Configure GitHub secrets (SERVER_HOST, SSH_PRIVATE_KEY, etc.)
+2. Push to `main` branch
+3. GitHub Actions automatically deploys to your server
 
-## 📋 Technical Features
-
-- ✅ **Docker Containerization** - Runs in isolated containers using `itzg/minecraft-server:java21`
-- ✅ **Paper Server** - High-performance Spigot fork with plugin support
-- ✅ **Optimized Performance** - Aikar's JVM flags built into container
-- ✅ **Automated Deployment** - GitHub Actions workflows for continuous deployment
-- ✅ **Easy Configuration** - Environment variables in docker-compose.yml
-- ✅ **Built-in Health Checks** - Container includes mc-health monitoring
-- ✅ **Volume Management** - Persistent data with Docker volumes
-- ✅ **Comprehensive Documentation** - Full guides for setup and management
+**See [Deployment Guide](docs/getting-started/deployment.md) for step-by-step instructions.**
 
 ---
 
-## 🌐 Server Website
+## 🌍 Cross-Platform Support
 
-The server has a modern website at **[mc.festas-builds.com](https://mc.festas-builds.com)** featuring:
+| Edition | Address | Port |
+|---------|---------|------|
+| **Java** | your-server-ip | 25565 |
+| **Bedrock** | your-server-ip | 19132 |
 
-- 🎮 Server information and connection details
-- ✨ Feature highlights and plugin showcase
-- 📖 How-to-join instructions for Java and Bedrock Edition
-- 📜 Server rules
-- 🗺️ Links to BlueMap and Discord
+Players on mobile, console, and Windows 10/11 can join via Bedrock Edition.
 
-The website is automatically deployed via GitHub Actions when changes are pushed to the `website/` directory.
-
-See **[docs/features/website.md](docs/features/website.md)** for deployment instructions and customization guide.
+**Setup:** [Bedrock Edition Guide](docs/getting-started/bedrock-setup.md)
 
 ---
 
----
+## 🛠️ Server Management
 
-## 🐳 Quick Start with Docker
-
-Get your server running in minutes:
-
+### Docker Commands
 ```bash
-# 1. Clone the repository
-git clone https://github.com/Festas/Minecraft-Server.git
-cd Minecraft-Server
-
-# 2. Configure environment (optional - has defaults)
-cp .env.example .env
-# Edit .env with your RCON password and other settings
-
-# 3. Create external network for services
-docker network create caddy-network
-
-# 4. Start the Minecraft server
-docker compose up -d
-
-# 5. View logs
+# View logs
 docker compose logs -f minecraft-server
-```
-
-The server will be available at `your-server-ip:25565` once started.
-
-For production deployment with automated GitHub Actions, see [docs/getting-started/deployment.md](docs/getting-started/deployment.md).
-
----
-
-## 🎮 Plugin Management
-
-The server uses the `itzg/minecraft-server` container which supports multiple plugin installation methods:
-
-### Method 1: Auto-Download from URLs (Recommended)
-
-Set environment variables in `docker-compose.yml`:
-
-```yaml
-environment:
-  PLUGINS: |
-    https://github.com/LuckPerms/LuckPerms/releases/download/v5.4.102/LuckPerms-Bukkit-5.4.102.jar
-    https://github.com/EssentialsX/Essentials/releases/download/2.20.1/EssentialsX-2.20.1.jar
-```
-
-### Method 2: Manual Installation
-
-Copy plugin JARs to the data volume:
-
-```bash
-# Copy a plugin to the server
-docker cp MyPlugin.jar minecraft-server:/data/plugins/
-
-# Restart to load the plugin
-docker compose restart minecraft-server
-```
-
-### Method 3: Using Modrinth/CurseForge
-
-```yaml
-environment:
-  MODRINTH_PROJECTS: "luckperms,essentialsx,coreprotect"
-  MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
-```
-
-**For complete plugin documentation**, see [Plugins Guide](docs/admin/plugins.md) - includes:
-- Recommended plugins list
-- Configuration guides
-- Troubleshooting tips
-
----
-
-## 🛠️ What's Included
-
-- **Docker Configuration**
-  - `docker-compose.yml` - Main Minecraft server container setup
-  - `docker-compose.console.yml` - Web console container reference
-  - `docker-compose.web.yml` - Website container reference
-  - `.env.example` - Environment variable template
-  
-- **Plugin Management**
-  - `config/server/plugins.json` - Plugin definitions and metadata
-  - `config/plugins/` - Plugin configuration files
-  - `config/templates/` - Competition themes and templates
-  
-- **Web Console**
-  - `console/` - Full-featured web management interface
-  
-- **Website**
-  - `website/` - Static server website
-  
-- **Automation**
-  - `.github/workflows/deploy-minecraft.yml` - Server deployment workflow
-  - `.github/workflows/backup-minecraft.yml` - Automated backup workflow (daily at 4 AM UTC)
-  - `.github/workflows/deploy-console.yml` - Console deployment workflow
-  - `.github/workflows/deploy-website.yml` - Website deployment workflow
-  
-- **Documentation**
-  - Complete guides for deployment, plugins, and features
-  - Setup instructions for console, website, and Bedrock Edition
-
----
-
-## 🎯 Quick Deployment Overview
-
-### Required GitHub Secrets
-
-Before deploying, configure these secrets in your GitHub repository (Settings → Secrets and variables → Actions):
-
-#### Core Server Secrets (Required)
-
-| Secret | Description |
-|--------|-------------|
-| `SERVER_HOST` | Your server's IP address |
-| `SERVER_USER` | SSH username (e.g., `deploy`) |
-| `SSH_PRIVATE_KEY` | Private SSH key for authentication |
-| `RCON_PASSWORD` | Password for server console access |
-
-#### Console Secrets (Required for Web Console)
-
-| Secret | Description |
-|--------|-------------|
-| `CONSOLE_ADMIN_USER` | Console login username |
-| `CONSOLE_ADMIN_PASSWORD` | Console login password |
-| `SESSION_SECRET` | Random string for session encryption (32+ chars) |
-| `CSRF_SECRET` | Random string for CSRF protection (32+ chars) |
-| `REDIS_HOST` | Redis server hostname (e.g., 'redis' for Docker) |
-| `REDIS_PORT` | Redis server port (typically 6379) |
-
-**Optional secrets** for customization: `MINECRAFT_VERSION`, `WORLD_SEED`, `OP_OWNER`, `WHITELIST_ENABLED`, and more.  
-See **[Server Management Guide](docs/admin/server-management.md#github-secrets-configuration)** for all options.
-
-### Deployment Steps
-
-1. **Prepare your server** - Install Docker and Docker Compose
-2. **Setup GitHub secrets** - Add the 4 required secrets above
-3. **Configure environment** - Set RCON password and other variables in docker-compose.yml
-4. **Deploy** - Push to main branch or trigger `deploy-minecraft.yml` workflow manually
-5. **Verify** - Check container health and logs
-6. **Install plugins** - Use container's built-in plugin support or manual installation
-7. **Play!** - Connect with your Minecraft client
-
-See [docs/getting-started/deployment.md](docs/getting-started/deployment.md) for the complete step-by-step guide.
-
----
-
-## 📊 Server Requirements
-
-- **OS**: Any Linux distribution with Docker support (Ubuntu 20.04+, Debian 11+ recommended)
-- **RAM**: Minimum 4GB (6GB+ recommended for plugins and Bedrock support)
-- **Disk**: At least 10GB free space
-- **Docker**: Docker Engine 20.10+ and Docker Compose v2+
-- **Network**: Ports 25565 (TCP/UDP) for Java Edition
-- **Network (Bedrock)**: Port 19132 (UDP) for Bedrock Edition cross-play
-
-## 🔧 Configuration
-
-### Server Properties
-
-Edit environment variables in `docker-compose.yml`:
-
-```yaml
-environment:
-  VERSION: "1.20.4"              # Minecraft version
-  MEMORY: "4G"                   # RAM allocation
-  MOTD: "My Server"              # Server description
-  MAX_PLAYERS: 20                # Maximum players
-  DIFFICULTY: "normal"           # Difficulty level
-  MODE: "survival"               # Game mode
-  PVP: "true"                    # Enable PvP
-  VIEW_DISTANCE: 10              # Render distance
-```
-
-After editing, redeploy:
-
-```bash
-docker compose up -d
-```
-
-Or push changes to trigger GitHub Actions deployment.
-
----
-
-## 📝 Server Management
-
-### Using Docker Compose
-
-```bash
-# Start server
-docker compose up -d
-
-# Stop server
-docker compose down
 
 # Restart server
 docker compose restart minecraft-server
 
-# View logs
-docker compose logs -f minecraft-server
-
 # Execute console commands
 docker exec -i minecraft-server rcon-cli
 
-# Access container shell
-docker exec -it minecraft-server bash
+# Backup data
+docker run --rm -v minecraft_data:/data -v ~/backups:/backup \
+  alpine tar czf /backup/backup-$(date +%Y%m%d).tar.gz -C /data .
 ```
 
-### Using the Web Console
-
-Access the web console at `http://your-server:3001/console` for:
-- Real-time server monitoring
-- Execute commands via RCON
-- Player management
-- Server start/stop/restart
-- Backup management
-
-See [Console Setup Guide](docs/admin/console-setup.md) for setup instructions.
-
-## 🔄 Automated Deployment
-
-The repository includes GitHub Actions workflows for automated deployment:
-
-- **deploy-minecraft.yml** - Deploys the Minecraft server container
-- **deploy-console.yml** - Deploys the web console
-- **deploy-website.yml** - Deploys the server website
-
-Every push to the `main` branch or manual workflow trigger will:
-1. Connect to your server via SSH
-2. Pull the latest configuration
-3. Update the Docker containers
-4. Restart services with zero downtime
-
-You can manually trigger deployments from the GitHub Actions tab.
+**More commands:** [Admin Cheatsheet](docs/admin/cheatsheet.md) | [Server Management Guide](docs/admin/server-management.md)
 
 ---
 
-## 💾 Backups
+## 📋 Requirements
 
-### Using Docker Volumes
-
-Backup the Minecraft data volume:
-
-```bash
-# Create backup directory
-mkdir -p ~/minecraft-backups
-
-# Backup the volume
-docker run --rm \
-  -v minecraft_data:/data \
-  -v ~/minecraft-backups:/backup \
-  alpine tar czf /backup/minecraft-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /data .
-
-# List backups
-ls -lh ~/minecraft-backups/
-```
-
-### Automated Backups with Cron
-
-```bash
-# Create backup script
-cat > ~/backup-minecraft.sh << 'EOF'
-#!/bin/bash
-BACKUP_DIR="$HOME/minecraft-backups"
-mkdir -p "$BACKUP_DIR"
-docker run --rm \
-  -v minecraft_data:/data \
-  -v "$BACKUP_DIR":/backup \
-  alpine tar czf /backup/minecraft-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /data .
-# Keep only last 7 backups
-cd "$BACKUP_DIR" && ls -t minecraft-backup-*.tar.gz | tail -n +8 | xargs -r rm
-EOF
-
-chmod +x ~/backup-minecraft.sh
-
-# Add to crontab (daily at 3 AM)
-(crontab -l 2>/dev/null; echo "0 3 * * * $HOME/backup-minecraft.sh") | crontab -
-```
-
-### Restore from Backup
-
-```bash
-# Stop the server
-docker compose down
-
-# Restore the backup
-docker run --rm \
-  -v minecraft_data:/data \
-  -v ~/minecraft-backups:/backup \
-  alpine sh -c "cd /data && tar xzf /backup/minecraft-backup-YYYYMMDD-HHMMSS.tar.gz"
-
-# Start the server
-docker compose up -d
-```
-
-## 🔄 Updating Minecraft Version
-
-Edit `docker-compose.yml` and change the VERSION:
-
-```yaml
-environment:
-  VERSION: "1.21.0"  # Update to new version
-```
-
-Then redeploy:
-
-```bash
-# Pull new server version
-docker compose pull
-
-# Restart with new version (backs up old world automatically)
-docker compose up -d
-
-# Monitor startup
-docker compose logs -f minecraft-server
-```
-
-**Note:** The container automatically backs up the world before major updates!
+- **OS:** Linux with Docker support (Ubuntu 20.04+, Debian 11+)
+- **RAM:** 4GB minimum (6GB+ recommended)
+- **Disk:** 10GB free space minimum
+- **Docker:** Docker Engine 20.10+ and Docker Compose v2+
+- **Ports:** 25565 (TCP/UDP), 19132 (UDP for Bedrock)
 
 ---
-
-## 🎮 Why Paper?
-
-This server uses **Paper** instead of Vanilla Minecraft for:
-
-- ✅ **Better Performance** - Handles more players with less lag
-- ✅ **Plugin Support** - Add features without modding clients
-- ✅ **Exploit Protection** - Built-in protection against common exploits
-- ✅ **Better Configuration** - More options to customize gameplay
-- ✅ **Active Development** - Regular updates and improvements
-- ✅ **Aikar's Flags** - Optimized JVM garbage collection
-
-Paper is fully compatible with Vanilla clients - players don't need to install anything!
-
-Learn more: https://papermc.io/
-
----
-
-## 🎯 Community Server Goals
-
-The festas_builds server is evolving in phases:
-
-**Phase 1: Foundation** ✅
-- Switch to Paper server
-- Core plugins (LuckPerms, EssentialsX, CoreProtect, WorldGuard)
-- Protected spawn area
-- Permission system
-
-**Phase 2: Community Features** 🚧
-- Discord integration (DiscordSRV)
-- Economy system
-- Land claims for players
-- Regular community events
-
-**Phase 3: Scale & Polish** 📅
-- Web-based live map (BlueMap)
-- Server website
-- Voting integration
-- 50-100 concurrent players
-
-See [docs/features/roadmap.md](docs/features/roadmap.md) for the complete growth plan.
-
----
-
-## 🐛 Troubleshooting
-
-See the [Troubleshooting section](docs/getting-started/deployment.md#troubleshooting) in the Deployment Guide for common issues and solutions.
-
-**Quick checks:**
-- Verify Docker is running: `docker ps`
-- Check container status: `docker compose ps`
-- View container logs: `docker compose logs minecraft-server`
-- Check port availability: `netstat -tulpn | grep 25565`
-- Verify network connectivity: `docker network ls`
-
-## 📚 Additional Resources
-
-- [docs/getting-started/deployment.md](docs/getting-started/deployment.md) - Complete deployment guide
-- [Plugins Guide](docs/admin/plugins.md) - Recommended plugins and setup
-- [docs/features/roadmap.md](docs/features/roadmap.md) - Server growth roadmap
-- [docs/getting-started/server-icon.md](docs/getting-started/server-icon.md) - Custom branding
-- [Paper Documentation](https://docs.papermc.io/)
-- [Minecraft Server Wiki](https://minecraft.fandom.com/wiki/Server)
-- [Minecraft EULA](https://account.mojang.com/documents/minecraft_eula)
-
----
-
-## ⚖️ License
-
-This deployment setup is provided as-is. Minecraft is owned by Mojang Studios. You must accept the [Minecraft EULA](https://account.mojang.com/documents/minecraft_eula) to run a Minecraft server.
 
 ## 🤝 Contributing
 
-Feel free to submit issues or pull requests to improve the deployment setup!
+Contributions are welcome! Please see:
+
+- **[Contributing Guide](docs/development/contributing.md)** - How to contribute
+- **[Architecture](docs/development/architecture.md)** - System overview
+- **[Issue Templates](.github/ISSUE_TEMPLATE/)** - Bug reports, features, docs
 
 ---
 
-**Ready to get started?** Head over to [docs/getting-started/deployment.md](docs/getting-started/deployment.md) for the complete step-by-step guide!
+## 📜 License
+
+This deployment configuration is released under the MIT License. See [LICENSE](LICENSE) for details.
+
+Minecraft is owned by Mojang Studios. You must accept the [Minecraft EULA](https://account.mojang.com/documents/minecraft_eula) to run a server.
 
 ---
 
-## 🎨 Branding
+## 🔗 Useful Links
 
-This server represents the **festas_builds** community. For branding consistency:
-- Use the festas_builds logo for the server icon
-- Keep the branded MOTD in `server.properties`
-- Follow brand colors in spawn builds and announcements
-- Link to festas_builds social media in Discord and website
+- **[Documentation Hub](docs/)** - Complete documentation
+- **[Roadmap](docs/features/roadmap.md)** - Server growth plan
+- **[Changelog](docs/development/changelog.md)** - Version history
+- **[Paper Documentation](https://docs.papermc.io/)** - Paper server docs
+- **[Minecraft Wiki](https://minecraft.fandom.com/wiki/Server)** - General server info
 
 ---
+
+**Ready to deploy?** → **[Start Here: Quick Start Guide](docs/getting-started/quickstart.md)**
 
 *Built with ❤️ for the festas_builds community*
