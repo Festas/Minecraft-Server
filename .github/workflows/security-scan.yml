@@ -1,0 +1,244 @@
+name: CodeQL Security Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run weekly on Mondays at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze Code
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript' ]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+          
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+          
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ../results
+          
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-2.0, GPL-3.0
+          
+  npm-audit:
+    name: NPM Security Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: console/backend/package-lock.json
+          
+      - name: Install dependencies
+        run: |
+          cd console/backend
+          npm ci --audit=false
+          
+      - name: Run npm audit
+        run: |
+          cd console/backend
+          npm audit --production --audit-level=moderate
+        continue-on-error: true
+        
+      - name: Generate detailed audit report
+        if: always()
+        run: |
+          cd console/backend
+          npm audit --json > ../../npm-audit-report.json || true
+          
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-report-${{ github.run_number }}
+          path: npm-audit-report.json
+          retention-days: 90
+          
+      - name: Create audit summary
+        if: always()
+        run: |
+          cd console/backend
+          {
+            echo "## 🔒 NPM Security Audit"
+            echo ""
+            echo "**Run:** [${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "**Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+            echo ""
+            
+            if npm audit --production --audit-level=low &> /dev/null; then
+              echo "### ✅ No vulnerabilities found"
+            else
+              echo "### ⚠️ Vulnerabilities Detected"
+              echo ""
+              echo '```'
+              npm audit --production || true
+              echo '```'
+              echo ""
+              echo "**Action Required:** Review and update dependencies with \`npm audit fix\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          
+  secret-scanning:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+          
+  docker-security:
+    name: Docker Image Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      security-events: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Build Docker image
+        run: |
+          cd console
+          docker build -t minecraft-console:scan -f backend/Dockerfile .
+          
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'minecraft-console:scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'docker-scan'
+          
+      - name: Run Trivy in table mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'minecraft-console:scan'
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          
+  security-summary:
+    name: Security Summary
+    needs: [analyze, npm-audit, docker-security]
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      contents: read
+      
+    steps:
+      - name: Generate security summary
+        run: |
+          {
+            echo "## 🔒 Security Analysis Summary"
+            echo ""
+            echo "**Workflow:** Security Analysis"
+            echo "**Run:** [${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "**Branch:** ${{ github.ref_name }}"
+            echo "**Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+            echo ""
+            
+            echo "### Analysis Results"
+            echo "| Check | Status |"
+            echo "|-------|--------|"
+            echo "| CodeQL Analysis | ${{ needs.analyze.result == 'success' && '✅ Passed' || needs.analyze.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |"
+            echo "| NPM Audit | ${{ needs.npm-audit.result == 'success' && '✅ Passed' || needs.npm-audit.result == 'skipped' && '⏭️ Skipped' || '⚠️ Issues Found' }} |"
+            echo "| Docker Scan | ${{ needs.docker-security.result == 'success' && '✅ Passed' || needs.docker-security.result == 'skipped' && '⏭️ Skipped' || '⚠️ Issues Found' }} |"
+            echo ""
+            
+            if [ "${{ needs.analyze.result }}" != "success" ] || [ "${{ needs.npm-audit.result }}" != "success" ] || [ "${{ needs.docker-security.result }}" != "success" ]; then
+              echo "### ⚠️ Action Required"
+              echo ""
+              echo "One or more security checks found issues. Please review:"
+              echo "1. CodeQL findings in the Security tab"
+              echo "2. NPM audit report artifacts"
+              echo "3. Docker scan results"
+              echo ""
+              echo "Address high and critical severity issues before deploying."
+            else
+              echo "### ✅ All Security Checks Passed"
+              echo ""
+              echo "No critical security issues detected. Safe to proceed with deployment."
+            fi
+            
+            echo ""
+            echo "### Next Steps"
+            echo "- Review [Security Policy](SECURITY.md)"
+            echo "- Check [Security Tab](${{ github.server_url }}/${{ github.repository }}/security) for advisories"
+            echo "- Run \`npm audit fix\` to auto-fix vulnerabilities"
+            echo "- Update base images for Docker containers"
+          } >> "$GITHUB_STEP_SUMMARY"

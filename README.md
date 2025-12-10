@@ -88,6 +88,13 @@ See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
 
 ## 📚 Documentation
 
+### Getting Started & Launch
+
+- **[GETTING-STARTED.md](GETTING-STARTED.md)** - Quick start guide
+- **[LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md)** - ⭐ **Pre-launch validation checklist**
+- **[QA-CHECKLIST.md](QA-CHECKLIST.md)** - Comprehensive quality assurance testing
+- **[UPGRADE-GUIDE.md](UPGRADE-GUIDE.md)** - Safe upgrade procedures and rollback guide
+
 ### Server Management
 
 - **[SERVER-MANAGEMENT.md](SERVER-MANAGEMENT.md)** - **Complete server management guide** ⭐
@@ -110,6 +117,13 @@ See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
 - **[BEDROCK-SETUP.md](BEDROCK-SETUP.md)** - Cross-platform play setup guide (Geyser + Floodgate)
 - **[WEBSITE.md](WEBSITE.md)** - Website deployment and customization guide
 - **[server-icon-instructions.md](server-icon-instructions.md)** - Custom server icon setup
+
+### Administration & Security
+
+- **[docs/ADMIN-ONBOARDING.md](docs/ADMIN-ONBOARDING.md)** - ⭐ **New administrator onboarding guide**
+- **[ADMIN-GUIDE.md](ADMIN-GUIDE.md)** - Complete guide for server administrators
+- **[SECURITY.md](SECURITY.md)** - ⭐ **Comprehensive security policy and best practices**
+- **[docs/LOCALIZATION.md](docs/LOCALIZATION.md)** - Internationalization guide and translation workflow
 
 ### Troubleshooting & Diagnostics
 
