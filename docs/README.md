@@ -92,6 +92,7 @@ Implementation summaries, historical decisions, and completed feature documentat
 
 ## 💡 Search Tips
 
+- **[Browse Complete Sitemap](NAVIGATION.md)** - Full documentation navigation guide
 - Use your browser's search (Ctrl+F / Cmd+F) within documentation pages
 - Check the section README files for an overview of available documents
 - Cross-references between sections are provided where relevant
