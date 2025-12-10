@@ -626,7 +626,7 @@ Use browser developer tools effectively:
 - [Console Setup Guide](./admin/console-setup.md)
 - [API Documentation](./API.md)
 - [User Management Guide](./user-management.md)
-- [Plugin Manager V2](./PLUGIN-MANAGER-V2.md)
+- [Plugin Manager V2](development/plugin-manager-api.md)
 
 ## Changelog
 

@@ -137,7 +137,7 @@ Successfully implemented a modern, asynchronous job queue system for plugin mana
 ### Documentation ✅
 
 **Files Created:**
-1. **`docs/PLUGIN-MANAGER-V2.md`** (12KB)
+1. **`development/plugin-manager-api.md`** (12KB)
    - Complete architecture documentation
    - API reference with examples
    - Job queue workflow
@@ -145,7 +145,7 @@ Successfully implemented a modern, asynchronous job queue system for plugin mana
    - Troubleshooting section
    - Development guide
 
-2. **`docs/PLUGIN-MANAGER-V2-QUICKSTART.md`** (6KB)
+2. **`development/plugin-manager-quickstart.md`** (6KB)
    - Quick setup in 3 steps
    - curl examples for all operations
    - Automation script examples (bash, python)
@@ -445,8 +445,8 @@ The system is designed for easy extension:
 4. `console/backend/routes/pluginsV2.js` - V2 API routes
 5. `console/frontend/plugins-v2.html` - V2 UI
 6. `console/frontend/js/pluginsV2.js` - V2 frontend logic
-7. `docs/PLUGIN-MANAGER-V2.md` - V2 documentation
-8. `docs/PLUGIN-MANAGER-V2-QUICKSTART.md` - Quick start guide
+7. `development/plugin-manager-api.md` - V2 documentation
+8. `development/plugin-manager-quickstart.md` - Quick start guide
 
 ### Modified Files (4)
 1. `console/backend/server.js` - Integration of V2 components
@@ -496,8 +496,8 @@ The system is designed for easy extension:
 - Server logs show job lifecycle
 
 ✅ **Documentation for admins to trigger, debug, and extend plugin actions**
-- PLUGIN-MANAGER-V2.md: Complete architecture guide
-- PLUGIN-MANAGER-V2-QUICKSTART.md: Quick setup guide
+- development/plugin-manager-api.md: Complete architecture guide
+- development/plugin-manager-quickstart.md: Quick setup guide
 - curl examples for all operations
 - Troubleshooting section
 - Migration guide from V1

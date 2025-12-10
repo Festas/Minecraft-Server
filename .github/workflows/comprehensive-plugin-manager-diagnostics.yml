@@ -32,7 +32,7 @@
 # 3. Configure options (or use defaults)
 # 4. Review artifacts starting with comprehensive-summary
 #
-# See docs/DIAGNOSTICS-GUIDE.md for detailed documentation
+# See docs/troubleshooting/diagnostics-guide.md for detailed documentation
 
 name: Comprehensive Plugin Manager Diagnostics
 

@@ -301,7 +301,7 @@ If you need assistance:
 
 1. Check the relevant document in this section
 2. Review [Troubleshooting guides](../troubleshooting/)
-3. Check the [CHANGELOG](../../CHANGELOG.md) for recent changes
+3. Check the [CHANGELOG](../development/changelog.md) for recent changes
 4. Consult the [Roadmap](../features/roadmap.md) for planned features
 5. Review [GitHub Issues](https://github.com/Festas/Minecraft-Server/issues)
 
