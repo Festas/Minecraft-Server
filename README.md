@@ -157,8 +157,6 @@ For production deployment with automated GitHub Actions, see [DEPLOYMENT.md](DEP
 
 ## 🎮 Plugin Management
 
-## 🎮 Plugin Management
-
 The server uses the `itzg/minecraft-server` container which supports multiple plugin installation methods:
 
 ### Method 1: Auto-Download from URLs (Recommended)
