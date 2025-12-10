@@ -37,13 +37,14 @@
         container.classList.add('stagger-children');
         
         // Fallback: ensure elements become visible after animation completes
+        // Calculation: (max 9th+ child delay: 400ms) + (animation duration: 200ms) + (safety buffer: 100ms) = 700ms
         setTimeout(() => {
           container.classList.add('loaded');
           // Also directly set opacity on children as ultimate fallback
           Array.from(container.children).forEach(child => {
             child.style.opacity = '1';
           });
-        }, 500); // 500ms should be enough for all staggered animations
+        }, 700); // Enough time for all staggered animations (400ms delay + 200ms animation + 100ms buffer)
       }
     });
   }

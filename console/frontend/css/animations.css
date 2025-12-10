@@ -152,7 +152,7 @@
 
 .stagger-children > * {
   opacity: 0;
-  animation: fadeInUp 0.3s ease-out forwards; /* Use fixed duration instead of variable */
+  animation: fadeInUp 200ms ease-out forwards; /* Use fixed 200ms duration (matches --transition-normal value) */
 }
 
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
