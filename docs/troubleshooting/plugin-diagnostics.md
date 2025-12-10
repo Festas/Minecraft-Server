@@ -270,10 +270,10 @@ Times may vary based on:
 
 ## Related Documentation
 
-- [Plugin Manager Guide](./admin/plugin-manager.md) - Plugin management features
-- [CSRF Fix Documentation](./CSRF-FIX-DOCUMENTATION.md) - CSRF implementation details
-- [Session/CSRF Debug Implementation](./SESSION-CSRF-DEBUG-IMPLEMENTATION.md) - Debug logging details
-- [API Documentation](./API.md) - API endpoint reference
+- [Plugin Manager Guide](../admin/plugin-manager.md) - Plugin management features
+- [CSRF Fix Documentation](../CSRF-FIX-DOCUMENTATION.md) - CSRF implementation details
+- [Session/CSRF Debug Implementation](../SESSION-CSRF-DEBUG-IMPLEMENTATION.md) - Debug logging details
+- [API Documentation](../API.md) - API endpoint reference
 
 ## Troubleshooting
 
@@ -306,7 +306,7 @@ The Plugin Install Diagnostics focus on backend plugin installation testing. For
 
 If the Plugin Manager UI is unresponsive or showing JavaScript errors:
 
-**Use**: [Browser Diagnostics](./BROWSER-DIAGNOSTICS.md)
+**Use**: [Browser Diagnostics](./browser-diagnostics.md)
 ```bash
 # Via GitHub Actions
 Actions → Browser Diagnostics - Plugin Manager → Run workflow
