@@ -125,7 +125,7 @@ BlueMap will generate default configuration files on first start.
 
 ### Configuration Quick Start
 
-BlueMap creates several config files. We've provided templates in `config/bluemap/` that you should copy to your server.
+BlueMap creates several config files. We've provided templates in `config/plugins/bluemap/` that you should copy to your server.
 
 **Configuration Files Location:**
 ```
@@ -136,9 +136,9 @@ BlueMap creates several config files. We've provided templates in `config/bluema
 
 ```bash
 # Copy our templates to the BlueMap plugin folder
-cp config/bluemap/core.conf plugins/BlueMap/core.conf
-cp config/bluemap/webserver.conf plugins/BlueMap/webserver.conf
-cp config/bluemap/maps/world.conf plugins/BlueMap/maps/world.conf
+cp config/plugins/bluemap/core.conf plugins/BlueMap/core.conf
+cp config/plugins/bluemap/webserver.conf plugins/BlueMap/webserver.conf
+cp config/plugins/bluemap/maps/world.conf plugins/BlueMap/maps/world.conf
 ```
 
 ### Key Configuration Options
@@ -370,7 +370,7 @@ See where everyone is building!
 
 ### Reduce Render Time
 
-Edit `config/bluemap/maps/world.conf`:
+Edit `config/plugins/bluemap/maps/world.conf`:
 
 ```hocon
 # Lower quality = faster renders
@@ -533,7 +533,7 @@ BlueMap rendering is memory-intensive.
 
 **Check configuration:**
 
-Edit `config/bluemap/maps/world.conf`:
+Edit `config/plugins/bluemap/maps/world.conf`:
 
 ```hocon
 player-markers: true
@@ -555,8 +555,8 @@ To render Nether and End:
 
 1. Create configs:
    ```bash
-   cp config/bluemap/maps/world.conf plugins/BlueMap/maps/nether.conf
-   cp config/bluemap/maps/world.conf plugins/BlueMap/maps/end.conf
+   cp config/plugins/bluemap/maps/world.conf plugins/BlueMap/maps/nether.conf
+   cp config/plugins/bluemap/maps/world.conf plugins/BlueMap/maps/end.conf
    ```
 
 2. Edit each file:
@@ -635,7 +635,7 @@ sudo certbot renew                        # Renew SSL (automatic)
 
 ```
 Server configs:          /home/deploy/minecraft-server/plugins/BlueMap/
-Template configs:        /home/deploy/minecraft-server/config/bluemap/
+Template configs:        /home/deploy/minecraft-server/config/plugins/bluemap/
 Nginx config:           /etc/nginx/sites-available/bluemap
 Map tiles (web files):  /home/deploy/minecraft-server/bluemap/web/
 ```

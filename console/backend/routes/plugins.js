@@ -505,7 +505,7 @@ router.post('/upload', checkPermission(PERMISSIONS.PLUGIN_INSTALL), upload.singl
         console.log('[PLUGIN_UPLOAD] Plugin moved to:', targetPath);
         
         // Update plugins.json
-        const PLUGINS_JSON = process.env.PLUGINS_JSON || path.join(process.cwd(), '../../plugins.json');
+        const PLUGINS_JSON = process.env.PLUGINS_JSON || path.join(process.cwd(), '../../config/server/plugins.json');
         let pluginsData = { plugins: [] };
         
         try {

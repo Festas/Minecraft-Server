@@ -23,9 +23,9 @@ Complete guide to the cosmetics system - unlock hats, particles, and rewards thr
 - HeadDatabase (download from SpigotMC)
 
 **Configuration Files:**
-- `config/cosmetics/particle-effects.yml`
-- `config/cosmetics/cosmetics-config.yml`
-- `config/cosmetics/ranks-rewards.yml`
+- `config/plugins/cosmetics/particle-effects.yml`
+- `config/plugins/cosmetics/cosmetics-config.yml`
+- `config/plugins/cosmetics/ranks-rewards.yml`
 
 ---
 
@@ -222,7 +222,7 @@ lp group builder permission set playerparticles.effect.villager_happy true
 lp group architect permission set cosmetics.hat.crown_silver true
 ```
 
-See `config/cosmetics/ranks-rewards.yml` for full permission list.
+See `config/plugins/cosmetics/ranks-rewards.yml` for full permission list.
 
 ---
 
@@ -261,9 +261,9 @@ A: Yes - use `/cosmetics` GUI to preview hats and items.
 
 ## Configuration Files
 
-- `config/cosmetics/particle-effects.yml` - Particle configurations
-- `config/cosmetics/cosmetics-config.yml` - Hats and items
-- `config/cosmetics/ranks-rewards.yml` - Rank progression and rewards
+- `config/plugins/cosmetics/particle-effects.yml` - Particle configurations
+- `config/plugins/cosmetics/cosmetics-config.yml` - Hats and items
+- `config/plugins/cosmetics/ranks-rewards.yml` - Rank progression and rewards
 
 ---
 
