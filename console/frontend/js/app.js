@@ -1,6 +1,13 @@
 // Main application initialization
 let statsInterval = null;
 
+// Constants for metrics thresholds
+const DEFAULT_TPS = 20;
+const TPS_HEALTHY_THRESHOLD = 19;
+const TPS_WARNING_THRESHOLD = 15;
+const RESOURCE_CRITICAL_THRESHOLD = 90;
+const RESOURCE_WARNING_THRESHOLD = 75;
+
 document.addEventListener('DOMContentLoaded', () => {
     // Check authentication
     checkAuth();
@@ -419,16 +426,16 @@ function updateServerStatus(stats) {
     // Update TPS with null check and health colors
     const tpsEl = document.getElementById('tps');
     if (tpsEl) {
-        const tpsValue = stats.tps !== undefined ? stats.tps : 20;
+        const tpsValue = stats.tps !== undefined ? stats.tps : DEFAULT_TPS;
         tpsEl.textContent = tpsValue.toFixed(1);
         
         // Remove all health classes
         tpsEl.classList.remove('healthy', 'warning', 'critical');
         
         // Add appropriate health class
-        if (tpsValue >= 19) {
+        if (tpsValue >= TPS_HEALTHY_THRESHOLD) {
             tpsEl.classList.add('healthy');
-        } else if (tpsValue >= 15) {
+        } else if (tpsValue >= TPS_WARNING_THRESHOLD) {
             tpsEl.classList.add('warning');
         } else {
             tpsEl.classList.add('critical');
@@ -457,9 +464,9 @@ function updateServerStatus(stats) {
                 memoryProgress.classList.remove('warning', 'critical');
                 
                 // Add appropriate state class
-                if (percentage >= 90) {
+                if (percentage >= RESOURCE_CRITICAL_THRESHOLD) {
                     memoryProgress.classList.add('critical');
-                } else if (percentage >= 75) {
+                } else if (percentage >= RESOURCE_WARNING_THRESHOLD) {
                     memoryProgress.classList.add('warning');
                 }
             }
@@ -486,9 +493,9 @@ function updateServerStatus(stats) {
             cpuProgress.classList.remove('warning', 'critical');
             
             // Add appropriate state class
-            if (cpuValue >= 90) {
+            if (cpuValue >= RESOURCE_CRITICAL_THRESHOLD) {
                 cpuProgress.classList.add('critical');
-            } else if (cpuValue >= 75) {
+            } else if (cpuValue >= RESOURCE_WARNING_THRESHOLD) {
                 cpuProgress.classList.add('warning');
             }
         }
