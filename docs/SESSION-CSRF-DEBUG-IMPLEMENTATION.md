@@ -129,7 +129,7 @@ Created `scripts/test-api-auth.sh`:
 
 ### 8. Documentation
 
-Updated `PLUGIN-MANAGER.md` with:
+Updated `admin/plugin-manager.md` with:
 - New "API Authentication" section under "API Endpoints"
 - Complete authentication flow documentation
 - Example commands for login, CSRF token, and authenticated requests
@@ -178,7 +178,7 @@ Updated `PLUGIN-MANAGER.md` with:
    - Manual API authentication test script
    - 145 lines with complete test flow
 
-8. **PLUGIN-MANAGER.md**
+8. **admin/plugin-manager.md**
    - Added API Authentication section (~100 lines)
    - Updated Security section
    - Updated File Structure section
@@ -719,6 +719,6 @@ docker logs minecraft-console | grep PLUGIN_INSTALL_API
 
 ## Related Documentation
 
-- [PLUGIN-MANAGER.md](../PLUGIN-MANAGER.md) - API authentication section
+- [admin/plugin-manager.md](../admin/plugin-manager.md) - API authentication section
 - [scripts/test-api-auth.sh](../scripts/test-api-auth.sh) - Manual test script
 - [.github/workflows/plugin-install-diagnose.yml](../.github/workflows/plugin-install-diagnose.yml) - Diagnostic workflow

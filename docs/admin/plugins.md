@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Plugin Guide for festas_builds Community Server
 
 This guide outlines the recommended plugins for building a scalable, well-managed community Minecraft server. Plugins are organized into phases to make the transition from a small server to a full community server manageable.
@@ -306,7 +310,7 @@ remote:
 **Links:**
 - Official Wiki: https://wiki.geysermc.org/geyser/
 - Discord Support: https://discord.gg/geysermc
-- Bedrock Setup Guide: [docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md)
+- Bedrock Setup Guide: [docs/getting-started/bedrock-setup.md](../getting-started/bedrock-setup.md)
 
 ---
 
@@ -364,7 +368,7 @@ replace-spaces: true
 
 **Links:**
 - Official Wiki: https://wiki.geysermc.org/floodgate/
-- Setup Guide: [docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md)
+- Setup Guide: [docs/getting-started/bedrock-setup.md](../getting-started/bedrock-setup.md)
 
 ---
 
@@ -1111,3 +1115,15 @@ Review these files if something goes wrong:
 tail -f plugin-install.log
 ```
 
+
+---
+
+## Related Documents
+
+- [Admin Guide](./admin-guide.md) - Daily administration tasks
+- [Server Management](./server-management.md) - Technical operations
+- [Onboarding Guide](./onboarding.md) - New admin training
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+- [Documentation Hub](../README.md) - All documentation
+
+[← Back to Admin Guide](./README.md)

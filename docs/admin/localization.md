@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Localization (i18n) Guide
 
 This guide explains how to use and contribute to the internationalization (i18n) system in the Minecraft Server Console.
@@ -303,3 +307,15 @@ For translation questions or issues:
 ---
 
 **Thank you for helping make the Minecraft Server Console accessible to more people worldwide! 🌍**
+
+---
+
+## Related Documents
+
+- [Admin Guide](./admin-guide.md) - Daily administration tasks
+- [Server Management](./server-management.md) - Technical operations
+- [Onboarding Guide](./onboarding.md) - New admin training
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+- [Documentation Hub](../README.md) - All documentation
+
+[← Back to Admin Guide](./README.md)

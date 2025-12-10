@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Minecraft Web Console - Implementation Summary
 
 ## Overview
@@ -391,3 +395,15 @@ https://mc.festas-builds.com/console
 
 ## License
 MIT License - See LICENSE file for details
+
+---
+
+## Related Documents
+
+- [Admin Guide](./admin-guide.md) - Daily administration tasks
+- [Server Management](./server-management.md) - Technical operations
+- [Onboarding Guide](./onboarding.md) - New admin training
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+- [Documentation Hub](../README.md) - All documentation
+
+[← Back to Admin Guide](./README.md)

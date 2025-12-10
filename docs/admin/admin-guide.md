@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Server Administration Guide for festas_builds
 
 Complete guide for server administrators and staff members.
@@ -606,3 +610,16 @@ New staff should learn:
 **Questions?** Contact senior staff or check documentation.
 
 *Keep festas_builds running smoothly!*
+
+---
+
+## Related Documents
+
+- [Server Management](./server-management.md) - Technical server operations
+- [Console Setup](./console-setup.md) - Web console configuration
+- [Plugins Guide](./plugins.md) - Plugin documentation
+- [Security Policy](./security.md) - Security guidelines
+- [Onboarding Guide](./onboarding.md) - New admin training
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+
+[← Back to Admin Guide](./README.md)

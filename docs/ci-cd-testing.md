@@ -619,7 +619,7 @@ npm run test:coverage -- --coverage --coverageDirectory=coverage
 **Solutions**:
 1. Go to repository Settings → Secrets and variables → Actions
 2. Add missing secrets listed in error message
-3. Refer to CONSOLE-SETUP.md for secret values
+3. Refer to admin/console-setup.md for secret values
 
 #### 5. CSRF Token Errors in Tests
 
@@ -663,7 +663,7 @@ DEBUG=* npm test
 1. **Check workflow logs**: Actions → Failed run → View logs
 2. **Review artifacts**: Download diagnostic reports
 3. **Check CI/CD dashboard**: Real-time status and history
-4. **Review documentation**: This guide and CONSOLE-SETUP.md
+4. **Review documentation**: This guide and admin/console-setup.md
 5. **Open an issue**: Include logs and steps to reproduce
 
 ## Best Practices
@@ -769,6 +769,6 @@ gh run list --workflow=deploy-console.yml --limit 5
 This CI/CD infrastructure ensures reliable, automated deployments with comprehensive testing and monitoring. Follow this guide for smooth development, testing, and deployment workflows.
 
 For additional help, refer to:
-- CONSOLE-SETUP.md - Setup instructions
+- admin/console-setup.md - Setup instructions
 - API.md - API documentation
 - DIAGNOSTICS-GUIDE.md - Troubleshooting guide

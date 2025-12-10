@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Upgrade Guide
 
 This guide helps you upgrade your Minecraft Server Console installation safely.
@@ -32,7 +36,7 @@ docker run --rm \
 
 ### 2. Review the Changelog
 
-Check [CHANGELOG.md](CHANGELOG.md) for:
+Check [CHANGELOG.md](../../CHANGELOG.md) for:
 - Breaking changes
 - New features
 - Security fixes
@@ -462,7 +466,7 @@ echo "Upgrade complete! Monitor logs with: docker compose logs -f"
 
 If you encounter issues during upgrade:
 
-1. Check [Troubleshooting Guide](docs/getting-started/deployment.md#troubleshooting)
+1. Check [Troubleshooting Guide](../getting-started/deployment.md#troubleshooting)
 2. Review [GitHub Issues](https://github.com/Festas/Minecraft-Server/issues)
 3. Join our [Discord](https://discord.gg/your-server) for support
 4. Post detailed logs and steps to reproduce
@@ -477,3 +481,15 @@ If you encounter issues during upgrade:
 ---
 
 **Remember:** The safest upgrade is one you can safely roll back from. Always backup first!
+
+---
+
+## Related Documents
+
+- [Admin Guide](./admin-guide.md) - Daily administration tasks
+- [Server Management](./server-management.md) - Technical operations
+- [Onboarding Guide](./onboarding.md) - New admin training
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+- [Documentation Hub](../README.md) - All documentation
+
+[← Back to Admin Guide](./README.md)

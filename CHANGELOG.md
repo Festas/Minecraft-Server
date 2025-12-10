@@ -12,12 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Documentation & Guides
 - docs/getting-started/qa-checklist.md - Comprehensive quality assurance checklist
 - docs/getting-started/launch-checklist.md - Pre-launch validation checklist
-- UPGRADE-GUIDE.md - Complete upgrade procedures and rollback guide
-- docs/ADMIN-ONBOARDING.md - New administrator onboarding guide
-- docs/LOCALIZATION.md - i18n implementation and translation guide
+- docs/admin/upgrade-guide.md - Complete upgrade procedures and rollback guide
+- docs/admin/onboarding.md - New administrator onboarding guide
+- docs/admin/localization.md - i18n implementation and translation guide
 
 #### Security Enhancements
-- Enhanced SECURITY.md with comprehensive security features documentation
+- Enhanced docs/admin/security.md with comprehensive security features documentation
 - Added security scanning workflow (.github/workflows/security-scan.yml)
 - CodeQL security analysis integration
 - NPM audit automation
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Browser compatibility validation
 
 ### Changed
-- Enhanced SECURITY.md with detailed security features, audit logging, and incident response
+- Enhanced docs/admin/security.md with detailed security features, audit logging, and incident response
 - Updated test-build.yml workflow to use actions/download-artifact@v4.1.3 (CVE fix)
 - Improved documentation structure and organization
 
@@ -75,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - EditorConfig for consistent coding styles
 - Dependabot configuration for automated dependency updates
 - Comprehensive API documentation
-- Security policy (SECURITY.md)
+- Security policy (docs/admin/security.md)
 - RCON password validation script
 - Network isolation in Docker Compose
 - Resource limits for Docker containers

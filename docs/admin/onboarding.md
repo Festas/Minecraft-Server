@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Admin Onboarding Guide
 
 Welcome to the Minecraft Server Console admin team! This guide will help you get started with managing the server.
@@ -337,15 +341,15 @@ Go to Console → Type: /say Server restarting in 5 minutes!
 ## Useful Resources
 
 ### Documentation
-- [Full Admin Guide](ADMIN-GUIDE.md) - Comprehensive administration guide
-- [Server Management](SERVER-MANAGEMENT.md) - Technical server management
-- [Plugin Guide](PLUGINS.md) - Plugin documentation
+- [Full Admin Guide](./admin-guide.md) - Comprehensive administration guide
+- [Server Management](./server-management.md) - Technical server management
+- [Plugin Guide](./plugins.md) - Plugin documentation
 - [Troubleshooting](./getting-started/deployment.md#troubleshooting) - Common issues
 
 ### Quick References
 - [Launch Checklist](./getting-started/launch-checklist.md) - Pre-launch validation
 - [QA Checklist](./getting-started/qa-checklist.md) - Quality assurance
-- [Security Policy](SECURITY.md) - Security guidelines
+- [Security Policy](./security.md) - Security guidelines
 
 ### Support Channels
 - Team Discord - Real-time help from other admins

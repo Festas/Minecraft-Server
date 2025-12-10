@@ -93,7 +93,7 @@ docker compose -f docker-compose.console.yml up -d
 # 3. Access at http://your-server:3001/console
 ```
 
-See **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** for detailed setup with SSL/HTTPS.
+See **[Console Setup Guide](docs/admin/console-setup.md)** for detailed setup with SSL/HTTPS.
 
 ## 📋 Technical Features
 
@@ -190,7 +190,7 @@ environment:
   MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
 ```
 
-**For complete plugin documentation**, see [PLUGINS.md](PLUGINS.md) - includes:
+**For complete plugin documentation**, see [Plugins Guide](docs/admin/plugins.md) - includes:
 - Recommended plugins list
 - Configuration guides
 - Troubleshooting tips
@@ -255,7 +255,7 @@ Before deploying, configure these secrets in your GitHub repository (Settings �
 | `REDIS_PORT` | Redis server port (typically 6379) |
 
 **Optional secrets** for customization: `MINECRAFT_VERSION`, `WORLD_SEED`, `OP_OWNER`, `WHITELIST_ENABLED`, and more.  
-See **[SERVER-MANAGEMENT.md](SERVER-MANAGEMENT.md#github-secrets-configuration)** for all options.
+See **[Server Management Guide](docs/admin/server-management.md#github-secrets-configuration)** for all options.
 
 ### Deployment Steps
 
@@ -341,7 +341,7 @@ Access the web console at `http://your-server:3001/console` for:
 - Server start/stop/restart
 - Backup management
 
-See [CONSOLE-SETUP.md](CONSOLE-SETUP.md) for setup instructions.
+See [Console Setup Guide](docs/admin/console-setup.md) for setup instructions.
 
 ## 🔄 Automated Deployment
 
@@ -502,7 +502,7 @@ See the [Troubleshooting section](docs/getting-started/deployment.md#troubleshoo
 ## 📚 Additional Resources
 
 - [docs/getting-started/deployment.md](docs/getting-started/deployment.md) - Complete deployment guide
-- [PLUGINS.md](PLUGINS.md) - Recommended plugins and setup
+- [Plugins Guide](docs/admin/plugins.md) - Recommended plugins and setup
 - [ROADMAP.md](ROADMAP.md) - Server growth roadmap
 - [docs/getting-started/server-icon.md](docs/getting-started/server-icon.md) - Custom branding
 - [Paper Documentation](https://docs.papermc.io/)

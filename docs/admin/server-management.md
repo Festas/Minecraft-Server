@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Server Management Guide
 
 Complete guide for managing the festas_builds Minecraft server deployment, including configuration, backups, and operations.
@@ -853,10 +857,10 @@ nc -zv localhost 25565
 
 ## Additional Resources
 
-- **[README.md](README.md)** - Main documentation
-- **[docs/getting-started/deployment.md](docs/getting-started/deployment.md)** - Initial deployment guide
-- **[PLUGINS.md](PLUGINS.md)** - Plugin recommendations and setup
-- **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** - Web console setup
+- **[README.md](../../README.md)** - Main documentation
+- **[docs/getting-started/deployment.md](../getting-started/deployment.md)** - Initial deployment guide
+- **[PLUGINS.md](./plugins.md)** - Plugin recommendations and setup
+- **[CONSOLE-SETUP.md](./console-setup.md)** - Web console setup
 - **[Paper Documentation](https://docs.papermc.io/)** - Paper server docs
 - **[itzg/minecraft-server](https://github.com/itzg/docker-minecraft-server)** - Container documentation
 
@@ -871,10 +875,23 @@ If you encounter issues:
 3. Check container logs: `docker logs minecraft-server`
 4. Verify secrets are configured correctly
 5. Check server resources (disk, memory, CPU)
-6. Review [docs/getting-started/deployment.md](docs/getting-started/deployment.md) for setup issues
+6. Review [docs/getting-started/deployment.md](../getting-started/deployment.md) for setup issues
 
-For plugin-specific issues, see [PLUGINS.md](PLUGINS.md).
+For plugin-specific issues, see [PLUGINS.md](./plugins.md).
 
 ---
 
 *Last updated: 2025-01-06*
+
+---
+
+## Related Documents
+
+- [Admin Guide](./admin-guide.md) - Daily administration tasks
+- [Console Setup](./console-setup.md) - Web console configuration
+- [Plugins Guide](./plugins.md) - Plugin documentation
+- [Security Policy](./security.md) - Security best practices
+- [Upgrade Guide](./upgrade-guide.md) - Server upgrade procedures
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+
+[← Back to Admin Guide](./README.md)

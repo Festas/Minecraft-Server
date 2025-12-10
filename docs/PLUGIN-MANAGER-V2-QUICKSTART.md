@@ -255,7 +255,7 @@ while True:
 ## Additional Resources
 
 - **Full Documentation:** See `docs/PLUGIN-MANAGER-V2.md`
-- **API Reference:** See `PLUGIN-MANAGER.md` section "Version 2"
+- **API Reference:** See `docs/admin/plugin-manager.md` section "Version 2"
 - **Migration Guide:** See `docs/PLUGIN-MANAGER-V2.md` section "Migration from V1"
 
 ## Support

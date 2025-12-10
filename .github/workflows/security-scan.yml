@@ -237,7 +237,7 @@ jobs:
             
             echo ""
             echo "### Next Steps"
-            echo "- Review [Security Policy](SECURITY.md)"
+            echo "- Review [Security Policy](docs/admin/security.md)"
             echo "- Check [Security Tab](${{ github.server_url }}/${{ github.repository }}/security) for advisories"
             echo "- Run \`npm audit fix\` to auto-fix vulnerabilities"
             echo "- Update base images for Docker containers"

@@ -97,7 +97,7 @@ jobs:
               echo "- $secret"
             done
             echo ""
-            echo "See CONSOLE-SETUP.md for detailed instructions."
+            echo "See docs/admin/console-setup.md for detailed instructions."
             exit 1
           fi
 
