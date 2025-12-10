@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="css/cards.css">
     <link rel="stylesheet" href="css/buttons.css">
     <link rel="stylesheet" href="css/indicators.css">
+    <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
@@ -177,8 +178,14 @@
 
                 <!-- Dashboard Section -->
                 <section id="dashboard" class="content-section active">
-                    <!-- Server Status Card -->
-                    <div class="card status-card card-full">
+                    <!-- Page Header -->
+                    <div class="page-header">
+                        <h1 class="page-title">Dashboard</h1>
+                    </div>
+
+                    <!-- Server Status Section -->
+                    <div class="section">
+                        <div class="card status-card card-full">
                         <div class="card-header">
                             <h3 class="card-title">Server Status</h3>
                             <span id="serverStatus" class="status-indicator offline">
@@ -186,10 +193,12 @@
                                 <span id="serverStatusText">Offline</span>
                             </span>
                         </div>
+                        </div>
                     </div>
 
-                    <!-- Metrics Grid -->
-                    <div class="card-grid">
+                    <!-- Metrics Section -->
+                    <div class="section">
+                        <div class="card-grid">
                         <div class="card stat-card">
                             <div class="tps-meter">
                                 <div class="tps-value healthy" id="tps">20.0</div>
@@ -216,10 +225,12 @@
                             </div>
                             <div class="stat-label">Uptime</div>
                         </div>
+                        </div>
                     </div>
 
-                    <!-- Resource Usage -->
-                    <div class="card-grid">
+                    <!-- Resource Usage Section -->
+                    <div class="section">
+                        <div class="card-grid">
                         <div class="card">
                             <div class="usage-bar">
                                 <div class="usage-header">
@@ -250,10 +261,12 @@
                             <div class="stat-value" id="worldSize" style="font-size: var(--text-xl);">--</div>
                             <div class="stat-label">World Size</div>
                         </div>
+                        </div>
                     </div>
 
-                    <!-- Quick Actions -->
-                    <div class="card card-full">
+                    <!-- Quick Actions Section -->
+                    <div class="section">
+                        <div class="card card-full">
                         <div class="card-header">
                             <h3 class="card-title">Quick Actions</h3>
                         </div>
@@ -267,16 +280,19 @@
                                 <button class="btn btn-danger quick-action-btn" id="killBtn">🔌 Kill</button>
                             </div>
                         </div>
+                        </div>
                     </div>
 
-                    <!-- Live Log Preview -->
-                    <div class="card card-full">
+                    <!-- Live Log Preview Section -->
+                    <div class="section">
+                        <div class="card card-full">
                         <div class="card-header">
                             <h3 class="card-title">Live Logs</h3>
                             <button id="pauseLogsBtn" class="btn btn-sm">⏸️ Pause</button>
                         </div>
                         <div class="card-body">
                             <div id="logPreview" class="log-output"></div>
+                        </div>
                         </div>
                     </div>
                 </section>

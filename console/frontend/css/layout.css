@@ -1,0 +1,324 @@
+/*
+ * LAYOUT SYSTEM - Mobile-First Responsive Layout
+ * 
+ * Comprehensive layout utilities for consistent spacing, structure, and responsive behavior.
+ * Built on the design system variables for maintainability.
+ * 
+ * Components:
+ * - Page structure (.page, .main-content)
+ * - Containers (.container with size variants)
+ * - Page headers (.page-header, .page-title, .page-actions)
+ * - Sections (.section, .section-header)
+ * - Grid system (responsive columns, auto-fit)
+ * - Flexbox utilities
+ * - Gap utilities
+ * - Spacing utilities (margin/padding)
+ * - Two-column layouts (.layout-sidebar)
+ * - Dividers
+ * - Empty states
+ */
+
+/* ==========================================================================
+   BASE PAGE LAYOUT
+   ========================================================================== */
+
+/* Base page layout */
+.page {
+  min-height: 100vh;
+  background: var(--color-bg-primary);
+}
+
+/* Main content area */
+.main-content {
+  min-height: 100vh;
+  padding: var(--space-4);
+  padding-top: calc(var(--touch-target-min) + var(--space-6));
+  transition: margin-left var(--transition-normal);
+}
+
+@media (min-width: 1024px) {
+  .main-content {
+    margin-left: var(--sidebar-width);
+    padding: var(--space-6);
+    padding-top: var(--space-6);
+  }
+}
+
+@media (min-width: 1280px) {
+  .main-content {
+    padding: var(--space-8);
+  }
+}
+
+/* ==========================================================================
+   CONTAINER SYSTEM (max-width constraint)
+   ========================================================================== */
+
+.container {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+.container-sm { max-width: 640px; }
+.container-md { max-width: 768px; }
+.container-lg { max-width: 1024px; }
+.container-xl { max-width: 1280px; }
+.container-full { max-width: none; }
+
+/* ==========================================================================
+   PAGE HEADER COMPONENT
+   ========================================================================== */
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .page-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.page-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+@media (min-width: 640px) {
+  .page-title {
+    font-size: var(--text-3xl);
+  }
+}
+
+.page-subtitle {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ==========================================================================
+   SECTION COMPONENT (vertical rhythm)
+   ========================================================================== */
+
+.section {
+  margin-bottom: var(--space-8);
+}
+
+.section:last-child {
+  margin-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .section-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.section-title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   CONTENT GRID SYSTEM
+   ========================================================================== */
+
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* Auto-fit responsive grids */
+.grid-auto-sm {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.grid-auto-md {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.grid-auto-lg {
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+/* Fixed column grids */
+.grid-cols-1 { grid-template-columns: 1fr; }
+
+@media (min-width: 640px) {
+  .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 768px) {
+  .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* Span utilities */
+.col-span-full { grid-column: 1 / -1; }
+
+@media (min-width: 640px) {
+  .col-span-2 { grid-column: span 2; }
+}
+
+@media (min-width: 1024px) {
+  .col-span-3 { grid-column: span 3; }
+}
+
+/* ==========================================================================
+   FLEXBOX UTILITIES
+   ========================================================================== */
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.flex-1 { flex: 1; }
+.flex-shrink-0 { flex-shrink: 0; }
+
+/* ==========================================================================
+   GAP UTILITIES
+   ========================================================================== */
+
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-5 { gap: var(--space-5); }
+.gap-6 { gap: var(--space-6); }
+.gap-8 { gap: var(--space-8); }
+
+/* ==========================================================================
+   SPACING UTILITIES
+   ========================================================================== */
+
+/* Margin */
+.m-0 { margin: 0; }
+.mt-4 { margin-top: var(--space-4); }
+.mt-6 { margin-top: var(--space-6); }
+.mt-8 { margin-top: var(--space-8); }
+.mb-4 { margin-bottom: var(--space-4); }
+.mb-6 { margin-bottom: var(--space-6); }
+.mb-8 { margin-bottom: var(--space-8); }
+
+/* Padding */
+.p-0 { padding: 0; }
+.p-4 { padding: var(--space-4); }
+.p-6 { padding: var(--space-6); }
+.px-4 { padding-left: var(--space-4); padding-right: var(--space-4); }
+.py-4 { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+
+/* ==========================================================================
+   TWO-COLUMN LAYOUT (sidebar content pattern)
+   ========================================================================== */
+
+.layout-sidebar {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .layout-sidebar {
+    grid-template-columns: 300px 1fr;
+  }
+}
+
+.layout-sidebar-right {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .layout-sidebar-right {
+    grid-template-columns: 1fr 300px;
+  }
+}
+
+/* ==========================================================================
+   DIVIDERS
+   ========================================================================== */
+
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--space-6) 0;
+}
+
+.divider-vertical {
+  width: 1px;
+  height: 100%;
+  background: var(--color-border);
+  margin: 0 var(--space-4);
+}
+
+/* ==========================================================================
+   EMPTY STATE COMPONENT
+   ========================================================================== */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.empty-state-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.empty-state-description {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  max-width: 400px;
+}
