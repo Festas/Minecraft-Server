@@ -1,0 +1,312 @@
+/*
+ * TABLE COMPONENTS - Modern, Responsive Table Styles
+ * 
+ * Provides table component styles for:
+ * - Base table styles with border-collapse
+ * - Header styling (uppercase, muted, background)
+ * - Row hover states
+ * - Responsive table wrapper with horizontal scroll
+ * - Striped and bordered variants
+ */
+
+/* ==========================================================================
+   BASE TABLE STYLES
+   ========================================================================== */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+}
+
+/* ==========================================================================
+   TABLE HEADER
+   ========================================================================== */
+
+.table thead {
+  background-color: var(--color-bg-secondary);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.table th {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.table th.text-center {
+  text-align: center;
+}
+
+.table th.text-right {
+  text-align: right;
+}
+
+/* ==========================================================================
+   TABLE BODY
+   ========================================================================== */
+
+.table tbody tr {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: var(--color-bg-elevated);
+}
+
+.table td {
+  padding: var(--space-3) var(--space-4);
+  vertical-align: middle;
+}
+
+.table td.text-center {
+  text-align: center;
+}
+
+.table td.text-right {
+  text-align: right;
+}
+
+/* ==========================================================================
+   TABLE VARIANTS
+   ========================================================================== */
+
+/* Striped Table */
+.table-striped tbody tr:nth-child(odd) {
+  background-color: var(--color-bg-secondary);
+}
+
+.table-striped tbody tr:nth-child(even) {
+  background-color: var(--color-bg-primary);
+}
+
+.table-striped tbody tr:hover {
+  background-color: var(--color-bg-elevated);
+}
+
+/* Bordered Table */
+.table-bordered {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid var(--color-border);
+}
+
+/* Compact Table */
+.table-compact th,
+.table-compact td {
+  padding: var(--space-2) var(--space-3);
+}
+
+/* Spacious Table */
+.table-spacious th,
+.table-spacious td {
+  padding: var(--space-4) var(--space-5);
+}
+
+/* ==========================================================================
+   TABLE CELL UTILITIES
+   ========================================================================== */
+
+.table .badge {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.table .btn {
+  white-space: nowrap;
+}
+
+/* Prevent text wrapping in action columns */
+.table td.actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* Status indicators in tables */
+.table .status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ==========================================================================
+   RESPONSIVE TABLE WRAPPER
+   ========================================================================== */
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.table-wrapper .table {
+  margin-bottom: 0;
+}
+
+/* Responsive scroll shadow indicators */
+.table-wrapper {
+  position: relative;
+  background: 
+    linear-gradient(to right, var(--color-bg-primary) 30%, rgba(0,0,0,0)),
+    linear-gradient(to right, rgba(0,0,0,0), var(--color-bg-primary) 70%) 0 100%,
+    radial-gradient(farthest-side at 0% 50%, rgba(0,0,0,0.2), rgba(0,0,0,0)),
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.2), rgba(0,0,0,0)) 0 100%;
+  background-repeat: no-repeat;
+  background-color: var(--color-bg-primary);
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-position: 0 0, 100%, 0 0, 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 639px) {
+  /* Stack table on mobile if needed */
+  .table-responsive-stack {
+    border: 0;
+  }
+
+  .table-responsive-stack thead {
+    display: none;
+  }
+
+  .table-responsive-stack tbody,
+  .table-responsive-stack tr,
+  .table-responsive-stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-responsive-stack tr {
+    margin-bottom: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    background-color: var(--color-bg-secondary);
+  }
+
+  .table-responsive-stack td {
+    text-align: right;
+    padding: var(--space-2) 0;
+    border: none;
+    position: relative;
+  }
+
+  .table-responsive-stack td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+
+  .table-responsive-stack td:last-child {
+    border-bottom: 0;
+  }
+}
+
+/* ==========================================================================
+   TABLE SORTING
+   ========================================================================== */
+
+.table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  padding-right: var(--space-8);
+}
+
+.table th.sortable:hover {
+  background-color: var(--color-bg-elevated);
+}
+
+.table th.sortable::after {
+  content: '⇅';
+  position: absolute;
+  right: var(--space-3);
+  opacity: 0.3;
+  font-size: var(--text-sm);
+}
+
+.table th.sortable.asc::after {
+  content: '↑';
+  opacity: 1;
+}
+
+.table th.sortable.desc::after {
+  content: '↓';
+  opacity: 1;
+}
+
+/* ==========================================================================
+   EMPTY STATE
+   ========================================================================== */
+
+.table-empty {
+  padding: var(--space-10) var(--space-5);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.table-empty-icon {
+  font-size: var(--text-4xl);
+  margin-bottom: var(--space-3);
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   TABLE LOADING STATE
+   ========================================================================== */
+
+.table-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.table-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .table-loading::after {
+    animation-duration: 0.01ms;
+  }
+}

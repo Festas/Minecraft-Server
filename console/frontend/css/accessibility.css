@@ -4,11 +4,12 @@
  */
 
 /* Skip navigation link - visible on focus for keyboard users */
-.skip-navigation {
+.skip-navigation,
+.skip-to-content {
     position: absolute;
     top: -100px;
     left: 0;
-    background: var(--accent-primary);
+    background: var(--color-primary, var(--accent-primary));
     color: white;
     padding: 10px 20px;
     text-decoration: none;
@@ -18,9 +19,10 @@
     transition: top 0.3s;
 }
 
-.skip-navigation:focus {
+.skip-navigation:focus,
+.skip-to-content:focus {
     top: 0;
-    outline: 3px solid var(--accent-warning);
+    outline: 3px solid var(--color-warning, var(--accent-warning));
     outline-offset: 2px;
 }
 

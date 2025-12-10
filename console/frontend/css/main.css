@@ -1,0 +1,63 @@
+/*
+ * MAIN CSS - Unified Import File
+ * 
+ * Single entry point for all console CSS files.
+ * Import this one file instead of individual CSS files.
+ * 
+ * Order matters! Files are loaded in dependency order:
+ * 1. Design system (variables, reset, base styles)
+ * 2. Layout components (sidebar, cards, buttons)
+ * 3. Indicators and interactive elements
+ * 4. Page layout
+ * 5. Animations
+ * 6. Utilities (helper classes)
+ * 7. Form components
+ * 8. Data display (tables)
+ * 9. Overlays (modals, toasts)
+ * 10. Small components (badges)
+ */
+
+/* ==========================================================================
+   FOUNDATION - Design System & Variables
+   ========================================================================== */
+@import url('design-system.css');
+
+/* ==========================================================================
+   LAYOUT COMPONENTS
+   ========================================================================== */
+@import url('sidebar.css');
+@import url('cards.css');
+@import url('buttons.css');
+@import url('indicators.css');
+@import url('layout.css');
+
+/* ==========================================================================
+   ANIMATIONS & INTERACTIONS
+   ========================================================================== */
+@import url('animations.css');
+
+/* ==========================================================================
+   UTILITIES & HELPERS
+   ========================================================================== */
+@import url('utilities.css');
+
+/* ==========================================================================
+   FORM COMPONENTS
+   ========================================================================== */
+@import url('forms.css');
+
+/* ==========================================================================
+   DATA DISPLAY
+   ========================================================================== */
+@import url('tables.css');
+
+/* ==========================================================================
+   OVERLAYS & NOTIFICATIONS
+   ========================================================================== */
+@import url('modal.css');
+@import url('toast.css');
+
+/* ==========================================================================
+   SMALL COMPONENTS
+   ========================================================================== */
+@import url('badges.css');
