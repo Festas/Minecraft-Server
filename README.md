@@ -18,6 +18,26 @@ The festas_builds server is growing from a friends-only server to a **full commu
 
 ---
 
+## 📚 Documentation
+
+**Comprehensive documentation is available in the [`docs/`](docs/) directory.** 
+
+All setup guides, administration procedures, troubleshooting resources, and reference materials have been organized into a structured documentation hub for easy navigation.
+
+### 📖 **[→ Browse Full Documentation](docs/)**
+
+**Quick Access:**
+- 🚀 [Getting Started](docs/getting-started/) - Deployment and first-time setup
+- 🔧 [Administration](docs/admin/) - Server management and security
+- ✨ [Features](docs/features/) - Plugins and gameplay features
+- 💻 [Development](docs/development/) - Contributing and API docs
+- 🔍 [Troubleshooting](docs/troubleshooting/) - Diagnostics and solutions
+- 📖 [Reference](docs/reference/) - Quick reference and checklists
+
+**Note:** While this README provides a quick overview, comprehensive documentation with detailed guides, troubleshooting steps, and reference materials is maintained in the `docs/` directory.
+
+---
+
 ## 🎮 Cross-Platform Play
 
 This server supports both **Java Edition** and **Bedrock Edition** players!
