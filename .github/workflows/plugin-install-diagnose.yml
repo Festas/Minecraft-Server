@@ -138,7 +138,7 @@ jobs:
             } | tee "$DIAG_DIR/clock-sync.txt"
 
             log_section "File Permissions - plugins.json"
-            PLUGINS_JSON="${{ env.DEPLOY_DIR }}/plugins.json"
+            PLUGINS_JSON="${{ env.DEPLOY_DIR }}/config/server/plugins.json"
             test_file_permissions "$PLUGINS_JSON" "$DIAG_DIR/plugins-json-permissions.txt"
 
             log_section "File Permissions - plugins directory"
@@ -555,7 +555,7 @@ jobs:
             log_section "Post-Install State Capture"
 
             log_subsection "Capture plugins.json state (AFTER)"
-            PLUGINS_JSON="${{ env.DEPLOY_DIR }}/plugins.json"
+            PLUGINS_JSON="${{ env.DEPLOY_DIR }}/config/server/plugins.json"
             capture_plugins_json "$PLUGINS_JSON" "$DIAG_DIR/plugins-json-after.txt"
 
             log_subsection "Capture plugins directory state (AFTER)"
