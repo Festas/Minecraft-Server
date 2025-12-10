@@ -85,7 +85,7 @@ class BackupService {
      * Initialize database tables for backup tracking
      */
     initializeDatabase() {
-        const db = database.getDatabase();
+        const db = database.db;
         
         // Backup jobs table
         db.exec(`
@@ -171,7 +171,7 @@ class BackupService {
     async createBackup({ name, type = BACKUP_TYPES.FULL, username, retentionPolicy = 'daily' }) {
         const jobId = this.generateJobId('backup');
         const timestamp = new Date().toISOString();
-        const db = database.getDatabase();
+        const db = database.db;
 
         try {
             // Create job record
@@ -208,7 +208,7 @@ class BackupService {
      * Perform the actual backup operation
      */
     async performBackup(jobId, type, username) {
-        const db = database.getDatabase();
+        const db = database.db;
         const startTime = Date.now();
         const timestamp = new Date().toISOString();
 
@@ -340,7 +340,7 @@ class BackupService {
      * Get backup job by ID
      */
     getBackupJob(jobId) {
-        const db = database.getDatabase();
+        const db = database.db;
         const stmt = db.prepare('SELECT * FROM backup_jobs WHERE id = ?');
         return stmt.get(jobId);
     }
@@ -349,7 +349,7 @@ class BackupService {
      * Get all backup jobs
      */
     getAllBackupJobs(limit = 50, offset = 0) {
-        const db = database.getDatabase();
+        const db = database.db;
         const stmt = db.prepare(`
             SELECT * FROM backup_jobs 
             ORDER BY created_at DESC 
@@ -362,7 +362,7 @@ class BackupService {
      * Get backup jobs by status
      */
     getBackupJobsByStatus(status) {
-        const db = database.getDatabase();
+        const db = database.db;
         const stmt = db.prepare('SELECT * FROM backup_jobs WHERE status = ? ORDER BY created_at DESC');
         return stmt.all(status);
     }
@@ -418,7 +418,7 @@ class BackupService {
     async restoreBackup({ backupId, username, createPreBackup = true }) {
         const restoreId = this.generateJobId('restore');
         const timestamp = new Date().toISOString();
-        const db = database.getDatabase();
+        const db = database.db;
 
         try {
             // Get backup job
@@ -480,7 +480,7 @@ class BackupService {
      * Perform the actual restore operation
      */
     async performRestore(restoreId, backup, username) {
-        const db = database.getDatabase();
+        const db = database.db;
         const startTime = Date.now();
         const timestamp = new Date().toISOString();
 
@@ -669,7 +669,7 @@ class BackupService {
      * Delete backup
      */
     async deleteBackup(jobId, username) {
-        const db = database.getDatabase();
+        const db = database.db;
         const backup = this.getBackupJob(jobId);
         
         if (!backup) {
@@ -718,7 +718,7 @@ class BackupService {
             });
 
             // Create migration job record
-            const db = database.getDatabase();
+            const db = database.db;
             const timestamp = new Date().toISOString();
             db.prepare(`
                 INSERT INTO migration_jobs 
@@ -746,7 +746,7 @@ class BackupService {
      */
     async cleanupOldBackups() {
         try {
-            const db = database.getDatabase();
+            const db = database.db;
             const now = Date.now();
 
             // Get all successful backups
@@ -787,7 +787,7 @@ class BackupService {
      * Get restore job
      */
     getRestoreJob(restoreId) {
-        const db = database.getDatabase();
+        const db = database.db;
         const stmt = db.prepare('SELECT * FROM restore_jobs WHERE id = ?');
         return stmt.get(restoreId);
     }
@@ -796,7 +796,7 @@ class BackupService {
      * Get all restore jobs
      */
     getAllRestoreJobs(limit = 50, offset = 0) {
-        const db = database.getDatabase();
+        const db = database.db;
         const stmt = db.prepare(`
             SELECT * FROM restore_jobs 
             ORDER BY created_at DESC 
@@ -809,7 +809,7 @@ class BackupService {
      * Get migration job
      */
     getMigrationJob(migrationId) {
-        const db = database.getDatabase();
+        const db = database.db;
         const stmt = db.prepare('SELECT * FROM migration_jobs WHERE id = ?');
         return stmt.get(migrationId);
     }
@@ -818,7 +818,7 @@ class BackupService {
      * Get all migration jobs
      */
     getAllMigrationJobs(limit = 50, offset = 0) {
-        const db = database.getDatabase();
+        const db = database.db;
         const stmt = db.prepare(`
             SELECT * FROM migration_jobs 
             ORDER BY created_at DESC 
