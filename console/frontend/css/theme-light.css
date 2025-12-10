@@ -1,37 +1,78 @@
 /**
  * Light Theme for Minecraft Console
+ * Uses design-system.css variables with light mode overrides
  * Ensures WCAG AA color contrast compliance
  * Maintains Minecraft aesthetic with lighter palette
  */
 
-/* Light theme variables - only applied when data-theme="light" */
+/* Light theme variables - override design system for light mode */
 [data-theme="light"] {
     /* Background colors - lighter palette */
-    --bg-primary: #f5f5f5;
-    --bg-secondary: #ffffff;
-    --bg-tertiary: #e8e8e8;
-    --bg-hover: #d0d0d0;
+    --color-bg-primary: #f5f5f5;
+    --color-bg-secondary: #ffffff;
+    --color-bg-tertiary: #e8e8e8;
+    --color-bg-elevated: #fafafa;
+    --color-bg-hover: #d0d0d0;
+    
+    /* Surface colors for light mode */
+    --color-surface: rgba(255, 255, 255, 0.9);
+    --color-surface-hover: rgba(245, 245, 245, 0.95);
+    --color-surface-active: rgba(240, 240, 240, 1);
+    
+    /* Brand/Accent - adjusted for light backgrounds */
+    --color-primary: #059669;
+    --color-primary-hover: #047857;
+    --color-primary-muted: rgba(5, 150, 105, 0.1);
+    
+    /* Semantic colors - darker for better contrast */
+    --color-success: #16a34a;
+    --color-warning: #ea580c;
+    --color-error: #dc2626;
+    --color-info: #2563eb;
     
     /* Text colors - dark for readability */
-    --text-primary: #1a1a1a;
-    --text-secondary: #4a4a4a;
-    
-    /* Accent colors - adjusted for light backgrounds */
-    --accent-primary: #1976d2;
-    --accent-success: #2e7d32;
-    --accent-warning: #f57c00;
-    --accent-danger: #c62828;
+    --color-text-primary: #1a1a1a;
+    --color-text-secondary: #4a4a4a;
+    --color-text-muted: #737373;
     
     /* Border colors */
-    --border-color: #d0d0d0;
+    --color-border: rgba(0, 0, 0, 0.1);
+    --color-border-hover: rgba(0, 0, 0, 0.2);
+    
+    /* Shadows - lighter for light mode */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+    
+    /* Glow effects for light mode */
+    --glow-primary: 0 0 20px rgba(5, 150, 105, 0.3);
+    --glow-error: 0 0 20px rgba(220, 38, 38, 0.3);
+    
+    /* Glassmorphism for light mode */
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    
+    /* Legacy variable mappings for backward compatibility */
+    --bg-primary: var(--color-bg-primary);
+    --bg-secondary: var(--color-bg-secondary);
+    --bg-tertiary: var(--color-bg-tertiary);
+    --bg-hover: var(--color-bg-hover);
+    --text-primary: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
+    --accent-primary: var(--color-info);
+    --accent-success: var(--color-success);
+    --accent-warning: var(--color-warning);
+    --accent-danger: var(--color-error);
+    --border-color: var(--color-border);
     
     /* Minecraft-inspired colors for light mode */
     --mc-stone: #9e9e9e;
     --mc-obsidian: #424242;
     --mc-diamond: #0277bd;
-    --mc-emerald: #2e7d32;
+    --mc-emerald: var(--color-primary);
     --mc-gold: #f9a825;
-    --mc-redstone: #c62828;
+    --mc-redstone: var(--color-error);
 }
 
 /* Light theme specific overrides */
