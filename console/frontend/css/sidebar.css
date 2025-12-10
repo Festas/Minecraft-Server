@@ -1,0 +1,318 @@
+/*
+ * SIDEBAR NAVIGATION - Mobile-First Responsive Design
+ * 
+ * Mobile (0-1023px): Hidden by default, slides in from left
+ * Desktop (1024px+): Always visible, fixed width
+ * 
+ * Features:
+ * - Touch-friendly targets (44px minimum)
+ * - Glassmorphism design with backdrop blur
+ * - Smooth transitions and animations
+ * - Active page highlighting
+ * - Section grouping with headers
+ */
+
+/* ==========================================================================
+   HAMBURGER MENU BUTTON (Mobile Only)
+   ========================================================================== */
+
+.hamburger-button {
+  position: fixed;
+  top: var(--space-3, 0.75rem);
+  left: var(--space-3, 0.75rem);
+  width: var(--touch-target-min, 44px);
+  height: var(--touch-target-min, 44px);
+  padding: var(--space-2, 0.5rem);
+  background: var(--color-surface, rgba(30, 34, 42, 0.8));
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-md, 0.5rem);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  z-index: calc(var(--z-overlay, 300) + 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all var(--transition-normal, 200ms ease);
+}
+
+.hamburger-button:hover {
+  background: var(--color-surface-hover, rgba(40, 45, 55, 0.9));
+  border-color: var(--color-border-hover, rgba(255, 255, 255, 0.2));
+}
+
+.hamburger-button:active {
+  transform: scale(0.95);
+}
+
+.hamburger-line {
+  width: 20px;
+  height: 2px;
+  background: var(--color-text-primary, #f1f5f9);
+  border-radius: 2px;
+  transition: all var(--transition-normal, 200ms ease);
+}
+
+/* Hamburger animation when sidebar is open */
+.sidebar-open .hamburger-line:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.sidebar-open .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.sidebar-open .hamburger-line:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Hide hamburger on desktop */
+@media (min-width: 1024px) {
+  .hamburger-button {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   SIDEBAR OVERLAY (Mobile Only)
+   ========================================================================== */
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-overlay, 300);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-normal, 200ms ease),
+              visibility var(--transition-normal, 200ms ease);
+}
+
+.sidebar-open .sidebar-overlay {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* No overlay needed on desktop */
+@media (min-width: 1024px) {
+  .sidebar-overlay {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   SIDEBAR CONTAINER
+   ========================================================================== */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  background: var(--glass-bg, rgba(30, 34, 42, 0.7));
+  border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  backdrop-filter: var(--glass-blur, blur(10px));
+  -webkit-backdrop-filter: var(--glass-blur, blur(10px));
+  z-index: calc(var(--z-overlay, 300) + 1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transform: translateX(-100%);
+  transition: transform var(--transition-normal, 200ms ease);
+}
+
+/* Sidebar open state on mobile */
+.sidebar-open .sidebar {
+  transform: translateX(0);
+}
+
+/* Always visible on desktop */
+@media (min-width: 1024px) {
+  .sidebar {
+    width: var(--sidebar-width, 240px);
+    transform: translateX(0);
+  }
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--color-border, rgba(255, 255, 255, 0.1));
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-hover, rgba(255, 255, 255, 0.2));
+}
+
+/* ==========================================================================
+   SIDEBAR HEADER
+   ========================================================================== */
+
+.sidebar-header {
+  padding: var(--space-4, 1rem) var(--space-4, 1rem);
+  border-bottom: 1px solid var(--color-border, rgba(255, 255, 255, 0.1));
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  min-height: var(--touch-target-min, 44px);
+}
+
+.sidebar-logo {
+  font-size: var(--text-2xl, 1.5rem);
+  line-height: 1;
+}
+
+.sidebar-title {
+  font-size: var(--text-lg, 1.125rem);
+  font-weight: var(--font-semibold, 600);
+  color: var(--color-text-primary, #f1f5f9);
+  margin: 0;
+}
+
+.sidebar-subtitle {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-text-secondary, #94a3b8);
+  margin: 0;
+  margin-top: var(--space-1, 0.25rem);
+}
+
+/* ==========================================================================
+   NAVIGATION
+   ========================================================================== */
+
+.sidebar nav {
+  flex: 1;
+  padding: var(--space-4, 1rem) 0;
+}
+
+/* Section Headers */
+.nav-section-header {
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--font-semibold, 600);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #64748b);
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.nav-section-header:first-child {
+  margin-top: 0;
+}
+
+/* Navigation Items */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+  min-height: var(--touch-target-min, 44px);
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  color: var(--color-text-secondary, #94a3b8);
+  font-size: var(--text-base, 1rem);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms ease);
+  text-decoration: none;
+}
+
+.nav-item:hover {
+  background: var(--color-surface-hover, rgba(40, 45, 55, 0.9));
+  color: var(--color-text-primary, #f1f5f9);
+}
+
+.nav-item:active {
+  background: var(--color-surface-active, rgba(50, 55, 65, 0.95));
+}
+
+/* Active state */
+.nav-item.active {
+  background: var(--color-primary-muted, rgba(16, 185, 129, 0.15));
+  border-left-color: var(--color-primary, #10b981);
+  color: var(--color-text-primary, #f1f5f9);
+}
+
+.nav-item.active .nav-icon {
+  color: var(--color-primary, #10b981);
+}
+
+/* Navigation Icons */
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.nav-item .nav-icon {
+  transition: color var(--transition-fast, 150ms ease);
+}
+
+/* Navigation Text */
+.nav-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   MAIN CONTENT OFFSET
+   ========================================================================== */
+
+/* Mobile: Add top padding for hamburger button */
+.main-content {
+  padding-top: calc(var(--touch-target-min, 44px) + var(--space-6, 1.5rem));
+  transition: margin-left var(--transition-normal, 200ms ease),
+              padding-top var(--transition-normal, 200ms ease);
+}
+
+/* Desktop: Add left margin for sidebar */
+@media (min-width: 1024px) {
+  .main-content {
+    margin-left: var(--sidebar-width, 240px);
+    padding-top: 0;
+  }
+}
+
+/* ==========================================================================
+   FOCUS STATES (Accessibility)
+   ========================================================================== */
+
+.hamburger-button:focus-visible,
+.nav-item:focus-visible {
+  outline: 2px solid var(--color-primary, #10b981);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   REDUCED MOTION SUPPORT
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar-overlay,
+  .hamburger-button,
+  .hamburger-line,
+  .nav-item {
+    transition-duration: 0.01ms !important;
+  }
+}
