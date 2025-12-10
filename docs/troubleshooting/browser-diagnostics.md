@@ -86,7 +86,7 @@ cd console/backend
 npm install puppeteer
 
 # Run diagnostics
-node ../../scripts/browser-diagnostics.js
+node ../../scripts/diagnostics/browser-diagnostics.js
 ```
 
 ### Manual API Profiling
@@ -101,7 +101,7 @@ export ADMIN_PASSWORD="your-password"
 export OUTPUT_DIR="/tmp/api-profiler"
 
 # Run profiler
-./scripts/api-profiler.sh
+./scripts/api-testing/api-profiler.sh
 ```
 
 ### Manual Resource Monitoring
@@ -116,7 +116,7 @@ export MONITOR_INTERVAL=2   # seconds
 export CONTAINER_NAME="minecraft-console"
 
 # Run monitor
-./scripts/resource-monitor.sh
+./scripts/diagnostics/resource-monitor.sh
 ```
 
 ### Frontend Debug Button

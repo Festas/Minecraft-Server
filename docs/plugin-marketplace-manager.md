@@ -580,12 +580,12 @@ headers: {
 
 3. **Run Diagnostics**
    ```bash
-   ./scripts/diagnose-plugins.sh diagnose
+   ./scripts/diagnostics/diagnose-plugins.sh diagnose
    ```
 
 4. **Fix Issues**
    ```bash
-   ./scripts/diagnose-plugins.sh fix
+   ./scripts/diagnostics/diagnose-plugins.sh fix
    ```
 
 5. **Restore if Needed**
@@ -831,7 +831,7 @@ If issues persist:
 
 1. **Run diagnostics**:
    ```bash
-   ./scripts/diagnose-plugins.sh diagnose
+   ./scripts/diagnostics/diagnose-plugins.sh diagnose
    ```
 
 2. **Collect information**:

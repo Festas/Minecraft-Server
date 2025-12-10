@@ -325,7 +325,7 @@ For API response time analysis and endpoint testing:
 
 **Use**: API Profiling (part of Browser Diagnostics)
 ```bash
-./scripts/api-profiler.sh
+./scripts/api-testing/api-profiler.sh
 ```
 
 API Profiling provides:
@@ -340,7 +340,7 @@ For CPU, memory, or resource exhaustion problems:
 
 **Use**: Resource Monitoring
 ```bash
-./scripts/resource-monitor.sh
+./scripts/diagnostics/resource-monitor.sh
 ```
 
 Resource Monitoring provides:
