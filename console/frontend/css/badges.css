@@ -79,7 +79,7 @@
    ========================================================================== */
 
 .badge-sm {
-  padding: var(--space-0-5) var(--space-2);
+  padding: 0.125rem var(--space-2);
   font-size: 0.625rem; /* 10px */
 }
 

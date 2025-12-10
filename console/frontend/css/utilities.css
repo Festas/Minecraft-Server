@@ -87,18 +87,7 @@
 .visible { visibility: visible; }
 .invisible { visibility: hidden; }
 
-/* Screen Reader Only */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
+/* Screen Reader Only - defined in accessibility.css */
 
 /* Responsive Visibility - Mobile First */
 @media (min-width: 640px) {
