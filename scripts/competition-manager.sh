@@ -10,7 +10,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SERVER_DIR="$(dirname "$SCRIPT_DIR")"
 COMPETITION_WORLD="competition"
-THEMES_FILE="$SERVER_DIR/competition-templates/weekly-themes.md"
+THEMES_FILE="$SERVER_DIR/config/templates/competitions/weekly-themes.md"
 RCON_CLI="rcon-cli"  # Install with: apt install rcon-cli
 
 # Colors for output

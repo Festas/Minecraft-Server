@@ -25,10 +25,10 @@ Complete guide for content creators to film, record, and create amazing content 
 - Camera plugins
 
 **Configuration Files:**
-- `config/creator-tools/vanish-config.yml`
-- `config/creator-tools/replay-config.yml`
-- `config/creator-tools/creator-permissions.yml`
-- `config/creator-tools/filming-kit.yml`
+- `config/plugins/creator-tools/vanish-config.yml`
+- `config/plugins/creator-tools/replay-config.yml`
+- `config/plugins/creator-tools/creator-permissions.yml`
+- `config/plugins/creator-tools/filming-kit.yml`
 
 ---
 
@@ -169,7 +169,7 @@ When vanished:
 
 ### Quick Access Items
 
-See `config/creator-tools/filming-kit.yml` for full kit.
+See `config/plugins/creator-tools/filming-kit.yml` for full kit.
 
 **Filming Kit** (`/filmingkit`):
 - Vanish toggle item
@@ -577,10 +577,10 @@ Check:
 
 ## Configuration Files
 
-- `config/creator-tools/vanish-config.yml` - SuperVanish settings
-- `config/creator-tools/replay-config.yml` - Replay system config
-- `config/creator-tools/creator-permissions.yml` - Permission setup
-- `config/creator-tools/filming-kit.yml` - Filming tools kit
+- `config/plugins/creator-tools/vanish-config.yml` - SuperVanish settings
+- `config/plugins/creator-tools/replay-config.yml` - Replay system config
+- `config/plugins/creator-tools/creator-permissions.yml` - Permission setup
+- `config/plugins/creator-tools/filming-kit.yml` - Filming tools kit
 
 ---
 

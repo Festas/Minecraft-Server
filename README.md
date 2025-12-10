@@ -206,9 +206,9 @@ environment:
   - `.env.example` - Environment variable template
   
 - **Plugin Management**
-  - `plugins.json` - Plugin definitions (reference)
-  - `plugins/` - Plugin configuration files
-  - `config/` - Plugin configs
+  - `config/server/plugins.json` - Plugin definitions and metadata
+  - `config/plugins/` - Plugin configuration files
+  - `config/templates/` - Competition themes and templates
   
 - **Web Console**
   - `console/` - Full-featured web management interface

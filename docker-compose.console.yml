@@ -70,10 +70,13 @@ services:
       # Mount Docker socket to control containers
       - /var/run/docker.sock:/var/run/docker.sock
 
-      # Mount console config
+      # Mount console backend configuration (users, settings, schedules)
+      # NOT to be confused with server plugin configs in config/
       - ./console/backend/config:/app/config
 
       # Mount server data for file access
+      # Server configs are in /data/config/ on the server
+      # Console reads config/server/plugins.json via PLUGINS_JSON env var
       - ./data:/data:ro
 
       # Mount backup script

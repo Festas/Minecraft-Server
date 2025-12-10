@@ -7,7 +7,7 @@ const { parsePluginYml, isValidJar } = require('./pluginParser');
 const { parseUrl } = require('./urlParser');
 
 const PLUGINS_DIR = process.env.PLUGINS_DIR || path.join(process.cwd(), '../../plugins');
-const PLUGINS_JSON = process.env.PLUGINS_JSON || path.join(process.cwd(), '../../plugins.json');
+const PLUGINS_JSON = process.env.PLUGINS_JSON || path.join(process.cwd(), '../../config/server/plugins.json');
 const HISTORY_FILE = path.join(__dirname, '../data/plugin-history.json');
 const INSTALL_ERRORS_LOG = path.join(__dirname, '../data/install-errors.log');
 

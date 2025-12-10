@@ -107,7 +107,7 @@ ls -lh /home/deploy/minecraft-server/backups/
 ./scripts/competition-manager.sh start
 
 # Option 2: Manual
-# 1. Choose theme from competition-templates/weekly-themes.md
+# 1. Choose theme from config/templates/competitions/weekly-themes.md
 # 2. Announce in-game and Discord
 # 3. Enable plot claiming
 ```

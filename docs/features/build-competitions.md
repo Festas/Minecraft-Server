@@ -25,7 +25,7 @@ A complete guide to running engaging build competitions on the festas_builds Min
 
 **Additional Resources:**
 - Competition manager script (`scripts/competition-manager.sh`)
-- Theme library (`competition-templates/weekly-themes.md`)
+- Theme library (`config/templates/competitions/weekly-themes.md`)
 
 ---
 
@@ -86,7 +86,7 @@ Build competitions are a core feature of the festas_builds server, providing:
 - `config/plotsquared/settings.yml` - Main PlotSquared configuration
 - `config/plotsquared/worlds.yml` - Competition world settings
 - `scripts/competition-manager.sh` - Competition automation script
-- `competition-templates/weekly-themes.md` - Theme library
+- `config/templates/competitions/weekly-themes.md` - Theme library
 
 ---
 
@@ -218,7 +218,7 @@ Commands:
 #### 1. Start Competition
 
 ```bash
-# Choose a theme from competition-templates/weekly-themes.md
+# Choose a theme from config/templates/competitions/weekly-themes.md
 # Or let the script choose randomly:
 ./scripts/competition-manager.sh start
 ```
@@ -604,7 +604,7 @@ Competition wins contribute to Legend rank requirements (see ranks-rewards.yml).
 ## Resources
 
 - **PlotSquared Wiki**: https://github.com/IntellectualSites/PlotSquared/wiki
-- **Theme Ideas**: See `competition-templates/weekly-themes.md`
+- **Theme Ideas**: See `config/templates/competitions/weekly-themes.md`
 - **Competition Manager Script**: `scripts/competition-manager.sh`
 - **Discord Community**: Share builds and get inspiration!
 

@@ -24,10 +24,10 @@ Complete guide to setting up and managing the new player welcome experience.
 - Custom welcome plugin
 
 **Configuration Files:**
-- `config/welcome/join-messages.yml`
-- `config/welcome/starter-kit.yml`
-- `config/welcome/tutorial-config.yml`
-- `config/welcome/rules.yml`
+- `config/plugins/welcome/join-messages.yml`
+- `config/plugins/welcome/starter-kit.yml`
+- `config/plugins/welcome/tutorial-config.yml`
+- `config/plugins/welcome/rules.yml`
 
 ---
 
@@ -67,7 +67,7 @@ The welcome system provides new players with:
 
 ### 1. Join Messages
 
-**First Join** (`config/welcome/join-messages.yml`):
+**First Join** (`config/plugins/welcome/join-messages.yml`):
 - Custom welcome message with festas_builds branding
 - Server-wide announcement for new players
 - Title animation
@@ -80,7 +80,7 @@ The welcome system provides new players with:
 
 ### 2. Starter Kit
 
-**Contents** (`config/welcome/starter-kit.yml`):
+**Contents** (`config/plugins/welcome/starter-kit.yml`):
 - Diamond tools (Efficiency 3, Unbreaking 2)
 - Building materials (planks, stone, glass)
 - Food supply
@@ -92,7 +92,7 @@ The welcome system provides new players with:
 
 ### 3. Interactive Tutorial
 
-**5 Steps** (`config/welcome/tutorial-config.yml`):
+**5 Steps** (`config/plugins/welcome/tutorial-config.yml`):
 
 1. **Welcome** - Introduction to festas_builds
 2. **Land Claims** - How to protect builds
@@ -108,7 +108,7 @@ The welcome system provides new players with:
 
 ### 4. Server Rules
 
-**Rules System** (`config/welcome/rules.yml`):
+**Rules System** (`config/plugins/welcome/rules.yml`):
 - 6 core server rules
 - Detailed guidelines
 - Punishment system integration
@@ -142,14 +142,14 @@ Optional:
 
 ### Step 2: Configure Welcome Messages
 
-Edit `config/welcome/join-messages.yml`:
+Edit `config/plugins/welcome/join-messages.yml`:
 - Customize welcome text
 - Set your Discord link
 - Adjust delays and sounds
 
 ### Step 3: Set Up Starter Kit
 
-The starter kit is defined in `config/welcome/starter-kit.yml`.
+The starter kit is defined in `config/plugins/welcome/starter-kit.yml`.
 
 **EssentialsX Integration**:
 Add to `plugins/Essentials/kits.yml`:
@@ -228,7 +228,7 @@ rules:
 
 ### Branding Your Welcome Messages
 
-Edit `config/welcome/join-messages.yml`:
+Edit `config/plugins/welcome/join-messages.yml`:
 
 ```yaml
 first_join:
@@ -240,7 +240,7 @@ first_join:
 
 ### Adjusting Starter Kit
 
-Edit `config/welcome/starter-kit.yml`:
+Edit `config/plugins/welcome/starter-kit.yml`:
 
 ```yaml
 items:
@@ -252,7 +252,7 @@ items:
 
 ### Tutorial Steps
 
-Customize tutorial locations in `config/welcome/tutorial-config.yml`:
+Customize tutorial locations in `config/plugins/welcome/tutorial-config.yml`:
 
 ```yaml
 step_1:
@@ -266,7 +266,7 @@ step_1:
 
 ### Adding Discord Link
 
-In `config/welcome/join-messages.yml` and `rules.yml`:
+In `config/plugins/welcome/join-messages.yml` and `rules.yml`:
 
 ```yaml
 # TODO: Replace with your Discord invite
@@ -389,10 +389,10 @@ Check:
 
 ## Configuration Files Reference
 
-- `config/welcome/join-messages.yml` - Welcome and join/quit messages
-- `config/welcome/starter-kit.yml` - Items for new players
-- `config/welcome/tutorial-config.yml` - 5-step tutorial system
-- `config/welcome/rules.yml` - Server rules and guidelines
+- `config/plugins/welcome/join-messages.yml` - Welcome and join/quit messages
+- `config/plugins/welcome/starter-kit.yml` - Items for new players
+- `config/plugins/welcome/tutorial-config.yml` - 5-step tutorial system
+- `config/plugins/welcome/rules.yml` - Server rules and guidelines
 
 ---
 

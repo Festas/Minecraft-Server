@@ -740,7 +740,7 @@ Logs stored in:
 **Solutions:**
 
 1. Ensure plugins have marketplace metadata:
-   - Check `plugins.json` for `marketplace` object
+   - Check `config/server/plugins.json` for `marketplace` object
    - Add manually if missing:
      ```json
      {
@@ -854,7 +854,7 @@ If issues persist:
 
 ### Adding Marketplace Metadata to Existing Plugins
 
-Edit `plugins.json`:
+Edit `config/server/plugins.json`:
 
 ```json
 {

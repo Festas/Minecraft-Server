@@ -475,8 +475,8 @@ jobs:
 
             # Capture plugins.json state before install
             echo "Step 2: Capturing plugins.json state before install..."
-            if [ -f /home/deploy/minecraft-server/plugins.json ]; then
-              cp /home/deploy/minecraft-server/plugins.json /tmp/plugins-before.json
+            if [ -f /home/deploy/minecraft-server/config/server/plugins.json ]; then
+              cp /home/deploy/minecraft-server/config/server/plugins.json /tmp/plugins-before.json
               PLUGINS_COUNT_BEFORE=$(jq '.plugins | length' /tmp/plugins-before.json 2>/dev/null || echo "0")
               echo "Plugins before install: $PLUGINS_COUNT_BEFORE"
             else
@@ -540,20 +540,20 @@ jobs:
 
             # Step 5: Verify plugins.json was updated
             echo "Step 5: Verifying plugins.json was updated..."
-            if [ -f /home/deploy/minecraft-server/plugins.json ]; then
+            if [ -f /home/deploy/minecraft-server/config/server/plugins.json ]; then
               echo "✓ plugins.json exists"
 
               # Validate JSON structure
-              if jq empty /home/deploy/minecraft-server/plugins.json 2>/dev/null; then
+              if jq empty /home/deploy/minecraft-server/config/server/plugins.json 2>/dev/null; then
                 echo "✓ plugins.json is valid JSON"
 
-                PLUGINS_COUNT_AFTER=$(jq '.plugins | length' /home/deploy/minecraft-server/plugins.json)
+                PLUGINS_COUNT_AFTER=$(jq '.plugins | length' /home/deploy/minecraft-server/config/server/plugins.json)
                 echo "Plugins after install: $PLUGINS_COUNT_AFTER"
 
                 # Check if our test plugin is in the list
-                if jq -e ".plugins[] | select(.name == \"$TEST_PLUGIN_NAME\")" /home/deploy/minecraft-server/plugins.json > /dev/null 2>&1; then
+                if jq -e ".plugins[] | select(.name == \"$TEST_PLUGIN_NAME\")" /home/deploy/minecraft-server/config/server/plugins.json > /dev/null 2>&1; then
                   echo "✓ Test plugin '$TEST_PLUGIN_NAME' found in plugins.json"
-                  PLUGIN_INFO=$(jq ".plugins[] | select(.name == \"$TEST_PLUGIN_NAME\")" /home/deploy/minecraft-server/plugins.json)
+                  PLUGIN_INFO=$(jq ".plugins[] | select(.name == \"$TEST_PLUGIN_NAME\")" /home/deploy/minecraft-server/config/server/plugins.json)
                   echo "Plugin info:"
                   echo "$PLUGIN_INFO" | jq '.'
                 else
@@ -655,8 +655,8 @@ jobs:
             docker exec minecraft-console cat /app/data/plugin-history.json > /tmp/plugin-install-diagnostics/plugin-history.json 2>/dev/null || echo "No plugin history found"
 
             # IMPORTANT: Collect plugins.json for verification
-            if [ -f /home/deploy/minecraft-server/plugins.json ]; then
-              cp /home/deploy/minecraft-server/plugins.json /tmp/plugin-install-diagnostics/plugins.json
+            if [ -f /home/deploy/minecraft-server/config/server/plugins.json ]; then
+              cp /home/deploy/minecraft-server/config/server/plugins.json /tmp/plugin-install-diagnostics/plugins.json
               echo "✓ Captured plugins.json"
             else
               echo "⚠ plugins.json not found" > /tmp/plugin-install-diagnostics/plugins.json

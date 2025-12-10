@@ -44,7 +44,7 @@ else
 fi
 
 # Define paths
-PLUGINS_JSON="$BASE_DIR/plugins.json"
+PLUGINS_JSON="$BASE_DIR/config/server/plugins.json"
 PLUGINS_DIR="$BASE_DIR/plugins"
 BACKEND_DIR="$CONSOLE_DIR/backend"
 HISTORY_FILE="$BACKEND_DIR/data/plugin-history.json"

@@ -1371,10 +1371,10 @@ AUTO_RESTART=true ./scripts/diagnose-plugins.sh fix
 **Diagnosis:**
 ```bash
 # Check file
-cat /path/to/plugins.json
+cat /path/to/config/server/plugins.json
 
 # Validate JSON
-jq '.' /path/to/plugins.json
+jq '.' /path/to/config/server/plugins.json
 # Or:
 python3 -c "import json; json.load(open('plugins.json'))"
 ```

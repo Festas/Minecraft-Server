@@ -28,7 +28,7 @@ We provide an automated plugin installation system that downloads and installs a
 
 ### How It Works
 
-1. **Configuration**: Edit `plugins.json` to enable/disable plugins
+1. **Configuration**: Edit `config/server/plugins.json` to enable/disable plugins
 2. **Installation**: Run `./install-plugins.sh` to download enabled plugins
 3. **Updates**: Run `./update-plugins.sh` to check for and install updates
 
@@ -336,7 +336,7 @@ remote:
 
 **Configuration Template:**
 
-We provide a template at `config/floodgate-config.yml`:
+We provide a template at `config/plugins/floodgate-config.yml`:
 
 ```yaml
 # Prefix for Bedrock players (prevents conflicts)
@@ -616,7 +616,7 @@ cd /home/deploy/minecraft-server
 ```
 
 This will:
-- Read the `plugins.json` configuration
+- Read the `config/server/plugins.json` configuration
 - Download all plugins where `"enabled": true`
 - Save them to the `plugins/` directory
 - Track versions in `plugins/.plugin_versions`
@@ -689,7 +689,7 @@ Use debug mode when troubleshooting:
 
 #### 6. Plugin Discovery (Auto-Find Plugins)
 
-The discovery feature automatically searches for plugins and adds them to your `plugins.json` configuration. Instead of manually looking up repository paths and project IDs, simply create a wishlist of plugin names.
+The discovery feature automatically searches for plugins and adds them to your `config/server/plugins.json` configuration. Instead of manually looking up repository paths and project IDs, simply create a wishlist of plugin names.
 
 **Create a wishlist file:**
 
@@ -726,12 +726,12 @@ EOF
 1. Reads plugin names from `plugins-wishlist.txt` (one per line)
 2. Searches Modrinth API for each plugin
 3. If not found on Modrinth, searches GitHub
-4. Adds found plugins to `plugins.json` with:
+4. Adds found plugins to `config/server/plugins.json` with:
    - `source: "modrinth"` (preferred) or `source: "github"`
    - Correct `project_id` or `repo` information
    - `enabled: true` by default
    - `category: "discovered"`
-5. Skips plugins that already exist in `plugins.json`
+5. Skips plugins that already exist in `config/server/plugins.json`
 
 **Interactive mode features:**
 
@@ -787,7 +787,7 @@ Run './install-plugins.sh' to install the discovered plugins
 
 - Use exact plugin names for best results
 - Common plugins (LuckPerms, Vault, etc.) are usually found easily
-- If a plugin isn't found, add it manually to `plugins.json`
+- If a plugin isn't found, add it manually to `config/server/plugins.json`
 - Discovery prefers Modrinth over GitHub (better metadata)
 - Use `--debug` to see detailed API search results
 
@@ -865,7 +865,7 @@ Failed plugins are automatically retried:
 
 ### Configuration: plugins.json
 
-The `plugins.json` file controls which plugins are installed:
+The `config/server/plugins.json` file controls which plugins are installed:
 
 ```json
 {
@@ -905,7 +905,7 @@ The `plugins.json` file controls which plugins are installed:
 
 1. Find the GitHub repository (e.g., `AuthorName/PluginName`)
 2. Note the asset naming pattern (e.g., "bukkit", "paper", or specific filename pattern)
-3. Add to `plugins.json`:
+3. Add to `config/server/plugins.json`:
 
 ```json
 {
@@ -938,7 +938,7 @@ The `plugins.json` file controls which plugins are installed:
 
 1. Go to the plugin's Modrinth page (e.g., `https://modrinth.com/plugin/example`)
 2. Copy the project ID from the URL or page
-3. Add to `plugins.json`:
+3. Add to `config/server/plugins.json`:
 
 ```json
 {
@@ -987,7 +987,7 @@ For plugins that need a manual download URL as last resort:
 
 To disable a plugin without removing it:
 
-1. Edit `plugins.json`
+1. Edit `config/server/plugins.json`
 2. Change `"enabled": true` to `"enabled": false`
 3. Remove the plugin JAR manually from `plugins/` directory (or let it stay for later re-enable)
 
@@ -1036,7 +1036,7 @@ sudo apt update && sudo apt install -y jq
 
 #### "No matching asset found for pattern"
 
-The `asset_pattern` in `plugins.json` doesn't match any release assets. To fix:
+The `asset_pattern` in `config/server/plugins.json` doesn't match any release assets. To fix:
 
 1. Go to the GitHub releases page for the plugin
 2. Look at the JAR filenames
@@ -1051,7 +1051,7 @@ Example patterns:
 
 Possible causes:
 - GitHub rate limiting (try setting GITHUB_TOKEN environment variable)
-- Invalid repository name in `plugins.json`
+- Invalid repository name in `config/server/plugins.json`
 - Repository doesn't have releases
 
 Check the GitHub repo manually and verify it has releases published.
