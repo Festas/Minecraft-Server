@@ -117,7 +117,7 @@ Updated `.github/workflows/plugin-install-diagnose.yml`:
 
 ### 7. Manual Testing Script
 
-Created `scripts/test-api-auth.sh`:
+Created `scripts/api-testing/test-api-auth.sh`:
 - Tests complete authentication flow
 - Step 1: Login and save session cookie
 - Step 2: Get CSRF token
@@ -174,7 +174,7 @@ Updated `admin/plugin-manager.md` with:
    - Added debug logs display section
    - Updated diagnostic summary
 
-7. **scripts/test-api-auth.sh** (NEW)
+7. **scripts/api-testing/test-api-auth.sh** (NEW)
    - Manual API authentication test script
    - 145 lines with complete test flow
 
@@ -422,7 +422,7 @@ curl -b cookies.txt \
 ```bash
 export ADMIN_USER=admin
 export ADMIN_PASS=your-password
-./scripts/test-api-auth.sh
+./scripts/api-testing/test-api-auth.sh
 ```
 
 **Expected Output:**
@@ -720,5 +720,5 @@ docker logs minecraft-console | grep PLUGIN_INSTALL_API
 ## Related Documentation
 
 - [admin/plugin-manager.md](../admin/plugin-manager.md) - API authentication section
-- [scripts/test-api-auth.sh](../scripts/test-api-auth.sh) - Manual test script
+- [scripts/api-testing/test-api-auth.sh](../scripts/api-testing/test-api-auth.sh) - Manual test script
 - [.github/workflows/plugin-install-diagnose.yml](../.github/workflows/plugin-install-diagnose.yml) - Diagnostic workflow

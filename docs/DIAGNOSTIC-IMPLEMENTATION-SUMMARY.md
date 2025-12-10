@@ -9,7 +9,7 @@ This implementation adds comprehensive diagnostic capabilities for debugging fro
 ### 1. Browser Automation Diagnostics
 
 **Files Created:**
-- `scripts/browser-diagnostics.js` - Puppeteer-based automated browser testing
+- `scripts/diagnostics/browser-diagnostics.js` - Puppeteer-based automated browser testing
 - `.github/workflows/browser-diagnostics.yml` - GitHub Actions workflow
 
 **Capabilities:**
@@ -26,7 +26,7 @@ This implementation adds comprehensive diagnostic capabilities for debugging fro
 CONSOLE_URL="http://localhost:3000" \
 ADMIN_USERNAME="admin" \
 ADMIN_PASSWORD="password" \
-node scripts/browser-diagnostics.js
+node scripts/diagnostics/browser-diagnostics.js
 ```
 
 ### 2. Frontend Diagnostics Module
@@ -55,7 +55,7 @@ window.PluginManagerDiagnostics.download()  // Download as JSON
 ### 3. API Profiling
 
 **Files Created:**
-- `scripts/api-profiler.sh` - Comprehensive API endpoint testing
+- `scripts/api-testing/api-profiler.sh` - Comprehensive API endpoint testing
 
 **Capabilities:**
 - Tests all major endpoints (auth, plugins, RCON)
@@ -67,13 +67,13 @@ window.PluginManagerDiagnostics.download()  // Download as JSON
 **Usage:**
 ```bash
 CONSOLE_URL="http://localhost:3000" \
-./scripts/api-profiler.sh
+./scripts/api-testing/api-profiler.sh
 ```
 
 ### 4. Resource Monitoring
 
 **Files Created:**
-- `scripts/resource-monitor.sh` - System resource tracking during operations
+- `scripts/diagnostics/resource-monitor.sh` - System resource tracking during operations
 
 **Capabilities:**
 - CPU usage monitoring (with /proc/stat fallback)
@@ -86,7 +86,7 @@ CONSOLE_URL="http://localhost:3000" \
 **Usage:**
 ```bash
 MONITOR_DURATION=60 \
-./scripts/resource-monitor.sh
+./scripts/diagnostics/resource-monitor.sh
 ```
 
 ### 5. Comprehensive Documentation
@@ -243,9 +243,9 @@ Artifact Generation
 1. **Local Testing**:
    ```bash
    # Test each script individually
-   node scripts/browser-diagnostics.js
-   ./scripts/api-profiler.sh
-   ./scripts/resource-monitor.sh
+   node scripts/diagnostics/browser-diagnostics.js
+   ./scripts/api-testing/api-profiler.sh
+   ./scripts/diagnostics/resource-monitor.sh
    ```
 
 2. **Frontend Testing**:
@@ -352,13 +352,13 @@ The tools integrate seamlessly with existing diagnostics and provide actionable 
 
 ```bash
 # Browser diagnostics
-node scripts/browser-diagnostics.js
+node scripts/diagnostics/browser-diagnostics.js
 
 # API profiling
-./scripts/api-profiler.sh
+./scripts/api-testing/api-profiler.sh
 
 # Resource monitoring
-./scripts/resource-monitor.sh
+./scripts/diagnostics/resource-monitor.sh
 
 # In browser console
 window.PluginManagerDiagnostics.export()

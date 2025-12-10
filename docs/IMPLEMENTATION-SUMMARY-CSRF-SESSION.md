@@ -194,7 +194,7 @@ The task was to fix session, CSRF, and plugin install reliability for the Minecr
 
 ### 6. Integration Test Script
 
-**Location**: `/scripts/test-api-integration.sh`
+**Location**: `/scripts/api-testing/test-api-integration.sh`
 
 **Features**:
 - Tests complete authentication flow: Login → CSRF Token → Protected Endpoints
@@ -209,10 +209,10 @@ The task was to fix session, CSRF, and plugin install reliability for the Minecr
 **Usage**:
 ```bash
 # Basic test mode
-./scripts/test-api-integration.sh
+./scripts/api-testing/test-api-integration.sh
 
 # Full test mode (includes plugin install)
-./scripts/test-api-integration.sh full
+./scripts/api-testing/test-api-integration.sh full
 ```
 
 **Test coverage**:
@@ -290,7 +290,7 @@ When troubleshooting CSRF or session issues:
 
 3. **Use the integration test script**:
    ```bash
-   ./scripts/test-api-integration.sh full
+   ./scripts/api-testing/test-api-integration.sh full
    ```
 
 4. **Review the documentation**:
@@ -331,7 +331,7 @@ When making API calls:
 2. `console/backend/routes/plugins.js` - Enhanced plugin install endpoint logging
 3. `console/backend/middleware/rateLimiter.js` - Improved rate limiting and logging
 4. `docs/API-AUTHENTICATION-GUIDE.md` - Comprehensive API documentation (new)
-5. `scripts/test-api-integration.sh` - Integration test script (new)
+5. `scripts/api-testing/test-api-integration.sh` - Integration test script (new)
 6. `console/backend/__tests__/diagnostics/logging.test.js` - Diagnostic logging tests (new)
 
 ## Validation Checklist
@@ -359,7 +359,7 @@ The integration test script requires a running server to execute. To manually ve
 
 2. In another terminal, run the test script:
    ```bash
-   ./scripts/test-api-integration.sh full
+   ./scripts/api-testing/test-api-integration.sh full
    ```
 
 3. Verify all tests pass for both localhost and 127.0.0.1
@@ -375,7 +375,7 @@ Consider adding the integration test script to your CI/CD pipeline:
     cd console/backend
     npm start &
     sleep 5
-    ../../scripts/test-api-integration.sh
+    ../../scripts/api-testing/test-api-integration.sh
 ```
 
 ## Conclusion

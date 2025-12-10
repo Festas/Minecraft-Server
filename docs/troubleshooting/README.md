@@ -105,14 +105,14 @@ Start Here: What's the problem?
 export CONSOLE_URL="http://localhost:3001"
 export ADMIN_USERNAME="admin"
 export ADMIN_PASSWORD="your-password"
-node scripts/browser-diagnostics.js
+node scripts/diagnostics/browser-diagnostics.js
 
 # API profiling
 export CONSOLE_URL="http://localhost:3001"
-./scripts/api-profiler.sh
+./scripts/api-testing/api-profiler.sh
 
 # Resource monitoring
-./scripts/resource-monitor.sh
+./scripts/diagnostics/resource-monitor.sh
 
 # Plugin diagnostics
 # See: .github/workflows/plugin-install-diagnose.yml

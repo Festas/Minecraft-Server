@@ -63,10 +63,10 @@ df -h /home/deploy/minecraft-server
 **Competition Management**:
 ```bash
 # Announce new competition theme
-./scripts/competition-manager.sh start
+./scripts/utilities/competition-manager.sh start
 
 # Clear previous competition plots (if ended)
-./scripts/competition-manager.sh reset
+./scripts/utilities/competition-manager.sh reset
 ```
 
 ### Every Wednesday
@@ -93,7 +93,7 @@ ls -lh /home/deploy/minecraft-server/backups/
 **Competition Voting**:
 ```bash
 # End building period, start voting
-./scripts/competition-manager.sh end
+./scripts/utilities/competition-manager.sh end
 ```
 
 ---
@@ -104,7 +104,7 @@ ls -lh /home/deploy/minecraft-server/backups/
 
 ```bash
 # Option 1: Automated with random theme
-./scripts/competition-manager.sh start
+./scripts/utilities/competition-manager.sh start
 
 # Option 2: Manual
 # 1. Choose theme from config/templates/competitions/weekly-themes.md
@@ -132,7 +132,7 @@ ls -lh /home/deploy/minecraft-server/backups/
 
 ```bash
 # Close submissions, start voting
-./scripts/competition-manager.sh end
+./scripts/utilities/competition-manager.sh end
 ```
 
 - Post builds to Discord #competition channel
@@ -143,7 +143,7 @@ ls -lh /home/deploy/minecraft-server/backups/
 
 ```bash
 #Input: 1st, 2nd, 3rd place
-./scripts/competition-manager.sh winners
+./scripts/utilities/competition-manager.sh winners
 ```
 
 **Give Rewards**:
@@ -166,7 +166,7 @@ lp user <player> permission set playerparticles.effect.totem_of_undying true
 
 ```bash
 # ⚠️ WARNING: Clears ALL plots
-./scripts/competition-manager.sh reset
+./scripts/utilities/competition-manager.sh reset
 ```
 
 ---

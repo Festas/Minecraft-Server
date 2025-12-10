@@ -24,7 +24,7 @@ A complete guide to running engaging build competitions on the festas_builds Min
 - Multiverse-Core (for competition world management)
 
 **Additional Resources:**
-- Competition manager script (`scripts/competition-manager.sh`)
+- Competition manager script (`scripts/utilities/competition-manager.sh`)
 - Theme library (`config/templates/competitions/weekly-themes.md`)
 
 ---
@@ -85,7 +85,7 @@ Build competitions are a core feature of the festas_builds server, providing:
 
 - `config/plotsquared/settings.yml` - Main PlotSquared configuration
 - `config/plotsquared/worlds.yml` - Competition world settings
-- `scripts/competition-manager.sh` - Competition automation script
+- `scripts/utilities/competition-manager.sh` - Competition automation script
 - `config/templates/competitions/weekly-themes.md` - Theme library
 
 ---
@@ -202,7 +202,7 @@ Our `worlds.yml` template includes a pre-configured competition world. Just crea
 We've provided a bash script to automate competition management:
 
 ```bash
-./scripts/competition-manager.sh [command]
+./scripts/utilities/competition-manager.sh [command]
 ```
 
 Commands:
@@ -220,7 +220,7 @@ Commands:
 ```bash
 # Choose a theme from config/templates/competitions/weekly-themes.md
 # Or let the script choose randomly:
-./scripts/competition-manager.sh start
+./scripts/utilities/competition-manager.sh start
 ```
 
 This will:
@@ -248,7 +248,7 @@ PlotSquared automatically assigns them an empty plot.
 #### 4. End Build Period
 
 ```bash
-./scripts/competition-manager.sh end
+./scripts/utilities/competition-manager.sh end
 ```
 
 Announces end of building, starts voting period.
@@ -267,7 +267,7 @@ Duration: 3 days
 #### 6. Announce Winners
 
 ```bash
-./scripts/competition-manager.sh winners
+./scripts/utilities/competition-manager.sh winners
 ```
 
 Enter 1st, 2nd, 3rd place winners.
@@ -279,7 +279,7 @@ See [Rewards & Recognition](#rewards--recognition)
 #### 8. Reset for Next Competition
 
 ```bash
-./scripts/competition-manager.sh reset
+./scripts/utilities/competition-manager.sh reset
 ```
 
 ⚠️ **Warning**: This clears ALL plots!
@@ -605,7 +605,7 @@ Competition wins contribute to Legend rank requirements (see ranks-rewards.yml).
 
 - **PlotSquared Wiki**: https://github.com/IntellectualSites/PlotSquared/wiki
 - **Theme Ideas**: See `config/templates/competitions/weekly-themes.md`
-- **Competition Manager Script**: `scripts/competition-manager.sh`
+- **Competition Manager Script**: `scripts/utilities/competition-manager.sh`
 - **Discord Community**: Share builds and get inspiration!
 
 ---
@@ -632,11 +632,11 @@ Competition wins contribute to Legend rank requirements (see ranks-rewards.yml).
 /plot info                    # Plot information
 
 # Competition Manager Script
-./scripts/competition-manager.sh start     # Start competition
-./scripts/competition-manager.sh end       # End building period
-./scripts/competition-manager.sh reset     # Clear all plots
-./scripts/competition-manager.sh announce  # Remind players
-./scripts/competition-manager.sh winners   # Announce winners
+./scripts/utilities/competition-manager.sh start     # Start competition
+./scripts/utilities/competition-manager.sh end       # End building period
+./scripts/utilities/competition-manager.sh reset     # Clear all plots
+./scripts/utilities/competition-manager.sh announce  # Remind players
+./scripts/utilities/competition-manager.sh winners   # Announce winners
 ```
 
 ---

@@ -522,7 +522,7 @@ The debug logs show detailed information about:
 
 Or use the provided test script:
 ```bash
-./scripts/test-api-auth.sh
+./scripts/api-testing/test-api-auth.sh
 ```
 
 This script tests the complete authentication flow and provides detailed output.
@@ -943,7 +943,7 @@ curl http://localhost:3001/api/plugins/health
 6. **Network diagnostics**
    - Run the diagnostic script with network checks:
      ```bash
-     ./scripts/diagnose-plugins.sh diagnose
+     ./scripts/diagnostics/diagnose-plugins.sh diagnose
      ```
    - Check section "Network Binding and Port Check" in output
    - Look for binding to `0.0.0.0` vs `127.0.0.1`
@@ -969,7 +969,7 @@ curl -s http://localhost:3001/health
 netstat -tuln | grep 3001   # or: ss -tuln | grep 3001
 
 # 7. Run diagnostics
-./scripts/diagnose-plugins.sh diagnose
+./scripts/diagnostics/diagnose-plugins.sh diagnose
 ```
 
 ## Diagnostic Tools
@@ -995,12 +995,12 @@ This script performs basic health checks and can automatically fix common issues
 
 **Diagnose mode** (check only):
 ```bash
-./scripts/diagnose-plugins.sh diagnose
+./scripts/diagnostics/diagnose-plugins.sh diagnose
 ```
 
 **Fix mode** (check and auto-repair):
 ```bash
-./scripts/diagnose-plugins.sh fix
+./scripts/diagnostics/diagnose-plugins.sh fix
 ```
 
 **What gets auto-fixed:**
@@ -1033,7 +1033,7 @@ This script performs deep diagnostics that go beyond basic file checks.
 
 **Usage:**
 ```bash
-./scripts/diagnose-plugins-advanced.sh
+./scripts/diagnostics/diagnose-plugins-advanced.sh
 ```
 
 **What it checks:**
@@ -1232,7 +1232,7 @@ docker ps --filter "name=minecraft-console"
 **Diagnosis:**
 ```bash
 # Run diagnostics
-./scripts/diagnose-plugins.sh diagnose
+./scripts/diagnostics/diagnose-plugins.sh diagnose
 
 # Check specific sections
 cat /tmp/plugin-diagnostics-*/06-network-binding.log
@@ -1279,7 +1279,7 @@ cat /tmp/plugin-diagnostics-*/07-docker-port-mapping.log
 **Auto-Fix:**
 ```bash
 # Run diagnostics with auto-fix and auto-restart
-AUTO_RESTART=true ./scripts/diagnose-plugins.sh fix
+AUTO_RESTART=true ./scripts/diagnostics/diagnose-plugins.sh fix
 ```
 
 #### 2. Port 3001 Already in Use
@@ -1358,7 +1358,7 @@ docker logs minecraft-console --tail=50
 **Auto-Fix:**
 ```bash
 # Run full diagnostics with fix and restart
-AUTO_RESTART=true ./scripts/diagnose-plugins.sh fix
+AUTO_RESTART=true ./scripts/diagnostics/diagnose-plugins.sh fix
 ```
 
 #### 4. plugins.json Corrupt or Invalid
@@ -1382,7 +1382,7 @@ python3 -c "import json; json.load(open('plugins.json'))"
 **Auto-Fix:**
 ```bash
 # Diagnostics will detect and fix
-./scripts/diagnose-plugins.sh fix
+./scripts/diagnostics/diagnose-plugins.sh fix
 
 # Or manually:
 cp plugins.json plugins.json.backup
@@ -1407,7 +1407,7 @@ docker exec minecraft-console ls -la /minecraft/plugins
 
 **Auto-Fix:**
 ```bash
-./scripts/diagnose-plugins.sh fix
+./scripts/diagnostics/diagnose-plugins.sh fix
 ```
 
 ### Diagnostic Tools
@@ -1417,7 +1417,7 @@ docker exec minecraft-console ls -la /minecraft/plugins
 **Quick Check:**
 ```bash
 # Run basic diagnostics
-./scripts/diagnose-plugins.sh diagnose
+./scripts/diagnostics/diagnose-plugins.sh diagnose
 
 # Review summary
 cat /tmp/plugin-diagnostics-*/summary.log
@@ -1426,7 +1426,7 @@ cat /tmp/plugin-diagnostics-*/summary.log
 **Auto-Fix Common Issues:**
 ```bash
 # Run with auto-fix
-./scripts/diagnose-plugins.sh fix
+./scripts/diagnostics/diagnose-plugins.sh fix
 
 # Review what was fixed
 cat /tmp/plugin-diagnostics-*/fixes.log
@@ -1435,7 +1435,7 @@ cat /tmp/plugin-diagnostics-*/fixes.log
 **Deep Analysis:**
 ```bash
 # Run advanced diagnostics
-./scripts/diagnose-plugins-advanced.sh
+./scripts/diagnostics/diagnose-plugins-advanced.sh
 
 # Review all findings
 ls /tmp/plugin-diagnostics-advanced-*/
@@ -1497,7 +1497,7 @@ grep -A 2 "ports:" docker-compose.console.yml
 grep "API_PORT" docker-compose.console.yml
 
 # 8. Run full diagnostics
-./scripts/diagnose-plugins.sh diagnose
+./scripts/diagnostics/diagnose-plugins.sh diagnose
 
 # 9. Review deployment summary
 cat /tmp/plugin-diagnostics-*/deployment-summary.txt
@@ -1510,8 +1510,8 @@ If issues persist after running diagnostics:
 1. **Collect diagnostic artifacts:**
    ```bash
    # Run full diagnostics
-   ./scripts/diagnose-plugins.sh fix
-   ./scripts/diagnose-plugins-advanced.sh
+   ./scripts/diagnostics/diagnose-plugins.sh fix
+   ./scripts/diagnostics/diagnose-plugins-advanced.sh
    
    # Collect logs
    tar -czf plugin-diagnostics.tar.gz /tmp/plugin-diagnostics-*
@@ -1533,7 +1533,7 @@ If issues persist after running diagnostics:
 **Quick Check:**
 ```bash
 # Run basic diagnostics
-./scripts/diagnose-plugins.sh diagnose
+./scripts/diagnostics/diagnose-plugins.sh diagnose
 
 # Review summary
 cat /tmp/plugin-diagnostics-*/summary.log
@@ -1542,7 +1542,7 @@ cat /tmp/plugin-diagnostics-*/summary.log
 **Auto-Fix Common Issues:**
 ```bash
 # Run with auto-fix
-./scripts/diagnose-plugins.sh fix
+./scripts/diagnostics/diagnose-plugins.sh fix
 
 # Review what was fixed
 cat /tmp/plugin-diagnostics-*/fixes.log
@@ -1551,7 +1551,7 @@ cat /tmp/plugin-diagnostics-*/fixes.log
 **Deep Analysis:**
 ```bash
 # Run advanced diagnostics
-./scripts/diagnose-plugins-advanced.sh
+./scripts/diagnostics/diagnose-plugins-advanced.sh
 
 # Review all findings
 ls /tmp/plugin-diagnostics-advanced-*/

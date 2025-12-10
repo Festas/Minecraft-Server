@@ -68,7 +68,7 @@ jobs:
 
       - name: Upload diagnostics script to remote host
         run: |
-          echo "Uploading scripts/diagnose.sh to remote host..."
+          echo "Uploading scripts/diagnostics/diagnose.sh to remote host..."
 
           # Ensure remote directories exist
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
@@ -77,13 +77,13 @@ jobs:
 
           # Upload the diagnostics script
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            scripts/diagnose.sh \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${DEPLOY_DIR}/scripts/diagnose.sh
+            scripts/diagnostics/diagnose.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${DEPLOY_DIR}/scripts/diagnostics/diagnose.sh
 
           # Make the script executable
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "chmod +x ${DEPLOY_DIR}/scripts/diagnose.sh"
+            "mkdir -p ${DEPLOY_DIR}/scripts/diagnostics && chmod +x ${DEPLOY_DIR}/scripts/diagnostics/diagnose.sh"
 
           echo "✓ Diagnostics script uploaded successfully"
 
@@ -110,7 +110,7 @@ jobs:
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "cd ${DEPLOY_DIR} && \
              export RCON_PASSWORD=\$(cat /tmp/rcon_password.tmp) && \
-             bash scripts/diagnose.sh '${ACTION}' && \
+             bash scripts/diagnostics/diagnose.sh '${ACTION}' && \
              rm -f /tmp/rcon_password.tmp"
 
           # Clean up local password file

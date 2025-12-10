@@ -24,7 +24,7 @@ The Comprehensive Plugin Manager Diagnostics workflow has been completely refact
 - Step-by-step guide for adding missing secrets securely
 
 **📊 Enhanced Reporting (Now Script-Based!)**
-- All summary generation logic moved to `scripts/generate-diagnostics-summary.sh`
+- All summary generation logic moved to `scripts/diagnostics/generate-diagnostics-summary.sh`
 - Workflow reduced by 775+ lines - much cleaner and maintainable
 - Never hits YAML expression limits
 - Comprehensive MASTER-SUMMARY.txt with secrets status
@@ -45,7 +45,7 @@ The Comprehensive Plugin Manager Diagnostics workflow has been completely refact
 - Password strength recommendations
 - Access monitoring and rotation advice
 
-**Documentation**: See enhanced workflow at `.github/workflows/comprehensive-plugin-manager-diagnostics.yml` and script at `scripts/generate-diagnostics-summary.sh`
+**Documentation**: See enhanced workflow at `.github/workflows/comprehensive-plugin-manager-diagnostics.yml` and script at `scripts/diagnostics/generate-diagnostics-summary.sh`
 
 ---
 
@@ -109,7 +109,7 @@ Actions → Browser Diagnostics - Plugin Manager → Run workflow
 CONSOLE_URL="http://localhost:3000" \
 ADMIN_USERNAME="admin" \
 ADMIN_PASSWORD="your-password" \
-node scripts/browser-diagnostics.js
+node scripts/diagnostics/browser-diagnostics.js
 ```
 
 **Documentation**: [BROWSER-DIAGNOSTICS.md](./browser-diagnostics.md)
@@ -124,7 +124,7 @@ node scripts/browser-diagnostics.js
 CONSOLE_URL="http://localhost:3000" \
 ADMIN_USERNAME="admin" \
 ADMIN_PASSWORD="your-password" \
-./scripts/api-profiler.sh
+./scripts/api-testing/api-profiler.sh
 ```
 
 **Documentation**: [BROWSER-DIAGNOSTICS.md](./browser-diagnostics.md#api-profiling)
@@ -163,7 +163,7 @@ Actions → Console & RCON Diagnostics → Run workflow
 # During page load or testing
 MONITOR_DURATION=60 \
 CONTAINER_NAME="minecraft-console" \
-./scripts/resource-monitor.sh
+./scripts/diagnostics/resource-monitor.sh
 ```
 
 **Documentation**: [BROWSER-DIAGNOSTICS.md](./browser-diagnostics.md#resource-monitoring)
@@ -702,7 +702,7 @@ on:
 
 **Step 5: Update summary script**
 
-Edit `scripts/generate-diagnostics-summary.sh`:
+Edit `scripts/diagnostics/generate-diagnostics-summary.sh`:
 
 ```bash
 # Add environment variable
@@ -731,7 +731,7 @@ fi
 
 ### Customizing Summary Generation
 
-The `scripts/generate-diagnostics-summary.sh` script is modular and easy to customize:
+The `scripts/diagnostics/generate-diagnostics-summary.sh` script is modular and easy to customize:
 
 **Add custom sections**:
 ```bash
@@ -772,14 +772,14 @@ export ADMIN_USERNAME="admin"
 export ADMIN_PASSWORD="admin"
 export OUTPUT_DIR="/tmp/my-diagnostics"
 export HEADLESS="true"
-node scripts/browser-diagnostics.js
+node scripts/diagnostics/browser-diagnostics.js
 
 # API profiling
 export CONSOLE_URL="http://localhost:3000"
 export ADMIN_USERNAME="admin"
 export ADMIN_PASSWORD="admin"
 export OUTPUT_DIR="/tmp/my-api-tests"
-bash scripts/api-profiler.sh
+bash scripts/api-testing/api-profiler.sh
 
 # Summary generation
 export OUTPUT_DIR="/tmp/my-summary"
@@ -788,7 +788,7 @@ export CONSOLE_URL="http://localhost:3000"
 export RUN_BROWSER_DIAGNOSTICS="true"
 export RUN_BACKEND_DIAGNOSTICS="false"
 export RUN_API_PROFILING="true"
-bash scripts/generate-diagnostics-summary.sh
+bash scripts/diagnostics/generate-diagnostics-summary.sh
 ```
 
 ### Testing Script Changes
@@ -807,7 +807,7 @@ cd /path/to/repo
 # Test with full config
 export RUN_NUMBER="test-001"
 export OUTPUT_DIR="/tmp/test-diagnostics-001"
-bash scripts/generate-diagnostics-summary.sh
+bash scripts/diagnostics/generate-diagnostics-summary.sh
 
 # Verify files created
 ls -lh "${OUTPUT_DIR}"
@@ -819,7 +819,7 @@ cat "${OUTPUT_DIR}/MASTER-SUMMARY.txt"
 unset RUN_BROWSER_DIAGNOSTICS
 export RUN_NUMBER="test-002"
 export OUTPUT_DIR="/tmp/test-diagnostics-002"
-bash scripts/generate-diagnostics-summary.sh
+bash scripts/diagnostics/generate-diagnostics-summary.sh
 ```
 
 ### Best Practices for Extensibility
@@ -943,13 +943,13 @@ Planned improvements:
 
 ```bash
 # Browser diagnostics
-node scripts/browser-diagnostics.js
+node scripts/diagnostics/browser-diagnostics.js
 
 # API profiling
-./scripts/api-profiler.sh
+./scripts/api-testing/api-profiler.sh
 
 # Resource monitoring
-./scripts/resource-monitor.sh
+./scripts/diagnostics/resource-monitor.sh
 
 # In browser console
 window.PluginManagerDiagnostics.export()

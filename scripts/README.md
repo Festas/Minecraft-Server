@@ -1,398 +1,286 @@
-# Diagnostic Scripts
+# Scripts Directory
 
-This directory contains various scripts for diagnosing and troubleshooting the Minecraft server console and plugin manager.
+This directory contains diagnostic, testing, and utility scripts for the Minecraft Server console and plugin manager.
 
-## 🚀 Quick Start: Comprehensive Diagnostics
+## Quick Start
 
-**Recommended**: Use the all-in-one workflow for most troubleshooting scenarios:
+### Using the Wrapper Script (Recommended)
 
-```
-GitHub Actions → Comprehensive Plugin Manager Diagnostics → Run workflow
-```
-
-This runs all diagnostic scripts in a coordinated manner and produces a master summary with rapid triage guide.
-
-**When to use the comprehensive workflow**:
-- ✅ You're not sure where the problem is
-- ✅ Need complete production health check
-- ✅ Post-deployment validation
-- ✅ Complex issues requiring multiple perspectives
-- ✅ Performance issues
-
-**See**: `.github/workflows/comprehensive-plugin-manager-diagnostics.yml`
-**Documentation**: [DIAGNOSTICS-GUIDE.md](../docs/troubleshooting/diagnostics-guide.md)
-
----
-
-## Individual Scripts
-
-For targeted diagnostics or manual testing, you can run individual scripts:
-
-## Scripts Overview
-
-### Summary Generation
-
-#### `generate-diagnostics-summary.sh` ⭐ **NEW**
-
-Master summary and report generation script (used by comprehensive workflow).
-
-**Purpose**: Generate all diagnostic summary reports and documentation
-
-**Usage**:
-```bash
-# Called automatically by workflow, but can be run manually:
-export OUTPUT_DIR="./comprehensive-summary"
-export RUN_NUMBER="123"
-export CONSOLE_URL="http://localhost:3000"
-export TIMESTAMP="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-
-# Configure what was run
-export RUN_BROWSER_DIAGNOSTICS="true"
-export RUN_BACKEND_DIAGNOSTICS="true"
-export RUN_API_PROFILING="true"
-export RUN_RESOURCE_MONITORING="true"
-
-# Configure secrets status
-export HAS_SERVER_HOST="true"
-export HAS_SSH_KEY="true"
-export CAN_SSH="true"
-
-./scripts/generate-diagnostics-summary.sh
-```
-
-**Outputs**:
-- `MASTER-SUMMARY.txt` - Complete diagnostic results with triage guide
-- `README.md` - GitHub-friendly markdown summary
-- `SECRETS-GUIDE.txt` - Detailed secret configuration instructions
-
-**Features**:
-- Environment-based configuration (no hardcoded values)
-- Aggregates results from all diagnostic types
-- Includes secrets status and configuration guidance
-- Explains which diagnostics ran vs. skipped
-- Provides rapid triage guide and common problem patterns
-- Fully extensible - easy to add new diagnostic types
-
-**Documentation**: See workflow `.github/workflows/comprehensive-plugin-manager-diagnostics.yml` and [Extending the Diagnostics Platform](../docs/troubleshooting/diagnostics-guide.md#extending-the-diagnostics-platform)
-
----
-
-### Browser Automation
-
-#### `browser-diagnostics.js`
-
-Automated browser testing using Puppeteer to diagnose frontend issues.
-
-**Purpose**: Capture frontend errors, network requests, performance metrics, and visual state
-
-**Usage**:
-```bash
-export CONSOLE_URL="http://localhost:3000"
-export ADMIN_USERNAME="admin"
-export ADMIN_PASSWORD="your-password"
-export OUTPUT_DIR="/tmp/browser-diagnostics"
-
-node scripts/browser-diagnostics.js
-```
-
-**Outputs**:
-- Console errors and warnings
-- Network request logs with timings
-- Performance metrics
-- DOM complexity analysis
-- Screenshots at key stages
-
-**Documentation**: [BROWSER-DIAGNOSTICS.md](../docs/troubleshooting/browser-diagnostics.md)
-
----
-
-### API Testing
-
-#### `api-profiler.sh`
-
-Comprehensive API endpoint testing and profiling.
-
-**Purpose**: Test all API endpoints with timing data and error cases
-
-**Usage**:
-```bash
-export CONSOLE_URL="http://localhost:3000"
-export ADMIN_USERNAME="admin"
-export ADMIN_PASSWORD="your-password"
-export OUTPUT_DIR="/tmp/api-profiler"
-
-./scripts/api-profiler.sh
-```
-
-**Tests**:
-- Authentication flow (login, session, CSRF)
-- Plugin manager APIs (list, history, install)
-- RCON APIs (status, players)
-- Error cases (invalid credentials, missing CSRF)
-
-**Outputs**:
-- Response times for each endpoint
-- Request/response samples
-- HTTP headers and cookies
-- Error case results
-
-**Documentation**: [BROWSER-DIAGNOSTICS.md](../docs/troubleshooting/browser-diagnostics.md#api-profiling)
-
----
-
-### Resource Monitoring
-
-#### `resource-monitor.sh`
-
-System and Docker container resource monitoring.
-
-**Purpose**: Track CPU, memory, and network usage during operations
-
-**Usage**:
-```bash
-export OUTPUT_DIR="/tmp/resource-monitor"
-export MONITOR_DURATION=60  # seconds
-export MONITOR_INTERVAL=2   # seconds
-export CONTAINER_NAME="minecraft-console"
-
-./scripts/resource-monitor.sh
-```
-
-**Monitors**:
-- System CPU and memory usage
-- Docker container statistics
-- Network connections
-- Process lists
-
-**Outputs**:
-- Time-series resource usage logs
-- Summary statistics
-- Peak usage metrics
-
-**Documentation**: [BROWSER-DIAGNOSTICS.md](../docs/troubleshooting/browser-diagnostics.md#resource-monitoring)
-
----
-
-### Plugin Diagnostics
-
-#### `diagnose-plugins.sh`
-
-Basic plugin manager diagnostics.
-
-**Purpose**: Check plugin files, permissions, and basic functionality
-
-**Usage**:
-```bash
-./scripts/diagnose-plugins.sh [diagnose|fix]
-```
-
-**Documentation**: See [PLUGIN-INSTALL-DIAGNOSTICS.md](../docs/troubleshooting/plugin-diagnostics.md)
-
-#### `diagnose-plugins-advanced.sh`
-
-Advanced plugin diagnostics with detailed analysis.
-
-**Purpose**: Deep analysis of plugin system state
-
-**Usage**:
-```bash
-./scripts/diagnose-plugins-advanced.sh
-```
-
-**Documentation**: See [PLUGIN-INSTALL-DIAGNOSTICS.md](../docs/troubleshooting/plugin-diagnostics.md)
-
----
-
-### Plugin Install Testing
-
-#### `plugin-install-diagnostics-lib.sh`
-
-Library functions for plugin install diagnostics workflow.
-
-**Purpose**: Shared functions used by plugin install diagnostics
-
-**Note**: Not meant to be run directly; used by workflow
-
-#### `plugin-install-test-scenarios.sh`
-
-Test scenarios for plugin installation validation.
-
-**Purpose**: Comprehensive test scenarios for plugin install flow
-
-**Note**: Not meant to be run directly; used by workflow
-
-**Documentation**: See [PLUGIN-INSTALL-DIAGNOSTICS.md](../docs/troubleshooting/plugin-diagnostics.md)
-
----
-
-### API Testing
-
-#### `test-api-auth.sh`
-
-Quick API authentication test.
-
-**Purpose**: Test login and session functionality
-
-**Usage**:
-```bash
-./scripts/test-api-auth.sh
-```
-
-#### `test-api-integration.sh`
-
-Comprehensive API integration testing.
-
-**Purpose**: Test complete authentication flow and protected endpoints
-
-**Usage**:
-```bash
-./scripts/test-api-integration.sh
-```
-
-**Documentation**: See [API-AUTHENTICATION-GUIDE.md](../docs/API-AUTHENTICATION-GUIDE.md)
-
-#### `test-csrf-double-submit.sh`
-
-CSRF double-submit pattern testing.
-
-**Purpose**: Validate CSRF protection implementation
-
-**Usage**:
-```bash
-./scripts/test-csrf-double-submit.sh
-```
-
----
-
-### Validation
-
-#### `validate-rcon-password.sh`
-
-RCON password validation and sync.
-
-**Purpose**: Verify RCON passwords match across server and console
-
-**Usage**:
-```bash
-./scripts/validate-rcon-password.sh
-```
-
----
-
-### Utilities
-
-#### `competition-manager.sh`
-
-Build competition management utilities.
-
-**Purpose**: Manage build competitions
-
-**Usage**:
-```bash
-./scripts/competition-manager.sh [command]
-```
-
----
-
-### Diagnostics
-
-#### `diagnose.sh`
-
-General server diagnostics.
-
-**Purpose**: Basic server health checks
-
-**Usage**:
-```bash
-./scripts/diagnose.sh
-```
-
----
-
-## Common Use Cases
-
-### Debugging Unresponsive Plugin Manager
+The easiest way to run scripts is through the unified wrapper:
 
 ```bash
-# 1. Run browser diagnostics
-CONSOLE_URL="http://localhost:3000" \
-ADMIN_USERNAME="admin" \
-ADMIN_PASSWORD="password" \
-node scripts/browser-diagnostics.js
+# List all available scripts
+./scripts/run.sh --list
 
-# 2. Check for JavaScript errors
-cat /tmp/browser-diagnostics/errors.json
+# Get help
+./scripts/run.sh --help
 
-# 3. Review network requests
-cat /tmp/browser-diagnostics/network-requests.json
+# Run a diagnostic script
+./scripts/run.sh diagnostics browser
+./scripts/run.sh diagnostics plugins diagnose
 
-# 4. Check screenshots
-ls /tmp/browser-diagnostics/screenshot-*.png
+# Run an API test
+./scripts/run.sh api-test profiler
+
+# Run a utility
+./scripts/run.sh utility rcon-validate
 ```
 
-### Testing API Performance
+### Direct Execution
+
+You can also run scripts directly:
 
 ```bash
-# 1. Run API profiler
-CONSOLE_URL="http://localhost:3000" \
-./scripts/api-profiler.sh
+# Bash scripts
+./scripts/diagnostics/diagnose-plugins.sh diagnose
 
-# 2. Review timing summary
-cat /tmp/api-profiler/SUMMARY.txt
-
-# 3. Check specific endpoint responses
-cat /tmp/api-profiler/*-response.json
+# JavaScript scripts
+node scripts/diagnostics/browser-diagnostics.js
 ```
 
-### Monitoring Resource Usage
+## Directory Organization
+
+Scripts are organized into categories:
+
+```
+scripts/
+├── run.sh                    # Unified wrapper script (use this!)
+├── README.md                 # This file
+├── DEVELOPMENT.md            # Script development guide
+├── upgrade.sh                # Server upgrade automation
+├── validate-launch.sh        # Pre-launch validation
+├── diagnostics/              # Diagnostic and troubleshooting scripts
+│   ├── README.md
+│   ├── browser-diagnostics.js
+│   ├── diagnose-plugins.sh
+│   ├── diagnose-plugins-advanced.sh
+│   ├── diagnose.sh
+│   ├── resource-monitor.sh
+│   └── generate-diagnostics-summary.sh
+├── api-testing/              # API testing and profiling scripts
+│   ├── README.md
+│   ├── api-profiler.sh
+│   ├── test-api-auth.sh
+│   ├── test-api-integration.sh
+│   └── test-csrf-double-submit.sh
+├── utilities/                # Utility and management scripts
+│   ├── README.md
+│   ├── competition-manager.sh
+│   ├── validate-rcon-password.sh
+│   └── migrate-users.js
+└── lib/                      # Shared libraries
+    ├── README.md
+    ├── plugin-install-diagnostics-lib.sh
+    └── plugin-install-test-scenarios.sh
+```
+
+## Scripts by Category
+
+### Diagnostic Scripts (`diagnostics/`)
+
+Diagnostic and troubleshooting tools.
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `browser-diagnostics.js` | Browser automation testing with Puppeteer | Frontend errors, performance issues, JavaScript problems |
+| `diagnose-plugins.sh` | Basic plugin manager diagnostics | Plugin installation issues, file permissions |
+| `diagnose-plugins-advanced.sh` | Advanced plugin diagnostics | Complex plugin issues, detailed analysis |
+| `diagnose.sh` | General server diagnostics | Docker issues, configuration problems |
+| `resource-monitor.sh` | System resource monitoring | Performance profiling, resource usage tracking |
+| `generate-diagnostics-summary.sh` | Master summary generation | Aggregating diagnostic results (used by workflows) |
+
+**Quick Reference:**
+```bash
+# Browser diagnostics
+./scripts/run.sh diagnostics browser
+
+# Plugin diagnostics
+./scripts/run.sh diagnostics plugins diagnose
+./scripts/run.sh diagnostics plugins-advanced
+
+# Resource monitoring
+./scripts/run.sh diagnostics resource-monitor
+```
+
+See [diagnostics/README.md](diagnostics/README.md) for details.
+
+### API Testing Scripts (`api-testing/`)
+
+API endpoint testing and profiling.
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `api-profiler.sh` | Comprehensive API profiling | Performance testing, endpoint validation |
+| `test-api-auth.sh` | Authentication flow testing | Login issues, session problems |
+| `test-api-integration.sh` | End-to-end API testing | Integration testing, complete flow validation |
+| `test-csrf-double-submit.sh` | CSRF protection testing | Security testing, CSRF debugging |
+
+**Quick Reference:**
+```bash
+# API profiling
+./scripts/run.sh api-test profiler
+
+# Authentication test
+./scripts/run.sh api-test auth
+
+# Integration test
+./scripts/run.sh api-test integration
+```
+
+See [api-testing/README.md](api-testing/README.md) for details.
+
+### Utility Scripts (`utilities/`)
+
+Management and administration utilities.
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `competition-manager.sh` | Build competition management | Managing competitions, themes |
+| `validate-rcon-password.sh` | RCON password validation | RCON connectivity issues |
+| `migrate-users.js` | User data migration | Database migrations, user operations |
+
+**Quick Reference:**
+```bash
+# RCON validation
+./scripts/run.sh utility rcon-validate
+
+# Competition management
+./scripts/run.sh utility competition
+
+# User migration
+./scripts/run.sh utility migrate-users
+```
+
+See [utilities/README.md](utilities/README.md) for details.
+
+### Library Scripts (`lib/`)
+
+Shared functions and test scenarios used by other scripts.
+
+| Script | Purpose |
+|--------|---------|
+| `plugin-install-diagnostics-lib.sh` | Shared diagnostic functions |
+| `plugin-install-test-scenarios.sh` | Plugin install test scenarios |
+
+**Note:** Library scripts are not meant to be run directly.
+
+See [lib/README.md](lib/README.md) for details.
+
+### Top-Level Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `run.sh` | Unified wrapper for all scripts |
+| `upgrade.sh` | Automated server upgrade with backup and rollback |
+| `validate-launch.sh` | Pre-launch validation with comprehensive checks |
+
+## Common Workflows
+
+### Quick Diagnostics
+
+For quick health checks:
 
 ```bash
-# 1. Start monitoring (in background or separate terminal)
-MONITOR_DURATION=60 ./scripts/resource-monitor.sh &
+# Check plugin manager
+./scripts/run.sh diagnostics plugins diagnose
 
-# 2. Perform operations (e.g., load page, install plugin)
-
-# 3. Wait for monitoring to complete, then review
-cat /tmp/resource-monitor/SUMMARY.txt
+# Check API
+./scripts/run.sh api-test auth
 ```
 
-### Complete Diagnostic Suite
+### Complete Diagnostics
 
-**RECOMMENDED: Use the Comprehensive Workflow**
-
-The easiest way to run all diagnostics is via the GitHub Actions workflow:
+For comprehensive troubleshooting, use the GitHub Actions workflow:
 
 ```
 Actions → Comprehensive Plugin Manager Diagnostics → Run workflow
 ```
 
-This automatically:
-- Coordinates all diagnostic scripts
-- Captures resource monitoring during all tests
-- Generates master summary with triage guide
-- Uploads organized artifacts
+This runs all diagnostic scripts in a coordinated manner and generates a master summary with triage guide.
 
-**Alternatively, run manually** (for local testing):
+Alternatively, run manually:
 
 ```bash
-# Run all diagnostics together for comprehensive analysis
+# 1. Start resource monitoring
+./scripts/run.sh diagnostics resource-monitor &
 
-# Terminal 1: Start resource monitoring
-MONITOR_DURATION=120 ./scripts/resource-monitor.sh &
+# 2. Run browser diagnostics
+./scripts/run.sh diagnostics browser
 
-# Terminal 2: Run API profiling
-./scripts/api-profiler.sh
+# 3. Run API profiling
+./scripts/run.sh api-test profiler
 
-# Terminal 3: Run browser diagnostics
-node scripts/browser-diagnostics.js
-
-# Review all outputs
-ls -lR /tmp/browser-diagnostics /tmp/api-profiler /tmp/resource-monitor
+# 4. Review results
+cat /tmp/browser-diagnostics/SUMMARY.txt
+cat /tmp/api-profiler/SUMMARY.txt
+cat /tmp/resource-monitor/SUMMARY.txt
 ```
 
-**When to use manual vs workflow**:
-- ✅ **Workflow**: Production diagnostics, complete health check, artifact retention
-- ✅ **Manual**: Local development, quick testing, custom configurations
+### Debugging Plugin Issues
+
+```bash
+# 1. Basic diagnostics first
+./scripts/run.sh diagnostics plugins diagnose
+
+# 2. If issues found, try auto-fix
+./scripts/run.sh diagnostics plugins fix
+
+# 3. For complex issues, run advanced
+./scripts/run.sh diagnostics plugins-advanced
+
+# 4. Review outputs
+cat /tmp/plugin-diagnostics-*/SUMMARY.txt
+```
+
+### API Performance Testing
+
+```bash
+# Run comprehensive profiler
+./scripts/run.sh api-test profiler
+
+# Review timing results
+cat /tmp/api-profiler/SUMMARY.txt
+```
+
+## Prerequisites
+
+### System Requirements
+
+- **OS:** Linux (Ubuntu/Debian recommended)
+- **Shell:** Bash 4.0+
+- **Node.js:** 18+ (for JavaScript scripts)
+- **Docker:** For container operations
+
+### Tool Requirements
+
+Most scripts require standard Unix tools:
+
+- `curl` - API requests and HTTP operations
+- `jq` - JSON parsing (optional but recommended)
+- `grep`, `awk`, `sed` - Text processing
+
+Browser diagnostics additionally requires:
+
+- Puppeteer (auto-installed via npm)
+- System libraries (libnss3, libatk1.0-0, etc.)
+
+### Installation
+
+```bash
+# Install Node.js and npm (if not present)
+sudo apt-get update
+sudo apt-get install -y nodejs npm
+
+# Install Puppeteer for browser diagnostics
+cd console/backend
+npm install puppeteer
+
+# Install system dependencies for Puppeteer
+sudo apt-get install -y \
+  libnss3 libatk1.0-0 libatk-bridge2.0-0 \
+  libcups2 libdrm2 libxkbcommon0 libxcomposite1 \
+  libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
+```
 
 ## Environment Variables
 
@@ -400,22 +288,21 @@ Common environment variables used across scripts:
 
 | Variable | Description | Default | Used By |
 |----------|-------------|---------|---------|
-| `CONSOLE_URL` | Console base URL | `http://localhost:3000` | All |
-| `ADMIN_USERNAME` | Admin username | `admin` | Auth scripts |
-| `ADMIN_PASSWORD` | Admin password | Required | Auth scripts |
-| `OUTPUT_DIR` | Output directory | `/tmp/[script-name]` | All |
-| `TIMEOUT` | Request timeout (ms) | `30000` | Browser diagnostics |
+| `CONSOLE_URL` | Console base URL | `http://localhost:3000` | Most scripts |
+| `ADMIN_USERNAME` | Admin username | `admin` | Auth/API scripts |
+| `ADMIN_PASSWORD` | Admin password | Required | Auth/API scripts |
+| `OUTPUT_DIR` | Output directory | `/tmp/[script-name]` | All scripts |
+| `TIMEOUT` | Request timeout (ms) | `30000` | Browser/API scripts |
 | `HEADLESS` | Run browser headless | `true` | Browser diagnostics |
 | `MONITOR_DURATION` | Monitor duration (s) | `30` | Resource monitor |
 | `MONITOR_INTERVAL` | Monitor interval (s) | `1` | Resource monitor |
-| `CONTAINER_NAME` | Docker container name | `minecraft-console` | Resource monitor |
 
-## Output Directory Structure
+## Output Structure
 
-Standard output directory structure:
+All diagnostic and test scripts create structured output:
 
 ```
-/tmp/[diagnostic-name]-[timestamp]/
+/tmp/[script-name]-[timestamp]/
 ├── SUMMARY.txt              # Start here - overview of results
 ├── *.json                   # Structured data files
 ├── *.log                    # Log files with time-series data
@@ -429,70 +316,19 @@ Standard output directory structure:
 Scripts follow standard exit code conventions:
 
 - `0` - Success, no issues found
-- `1` - Errors detected or diagnostics failed
+- `1` - Errors detected or operation failed
 - `2` - Invalid arguments or configuration
-- Other - Script-specific error codes
-
-## Prerequisites
-
-### System Requirements
-
-- **OS**: Linux (Ubuntu/Debian recommended)
-- **Shell**: Bash 4.0+
-- **Node.js**: 18+ (for browser diagnostics)
-- **Docker**: For container monitoring
-
-### Tool Requirements
-
-Different scripts require different tools:
-
-**Browser Diagnostics**:
-- Node.js and npm
-- Puppeteer (installed via npm)
-- System libraries (see [BROWSER-DIAGNOSTICS.md](../docs/troubleshooting/browser-diagnostics.md))
-
-**API Scripts**:
-- curl
-- jq (optional, for JSON parsing)
-- grep, awk, sed
-
-**Resource Monitoring**:
-- top
-- free
-- netstat
-- docker (for container monitoring)
-
-### Installation
-
-```bash
-# Install Node.js and npm (if not present)
-sudo apt-get update
-sudo apt-get install -y nodejs npm
-
-# Install Puppeteer
-cd console/backend
-npm install puppeteer
-
-# Install system dependencies for Puppeteer
-sudo apt-get install -y \
-  libnss3 libatk1.0-0 libatk-bridge2.0-0 \
-  libcups2 libdrm2 libxkbcommon0 libxcomposite1 \
-  libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2
-
-# Verify installation
-node scripts/browser-diagnostics.js --help || echo "Ready to use"
-```
 
 ## Troubleshooting
 
 ### Script Won't Execute
 
 ```bash
-# Make sure script is executable
-chmod +x scripts/*.sh
+# Make scripts executable
+chmod +x scripts/**/*.sh
 
-# Check shebang line
-head -1 scripts/script-name.sh
+# Verify shebang
+head -1 scripts/diagnostics/diagnose-plugins.sh
 ```
 
 ### Browser Diagnostics Fails
@@ -509,48 +345,61 @@ node -e "const puppeteer = require('puppeteer'); (async () => { const browser = 
 sudo apt-get install -y libnss3 libatk1.0-0 libatk-bridge2.0-0
 ```
 
-### Permission Denied
+### Permission Issues
 
 ```bash
 # Check output directory permissions
 ls -ld /tmp/
 
-# Create directory with proper permissions
-mkdir -p /tmp/diagnostics
-chmod 777 /tmp/diagnostics
-
 # Use custom output directory
 export OUTPUT_DIR="/home/user/diagnostics"
+mkdir -p "$OUTPUT_DIR"
 ```
 
-### No Data Collected
+### Connection Issues
 
 ```bash
 # Verify console is running
 curl http://localhost:3000/api/status
 
-# Check credentials
-echo $ADMIN_USERNAME $ADMIN_PASSWORD
+# Check environment variables
+echo $CONSOLE_URL $ADMIN_USERNAME
 
-# Enable verbose output
-set -x
-./scripts/script-name.sh
+# Test with explicit values
+CONSOLE_URL="http://localhost:3000" ./scripts/run.sh diagnostics plugins diagnose
 ```
 
 ## Contributing
 
-When adding new diagnostic scripts:
+When adding new scripts:
 
-1. Follow naming convention: `action-target.sh` or `test-feature.sh`
-2. Add comprehensive documentation header
-3. Support standard environment variables
-4. Generate SUMMARY.txt in output directory
-5. Use consistent exit codes
-6. Update this README
+1. Review [DEVELOPMENT.md](DEVELOPMENT.md) for standards
+2. Choose appropriate category directory
+3. Follow naming conventions
+4. Add comprehensive header comments
+5. Update category README
+6. Add to wrapper script if user-facing
+7. Test thoroughly
+8. Submit pull request
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed guidelines.
 
 ## Related Documentation
 
-- [Diagnostics Guide](../docs/troubleshooting/diagnostics-guide.md) - Overview of all diagnostic tools
-- [Browser Diagnostics](../docs/troubleshooting/browser-diagnostics.md) - Frontend and API diagnostics
-- [Plugin Install Diagnostics](../docs/troubleshooting/plugin-diagnostics.md) - Plugin system testing
-- [API Authentication Guide](../docs/API-AUTHENTICATION-GUIDE.md) - API and CSRF flow
+### Guides
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Script development guide
+- [diagnostics/README.md](diagnostics/README.md) - Diagnostics scripts guide
+- [api-testing/README.md](api-testing/README.md) - API testing scripts guide
+- [utilities/README.md](utilities/README.md) - Utility scripts guide
+- [lib/README.md](lib/README.md) - Library scripts guide
+
+### Documentation
+- [docs/troubleshooting/diagnostics-guide.md](../docs/troubleshooting/diagnostics-guide.md) - Complete diagnostics guide
+- [docs/troubleshooting/browser-diagnostics.md](../docs/troubleshooting/browser-diagnostics.md) - Browser diagnostics details
+- [docs/troubleshooting/plugin-diagnostics.md](../docs/troubleshooting/plugin-diagnostics.md) - Plugin diagnostics details
+- [docs/admin/admin-guide.md](../docs/admin/admin-guide.md) - Administration guide
+
+### Workflows
+- [.github/workflows/comprehensive-plugin-manager-diagnostics.yml](../.github/workflows/comprehensive-plugin-manager-diagnostics.yml) - Comprehensive diagnostics workflow
+- [.github/workflows/browser-diagnostics.yml](../.github/workflows/browser-diagnostics.yml) - Browser diagnostics workflow
+- [.github/workflows/plugin-install-diagnose.yml](../.github/workflows/plugin-install-diagnose.yml) - Plugin install diagnostics workflow

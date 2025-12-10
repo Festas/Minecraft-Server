@@ -91,7 +91,7 @@ jobs:
 
           # Upload diagnostic scripts to server
           scp -i ~/.ssh/id_rsa \
-            scripts/plugin-install-diagnostics-lib.sh \
+            scripts/lib/plugin-install-diagnostics-lib.sh \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
 
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
@@ -253,7 +253,7 @@ jobs:
 
           # Upload test scenario script to server
           scp -i ~/.ssh/id_rsa \
-            scripts/plugin-install-test-scenarios.sh \
+            scripts/lib/plugin-install-test-scenarios.sh \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
 
           # Run test scenarios on server
