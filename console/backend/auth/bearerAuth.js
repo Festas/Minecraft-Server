@@ -63,12 +63,21 @@ function verifyApiKey(req) {
         return null;
     }
     
-    console.log('[BearerAuth] Valid API key:', {
-        id: keyData.id,
-        name: keyData.name,
-        prefix: keyData.key_prefix,
-        scopes: keyData.scopes
-    });
+    // Log minimal key info (avoid exposing sensitive scope details in production)
+    if (process.env.NODE_ENV === 'development') {
+        console.log('[BearerAuth] Valid API key:', {
+            id: keyData.id,
+            name: keyData.name,
+            prefix: keyData.key_prefix,
+            scopes: keyData.scopes
+        });
+    } else {
+        console.log('[BearerAuth] Valid API key:', {
+            id: keyData.id,
+            name: keyData.name,
+            prefix: keyData.key_prefix
+        });
+    }
     
     return keyData;
 }

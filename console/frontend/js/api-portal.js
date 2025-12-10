@@ -278,7 +278,13 @@ function copyNewKey() {
  */
 async function viewKey(keyId) {
     try {
-        const response = await fetch(`/api/api-keys/${keyId}/stats?start_date=${new Date(Date.now() - 30*24*60*60*1000).toISOString()}&end_date=${new Date().toISOString()}`);
+        // Calculate date range (last 30 days)
+        const endDate = new Date();
+        const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        
+        const response = await fetch(
+            `/api/api-keys/${keyId}/stats?start_date=${startDate.toISOString()}&end_date=${endDate.toISOString()}`
+        );
         const data = await response.json();
         
         if (data.success) {
@@ -453,8 +459,9 @@ async function tryApiRequest() {
     const key = apiKeys.find(k => k.id === keyId);
     if (!key) return;
     
-    // Note: For security, we can't use the actual API key client-side
-    // Instead, we'll use session authentication
+    // Note: For security, actual API keys cannot be used client-side
+    // The playground uses session-based authentication instead
+    // This demonstrates the endpoint response structure
     
     try {
         const response = await fetch(endpoint);

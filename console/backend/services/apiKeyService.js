@@ -14,8 +14,11 @@ const database = require('./database');
 
 /**
  * Generate a secure random API key
- * Format: mcs_<32 random bytes in hex>
- * @returns {string} API key
+ * Uses crypto.randomBytes for cryptographically secure random generation
+ * Format: mcs_<32 random bytes in hex> (total length: 68 characters)
+ * Provides 256 bits of entropy for strong security
+ * 
+ * @returns {string} API key in format mcs_<64 hex characters>
  */
 function generateApiKey() {
     const randomBytes = crypto.randomBytes(32);
