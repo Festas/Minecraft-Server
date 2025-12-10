@@ -397,7 +397,7 @@ Access the web console at `http://your-server:3001/console` for:
 - Backup management
 - Log viewing with WebSocket
 
-See [CONSOLE-SETUP.md](CONSOLE-SETUP.md) for setup instructions.
+See [CONSOLE-SETUP.md](../../CONSOLE-SETUP.md) for setup instructions.
 
 ### Viewing Server Files
 

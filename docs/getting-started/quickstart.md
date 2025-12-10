@@ -116,7 +116,7 @@ It covers:
 - ✅ Security best practices
 
 ### For Quick Commands
-👉 **Use [Quick Reference](../reference/quick-reference.md)** - Fast lookup for common tasks
+👉 **Use [Quick Reference](../../QUICK-REFERENCE.md)** - Fast lookup for common tasks
 
 ### For Docker Alternative
 👉 **See [docker.md](./docker.md)** - If you prefer containerized deployment
@@ -202,7 +202,7 @@ All files will be deployed to: `/home/deploy/minecraft-server/`
 ## 📞 Need Help?
 
 1. **Check [deployment.md](./deployment.md)** - Detailed troubleshooting section
-2. **Check [Quick Reference](../reference/quick-reference.md)** - Common commands
+2. **Check [Quick Reference](../../QUICK-REFERENCE.md)** - Common commands
 3. **View GitHub Actions logs** - See what went wrong in deployment
 4. **Check server logs** - `sudo journalctl -u minecraft.service -n 100`
 
