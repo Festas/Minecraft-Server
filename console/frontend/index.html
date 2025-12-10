@@ -6,6 +6,7 @@
     <title>Minecraft Server Console</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="css/design-system.css">
+    <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
@@ -13,6 +14,16 @@
     <link rel="stylesheet" href="css/accessibility.css">
 </head>
 <body>
+    <!-- Hamburger Menu Button (Mobile) -->
+    <button class="hamburger-button" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+    </button>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay"></div>
+
     <div class="console-wrapper">
         <!-- Header -->
         <header class="console-header">
@@ -33,55 +44,124 @@
         <div class="console-layout">
             <!-- Sidebar -->
             <aside class="sidebar">
+                <!-- Sidebar Header -->
+                <div class="sidebar-header">
+                    <span class="sidebar-logo">🎮</span>
+                    <div>
+                        <h2 class="sidebar-title">Festas Builds</h2>
+                        <p class="sidebar-subtitle">Server Console</p>
+                    </div>
+                </div>
+
                 <nav>
+                    <!-- MAIN Section -->
+                    <div class="nav-section-header">Main</div>
                     <button class="nav-item active" data-section="dashboard">
-                        <span>📊</span> Dashboard
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        <span class="nav-text">Dashboard</span>
                     </button>
                     <button class="nav-item" data-section="console">
-                        <span>💻</span> Console
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="nav-text">Console</span>
                     </button>
                     <button class="nav-item" data-section="players">
-                        <span>👥</span> Players
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        <span class="nav-text">Players</span>
                     </button>
+
+                    <!-- MANAGEMENT Section -->
+                    <div class="nav-section-header">Management</div>
                     <button class="nav-item" data-section="controls">
-                        <span>⚙️</span> Controls
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span class="nav-text">Controls</span>
                     </button>
-                    <button class="nav-item" data-href="/console/backups.html">
-                        <span>📦</span> Backups
-                    </button>
-                    <button class="nav-item" data-href="/console/map.html">
-                        <span>🗺️</span> Map
-                    </button>
-                    <button class="nav-item" data-href="/console/plugins-v2.html">
-                        <span>🔌</span> Plugins
-                    </button>
-                    <button class="nav-item" data-href="/console/plugins.html">
-                        <span>🔌</span> Plugins (Legacy)
-                    </button>
-                    <button class="nav-item" data-href="/console/automation.html">
-                        <span>⏰</span> Automation
-                    </button>
-                    <button class="nav-item" data-href="/console/webhooks.html">
-                        <span>🔗</span> Webhooks
-                    </button>
-                    <button class="nav-item" data-href="/console/notifications.html">
-                        <span>🔔</span> Notifications
-                    </button>
-                    <button class="nav-item" data-href="/console/analytics.html">
-                        <span>📊</span> Analytics
-                    </button>
-                    <button class="nav-item" data-href="/console/cicd.html">
-                        <span>🚀</span> CI/CD
-                    </button>
-                    <button class="nav-item" data-href="/console/api-portal.html">
-                        <span>🔑</span> Developer Portal
-                    </button>
-                    <button class="nav-item" data-section="settings">
-                        <span>🔧</span> Settings
-                    </button>
-                    <button id="userManagementBtn" class="nav-item hidden" data-href="/console/user-management.html">
-                        <span>👤</span> Users
-                    </button>
+                    <a class="nav-item" href="/console/backups.html" data-href="/console/backups.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <span class="nav-text">Backups</span>
+                    </a>
+                    <a class="nav-item" href="/console/plugins-v2.html" data-href="/console/plugins-v2.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z"/>
+                        </svg>
+                        <span class="nav-text">Plugins</span>
+                    </a>
+                    <a class="nav-item" href="/console/plugins.html" data-href="/console/plugins.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z"/>
+                        </svg>
+                        <span class="nav-text">Plugins Legacy</span>
+                    </a>
+                    <a class="nav-item" href="/console/map.html" data-href="/console/map.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                        </svg>
+                        <span class="nav-text">Map</span>
+                    </a>
+
+                    <!-- AUTOMATION Section -->
+                    <div class="nav-section-header">Automation</div>
+                    <a class="nav-item" href="/console/automation.html" data-href="/console/automation.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="nav-text">Automation</span>
+                    </a>
+                    <a class="nav-item" href="/console/webhooks.html" data-href="/console/webhooks.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                        </svg>
+                        <span class="nav-text">Webhooks</span>
+                    </a>
+                    <a class="nav-item" href="/console/notifications.html" data-href="/console/notifications.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        <span class="nav-text">Notifications</span>
+                    </a>
+
+                    <!-- SYSTEM Section -->
+                    <div class="nav-section-header">System</div>
+                    <a class="nav-item" href="/console/analytics.html" data-href="/console/analytics.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        <span class="nav-text">Analytics</span>
+                    </a>
+                    <a class="nav-item" href="/console/cicd.html" data-href="/console/cicd.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                        </svg>
+                        <span class="nav-text">CI/CD</span>
+                    </a>
+                    <a class="nav-item" href="/console/api-portal.html" data-href="/console/api-portal.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                        </svg>
+                        <span class="nav-text">Developer</span>
+                    </a>
+                    <a class="nav-item" id="userManagementBtn" href="/console/user-management.html" data-href="/console/user-management.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                        </svg>
+                        <span class="nav-text">Users</span>
+                    </a>
+                    <a class="nav-item" href="/console/marketplace.html" data-href="/console/marketplace.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        <span class="nav-text">Marketplace</span>
+                    </a>
                 </nav>
             </aside>
 
@@ -322,6 +402,7 @@
 
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
+    <script src="js/sidebar.js"></script>
     <script src="js/themeManager.js"></script>
     <script src="js/accessibility.js"></script>
     <script src="js/utils.js"></script>
