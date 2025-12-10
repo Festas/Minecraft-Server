@@ -142,7 +142,7 @@ function updatePlayerCount(online, max) {
     const maxCount = max ?? 20;
     
     if (playerCount) {
-        playerCount.textContent = `${onlineCount}/${maxCount} Players`;
+        playerCount.textContent = `${onlineCount}/${maxCount}`;
     }
     
     if (onlinePlayersCount) {

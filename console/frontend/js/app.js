@@ -1,6 +1,13 @@
 // Main application initialization
 let statsInterval = null;
 
+// Constants for metrics thresholds
+const DEFAULT_TPS = 20;
+const TPS_HEALTHY_THRESHOLD = 19;
+const TPS_WARNING_THRESHOLD = 15;
+const RESOURCE_CRITICAL_THRESHOLD = 90;
+const RESOURCE_WARNING_THRESHOLD = 75;
+
 document.addEventListener('DOMContentLoaded', () => {
     // Check authentication
     checkAuth();
@@ -396,10 +403,12 @@ function updateServerStatus(stats) {
     
     if (statusIndicator && statusText) {
         if (stats.status === 'online') {
-            statusIndicator.textContent = '🟢';
+            statusIndicator.classList.remove('offline');
+            statusIndicator.classList.add('online');
             statusText.textContent = 'Online';
         } else {
-            statusIndicator.textContent = '🔴';
+            statusIndicator.classList.remove('online');
+            statusIndicator.classList.add('offline');
             statusText.textContent = 'Offline';
         }
     }
@@ -414,10 +423,23 @@ function updateServerStatus(stats) {
         updatePlayerCount(0, 20);
     }
     
-    // Update TPS with null check
+    // Update TPS with null check and health colors
     const tpsEl = document.getElementById('tps');
     if (tpsEl) {
-        tpsEl.textContent = stats.tps !== undefined ? stats.tps.toFixed(1) : '--';
+        const tpsValue = stats.tps !== undefined ? stats.tps : DEFAULT_TPS;
+        tpsEl.textContent = tpsValue.toFixed(1);
+        
+        // Remove all health classes
+        tpsEl.classList.remove('healthy', 'warning', 'critical');
+        
+        // Add appropriate health class
+        if (tpsValue >= TPS_HEALTHY_THRESHOLD) {
+            tpsEl.classList.add('healthy');
+        } else if (tpsValue >= TPS_WARNING_THRESHOLD) {
+            tpsEl.classList.add('warning');
+        } else {
+            tpsEl.classList.add('critical');
+        }
     }
     
     // Update uptime with null check
@@ -426,20 +448,57 @@ function updateServerStatus(stats) {
         uptimeEl.textContent = stats.uptime ? formatUptime(stats.uptime) : '0m';
     }
     
-    // Update memory with null check
+    // Update memory with null check and progress bar
     const memoryEl = document.getElementById('memoryUsage');
+    const memoryProgress = document.getElementById('memoryProgress');
     if (memoryEl) {
         if (stats.memory && stats.memory.used && stats.memory.limit) {
             memoryEl.textContent = `${stats.memory.used}GB / ${stats.memory.limit}GB`;
+            
+            // Update progress bar
+            if (memoryProgress) {
+                const percentage = (stats.memory.used / stats.memory.limit) * 100;
+                memoryProgress.style.width = `${percentage}%`;
+                
+                // Remove all state classes
+                memoryProgress.classList.remove('warning', 'critical');
+                
+                // Add appropriate state class
+                if (percentage >= RESOURCE_CRITICAL_THRESHOLD) {
+                    memoryProgress.classList.add('critical');
+                } else if (percentage >= RESOURCE_WARNING_THRESHOLD) {
+                    memoryProgress.classList.add('warning');
+                }
+            }
         } else {
             memoryEl.textContent = '-- / --';
+            if (memoryProgress) {
+                memoryProgress.style.width = '0%';
+            }
         }
     }
     
-    // Update CPU with null check
+    // Update CPU with null check and progress bar
     const cpuEl = document.getElementById('cpuUsage');
+    const cpuProgress = document.getElementById('cpuProgress');
     if (cpuEl) {
-        cpuEl.textContent = stats.cpu !== undefined ? `${stats.cpu}%` : '--';
+        const cpuValue = stats.cpu !== undefined ? stats.cpu : 0;
+        cpuEl.textContent = `${cpuValue}%`;
+        
+        // Update progress bar
+        if (cpuProgress) {
+            cpuProgress.style.width = `${cpuValue}%`;
+            
+            // Remove all state classes
+            cpuProgress.classList.remove('warning', 'critical');
+            
+            // Add appropriate state class
+            if (cpuValue >= RESOURCE_CRITICAL_THRESHOLD) {
+                cpuProgress.classList.add('critical');
+            } else if (cpuValue >= RESOURCE_WARNING_THRESHOLD) {
+                cpuProgress.classList.add('warning');
+            }
+        }
     }
     
     // Update version with null check

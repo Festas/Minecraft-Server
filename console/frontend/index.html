@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="css/design-system.css">
     <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/cards.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
@@ -174,60 +175,89 @@
 
                 <!-- Dashboard Section -->
                 <section id="dashboard" class="content-section active">
-                    <!-- Server Status -->
-                    <div class="status-bar">
-                        <div class="status-item">
-                            <span id="serverStatus" class="status-indicator">🔴</span>
-                            <span id="serverStatusText">Offline</span>
+                    <!-- Server Status Card -->
+                    <div class="card status-card card-full">
+                        <div class="card-header">
+                            <h3 class="card-title">Server Status</h3>
+                            <span id="serverStatus" class="status-badge offline">
+                                <span class="status-dot"></span>
+                                <span id="serverStatusText">Offline</span>
+                            </span>
                         </div>
-                        <div class="status-item">
-                            <span id="playerCount">0/20 Players</span>
+                    </div>
+
+                    <!-- Metrics Grid -->
+                    <div class="card-grid">
+                        <div class="card stat-card">
+                            <div class="stat-value healthy" id="tps">20.0</div>
+                            <div class="stat-label">TPS</div>
                         </div>
-                        <div class="status-item">
-                            <span>TPS: <span id="tps">20.0</span></span>
+                        <div class="card stat-card">
+                            <div class="stat-value" id="playerCount">0/20</div>
+                            <div class="stat-label">Players</div>
                         </div>
-                        <div class="status-item">
-                            <span>Uptime: <span id="uptime">0m</span></span>
+                        <div class="card stat-card">
+                            <div class="stat-value" id="uptime">0m</div>
+                            <div class="stat-label">Uptime</div>
+                        </div>
+                    </div>
+
+                    <!-- Resource Usage -->
+                    <div class="card-grid">
+                        <div class="card progress-card">
+                            <div class="progress-header">
+                                <span class="progress-label">Memory Usage</span>
+                                <span class="progress-value" id="memoryUsage">-- / --</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="memoryProgress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="card progress-card">
+                            <div class="progress-header">
+                                <span class="progress-label">CPU Usage</span>
+                                <span class="progress-value" id="cpuUsage">--%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="cpuProgress" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="stat-value" id="mcVersion" style="font-size: var(--text-xl);">--</div>
+                            <div class="stat-label">Minecraft Version</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="stat-value" id="worldSize" style="font-size: var(--text-xl);">--</div>
+                            <div class="stat-label">World Size</div>
                         </div>
                     </div>
 
                     <!-- Quick Actions -->
-                    <div class="card">
-                        <h3>Quick Actions</h3>
-                        <div class="action-buttons">
-                            <button class="btn btn-success" id="startBtn">▶️ Start</button>
-                            <button class="btn btn-danger" id="stopBtn">⏹️ Stop</button>
-                            <button class="btn btn-warning" id="restartBtn">🔄 Restart</button>
-                            <button class="btn btn-primary" id="saveBtn">💾 Save</button>
-                            <button class="btn btn-primary" id="backupBtn">📦 Backup</button>
-                            <button class="btn btn-danger" id="killBtn">🔌 Kill</button>
+                    <div class="card card-full">
+                        <div class="card-header">
+                            <h3 class="card-title">Quick Actions</h3>
                         </div>
-                    </div>
-
-                    <!-- Server Info Grid -->
-                    <div class="info-grid">
-                        <div class="card">
-                            <h4>Memory Usage</h4>
-                            <div id="memoryUsage" class="stat-value">-- / --</div>
-                        </div>
-                        <div class="card">
-                            <h4>CPU Usage</h4>
-                            <div id="cpuUsage" class="stat-value">--%</div>
-                        </div>
-                        <div class="card">
-                            <h4>Minecraft Version</h4>
-                            <div id="mcVersion" class="stat-value">--</div>
-                        </div>
-                        <div class="card">
-                            <h4>World Size</h4>
-                            <div id="worldSize" class="stat-value">--</div>
+                        <div class="card-body">
+                            <div class="action-buttons">
+                                <button class="btn btn-success" id="startBtn">▶️ Start</button>
+                                <button class="btn btn-danger" id="stopBtn">⏹️ Stop</button>
+                                <button class="btn btn-warning" id="restartBtn">🔄 Restart</button>
+                                <button class="btn btn-primary" id="saveBtn">💾 Save</button>
+                                <button class="btn btn-primary" id="backupBtn">📦 Backup</button>
+                                <button class="btn btn-danger" id="killBtn">🔌 Kill</button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Live Log Preview -->
-                    <div class="card">
-                        <h3>Live Logs <button id="pauseLogsBtn" class="btn btn-sm">⏸️ Pause</button></h3>
-                        <div id="logPreview" class="log-output"></div>
+                    <div class="card card-full">
+                        <div class="card-header">
+                            <h3 class="card-title">Live Logs</h3>
+                            <button id="pauseLogsBtn" class="btn btn-sm">⏸️ Pause</button>
+                        </div>
+                        <div class="card-body">
+                            <div id="logPreview" class="log-output"></div>
+                        </div>
                     </div>
                 </section>
 
