@@ -1,5 +1,4 @@
 const axios = require('axios');
-const auditLog = require('./auditLog');
 
 /**
  * Plugin Marketplace Service
@@ -395,7 +394,7 @@ function formatHangarVersion(version) {
         versionType: version.channel || 'release',
         downloads: version.stats?.downloads || 0,
         datePublished: version.createdAt,
-        files: version.downloads?.PAPER ? Object.entries(version.downloads.PAPER).map(([platform, download]) => ({
+        files: version.downloads?.PAPER ? Object.entries(version.downloads.PAPER).map(([_platform, download]) => ({
             filename: download.fileInfo?.name || `${version.name}.jar`,
             url: download.downloadUrl,
             size: download.fileInfo?.sizeBytes || 0,
@@ -436,7 +435,7 @@ function deduplicatePlugins(plugins) {
  */
 function sortPlugins(plugins, sortBy) {
     const sortMap = {
-        relevance: (a, b) => 0, // Already sorted by API
+        relevance: (_a, _b) => 0, // Already sorted by API
         downloads: (a, b) => b.downloads - a.downloads,
         updated: (a, b) => new Date(b.dateModified) - new Date(a.dateModified),
         newest: (a, b) => new Date(b.dateCreated) - new Date(a.dateCreated)

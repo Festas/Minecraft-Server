@@ -377,7 +377,7 @@ class AutomationService {
     /**
      * Execute backup task
      */
-    async executeBackupTask(task) {
+    async executeBackupTask(_task) {
         try {
             // Disable auto-save
             await rconService.saveOff();
@@ -386,7 +386,7 @@ class AutomationService {
             // Run backup script - use environment variable if available
             const backupScript = process.env.BACKUP_SCRIPT_PATH || 
                                 path.join(__dirname, '../../../scripts/backup.sh');
-            const { stdout, stderr } = await execPromise(backupScript);
+            const { stdout } = await execPromise(backupScript);
 
             // Re-enable auto-save
             await rconService.saveOn();
@@ -495,6 +495,7 @@ class AutomationService {
         console.log('[Automation] Shutting down automation service...');
         
         // Stop all cron jobs
+        // eslint-disable-next-line no-unused-vars
         for (const [taskId, cronJob] of this.cronJobs.entries()) {
             cronJob.stop();
         }

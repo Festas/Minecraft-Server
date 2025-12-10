@@ -4,9 +4,9 @@ const { requireAuth } = require('../auth/auth');
 const { requirePermission } = require('../middleware/rbac');
 const { PERMISSIONS } = require('../config/rbac');
 const rateLimit = require('express-rate-limit');
-const { body, param, query, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator');
 const backupService = require('../services/backupService');
-const { BACKUP_TYPES, JOB_STATUS } = require('../services/backupService');
+const { BACKUP_TYPES } = require('../services/backupService');
 
 // Rate limiter for backup operations
 const backupRateLimiter = rateLimit({

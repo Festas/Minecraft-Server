@@ -9,25 +9,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 const EventEmitter = require('events');
-const { EVENT_CATEGORIES, EVENT_SEVERITY } = require('./eventLogger');
-
-/**
- * Notification delivery channels
- */
-const NOTIFICATION_CHANNELS = {
-    WEB: 'web',          // Browser notifications
-    TOAST: 'toast',      // Toast popups
-    INBOX: 'inbox'       // Notification inbox
-};
-
-/**
- * Notification status
- */
-const NOTIFICATION_STATUS = {
-    UNREAD: 'unread',
-    READ: 'read',
-    ARCHIVED: 'archived'
-};
+const { EVENT_SEVERITY } = require('./eventLogger');
 
 class NotificationService extends EventEmitter {
     constructor() {

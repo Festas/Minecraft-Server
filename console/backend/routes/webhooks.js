@@ -14,7 +14,6 @@ const rateLimit = require('express-rate-limit');
 const { body, param, query, validationResult } = require('express-validator');
 const webhookService = require('../services/webhookService');
 const inboundWebhookService = require('../services/inboundWebhookService');
-const crypto = require('crypto');
 
 // Rate limiter for webhook operations
 const webhookRateLimiter = rateLimit({

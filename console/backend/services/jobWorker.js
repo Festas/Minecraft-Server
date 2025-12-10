@@ -121,7 +121,7 @@ async function processNextJob() {
  * Execute a job based on its action
  */
 async function executeJob(job) {
-    const { action, pluginName, url, options } = job;
+    const { action } = job;
     
     switch (action) {
         case 'install':
@@ -207,7 +207,7 @@ async function executeUninstall(job) {
  * Execute update job
  */
 async function executeUpdate(job) {
-    const { pluginName, url, options } = job;
+    const { pluginName, url } = job;
     
     await jobQueue.addJobLog(job.id, `Updating plugin: ${pluginName}`);
     await jobQueue.addJobLog(job.id, `Update source: ${url}`);

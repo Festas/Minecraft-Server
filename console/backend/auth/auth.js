@@ -230,6 +230,7 @@ async function getUser(username) {
     }
     
     // Return user without password
+    // eslint-disable-next-line no-unused-vars
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
 }
@@ -242,6 +243,7 @@ async function getAllUsers() {
     
     // Return users without passwords
     return userData.users.map(user => {
+        // eslint-disable-next-line no-unused-vars
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
     });
@@ -276,7 +278,8 @@ async function createUser(username, password, role, createdBy) {
     await saveUsers(userData);
     
     // Return user without password
-    const { password: _, ...userWithoutPassword } = newUser;
+    // eslint-disable-next-line no-unused-vars
+    const { password: pwd, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
 }
 
@@ -299,6 +302,7 @@ async function updateUserRole(username, newRole) {
     await saveUsers(userData);
     
     // Return updated user without password
+    // eslint-disable-next-line no-unused-vars
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
 }
@@ -335,6 +339,7 @@ async function updateUserStatus(username, enabled) {
     await saveUsers(userData);
     
     // Return updated user without password
+    // eslint-disable-next-line no-unused-vars
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
 }

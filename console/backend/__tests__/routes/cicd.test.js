@@ -21,7 +21,7 @@ jest.mock('../../auth/auth', () => ({
 
 // Mock the RBAC middleware
 jest.mock('../../middleware/rbac', () => ({
-    requirePermission: (permission) => (req, res, next) => next(),
+    requirePermission: (_permission) => (req, res, next) => next(),
     PERMISSIONS: { SERVER_RESTART: 'SERVER_RESTART' }
 }));
 

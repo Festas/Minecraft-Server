@@ -3,7 +3,6 @@
  */
 
 const {
-    ROLES,
     PERMISSIONS,
     hasPermission,
     hasHigherOrEqualRole,

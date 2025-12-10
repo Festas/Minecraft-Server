@@ -363,7 +363,7 @@ class InboundWebhookService {
     /**
      * Execute webhook action
      */
-    async executeAction(actionConfig, payload, webhook, clientIp) {
+    async executeAction(actionConfig, payload, webhook, _clientIp) {
         const actionType = actionConfig.type;
         const actionData = actionConfig.data || {};
 
@@ -380,49 +380,55 @@ class InboundWebhookService {
             case WEBHOOK_ACTIONS.SERVER_RESTART:
                 return await dockerService.restartContainer();
 
-            case WEBHOOK_ACTIONS.EXECUTE_COMMAND:
+            case WEBHOOK_ACTIONS.EXECUTE_COMMAND: {
                 const command = params.command || actionData.command;
                 if (!command) {
                     throw new Error('Command not specified');
                 }
                 return await rconService.sendCommand(command);
+            }
 
-            case WEBHOOK_ACTIONS.BROADCAST:
+            case WEBHOOK_ACTIONS.BROADCAST: {
                 const message = params.message || actionData.message;
                 if (!message) {
                     throw new Error('Message not specified');
                 }
                 return await rconService.sendCommand(`say ${message}`);
+            }
 
-            case WEBHOOK_ACTIONS.KICK_PLAYER:
+            case WEBHOOK_ACTIONS.KICK_PLAYER: {
                 const kickPlayer = params.player || actionData.player;
                 const kickReason = params.reason || actionData.reason || 'Kicked via webhook';
                 if (!kickPlayer) {
                     throw new Error('Player not specified');
                 }
                 return await rconService.sendCommand(`kick ${kickPlayer} ${kickReason}`);
+            }
 
-            case WEBHOOK_ACTIONS.BAN_PLAYER:
+            case WEBHOOK_ACTIONS.BAN_PLAYER: {
                 const banPlayer = params.player || actionData.player;
                 const banReason = params.reason || actionData.reason || 'Banned via webhook';
                 if (!banPlayer) {
                     throw new Error('Player not specified');
                 }
                 return await rconService.sendCommand(`ban ${banPlayer} ${banReason}`);
+            }
 
-            case WEBHOOK_ACTIONS.PARDON_PLAYER:
+            case WEBHOOK_ACTIONS.PARDON_PLAYER: {
                 const pardonPlayer = params.player || actionData.player;
                 if (!pardonPlayer) {
                     throw new Error('Player not specified');
                 }
                 return await rconService.sendCommand(`pardon ${pardonPlayer}`);
+            }
 
-            case WEBHOOK_ACTIONS.TRIGGER_AUTOMATION:
+            case WEBHOOK_ACTIONS.TRIGGER_AUTOMATION: {
                 const taskId = params.task_id || actionData.task_id;
                 if (!taskId) {
                     throw new Error('Task ID not specified');
                 }
                 return await automationService.executeTask(taskId, `webhook:${webhook.name}`);
+            }
 
             case WEBHOOK_ACTIONS.CUSTOM:
                 // Custom actions can be extended here
