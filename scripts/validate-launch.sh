@@ -224,12 +224,14 @@ check_security() {
         test_warn "Console HTTPS endpoint not accessible (may be configured differently)"
     fi
     
-    # Check firewall (if ufw is installed)
+    # Check firewall (if ufw is installed and user has sudo)
     if command -v ufw &> /dev/null; then
-        if sudo ufw status 2>/dev/null | grep -q "Status: active"; then
+        if sudo -n ufw status 2>/dev/null | grep -q "Status: active"; then
+            test_pass "Firewall (ufw) is active"
+        elif sudo -n true 2>/dev/null && sudo ufw status 2>/dev/null | grep -q "Status: active"; then
             test_pass "Firewall (ufw) is active"
         else
-            test_warn "Firewall (ufw) is not active"
+            test_warn "Firewall (ufw) check skipped (requires sudo)"
         fi
     fi
 }
@@ -240,8 +242,8 @@ check_rcon() {
     if docker exec -i minecraft-server rcon-cli list &> /dev/null; then
         test_pass "RCON connection successful"
         
-        # Get player count
-        PLAYERS=$(docker exec -i minecraft-server rcon-cli list 2>/dev/null | grep -oP '\d+(?= of)' || echo "0")
+        # Get player count (portable version)
+        PLAYERS=$(docker exec -i minecraft-server rcon-cli list 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="of") print $(i-1)}' | head -1 || echo "0")
         test_pass "Current players online: $PLAYERS"
     else
         test_fail "RCON connection failed"

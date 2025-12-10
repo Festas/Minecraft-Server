@@ -14,11 +14,12 @@
  */
 
 class I18n {
-    constructor() {
+    constructor(options = {}) {
         this.locale = 'en';
         this.translations = {};
         this.fallbackLocale = 'en';
         this.availableLocales = ['en', 'es'];
+        this.basePath = options.basePath || 'locales';
     }
 
     /**
@@ -27,7 +28,9 @@ class I18n {
      */
     async loadLocale(locale) {
         try {
-            const response = await fetch(`/console/locales/${locale}.json`);
+            // Support both absolute and relative paths
+            const basePath = this.basePath || 'locales';
+            const response = await fetch(`${basePath}/${locale}.json`);
             if (!response.ok) {
                 throw new Error(`Failed to load locale: ${locale}`);
             }

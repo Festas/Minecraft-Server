@@ -27,9 +27,7 @@ The console automatically detects your browser language. To manually change the 
    location.reload();
    ```
 
-### Future: Language Selector UI
-
-A language selector will be added to the console header in a future update.
+**Note:** A language selector UI for the console header is planned for a future release. See [Future Enhancements](#future-enhancements) section below.
 
 ## For Developers
 

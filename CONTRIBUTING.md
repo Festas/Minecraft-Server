@@ -68,6 +68,30 @@ We appreciate pull requests! To submit a PR:
 - Respond to review feedback promptly
 - Be patient - reviews may take a few days
 
+## Adding Dependencies
+
+When adding new dependencies to the project:
+
+1. **Check License Compatibility**
+   - Avoid GPL-2.0 and GPL-3.0 licenses (incompatible with project)
+   - Prefer MIT, Apache-2.0, ISC, or BSD licenses
+   - Check license with: `npm view <package> license`
+
+2. **Security Check**
+   - Run security audit after adding: `npm audit`
+   - Review the package's security history
+   - Prefer well-maintained packages with active communities
+
+3. **Size Consideration**
+   - Check bundle size impact
+   - Avoid large dependencies when lighter alternatives exist
+   - Use `npm view <package> dist.unpackedSize`
+
+4. **Update Documentation**
+   - Document why the dependency is needed
+   - Update package.json with proper version constraints
+   - Run tests after adding to ensure compatibility
+
 ## Code Style Guidelines
 
 ### Shell Scripts
