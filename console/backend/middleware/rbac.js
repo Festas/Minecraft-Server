@@ -137,6 +137,7 @@ function requireModerator(req, res, next) {
 
 module.exports = {
     requirePermission,
+    checkPermission: requirePermission, // Alias for backward compatibility
     requireRole,
     requireOwner,
     requireAdmin,
