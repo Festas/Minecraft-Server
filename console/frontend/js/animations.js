@@ -32,7 +32,10 @@
   // Initialize staggered animations for grids
   function initStaggerAnimations() {
     document.querySelectorAll('.stagger-on-load').forEach(container => {
-      container.classList.add('stagger-children');
+      // Only add stagger-children if not already present and container has children
+      if (!container.classList.contains('stagger-children') && container.children.length > 0) {
+        container.classList.add('stagger-children');
+      }
     });
   }
   
