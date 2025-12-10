@@ -14,7 +14,7 @@ The festas_builds server is growing from a friends-only server to a **full commu
 **Server Software:** Paper (high-performance Spigot fork)  
 **Target:** 50-100 concurrent players
 
-📋 **[View Full Roadmap →](ROADMAP.md)**
+📋 **[View Full Roadmap →](docs/features/roadmap.md)**
 
 ---
 
@@ -66,7 +66,7 @@ This is a fully-featured community server with:
 - 🌍 **Cross-Platform** - Bedrock Edition support via Geyser
 - 💬 **Discord Integration** - Chat bridge and announcements
 
-See [FEATURES.md](FEATURES.md) for complete details.
+See [docs/features/overview.md](docs/features/overview.md) for complete details.
 
 ## 💻 Web Console
 
@@ -120,7 +120,7 @@ The server has a modern website at **[mc.festas-builds.com](https://mc.festas-bu
 
 The website is automatically deployed via GitHub Actions when changes are pushed to the `website/` directory.
 
-See **[WEBSITE.md](WEBSITE.md)** for deployment instructions and customization guide.
+See **[docs/features/website.md](docs/features/website.md)** for deployment instructions and customization guide.
 
 ---
 
@@ -484,7 +484,7 @@ The festas_builds server is evolving in phases:
 - Voting integration
 - 50-100 concurrent players
 
-See [ROADMAP.md](ROADMAP.md) for the complete growth plan.
+See [docs/features/roadmap.md](docs/features/roadmap.md) for the complete growth plan.
 
 ---
 
@@ -503,7 +503,7 @@ See the [Troubleshooting section](docs/getting-started/deployment.md#troubleshoo
 
 - [docs/getting-started/deployment.md](docs/getting-started/deployment.md) - Complete deployment guide
 - [Plugins Guide](docs/admin/plugins.md) - Recommended plugins and setup
-- [ROADMAP.md](ROADMAP.md) - Server growth roadmap
+- [docs/features/roadmap.md](docs/features/roadmap.md) - Server growth roadmap
 - [docs/getting-started/server-icon.md](docs/getting-started/server-icon.md) - Custom branding
 - [Paper Documentation](https://docs.papermc.io/)
 - [Minecraft Server Wiki](https://minecraft.fandom.com/wiki/Server)

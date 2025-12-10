@@ -198,7 +198,7 @@ Win build competitions to unlock:
 - Legend rank
 - Special effects
 
-See [BUILD-COMPETITIONS.md](BUILD-COMPETITIONS.md) for details.
+See [build-competitions.md](./build-competitions.md) for details.
 
 ### Through Achievements
 

@@ -593,7 +593,7 @@ Post to Discord when:
 
 ### Cosmetics System
 
-Winners automatically unlock exclusive cosmetics (see COSMETICS.md).
+Winners automatically unlock exclusive cosmetics (see [cosmetics.md](./cosmetics.md)).
 
 ### Rank Progression
 

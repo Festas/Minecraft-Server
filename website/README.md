@@ -117,7 +117,7 @@ Deployment is automated via GitHub Actions. Push changes to the `website/` direc
 2. Push to GitHub Container Registry
 3. Deploy to server automatically
 
-See `WEBSITE.md` in the repository root for complete deployment documentation.
+See `docs/features/website.md` for complete deployment documentation.
 
 ## Technology Stack
 
