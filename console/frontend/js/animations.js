@@ -35,6 +35,15 @@
       // Only add stagger-children if not already present and container has children
       if (!container.classList.contains('stagger-children') && container.children.length > 0) {
         container.classList.add('stagger-children');
+        
+        // Fallback: ensure elements become visible after animation completes
+        setTimeout(() => {
+          container.classList.add('loaded');
+          // Also directly set opacity on children as ultimate fallback
+          Array.from(container.children).forEach(child => {
+            child.style.opacity = '1';
+          });
+        }, 500); // 500ms should be enough for all staggered animations
       }
     });
   }

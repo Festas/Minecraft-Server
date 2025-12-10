@@ -152,7 +152,7 @@
 
 .stagger-children > * {
   opacity: 0;
-  animation: fadeInUp var(--transition-normal) ease-out forwards;
+  animation: fadeInUp 0.3s ease-out forwards; /* Use fixed duration instead of variable */
 }
 
 .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
@@ -164,6 +164,11 @@
 .stagger-children > *:nth-child(7) { animation-delay: 300ms; }
 .stagger-children > *:nth-child(8) { animation-delay: 350ms; }
 .stagger-children > *:nth-child(n+9) { animation-delay: 400ms; }
+
+/* Fallback - ensure elements become visible after animation */
+.stagger-children.loaded > * {
+  opacity: 1;
+}
 
 /* ==========================================================================
    HOVER EFFECTS
