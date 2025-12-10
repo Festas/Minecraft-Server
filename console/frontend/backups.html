@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup & Migration - Minecraft Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/minecraft-theme.css">
+    <link rel="stylesheet" href="css/theme-light.css">
+    <link rel="stylesheet" href="css/accessibility.css">
+    <style>
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-color);
+            background: var(--card-bg);
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .backup-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .backup-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .backup-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .backup-card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .backup-card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .backup-card-body {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            color: var(--text-color);
+        }
+
+        .backup-info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .backup-info-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .backup-info-value {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .status-pending {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-running {
+            background: #3498db;
+            color: white;
+        }
+
+        .status-failed {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .backup-type-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .type-full {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .type-world {
+            background: #3498db;
+            color: white;
+        }
+
+        .type-plugins {
+            background: #e67e22;
+            color: white;
+        }
+
+        .type-config {
+            background: #1abc9c;
+            color: white;
+        }
+
+        .type-migration {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .create-backup-form {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-close:hover {
+            color: var(--text-color);
+        }
+
+        .preview-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .preview-item {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .preview-item:last-child {
+            border-bottom: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #90caf9;
+        }
+
+        .alert-warning {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffb74d;
+        }
+
+        .alert-danger {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+
+        .migration-wizard {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .wizard-step {
+            display: none;
+        }
+
+        .wizard-step.active {
+            display: block;
+        }
+
+        .wizard-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="console-container">
+        <nav class="sidebar" role="navigation" aria-label="Main navigation">
+            <div class="logo">
+                <h1>Minecraft Console</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Dashboard</a></li>
+                <li><a href="players.html">Players</a></li>
+                <li><a href="plugins.html">Plugins</a></li>
+                <li><a href="automation.html">Automation</a></li>
+                <li><a href="backups.html" class="active">Backups</a></li>
+                <li><a href="map.html">Map</a></li>
+                <li><a href="webhooks.html">Webhooks</a></li>
+                <li><a href="analytics.html">Analytics</a></li>
+                <li><a href="notifications.html">Notifications</a></li>
+                <li><a href="cicd.html">CI/CD</a></li>
+                <li><a href="user-management.html">Users</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button id="theme-toggle" class="btn btn-secondary" aria-label="Toggle theme">
+                    🌙 Dark Mode
+                </button>
+                <button id="logout-btn" class="btn btn-danger">Logout</button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Backup, Restore & Migration</h2>
+                <p>Manage server backups, restore from backups, and migrate your server data</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="backups">Backups</button>
+                <button class="tab" data-tab="restore">Restore</button>
+                <button class="tab" data-tab="migration">Migration</button>
+                <button class="tab" data-tab="history">History</button>
+            </div>
+
+            <!-- Backups Tab -->
+            <div id="backups-tab" class="tab-content active">
+                <div class="create-backup-form">
+                    <h3>Create New Backup</h3>
+                    <form id="create-backup-form">
+                        <div class="form-group">
+                            <label for="backup-name">Backup Name *</label>
+                            <input type="text" id="backup-name" name="name" required 
+                                   placeholder="e.g., Daily Backup, Pre-Update Backup">
+                        </div>
+                        <div class="form-group">
+                            <label for="backup-type">Backup Type *</label>
+                            <select id="backup-type" name="type" required>
+                                <option value="full">Full (World + Plugins + Config)</option>
+                                <option value="world">World Only</option>
+                                <option value="plugins">Plugins Only</option>
+                                <option value="config">Config Only</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="retention-policy">Retention Policy *</label>
+                            <select id="retention-policy" name="retentionPolicy" required>
+                                <option value="daily">Daily (7 days)</option>
+                                <option value="weekly">Weekly (30 days)</option>
+                                <option value="monthly">Monthly (90 days)</option>
+                                <option value="permanent">Permanent</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Create Backup</button>
+                        </div>
+                    </form>
+                </div>
+
+                <h3>Recent Backups</h3>
+                <div id="backups-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📦</div>
+                        <p>No backups yet. Create your first backup above!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restore Tab -->
+            <div id="restore-tab" class="tab-content">
+                <div class="alert alert-warning">
+                    <strong>⚠️ Warning:</strong> Restoring a backup will replace current server data. 
+                    A pre-restore backup will be created automatically for safety.
+                </div>
+
+                <h3>Select Backup to Restore</h3>
+                <div id="restore-backups-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔄</div>
+                        <p>No backups available for restore</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Migration Tab -->
+            <div id="migration-tab" class="tab-content">
+                <div class="migration-wizard">
+                    <h3>Server Migration Tool</h3>
+                    <p>Export your server data for migration to a new host or environment, or import from a previous export.</p>
+
+                    <div class="wizard-step active" id="migration-choice">
+                        <h4>Choose Migration Action</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                            <div class="card" style="cursor: pointer; padding: 30px; text-align: center;" 
+                                 onclick="showMigrationStep('export')">
+                                <div style="font-size: 48px; margin-bottom: 12px;">📤</div>
+                                <h4>Export Server</h4>
+                                <p>Create a complete backup for migration to another server</p>
+                            </div>
+                            <div class="card" style="cursor: pointer; padding: 30px; text-align: center;" 
+                                 onclick="showMigrationStep('import')">
+                                <div style="font-size: 48px; margin-bottom: 12px;">📥</div>
+                                <h4>Import Server</h4>
+                                <p>Restore from a migration backup</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wizard-step" id="migration-export">
+                        <h4>Export Server Data</h4>
+                        <form id="migration-export-form">
+                            <div class="form-group">
+                                <label for="export-name">Export Name</label>
+                                <input type="text" id="export-name" name="name" 
+                                       placeholder="e.g., Migration to New Host">
+                            </div>
+                            <div class="alert alert-info">
+                                This will create a complete backup including world, plugins, and configuration files.
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="showMigrationStep('choice')">
+                                    Back
+                                </button>
+                                <button type="submit" class="btn btn-primary">Create Export</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="wizard-step" id="migration-import">
+                        <h4>Import Server Data</h4>
+                        <div class="alert alert-danger">
+                            <strong>⚠️ Critical Warning:</strong> This will completely replace your current server data!
+                        </div>
+                        <div id="migration-import-list">
+                            <p>Select a migration backup to import:</p>
+                        </div>
+                        <div class="wizard-nav">
+                            <button type="button" class="btn btn-secondary" onclick="showMigrationStep('choice')">
+                                Back
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="history-tab" class="tab-content">
+                <h3>Job History</h3>
+                <div class="tabs" style="border-bottom: 1px solid var(--border-color); margin-bottom: 20px;">
+                    <button class="tab active" data-subtab="backup-history">Backups</button>
+                    <button class="tab" data-subtab="restore-history">Restores</button>
+                    <button class="tab" data-subtab="migration-history">Migrations</button>
+                </div>
+
+                <div id="backup-history" class="tab-content active">
+                    <div id="backup-history-list"></div>
+                </div>
+
+                <div id="restore-history" class="tab-content">
+                    <div id="restore-history-list"></div>
+                </div>
+
+                <div id="migration-history" class="tab-content">
+                    <div id="migration-history-list"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Backup Preview</h3>
+                <button class="modal-close" onclick="closePreviewModal()">&times;</button>
+            </div>
+            <div id="preview-content"></div>
+        </div>
+    </div>
+
+    <!-- Restore Confirmation Modal -->
+    <div id="restore-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Restore</h3>
+                <button class="modal-close" onclick="closeRestoreModal()">&times;</button>
+            </div>
+            <div id="restore-content">
+                <div class="alert alert-warning">
+                    <strong>⚠️ Warning:</strong> This will replace your current server data.
+                    A pre-restore backup will be created automatically.
+                </div>
+                <p>Are you sure you want to restore from this backup?</p>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeRestoreModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirm-restore-btn">Restore</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Scripts -->
+    <script src="js/themeManager.js"></script>
+    <script src="js/accessibility.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/backups.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

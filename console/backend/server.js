@@ -542,6 +542,11 @@ async function initializeServices() {
     await automationService.initialize();
     console.log('[Startup] ✓ Automation service initialized');
     
+    // Initialize backup service
+    const backupService = require('./services/backupService');
+    await backupService.initialize();
+    console.log('[Startup] ✓ Backup service initialized');
+    
     // Initialize webhook services
     const webhookService = require('./services/webhookService');
     await webhookService.initialize();

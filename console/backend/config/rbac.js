@@ -66,6 +66,9 @@ const PERMISSIONS = {
     BACKUP_DELETE: 'backup:delete',
     BACKUP_DOWNLOAD: 'backup:download',
     BACKUP_VIEW: 'backup:view',
+    BACKUP_SCHEDULE: 'backup:schedule',
+    BACKUP_MIGRATE_EXPORT: 'backup:migrate:export',
+    BACKUP_MIGRATE_IMPORT: 'backup:migrate:import',
     
     // Plugin Management
     PLUGIN_INSTALL: 'plugin:install',
@@ -178,12 +181,15 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.PLAYER_VIEW_INVENTORY,
         PERMISSIONS.PLAYER_ACTION_HISTORY,
         
-        // Backup Management
+        // Backup Management (full access)
         PERMISSIONS.BACKUP_CREATE,
         PERMISSIONS.BACKUP_RESTORE,
         PERMISSIONS.BACKUP_DELETE,
         PERMISSIONS.BACKUP_DOWNLOAD,
         PERMISSIONS.BACKUP_VIEW,
+        PERMISSIONS.BACKUP_SCHEDULE,
+        PERMISSIONS.BACKUP_MIGRATE_EXPORT,
+        PERMISSIONS.BACKUP_MIGRATE_IMPORT,
         
         // Plugin Management (full)
         PERMISSIONS.PLUGIN_INSTALL,

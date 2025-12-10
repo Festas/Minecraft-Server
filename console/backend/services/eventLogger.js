@@ -81,6 +81,7 @@ const EVENT_TYPES = {
     
     // Backup events
     BACKUP_CREATED: 'backup.created',
+    BACKUP_COMPLETED: 'backup.completed',
     BACKUP_RESTORED: 'backup.restored',
     BACKUP_DELETED: 'backup.deleted',
     BACKUP_FAILED: 'backup.failed',
