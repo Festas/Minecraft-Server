@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI/CD Dashboard - Minecraft Console</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme-light.css" data-theme="light">
+    <link rel="stylesheet" href="css/accessibility.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <h1>Minecraft Console</h1>
+        </div>
+        <ul class="nav-menu" role="navigation" aria-label="Main navigation">
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="plugins-v2.html">Plugins</a></li>
+            <li><a href="automation.html">Automation</a></li>
+            <li><a href="analytics.html">Analytics</a></li>
+            <li><a href="map.html">Map</a></li>
+            <li><a href="webhooks.html">Webhooks</a></li>
+            <li><a href="cicd.html" class="active">CI/CD</a></li>
+            <li><a href="user-management.html">Users</a></li>
+            <li><a href="notifications.html">Notifications</a></li>
+        </ul>
+        <button id="logout-btn" class="btn-danger">Logout</button>
+    </nav>
+
+    <main class="main-content">
+        <header class="page-header">
+            <h2>CI/CD Dashboard</h2>
+            <p class="subtitle">Monitor build, test, and deployment status</p>
+        </header>
+
+        <!-- Status Overview -->
+        <section class="section">
+            <h3>Status Overview</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Successful Builds</div>
+                        <div class="stat-value" id="success-count">-</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Failed Builds</div>
+                        <div class="stat-value" id="failed-count">-</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-info">
+                        <div class="stat-label">In Progress</div>
+                        <div class="stat-value" id="inprogress-count">-</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <div class="stat-label">Total Runs</div>
+                        <div class="stat-value" id="total-runs">-</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Workflow Runs -->
+        <section class="section">
+            <div class="section-header">
+                <h3>Recent Workflow Runs</h3>
+                <div class="section-actions">
+                    <button id="refresh-btn" class="btn-secondary">
+                        <span class="icon">🔄</span> Refresh
+                    </button>
+                    <select id="workflow-filter" class="form-select">
+                        <option value="">All Workflows</option>
+                    </select>
+                    <select id="status-filter" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="completed">Completed</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="queued">Queued</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="runs-container" class="data-table-container">
+                <div class="loading-spinner" id="loading-spinner">Loading workflow runs...</div>
+            </div>
+        </section>
+
+        <!-- Workflow Run Details Modal -->
+        <div id="run-details-modal" class="modal" style="display: none;">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3>Workflow Run Details</h3>
+                    <button class="modal-close" onclick="closeRunDetailsModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="run-details-content">
+                        <div class="loading-spinner">Loading details...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Artifacts Modal -->
+        <div id="artifacts-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Build Artifacts</h3>
+                    <button class="modal-close" onclick="closeArtifactsModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="artifacts-content">
+                        <div class="loading-spinner">Loading artifacts...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/themeManager.js"></script>
+    <script src="js/accessibility.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/cicd.js"></script>
+</body>
+</html>
