@@ -1,9 +1,9 @@
 /* Map Dashboard Styles */
 
-/* Map Layout */
+/* Map Layout - Now inside main-content */
 .map-layout {
     display: flex;
-    height: calc(100vh - 70px); /* Full height minus header */
+    height: 100%; /* Take full height of main-content */
     overflow: hidden;
 }
 
@@ -504,4 +504,12 @@
     .map-content {
         height: 100vh;
     }
+}
+
+/* Make main-content take full height for map page */
+.main-content:has(.map-layout) {
+    display: flex;
+    flex-direction: column;
+    padding: 0; /* Remove padding for map to use full space */
+    overflow: hidden;
 }
