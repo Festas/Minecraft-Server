@@ -1,4 +1,33 @@
+← [Back to Features](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Build Competition System for festas_builds
+
+A complete guide to running engaging build competitions on the festas_builds Minecraft server using PlotSquared and custom management tools.
+
+**Setup Difficulty:** ⭐⭐ Medium  
+**Target Audience:** Server Administrators & Players  
+**Estimated Setup Time:** 45-60 minutes
+
+---
+
+## 📋 Dependencies
+
+**Required:**
+- PlotSquared (auto-installable via plugins.json)
+- FastAsyncWorldEdit (FAWE) - Required dependency for PlotSquared
+
+**Optional:**
+- DiscordSRV (for Discord integration)
+- LuckPerms (for permission-based rewards)
+- Multiverse-Core (for competition world management)
+
+**Additional Resources:**
+- Competition manager script (`scripts/competition-manager.sh`)
+- Theme library (`competition-templates/weekly-themes.md`)
+
+---
 
 A complete guide to running engaging build competitions on the festas_builds Minecraft server using PlotSquared and custom management tools.
 
@@ -564,7 +593,7 @@ Post to Discord when:
 
 ### Cosmetics System
 
-Winners automatically unlock exclusive cosmetics (see COSMETICS.md).
+Winners automatically unlock exclusive cosmetics (see [cosmetics.md](./cosmetics.md)).
 
 ### Rank Progression
 
@@ -615,3 +644,27 @@ Competition wins contribute to Legend rank requirements (see ranks-rewards.yml).
 **Ready to run amazing build competitions?** Follow this guide, be creative with themes, and watch your community thrive!
 
 *For questions or improvements, submit a PR or contact server staff.*
+
+---
+
+## 📸 Screenshots
+
+### Adding Screenshots
+
+To add screenshots to this documentation:
+
+1. Take screenshots of your competition setup
+2. Save them in `docs/features/images/build-competitions/`
+3. Add references in this section
+
+**Recommended Screenshots:**
+- Competition plot overview
+- Voting interface
+- Competition manager script in action
+- Example builds from past competitions
+- Discord integration announcements
+
+
+---
+
+← [Back to Features](./README.md) | [Documentation Home](../README.md)

@@ -1,4 +1,32 @@
+← [Back to Features](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # festas_builds Community Server - Growth Roadmap
+
+This roadmap outlines the transformation of the festas_builds Minecraft server from a small friends-only server to a full-scale community server. Each phase builds upon the previous one, with clear milestones and timelines.
+
+**Document Type:** ⭐ Easy (Planning & Reference)  
+**Target Audience:** Everyone (Server Staff, Players, Contributors)  
+**Purpose:** Strategic planning and feature tracking
+
+---
+
+## 📋 About This Document
+
+This is a **living document** that tracks:
+- Completed features and implementations
+- Upcoming features and improvements
+- Long-term vision and goals
+- Resource requirements by phase
+- Success criteria and metrics
+
+**Last Updated:** 2025-12-03  
+**Current Phase:** Phase 2 (Community Features)  
+**Maintained By:** festas_builds team
+
+---
+
 
 This roadmap outlines the transformation of the festas_builds Minecraft server from a small friends-only server to a full-scale community server. Each phase builds upon the previous one, with clear milestones and timelines.
 
@@ -408,3 +436,9 @@ This roadmap outlines the transformation of the festas_builds Minecraft server f
 ---
 
 *This roadmap is a living document. Update it as the server grows and adapts to community needs.*
+
+---
+
+*This roadmap is regularly updated. Check back for the latest status and upcoming features.*
+
+← [Back to Features](./README.md) | [Documentation Home](../README.md)

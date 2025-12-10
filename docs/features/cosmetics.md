@@ -1,4 +1,33 @@
+← [Back to Features](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Cosmetics & Rewards System for festas_builds
+
+Complete guide to the cosmetics system - unlock hats, particles, and rewards through gameplay!
+
+**Setup Difficulty:** ⭐⭐ Medium  
+**Target Audience:** Server Administrators & Players  
+**Estimated Setup Time:** 30-45 minutes
+
+---
+
+## 📋 Dependencies
+
+**Required:**
+- PlayerParticles (auto-installable via plugins.json)
+- LuckPerms (for rank-based permissions)
+
+**Manual Installation Required:**
+- HMCCosmetics (download from SpigotMC)
+- HeadDatabase (download from SpigotMC)
+
+**Configuration Files:**
+- `config/cosmetics/particle-effects.yml`
+- `config/cosmetics/cosmetics-config.yml`
+- `config/cosmetics/ranks-rewards.yml`
+
+---
 
 Complete guide to the cosmetics system - unlock hats, particles, and rewards through gameplay!
 
@@ -169,7 +198,7 @@ Win build competitions to unlock:
 - Legend rank
 - Special effects
 
-See [BUILD-COMPETITIONS.md](BUILD-COMPETITIONS.md) for details.
+See [build-competitions.md](./build-competitions.md) for details.
 
 ### Through Achievements
 
@@ -261,3 +290,27 @@ A: Yes - use `/cosmetics` GUI to preview hats and items.
 **Ready to customize your appearance?** Start playing, rank up, and unlock amazing cosmetics!
 
 *For support or suggestions, contact server staff or submit a GitHub PR.*
+
+---
+
+## 📸 Screenshots
+
+### Adding Screenshots
+
+To add screenshots to this documentation:
+
+1. Take screenshots of the cosmetics system in action
+2. Save them in `docs/features/images/cosmetics/`
+3. Add references in this section
+
+**Recommended Screenshots:**
+- Particle effects showcase
+- Cosmetics menu/GUI
+- Different rank cosmetics
+- Player with multiple cosmetics equipped
+- Competition winner cosmetics
+
+
+---
+
+← [Back to Features](./README.md) | [Documentation Home](../README.md)

@@ -1,6 +1,30 @@
+← [Back to Features](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # BlueMap Setup Guide for festas_builds Server
 
 BlueMap is a powerful 3D web-based live map for your Minecraft server. Players can explore your world in real-time through their web browser!
+
+**Setup Difficulty:** ⭐⭐ Medium  
+**Target Audience:** Server Administrators  
+**Estimated Setup Time:** 30-60 minutes
+
+---
+
+## 📋 Dependencies
+
+**Required Plugins:**
+- BlueMap (auto-installable via plugins.json)
+
+**Required Software:**
+- Nginx (for reverse proxy)
+- Certbot (for SSL/HTTPS)
+
+**Server Requirements:**
+- At least 4GB RAM (rendering is memory-intensive)
+- Port 8100 accessible (or use reverse proxy)
+- Domain or subdomain (e.g., `map.festasbuilds.com`)
 
 ---
 
@@ -22,6 +46,8 @@ BlueMap is a powerful 3D web-based live map for your Minecraft server. Players c
 
 ## Overview
 
+### For Admins
+
 **BlueMap** creates a beautiful 3D map of your Minecraft worlds that can be viewed in a web browser. Features include:
 
 - 🗺️ Real-time 3D world rendering
@@ -32,6 +58,15 @@ BlueMap is a powerful 3D web-based live map for your Minecraft server. Players c
 - 🖼️ High-resolution tile rendering
 
 **Demo:** https://bluecolored.de/bluemap
+
+### For Players
+
+Once set up, players can:
+- View the server world in 3D from their browser
+- See real-time player locations
+- Navigate to find interesting builds
+- Share coordinates with friends
+- Explore on mobile devices
 
 ---
 
@@ -49,7 +84,7 @@ Before starting, ensure you have:
 
 ## Installation
 
-### 1. Enable BlueMap Plugin
+### Step 1: Enable BlueMap Plugin
 
 Edit `plugins.json` and enable BlueMap:
 
@@ -65,7 +100,7 @@ Edit `plugins.json` and enable BlueMap:
 }
 ```
 
-### 2. Install the Plugin
+### Step 2: Install the Plugin
 
 Run the plugin installer:
 
@@ -76,7 +111,7 @@ cd /home/deploy/minecraft-server
 
 This will automatically download the latest BlueMap plugin.
 
-### 3. Restart Server
+### Step 3: Restart Server
 
 ```bash
 sudo systemctl restart minecraft.service
@@ -88,16 +123,16 @@ BlueMap will generate default configuration files on first start.
 
 ## Configuration
 
+### Configuration Quick Start
+
 BlueMap creates several config files. We've provided templates in `config/bluemap/` that you should copy to your server.
 
-### Configuration Files Location
-
-On your server, BlueMap configs are in:
+**Configuration Files Location:**
 ```
 /home/deploy/minecraft-server/plugins/BlueMap/
 ```
 
-### Copy Template Configurations
+**Copy Template Configurations:**
 
 ```bash
 # Copy our templates to the BlueMap plugin folder
@@ -381,6 +416,30 @@ BlueMap auto-updates regions as they change, but force a re-render periodically:
 
 ---
 
+## 📸 Screenshots
+
+### Adding Screenshots
+
+To add screenshots to this documentation:
+
+1. Take screenshots of the BlueMap interface
+2. Save them in `docs/features/images/bluemap/`
+3. Add references in this section:
+
+```markdown
+![BlueMap Overview](./images/bluemap/overview.png)
+![Player Markers](./images/bluemap/player-markers.png)
+![Mobile View](./images/bluemap/mobile-view.png)
+```
+
+**Recommended Screenshots:**
+- Main map view with player markers
+- Mobile interface
+- Different map styles
+- Configuration examples
+
+---
+
 ## Troubleshooting
 
 ### Map Not Loading
@@ -586,3 +645,7 @@ Map tiles (web files):  /home/deploy/minecraft-server/bluemap/web/
 **Ready to share your world?** Follow the steps above, and your festas_builds community will be able to explore the server in beautiful 3D!
 
 *For issues or improvements, submit a PR or open an issue on GitHub.*
+
+---
+
+← [Back to Features](./README.md) | [Documentation Home](../README.md)

@@ -1,4 +1,52 @@
+← [Back to Features](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Welcome & Tutorial System for festas_builds
+
+Complete guide to setting up and managing the new player welcome experience.
+
+**Setup Difficulty:** ⭐⭐ Medium  
+**Target Audience:** Server Administrators  
+**Estimated Setup Time:** 30-45 minutes
+
+---
+
+## 📋 Dependencies
+
+**Required:**
+- EssentialsX (for kits and commands)
+- LuckPerms (for permissions)
+
+**Optional:**
+- Citizens (for tutorial NPCs)
+- DeluxeHub (for hub management)
+- Custom welcome plugin
+
+**Configuration Files:**
+- `config/welcome/join-messages.yml`
+- `config/welcome/starter-kit.yml`
+- `config/welcome/tutorial-config.yml`
+- `config/welcome/rules.yml`
+
+---
+
+## For Players
+
+### What to Expect
+
+When you join for the first time:
+- Custom welcome message
+- Starter kit with tools and materials
+- Interactive 5-step tutorial
+- Server guide book
+- Rules and guidelines
+
+### For Admins
+
+This guide covers configuring the welcome experience for new players.
+
+---
 
 Complete guide to setting up and managing the new player welcome experience.
 
@@ -366,3 +414,28 @@ Check:
 **Ready to welcome new players?** Follow this guide to create an amazing first impression!
 
 *For improvements or issues, submit a PR or contact server staff.*
+
+---
+
+## 📸 Screenshots
+
+### Adding Screenshots
+
+To add screenshots to this documentation:
+
+1. Take screenshots of the welcome system
+2. Save them in `docs/features/images/welcome-system/`
+3. Add references in this section
+
+**Recommended Screenshots:**
+- Welcome message display
+- Starter kit contents
+- Tutorial NPC interactions
+- Tutorial step locations
+- Rules book/display
+- Discord integration
+
+
+---
+
+← [Back to Features](./README.md) | [Documentation Home](../README.md)

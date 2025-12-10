@@ -587,8 +587,8 @@ sudo journalctl -u minecraft.service -f  # Live logs
 ## Resources
 
 - **Plugin Docs**: See PLUGINS.md
-- **Competition Guide**: BUILD-COMPETITIONS.md
-- **Feature Docs**: FEATURES.md
+- **Competition Guide**: [../features/build-competitions.md](../features/build-competitions.md)
+- **Feature Docs**: [../features/overview.md](../features/overview.md)
 - **Troubleshooting**: docs/getting-started/deployment.md
 
 ---

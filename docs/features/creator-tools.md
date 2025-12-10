@@ -1,4 +1,46 @@
+← [Back to Features](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Content Creator Tools for festas_builds
+
+Complete guide for content creators to film, record, and create amazing content on the server.
+
+**Setup Difficulty:** ⭐⭐ Medium  
+**Target Audience:** Content Creators & Server Administrators  
+**Estimated Setup Time:** 30-45 minutes
+
+---
+
+## 📋 Dependencies
+
+**Required:**
+- SuperVanish (auto-installable via plugins.json)
+- WorldEdit (already installed)
+- LuckPerms (for creator rank permissions)
+
+**Optional:**
+- AdvancedReplay (for server-side recording)
+- Citizens (for NPC guides)
+- Camera plugins
+
+**Configuration Files:**
+- `config/creator-tools/vanish-config.yml`
+- `config/creator-tools/replay-config.yml`
+- `config/creator-tools/creator-permissions.yml`
+- `config/creator-tools/filming-kit.yml`
+
+---
+
+## For Players (Content Creators)
+
+This section is for approved content creators who have been granted the Creator rank.
+
+## For Admins
+
+This section covers setup and management of creator tools.
+
+---
 
 Complete guide for content creators to film, record, and create amazing content on the server.
 
@@ -586,3 +628,28 @@ Check:
 **Ready to create amazing content?** Use these tools wisely, credit the server, and make festas_builds proud!
 
 *For creator support, contact staff or join #creators channel in Discord.*
+
+---
+
+## 📸 Screenshots
+
+### Adding Screenshots
+
+To add screenshots to this documentation:
+
+1. Take screenshots of creator tools in action
+2. Save them in `docs/features/images/creator-tools/`
+3. Add references in this section
+
+**Recommended Screenshots:**
+- Vanish mode interface
+- Filming kit GUI
+- Replay system controls
+- Camera path creation
+- Time/weather controls
+- Before/after cinematics
+
+
+---
+
+← [Back to Features](./README.md) | [Documentation Home](../README.md)

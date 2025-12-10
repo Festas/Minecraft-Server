@@ -1,4 +1,43 @@
+← [Back to Features](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Minecraft Server Website Documentation
+
+This document explains the website setup for the festas_builds Minecraft server, available at `mc.festas-builds.com`.
+
+**Setup Difficulty:** ⭐⭐ Medium  
+**Target Audience:** Server Administrators & Developers  
+**Estimated Setup Time:** 45-90 minutes
+
+---
+
+## 📋 Dependencies
+
+**Required:**
+- Docker (for containerization)
+- Nginx (web server within container)
+- Caddy (reverse proxy - from Link-in-Bio repo)
+- Domain name with DNS access
+
+**Optional:**
+- GitHub Actions (for automated deployment)
+- Analytics tools (Google Analytics, Plausible, etc.)
+
+**Configuration Files:**
+- `docker-compose.web.yml` - Docker Compose configuration
+- `website/Dockerfile` - Container build instructions
+- `website/nginx.conf` - Nginx web server configuration
+- `.github/workflows/deploy-website.yml` - CI/CD pipeline
+
+---
+
+## For Admins
+
+This guide covers deploying and managing the server website.
+
+---
+
 
 This document explains the website setup for the festas_builds Minecraft server, available at `mc.festas-builds.com`.
 
@@ -466,3 +505,28 @@ To contribute to the website:
 **Questions or issues?** Open an issue on GitHub or contact the server admin.
 
 *Last updated: December 2024*
+
+---
+
+## 📸 Screenshots
+
+### Adding Screenshots
+
+To add screenshots to this documentation:
+
+1. Take screenshots of the website
+2. Save them in `docs/features/images/website/`
+3. Add references in this section
+
+**Recommended Screenshots:**
+- Desktop homepage view
+- Mobile responsive layout
+- Features section
+- BlueMap integration
+- Server info display
+- How-to-join section
+
+
+---
+
+← [Back to Features](./README.md) | [Documentation Home](../README.md)

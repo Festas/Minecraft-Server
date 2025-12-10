@@ -1,6 +1,13 @@
+← [Back to Features](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # festas_builds Server Features
 
 Complete overview of all features available on the festas_builds community Minecraft server.
+
+**Difficulty:** ⭐ Easy (Player Reference)  
+**Audience:** Players & Administrators
 
 ---
 
@@ -14,6 +21,7 @@ The festas_builds server is a fully-featured community server designed for build
 
 **Explore the world in your browser!**
 
+### For Players
 - **3D Interactive Map** - View the server world in real-time
 - **Player Markers** - See where everyone is building
 - **Mobile Friendly** - Works on phones and tablets
@@ -22,7 +30,10 @@ The festas_builds server is a fully-featured community server designed for build
 
 **Access**: Visit `map.your-domain.com` (after setup)
 
-**Documentation**: [BLUEMAP-SETUP.md](BLUEMAP-SETUP.md)
+### For Admins
+- **Setup Difficulty:** ⭐⭐ Medium
+- **Dependencies:** BlueMap plugin
+- **Documentation**: [bluemap.md](./bluemap.md)
 
 ---
 
@@ -30,16 +41,19 @@ The festas_builds server is a fully-featured community server designed for build
 
 **Weekly themed building contests!**
 
+### For Players
 - **PlotSquared Plots** - 100x100 building plots
 - **Random Themes** - 100+ theme ideas included
 - **Community Voting** - Players vote on builds
 - **Exclusive Rewards** - Winner crowns, particles, Legend rank
+- **Commands**: `/plots auto`, `/plot visit`, `/plot rate`
+
+### For Admins
+- **Setup Difficulty:** ⭐⭐ Medium
+- **Dependencies:** PlotSquared, FastAsyncWorldEdit
 - **Automated Management** - Bash script for easy management
 - **Discord Integration** - Announcements and voting
-
-**Commands**: `/plots auto`, `/plot visit`, `/plot rate`
-
-**Documentation**: [BUILD-COMPETITIONS.md](BUILD-COMPETITIONS.md)
+- **Documentation**: [build-competitions.md](./build-competitions.md)
 
 ---
 
@@ -47,19 +61,21 @@ The festas_builds server is a fully-featured community server designed for build
 
 **Unlock cosmetics through gameplay!**
 
-### Particle Effects
+### For Players
+
+#### Particle Effects
 - Flame trails, hearts, music notes
 - Dragon breath, fireworks, soul fire
 - Cherry blossoms, electric sparks
 - Legendary auras for winners
 
-### Hats & Items
+#### Hats & Items
 - Builder helmets, party hats, crowns
 - Wizard hats, halos, laurel wreaths
 - Backpacks, balloons
 - Angel wings (cosmetic)
 
-### Rank Progression
+#### Rank Progression
 ```
 Newcomer → Builder → Architect → Master Builder → Legend
    0h       10h       50h          200h           Win Comp
@@ -67,7 +83,10 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 **EULA Compliant**: All cosmetics are visual only!
 
-**Documentation**: [COSMETICS.md](COSMETICS.md)
+### For Admins
+- **Setup Difficulty:** ⭐⭐ Medium
+- **Dependencies:** PlayerParticles, HMCCosmetics, HeadDatabase, LuckPerms
+- **Documentation**: [cosmetics.md](./cosmetics.md)
 
 ---
 
@@ -75,16 +94,19 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 **New player friendly!**
 
+### For Players
 - **Branded Welcome Messages** - festas_builds themed
 - **5-Step Interactive Tutorial** - Learn the basics
 - **Starter Kit** - Diamond tools & building materials
 - **Server Guide Book** - In-game handbook
 - **Tutorial NPCs** - Interactive guides
 - **Completion Rewards** - Diamonds & emeralds
+- **Commands**: `/tutorial`, `/rules`, `/discord`
 
-**Commands**: `/tutorial`, `/rules`, `/discord`
-
-**Documentation**: [WELCOME-SYSTEM.md](WELCOME-SYSTEM.md)
+### For Admins
+- **Setup Difficulty:** ⭐⭐ Medium
+- **Dependencies:** Citizens, EssentialsX
+- **Documentation**: [welcome-system.md](./welcome-system.md)
 
 ---
 
@@ -92,29 +114,34 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 **Professional filming capabilities!**
 
-### Vanish Mode
+### For Players (Creators)
+
+#### Vanish Mode
 - Invisible to players while filming
 - Silent join/quit
 - No interruptions
 
-### Recording System
+#### Recording System
 - Server-side replay recording
 - Camera paths for cinematics
 - Playback controls
 
-### Environmental Control
+#### Environmental Control
 - Time control (`/time set`)
 - Weather control (`/weather`)
 - Freeze time for consistent lighting
 
-### Filming Kit
+#### Filming Kit
 - Quick access tools
 - Preset configurations
 - Teleport pearls
 
 **Creator Rank**: Apply via Discord
 
-**Documentation**: [CREATOR-TOOLS.md](CREATOR-TOOLS.md)
+### For Admins
+- **Setup Difficulty:** ⭐⭐ Medium
+- **Dependencies:** SuperVanish, WorldEdit, AdvancedReplay (optional)
+- **Documentation**: [creator-tools.md](./creator-tools.md)
 
 ---
 
@@ -122,12 +149,16 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 **Protect your builds from grief!**
 
+### For Players
 - **GriefPrevention** - Claim land with golden shovel
 - **WorldGuard** - Region protection
 - **CoreProtect** - Block logging & rollback
 - **Trust System** - Add friends to your claims
+- **Commands**: `/claim`, `/trust`, `/unclaim`
 
-**Commands**: `/claim`, `/trust`, `/unclaim`
+### For Admins
+- **Setup Difficulty:** ⭐⭐ Medium
+- **Dependencies:** GriefPrevention, WorldGuard, CoreProtect
 
 ---
 
@@ -135,6 +166,7 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 **Java + Bedrock Edition support!**
 
+### For Players
 - **Geyser** - Bedrock protocol translation
 - **Floodgate** - Bedrock authentication
 - **Mobile Support** - Play on phones/tablets
@@ -143,7 +175,10 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 **Bedrock Port**: 19132 (UDP)
 
-**Documentation**: [docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md)
+### For Admins
+- **Setup Difficulty:** ⭐⭐ Medium
+- **Dependencies:** Geyser, Floodgate
+- **Documentation**: [../getting-started/bedrock-setup.md](../getting-started/bedrock-setup.md)
 
 ---
 
@@ -151,35 +186,45 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 **Server-Discord chat bridge!**
 
+### For Players
 - **DiscordSRV** - Chat synchronization
 - **Join/Leave Announcements** - Know who's online
+- **Rich Embeds** - Beautiful formatted messages
+- **Join Discord**: `/discord` command in-game
+
+### For Admins
+- **Setup Difficulty:** ⭐⭐ Medium
+- **Dependencies:** DiscordSRV
 - **Console Logging** - Staff monitoring
 - **Commands from Discord** - Limited management
-- **Rich Embeds** - Beautiful formatted messages
-
-**Join Discord**: `/discord` command in-game
 
 ---
 
 ## 🔧 9. Essential Tools
 
-### WorldEdit & FAWE
+### For Players
+
+#### WorldEdit & FAWE
 - In-game world editing
 - Copy/paste builds
 - Terrain generation
 - Available to Architect+ ranks
 
-### EssentialsX
+#### EssentialsX
 - Home system (`/home`, `/sethome`)
 - Teleportation (`/tpa`, `/spawn`)
 - Warp system (`/warp`)
 - Kits & economy
 
-### LuckPerms
+#### LuckPerms
 - Advanced permissions
 - Rank management
 - Permission groups
 - Prefix/suffix support
+
+### For Admins
+- **Setup Difficulty:** ⭐ Easy to ⭐⭐ Medium
+- **Dependencies:** WorldEdit, FastAsyncWorldEdit, EssentialsX, LuckPerms
 
 ---
 
@@ -187,13 +232,17 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 **Optional player-driven economy!**
 
+### For Players
 - **Vault** - Economy API
 - **EssentialsX Economy** - Currency system
 - **Admin Shops** - Buy/sell items
 - **Player Shops** - Player-to-player trading
 - **Competition Rewards** - Earn currency
+- **Commands**: `/balance`, `/pay`, `/shop`
 
-**Commands**: `/balance`, `/pay`, `/shop`
+### For Admins
+- **Setup Difficulty:** ⭐⭐ Medium
+- **Dependencies:** Vault, EssentialsX
 
 ---
 
@@ -238,22 +287,22 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 All features are fully documented:
 
-- **[BLUEMAP-SETUP.md](BLUEMAP-SETUP.md)** - Live web map setup
-- **[BUILD-COMPETITIONS.md](BUILD-COMPETITIONS.md)** - Competition system
-- **[COSMETICS.md](COSMETICS.md)** - Cosmetics & rewards
-- **[WELCOME-SYSTEM.md](WELCOME-SYSTEM.md)** - New player experience
-- **[CREATOR-TOOLS.md](CREATOR-TOOLS.md)** - Content creation tools
-- **[docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md)** - Cross-platform play
-- **[PLUGINS.md](PLUGINS.md)** - Complete plugin list
-- **[docs/getting-started/deployment.md](docs/getting-started/deployment.md)** - Server deployment
-- **[ROADMAP.md](ROADMAP.md)** - Future plans
-- **[ADMIN-GUIDE.md](ADMIN-GUIDE.md)** - Administration guide
+- **[bluemap.md](./bluemap.md)** - Live web map setup
+- **[build-competitions.md](./build-competitions.md)** - Competition system
+- **[cosmetics.md](./cosmetics.md)** - Cosmetics & rewards
+- **[welcome-system.md](./welcome-system.md)** - New player experience
+- **[creator-tools.md](./creator-tools.md)** - Content creation tools
+- **[../getting-started/bedrock-setup.md](../getting-started/bedrock-setup.md)** - Cross-platform play
+- **[../admin/plugins.md](../admin/plugins.md)** - Complete plugin list
+- **[../getting-started/deployment.md](../getting-started/deployment.md)** - Server deployment
+- **[roadmap.md](./roadmap.md)** - Future plans
+- **[../admin/admin-guide.md](../admin/admin-guide.md)** - Administration guide
 
 ---
 
 ## 🚀 Planned Features
 
-See [ROADMAP.md](ROADMAP.md) for upcoming features:
+See [roadmap.md](./roadmap.md) for upcoming features:
 
 - Server website
 - Voting integration
@@ -323,3 +372,7 @@ All features are **fully Mojang EULA compliant**:
 **Ready to explore all these features?** Join the festas_builds server today!
 
 *This server represents months of configuration and optimization. Enjoy!*
+
+---
+
+← [Back to Features](./README.md) | [Documentation Home](../README.md)
