@@ -344,11 +344,11 @@ Go to Console → Type: /say Server restarting in 5 minutes!
 - [Full Admin Guide](./admin-guide.md) - Comprehensive administration guide
 - [Server Management](./server-management.md) - Technical server management
 - [Plugin Guide](./plugins.md) - Plugin documentation
-- [Troubleshooting](./getting-started/deployment.md#troubleshooting) - Common issues
+- [Troubleshooting](../getting-started/deployment.md#troubleshooting) - Common issues
 
 ### Quick References
-- [Launch Checklist](./getting-started/launch-checklist.md) - Pre-launch validation
-- [QA Checklist](./getting-started/qa-checklist.md) - Quality assurance
+- [Launch Checklist](../getting-started/launch-checklist.md) - Pre-launch validation
+- [QA Checklist](../getting-started/qa-checklist.md) - Quality assurance
 - [Security Policy](./security.md) - Security guidelines
 
 ### Support Channels
@@ -456,3 +456,16 @@ Good luck, and enjoy being part of the admin team! 🎮
 
 **Last Updated:** December 2024  
 **Questions?** Contact your team lead or check documentation
+
+---
+
+## Related Documents
+
+- [Admin Guide](./admin-guide.md) - Daily administration tasks
+- [Server Management](./server-management.md) - Technical operations
+- [Console Setup](./console-setup.md) - Web console configuration
+- [Security Policy](./security.md) - Security guidelines
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+- [Documentation Hub](../README.md) - All documentation
+
+[← Back to Admin Guide](./README.md)

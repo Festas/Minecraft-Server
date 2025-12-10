@@ -291,7 +291,7 @@ ls -lh /home/deploy/minecraft-backups/
 **Server is down?** → [Troubleshooting Guide](../troubleshooting/)  
 **Need to rollback?** → [Upgrade Guide - Rollback](./upgrade-guide.md#rollback-procedures)  
 **Security incident?** → [Security Policy - Incident Response](./security.md#incident-response)  
-**Data corruption?** → [Migration Guide - Restore](./migration.md#restore-procedures)
+**Data corruption?** → [Upgrade Guide - Rollback](./upgrade-guide.md#rollback-procedures)
 
 ---
 
