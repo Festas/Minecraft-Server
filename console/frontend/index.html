@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/buttons.css">
     <link rel="stylesheet" href="css/indicators.css">
     <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
@@ -179,13 +180,13 @@
                 <!-- Dashboard Section -->
                 <section id="dashboard" class="content-section active">
                     <!-- Page Header -->
-                    <div class="page-header">
+                    <div class="page-header animate-fadeInUp">
                         <h1 class="page-title">Dashboard</h1>
                     </div>
 
                     <!-- Server Status Section -->
                     <div class="section">
-                        <div class="card status-card card-full">
+                        <div class="card status-card card-full hover-lift">
                         <div class="card-header">
                             <h3 class="card-title">Server Status</h3>
                             <span id="serverStatus" class="status-indicator offline">
@@ -198,8 +199,8 @@
 
                     <!-- Metrics Section -->
                     <div class="section">
-                        <div class="card-grid">
-                        <div class="card stat-card">
+                        <div class="card-grid stagger-on-load">
+                        <div class="card stat-card hover-lift">
                             <div class="tps-meter">
                                 <div class="tps-value healthy" id="tps">20.0</div>
                                 <div class="tps-bar">
@@ -208,7 +209,7 @@
                             </div>
                             <div class="stat-label">TPS</div>
                         </div>
-                        <div class="card stat-card">
+                        <div class="card stat-card hover-lift">
                             <div class="player-counter">
                                 <span class="player-current" id="playerCurrent">0</span>
                                 <span class="player-separator">/</span>
@@ -216,7 +217,7 @@
                             </div>
                             <div class="stat-label">Players</div>
                         </div>
-                        <div class="card stat-card">
+                        <div class="card stat-card hover-lift">
                             <div class="uptime-display">
                                 <svg class="uptime-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -230,8 +231,8 @@
 
                     <!-- Resource Usage Section -->
                     <div class="section">
-                        <div class="card-grid">
-                        <div class="card">
+                        <div class="card-grid stagger-on-load">
+                        <div class="card hover-lift">
                             <div class="usage-bar">
                                 <div class="usage-header">
                                     <span class="usage-label">Memory Usage</span>
@@ -242,7 +243,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card">
+                        <div class="card hover-lift">
                             <div class="usage-bar">
                                 <div class="usage-header">
                                     <span class="usage-label">CPU Usage</span>
@@ -253,11 +254,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card stat-card">
+                        <div class="card stat-card hover-lift">
                             <div class="stat-value" id="mcVersion" style="font-size: var(--text-xl);">--</div>
                             <div class="stat-label">Minecraft Version</div>
                         </div>
-                        <div class="card stat-card">
+                        <div class="card stat-card hover-lift">
                             <div class="stat-value" id="worldSize" style="font-size: var(--text-xl);">--</div>
                             <div class="stat-label">World Size</div>
                         </div>
@@ -266,18 +267,18 @@
 
                     <!-- Quick Actions Section -->
                     <div class="section">
-                        <div class="card card-full">
+                        <div class="card card-full hover-lift">
                         <div class="card-header">
                             <h3 class="card-title">Quick Actions</h3>
                         </div>
                         <div class="card-body">
                             <div class="quick-actions">
-                                <button class="btn btn-success quick-action-btn" id="startBtn">▶️ Start</button>
-                                <button class="btn btn-danger quick-action-btn" id="stopBtn">⏹️ Stop</button>
-                                <button class="btn btn-warning quick-action-btn" id="restartBtn">🔄 Restart</button>
-                                <button class="btn btn-info quick-action-btn" id="saveBtn">💾 Save</button>
-                                <button class="btn btn-info quick-action-btn" id="backupBtn">📦 Backup</button>
-                                <button class="btn btn-danger quick-action-btn" id="killBtn">🔌 Kill</button>
+                                <button class="btn btn-success quick-action-btn ripple" id="startBtn">▶️ Start</button>
+                                <button class="btn btn-danger quick-action-btn ripple" id="stopBtn">⏹️ Stop</button>
+                                <button class="btn btn-warning quick-action-btn ripple" id="restartBtn">🔄 Restart</button>
+                                <button class="btn btn-info quick-action-btn ripple" id="saveBtn">💾 Save</button>
+                                <button class="btn btn-info quick-action-btn ripple" id="backupBtn">📦 Backup</button>
+                                <button class="btn btn-danger quick-action-btn ripple" id="killBtn">🔌 Kill</button>
                             </div>
                         </div>
                         </div>
@@ -285,7 +286,7 @@
 
                     <!-- Live Log Preview Section -->
                     <div class="section">
-                        <div class="card card-full">
+                        <div class="card card-full hover-lift">
                         <div class="card-header">
                             <h3 class="card-title">Live Logs</h3>
                             <button id="pauseLogsBtn" class="btn btn-sm">⏸️ Pause</button>
@@ -469,6 +470,7 @@
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/sidebar.js"></script>
+    <script src="js/animations.js"></script>
     <script src="js/themeManager.js"></script>
     <script src="js/accessibility.js"></script>
     <script src="js/utils.js"></script>

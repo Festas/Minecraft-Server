@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/buttons.css">
     <link rel="stylesheet" href="css/indicators.css">
     <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
@@ -263,7 +264,7 @@
                     </div>
 
                     <!-- Active Jobs -->
-                    <div class="card">
+                    <div class="card hover-lift">
                         <div class="card-header">
                             <h3>⚙️ Active Jobs <span id="activeJobsCount" class="badge">0</span></h3>
                             <div class="card-actions">
@@ -276,7 +277,7 @@
                     </div>
 
                     <!-- Recent Jobs -->
-                    <div class="card">
+                    <div class="card hover-lift">
                         <div class="card-header">
                             <h3>📜 Recent Jobs</h3>
                             <div class="card-actions">
@@ -285,33 +286,33 @@
                                 <button id="showAllJobsBtn" class="btn btn-sm">View All</button>
                             </div>
                         </div>
-                        <div id="recentJobsList" class="jobs-list">
+                        <div id="recentJobsList" class="jobs-list stagger-on-load">
                             <div class="loading">Loading jobs...</div>
                         </div>
                     </div>
                     
                     <!-- Recent Activity -->
-                    <div class="card">
+                    <div class="card hover-lift">
                         <div class="card-header">
                             <h3>📊 Recent Activity</h3>
                             <div class="card-actions">
                                 <button id="refreshActivityBtn" class="btn btn-sm">🔄 Refresh</button>
                             </div>
                         </div>
-                        <div id="recentActivityList" class="activity-list">
+                        <div id="recentActivityList" class="activity-list stagger-on-load">
                             <div class="loading">Loading activity...</div>
                         </div>
                     </div>
 
                     <!-- Installed Plugins -->
-                    <div class="card">
+                    <div class="card hover-lift">
                         <div class="card-header">
                             <h3>🔌 Installed Plugins <span id="pluginCount" class="badge">0</span></h3>
                             <div class="card-actions">
                                 <button id="refreshPluginsBtn" class="btn btn-sm">🔄 Refresh</button>
                             </div>
                         </div>
-                        <div id="pluginsList" class="plugins-list">
+                        <div id="pluginsList" class="plugins-list stagger-on-load">
                             <div class="loading">Loading plugins...</div>
                         </div>
                     </div>
@@ -339,6 +340,7 @@
     <!-- Scripts -->
     <script src="js/sidebar.js"></script>
     <script src="js/themeManager.js"></script>
+    <script src="js/animations.js"></script>
     <script src="js/accessibility.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/notifications.js"></script>
