@@ -422,6 +422,30 @@ This roadmap outlines the transformation of the festas_builds Minecraft server f
 
 ---
 
+## 📦 Plugin Wishlist
+
+Plugins being considered for future implementation:
+
+### Essential Plugins
+- **EssentialsX** - Core server commands and utilities
+- **LuckPerms** - Advanced permissions management
+- **Vault** - Economy and permissions API
+
+### Building & World Management
+- **WorldEdit** - Advanced building tools
+- **WorldGuard** - World protection and region management
+
+### Protection & Moderation
+- **GriefPrevention** - Claim-based land protection
+- **CoreProtect** - Block logging and rollback
+
+### Utilities
+- **PlugManX** - Plugin management
+
+> **Note:** This wishlist is subject to change based on server needs, performance considerations, and community feedback. Plugins will be evaluated for compatibility, security, and performance impact before installation.
+
+---
+
 ## Notes
 
 - **Be Patient:** Building a community takes time. Don't rush through phases.

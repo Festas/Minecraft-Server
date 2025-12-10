@@ -1,4 +1,18 @@
+← [Back to Reference](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Plugin Manager UI Screenshots
+
+Visual reference for the Plugin Manager web interface.
+
+**Document Type:** ⭐ Easy (Reference)  
+**Target Audience:** Server Administrators  
+**Purpose:** Visual documentation of the Plugin Manager interface
+
+---
+
+## Overview
 
 This document describes what the UI looks like for documentation purposes.
 
@@ -139,3 +153,17 @@ Auto-dismiss after 5 seconds.
 - Keyboard navigable
 - Screen reader friendly labels
 - High contrast text
+
+
+---
+
+## 🔗 Related Documents
+
+- **[Plugin Manager Guide](../admin/plugin-manager.md)** - Plugin Manager administration
+- **[Console Setup](../admin/console-setup.md)** - Web console installation
+- **[Console Implementation](../admin/console-implementation.md)** - Technical details
+- **[Features Overview](../features/overview.md)** - All server features
+
+---
+
+[← Back to Reference](./README.md) | [Documentation Home](../README.md)
