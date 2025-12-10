@@ -1,7 +1,6 @@
-/* Import Design System */
-@import 'design-system.css';
-
 /* Global Styles */
+/* Note: design-system.css is imported in HTML before this file */
+
 * {
     margin: 0;
     padding: 0;
