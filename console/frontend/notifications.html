@@ -6,11 +6,23 @@
     <title>Notifications - Minecraft Console</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="css/design-system.css">
+    <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/theme-light.css" id="theme-link">
     <link rel="stylesheet" href="css/accessibility.css">
 </head>
 <body>
+    <!-- Hamburger Menu Button (Mobile) -->
+    <button class="hamburger-button" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+    </button>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay"></div>
+
+
     <a href="#main" class="skip-nav">Skip to main content</a>
     
     <nav class="navbar" role="navigation" aria-label="Main navigation">
@@ -176,6 +188,7 @@
     <div id="toastContainer" class="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Scripts -->
+    <script src="js/sidebar.js"></script>
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
     <script src="/js/themeManager.js"></script>
     <script src="/js/accessibility.js"></script>

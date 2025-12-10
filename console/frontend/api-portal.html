@@ -6,6 +6,7 @@
     <title>Developer Portal - Minecraft Console</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="css/design-system.css">
+    <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
@@ -183,6 +184,17 @@
     </style>
 </head>
 <body>
+    <!-- Hamburger Menu Button (Mobile) -->
+    <button class="hamburger-button" aria-label="Toggle navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+    </button>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay"></div>
+
+
     <div class="console-wrapper">
         <!-- Header -->
         <header class="console-header">
@@ -376,6 +388,7 @@
         </div>
     </div>
 
+    <script src="js/sidebar.js"></script>
     <script src="js/api-portal.js"></script>
     <script src="js/theme.js"></script>
 </body>
