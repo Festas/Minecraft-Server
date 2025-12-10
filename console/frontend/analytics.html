@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="css/cards.css">
     <link rel="stylesheet" href="css/buttons.css">
     <link rel="stylesheet" href="css/indicators.css">
+    <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
@@ -283,11 +284,15 @@
         </header>
 
         <!-- Main Content -->
-        <main class="analytics-container">
-            <!-- Analytics Header -->
+        <main class="analytics-container main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">📊 Server Analytics</h1>
+            </div>
+
+            <!-- Analytics Controls -->
             <div class="analytics-header">
-                <h2 class="analytics-title">📊 Server Analytics</h2>
-                <div class="analytics-controls">
+                <div class="page-actions">
                     <div class="date-filter">
                         <label for="startDate">From:</label>
                         <input type="date" id="startDate">
