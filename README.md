@@ -49,7 +49,7 @@ This server supports both **Java Edition** and **Bedrock Edition** players!
 
 Bedrock players on mobile, console, and Windows 10/11 can play together with Java players thanks to [Geyser](https://geysermc.org/).
 
-See [BEDROCK-SETUP.md](BEDROCK-SETUP.md) for detailed setup instructions.
+See [docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md) for detailed setup instructions.
 
 ---
 
@@ -151,7 +151,7 @@ docker compose logs -f minecraft-server
 
 The server will be available at `your-server-ip:25565` once started.
 
-For production deployment with automated GitHub Actions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+For production deployment with automated GitHub Actions, see [docs/getting-started/deployment.md](docs/getting-started/deployment.md).
 
 ---
 
@@ -267,7 +267,7 @@ See **[SERVER-MANAGEMENT.md](SERVER-MANAGEMENT.md#github-secrets-configuration)*
 6. **Install plugins** - Use container's built-in plugin support or manual installation
 7. **Play!** - Connect with your Minecraft client
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete step-by-step guide.
+See [docs/getting-started/deployment.md](docs/getting-started/deployment.md) for the complete step-by-step guide.
 
 ---
 
@@ -490,7 +490,7 @@ See [ROADMAP.md](ROADMAP.md) for the complete growth plan.
 
 ## 🐛 Troubleshooting
 
-See the [Troubleshooting section](DEPLOYMENT.md#troubleshooting) in DEPLOYMENT.md for common issues and solutions.
+See the [Troubleshooting section](docs/getting-started/deployment.md#troubleshooting) in the Deployment Guide for common issues and solutions.
 
 **Quick checks:**
 - Verify Docker is running: `docker ps`
@@ -501,10 +501,10 @@ See the [Troubleshooting section](DEPLOYMENT.md#troubleshooting) in DEPLOYMENT.m
 
 ## 📚 Additional Resources
 
-- [DEPLOYMENT.md](DEPLOYMENT.md) - Complete deployment guide
+- [docs/getting-started/deployment.md](docs/getting-started/deployment.md) - Complete deployment guide
 - [PLUGINS.md](PLUGINS.md) - Recommended plugins and setup
 - [ROADMAP.md](ROADMAP.md) - Server growth roadmap
-- [server-icon-instructions.md](server-icon-instructions.md) - Custom branding
+- [docs/getting-started/server-icon.md](docs/getting-started/server-icon.md) - Custom branding
 - [Paper Documentation](https://docs.papermc.io/)
 - [Minecraft Server Wiki](https://minecraft.fandom.com/wiki/Server)
 - [Minecraft EULA](https://account.mojang.com/documents/minecraft_eula)
@@ -521,7 +521,7 @@ Feel free to submit issues or pull requests to improve the deployment setup!
 
 ---
 
-**Ready to get started?** Head over to [DEPLOYMENT.md](DEPLOYMENT.md) for the complete step-by-step guide!
+**Ready to get started?** Head over to [docs/getting-started/deployment.md](docs/getting-started/deployment.md) for the complete step-by-step guide!
 
 ---
 

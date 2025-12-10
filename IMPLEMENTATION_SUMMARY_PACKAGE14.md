@@ -13,7 +13,7 @@ Package 14 represents the final preparation phase for production launch, focusin
 ### 1. ✅ QA & Testing Workflows
 
 **Created:**
-- `QA-CHECKLIST.md` - Comprehensive quality assurance checklist
+- `docs/getting-started/qa-checklist.md` - Comprehensive quality assurance checklist
   - Functional testing for all features
   - Security testing procedures
   - Performance testing guidelines
@@ -117,7 +117,7 @@ Package 14 represents the final preparation phase for production launch, focusin
 ### 5. 📚 Documentation & Launch Guides
 
 **Created:**
-- `LAUNCH-CHECKLIST.md` - Pre-launch validation
+- `docs/getting-started/launch-checklist.md` - Pre-launch validation
   - Infrastructure requirements
   - Security configuration
   - GitHub Secrets setup
@@ -223,8 +223,8 @@ New Files Added:
 ├── scripts/
 │   ├── upgrade.sh
 │   └── validate-launch.sh
-├── LAUNCH-CHECKLIST.md
-├── QA-CHECKLIST.md
+├── docs/getting-started/launch-checklist.md
+├── docs/getting-started/qa-checklist.md
 └── UPGRADE-GUIDE.md
 
 Modified Files:
@@ -272,7 +272,7 @@ Modified Files:
 
 ### 🔧 Pre-Launch Actions Required
 1. Run `./scripts/validate-launch.sh`
-2. Complete `LAUNCH-CHECKLIST.md`
+2. Complete `docs/getting-started/launch-checklist.md`
 3. Verify all GitHub Secrets configured
 4. Test backup/restore procedures
 5. Conduct security audit
@@ -339,8 +339,8 @@ The project is **ready for production deployment** following the launch checklis
 
 ## Related Documentation
 
-- [QA Checklist](../QA-CHECKLIST.md)
-- [Launch Checklist](../LAUNCH-CHECKLIST.md)
+- [QA Checklist](../docs/getting-started/qa-checklist.md)
+- [Launch Checklist](../docs/getting-started/launch-checklist.md)
 - [Upgrade Guide](../UPGRADE-GUIDE.md)
 - [Security Policy](../SECURITY.md)
 - [Admin Onboarding](ADMIN-ONBOARDING.md)

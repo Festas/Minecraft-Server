@@ -263,4 +263,4 @@ The console and server communicate directly via the shared `caddy-network`, prov
 - [itzg/minecraft-server Documentation](https://docker-minecraft-server.readthedocs.io/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 - [CONSOLE-SETUP.md](./CONSOLE-SETUP.md) - Console configuration guide
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - General deployment guide
+- [docs/getting-started/deployment.md](./docs/getting-started/deployment.md) - General deployment guide

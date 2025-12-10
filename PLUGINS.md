@@ -306,7 +306,7 @@ remote:
 **Links:**
 - Official Wiki: https://wiki.geysermc.org/geyser/
 - Discord Support: https://discord.gg/geysermc
-- Bedrock Setup Guide: [BEDROCK-SETUP.md](BEDROCK-SETUP.md)
+- Bedrock Setup Guide: [docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md)
 
 ---
 
@@ -364,7 +364,7 @@ replace-spaces: true
 
 **Links:**
 - Official Wiki: https://wiki.geysermc.org/floodgate/
-- Setup Guide: [BEDROCK-SETUP.md](BEDROCK-SETUP.md)
+- Setup Guide: [docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md)
 
 ---
 

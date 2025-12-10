@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added - Package 14: Final Polish, QA, Security & Launch
 
 #### Documentation & Guides
-- QA-CHECKLIST.md - Comprehensive quality assurance checklist
-- LAUNCH-CHECKLIST.md - Pre-launch validation checklist
+- docs/getting-started/qa-checklist.md - Comprehensive quality assurance checklist
+- docs/getting-started/launch-checklist.md - Pre-launch validation checklist
 - UPGRADE-GUIDE.md - Complete upgrade procedures and rollback guide
 - docs/ADMIN-ONBOARDING.md - New administrator onboarding guide
 - docs/LOCALIZATION.md - i18n implementation and translation guide

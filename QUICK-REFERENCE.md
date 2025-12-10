@@ -266,7 +266,7 @@ htop
 view-distance=8
 simulation-distance=8
 
-# Add performance flags (see DEPLOYMENT.md)
+# Add performance flags (see docs/getting-started/deployment.md)
 ```
 
 ## 📊 Monitoring
@@ -387,6 +387,6 @@ rm -rf /home/deploy/minecraft-server/*
 
 ## 📞 Need More Help?
 
-- **Full Guide**: See [DEPLOYMENT.md](DEPLOYMENT.md)
-- **Docker Alternative**: See [DOCKER.md](DOCKER.md)
+- **Full Guide**: See [docs/getting-started/deployment.md](docs/getting-started/deployment.md)
+- **Docker Alternative**: See [docs/getting-started/docker.md](docs/getting-started/docker.md)
 - **Minecraft Wiki**: https://minecraft.fandom.com/wiki/Server
