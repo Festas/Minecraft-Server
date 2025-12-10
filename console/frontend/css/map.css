@@ -507,7 +507,7 @@
 }
 
 /* Make main-content take full height for map page */
-.main-content:has(.map-layout) {
+.main-content.map-page {
     display: flex;
     flex-direction: column;
     padding: 0; /* Remove padding for map to use full space */
