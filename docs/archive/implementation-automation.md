@@ -1,3 +1,7 @@
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Automation & Scheduler Implementation Summary
 
 ## Overview
@@ -284,3 +288,15 @@ Successfully implemented a comprehensive Automation & Scheduler system for the M
 The Automation & Scheduler system is fully implemented, tested, and documented. It provides a robust, secure, and user-friendly solution for automating Minecraft server maintenance tasks. The system follows established architectural patterns, maintains security best practices, and integrates seamlessly with existing console features.
 
 **Status: Complete and Production Ready** ✅
+
+---
+
+## Related Documents
+
+- [Archive Index](./README.md) - All implementation summaries
+- [Development Guide](../development/README.md) - Current development docs
+- [Features](../features/README.md) - Active features
+
+---
+
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)

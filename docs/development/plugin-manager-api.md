@@ -1,3 +1,7 @@
+[← Back to Development](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Plugin Manager V2 - Job Queue System
 
 ## Overview
@@ -544,3 +548,16 @@ curl http://localhost:3001/api/v2/plugins/list \
 ## License
 
 MIT
+
+---
+
+## Related Documents
+
+- [Plugin Manager Quickstart](./plugin-manager-quickstart.md) - Quick setup guide
+- [Plugin Diagnostics](../troubleshooting/plugin-diagnostics.md) - Troubleshooting plugin issues
+- [Admin Guide](../admin/plugin-manager.md) - Plugin management guide
+- [Plugins Guide](../admin/plugins.md) - Plugin configuration
+
+---
+
+[← Back to Development](./README.md) | [Documentation Hub](../README.md)

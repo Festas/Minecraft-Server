@@ -1,3 +1,7 @@
+[← Back to Development](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Contributing to Festas Minecraft Server
 
 Thank you for your interest in contributing to our Minecraft server project! This document provides guidelines for contributing to the repository.
@@ -183,3 +187,16 @@ If you have questions about contributing, feel free to:
 - Review closed issues and PRs for similar discussions
 
 Thank you for contributing to the Festas Minecraft Server project!
+
+---
+
+## Related Documents
+
+- [Architecture Guide](./architecture.md) - System design and structure
+- [Changelog](./changelog.md) - Version history
+- [Plugin Manager API](./plugin-manager-api.md) - Plugin development
+- [Troubleshooting](../troubleshooting/README.md) - Debugging tools
+
+---
+
+[← Back to Development](./README.md) | [Documentation Hub](../README.md)

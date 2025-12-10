@@ -548,4 +548,4 @@ For issues or questions:
 **Related Documentation**: 
 - [User Management](./user-management.md)
 - [API Documentation](./API.md)
-- [RBAC Guide](../IMPLEMENTATION_SUMMARY_RBAC.md)
+- [RBAC Guide](archive/implementation-rbac.md)

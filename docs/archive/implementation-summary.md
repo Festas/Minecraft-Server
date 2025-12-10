@@ -1,3 +1,7 @@
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Plugin Manager Implementation Summary
 
 ## Overview
@@ -207,3 +211,15 @@ The implementation follows the minimal-change principle by:
 
 Total lines of code: ~2,700 lines across all files
 Total implementation time: ~2 hours
+
+---
+
+## Related Documents
+
+- [Archive Index](./README.md) - All implementation summaries
+- [Development Guide](../development/README.md) - Current development docs
+- [Features](../features/README.md) - Active features
+
+---
+
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)

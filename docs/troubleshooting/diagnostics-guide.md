@@ -1,3 +1,7 @@
+[← Back to Troubleshooting](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Comprehensive Diagnostics Guide
 
 ## Overview
@@ -108,7 +112,7 @@ ADMIN_PASSWORD="your-password" \
 node scripts/browser-diagnostics.js
 ```
 
-**Documentation**: [BROWSER-DIAGNOSTICS.md](./BROWSER-DIAGNOSTICS.md)
+**Documentation**: [BROWSER-DIAGNOSTICS.md](./browser-diagnostics.md)
 
 ### For API/Backend Issues
 
@@ -123,7 +127,7 @@ ADMIN_PASSWORD="your-password" \
 ./scripts/api-profiler.sh
 ```
 
-**Documentation**: [BROWSER-DIAGNOSTICS.md](./BROWSER-DIAGNOSTICS.md#api-profiling)
+**Documentation**: [BROWSER-DIAGNOSTICS.md](./browser-diagnostics.md#api-profiling)
 
 ### For Plugin Installation Issues
 
@@ -135,7 +139,7 @@ ADMIN_PASSWORD="your-password" \
 Actions → Plugin Install Diagnostics (Comprehensive) → Run workflow
 ```
 
-**Documentation**: [PLUGIN-INSTALL-DIAGNOSTICS.md](./PLUGIN-INSTALL-DIAGNOSTICS.md)
+**Documentation**: [PLUGIN-INSTALL-DIAGNOSTICS.md](./plugin-diagnostics.md)
 
 ### For RCON/Console Backend Issues
 
@@ -162,7 +166,7 @@ CONTAINER_NAME="minecraft-console" \
 ./scripts/resource-monitor.sh
 ```
 
-**Documentation**: [BROWSER-DIAGNOSTICS.md](./BROWSER-DIAGNOSTICS.md#resource-monitoring)
+**Documentation**: [BROWSER-DIAGNOSTICS.md](./browser-diagnostics.md#resource-monitoring)
 
 ## Diagnostic Workflow Decision Tree
 
@@ -930,10 +934,10 @@ Planned improvements:
 
 ## Related Documentation
 
-- [Browser Diagnostics Guide](./BROWSER-DIAGNOSTICS.md) - Frontend and API diagnostics
-- [Plugin Install Diagnostics](./PLUGIN-INSTALL-DIAGNOSTICS.md) - Plugin system testing
-- [API Authentication Guide](./API-AUTHENTICATION-GUIDE.md) - API and CSRF flow
-- [Session & CSRF Debug](./SESSION-CSRF-DEBUG-IMPLEMENTATION.md) - Backend debugging
+- [Browser Diagnostics Guide](./browser-diagnostics.md) - Frontend and API diagnostics
+- [Plugin Install Diagnostics](./plugin-diagnostics.md) - Plugin system testing
+- [API Authentication Guide](../API-AUTHENTICATION-GUIDE.md) - API and CSRF flow
+- [Session & CSRF Debug](../SESSION-CSRF-DEBUG-IMPLEMENTATION.md) - Backend debugging
 
 ## Quick Reference Commands
 
@@ -956,3 +960,16 @@ ls -lh /tmp/browser-diagnostics-*/
 ls -lh /tmp/api-profiler-*/
 ls -lh /tmp/resource-monitor-*/
 ```
+
+---
+
+## Related Documents
+
+- [Browser Diagnostics](./browser-diagnostics.md) - Frontend and API diagnostics
+- [Plugin Diagnostics](./plugin-diagnostics.md) - Plugin system testing
+- [Common Issues](./common-issues.md) - Quick solutions to common problems
+- [Development Guide](../development/README.md) - Development setup
+
+---
+
+[← Back to Troubleshooting](./README.md) | [Documentation Hub](../README.md)

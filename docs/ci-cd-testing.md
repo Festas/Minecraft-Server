@@ -771,4 +771,4 @@ This CI/CD infrastructure ensures reliable, automated deployments with comprehen
 For additional help, refer to:
 - admin/console-setup.md - Setup instructions
 - API.md - API documentation
-- DIAGNOSTICS-GUIDE.md - Troubleshooting guide
+- troubleshooting/diagnostics-guide.md - Troubleshooting guide

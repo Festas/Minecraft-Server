@@ -20,7 +20,7 @@ This runs all diagnostic scripts in a coordinated manner and produces a master s
 - ✅ Performance issues
 
 **See**: `.github/workflows/comprehensive-plugin-manager-diagnostics.yml`
-**Documentation**: [DIAGNOSTICS-GUIDE.md](../docs/DIAGNOSTICS-GUIDE.md)
+**Documentation**: [DIAGNOSTICS-GUIDE.md](../docs/troubleshooting/diagnostics-guide.md)
 
 ---
 
@@ -73,7 +73,7 @@ export CAN_SSH="true"
 - Provides rapid triage guide and common problem patterns
 - Fully extensible - easy to add new diagnostic types
 
-**Documentation**: See workflow `.github/workflows/comprehensive-plugin-manager-diagnostics.yml` and [Extending the Diagnostics Platform](../docs/DIAGNOSTICS-GUIDE.md#extending-the-diagnostics-platform)
+**Documentation**: See workflow `.github/workflows/comprehensive-plugin-manager-diagnostics.yml` and [Extending the Diagnostics Platform](../docs/troubleshooting/diagnostics-guide.md#extending-the-diagnostics-platform)
 
 ---
 
@@ -102,7 +102,7 @@ node scripts/browser-diagnostics.js
 - DOM complexity analysis
 - Screenshots at key stages
 
-**Documentation**: [BROWSER-DIAGNOSTICS.md](../docs/BROWSER-DIAGNOSTICS.md)
+**Documentation**: [BROWSER-DIAGNOSTICS.md](../docs/troubleshooting/browser-diagnostics.md)
 
 ---
 
@@ -136,7 +136,7 @@ export OUTPUT_DIR="/tmp/api-profiler"
 - HTTP headers and cookies
 - Error case results
 
-**Documentation**: [BROWSER-DIAGNOSTICS.md](../docs/BROWSER-DIAGNOSTICS.md#api-profiling)
+**Documentation**: [BROWSER-DIAGNOSTICS.md](../docs/troubleshooting/browser-diagnostics.md#api-profiling)
 
 ---
 
@@ -169,7 +169,7 @@ export CONTAINER_NAME="minecraft-console"
 - Summary statistics
 - Peak usage metrics
 
-**Documentation**: [BROWSER-DIAGNOSTICS.md](../docs/BROWSER-DIAGNOSTICS.md#resource-monitoring)
+**Documentation**: [BROWSER-DIAGNOSTICS.md](../docs/troubleshooting/browser-diagnostics.md#resource-monitoring)
 
 ---
 
@@ -186,7 +186,7 @@ Basic plugin manager diagnostics.
 ./scripts/diagnose-plugins.sh [diagnose|fix]
 ```
 
-**Documentation**: See [PLUGIN-INSTALL-DIAGNOSTICS.md](../docs/PLUGIN-INSTALL-DIAGNOSTICS.md)
+**Documentation**: See [PLUGIN-INSTALL-DIAGNOSTICS.md](../docs/troubleshooting/plugin-diagnostics.md)
 
 #### `diagnose-plugins-advanced.sh`
 
@@ -199,7 +199,7 @@ Advanced plugin diagnostics with detailed analysis.
 ./scripts/diagnose-plugins-advanced.sh
 ```
 
-**Documentation**: See [PLUGIN-INSTALL-DIAGNOSTICS.md](../docs/PLUGIN-INSTALL-DIAGNOSTICS.md)
+**Documentation**: See [PLUGIN-INSTALL-DIAGNOSTICS.md](../docs/troubleshooting/plugin-diagnostics.md)
 
 ---
 
@@ -221,7 +221,7 @@ Test scenarios for plugin installation validation.
 
 **Note**: Not meant to be run directly; used by workflow
 
-**Documentation**: See [PLUGIN-INSTALL-DIAGNOSTICS.md](../docs/PLUGIN-INSTALL-DIAGNOSTICS.md)
+**Documentation**: See [PLUGIN-INSTALL-DIAGNOSTICS.md](../docs/troubleshooting/plugin-diagnostics.md)
 
 ---
 
@@ -449,7 +449,7 @@ Different scripts require different tools:
 **Browser Diagnostics**:
 - Node.js and npm
 - Puppeteer (installed via npm)
-- System libraries (see [BROWSER-DIAGNOSTICS.md](../docs/BROWSER-DIAGNOSTICS.md))
+- System libraries (see [BROWSER-DIAGNOSTICS.md](../docs/troubleshooting/browser-diagnostics.md))
 
 **API Scripts**:
 - curl
@@ -550,7 +550,7 @@ When adding new diagnostic scripts:
 
 ## Related Documentation
 
-- [Diagnostics Guide](../docs/DIAGNOSTICS-GUIDE.md) - Overview of all diagnostic tools
-- [Browser Diagnostics](../docs/BROWSER-DIAGNOSTICS.md) - Frontend and API diagnostics
-- [Plugin Install Diagnostics](../docs/PLUGIN-INSTALL-DIAGNOSTICS.md) - Plugin system testing
+- [Diagnostics Guide](../docs/troubleshooting/diagnostics-guide.md) - Overview of all diagnostic tools
+- [Browser Diagnostics](../docs/troubleshooting/browser-diagnostics.md) - Frontend and API diagnostics
+- [Plugin Install Diagnostics](../docs/troubleshooting/plugin-diagnostics.md) - Plugin system testing
 - [API Authentication Guide](../docs/API-AUTHENTICATION-GUIDE.md) - API and CSRF flow

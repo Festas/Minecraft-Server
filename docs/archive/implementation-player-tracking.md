@@ -1,3 +1,7 @@
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Player Tracking Refactor - Implementation Summary
 
 ## Overview
@@ -249,3 +253,15 @@ The player tracking system has been successfully refactored to use SQLite with t
 5. **Features**: UUID tracking, avatar support, better API
 
 The system is production-ready and requires no manual intervention for normal operation.
+
+---
+
+## Related Documents
+
+- [Archive Index](./README.md) - All implementation summaries
+- [Development Guide](../development/README.md) - Current development docs
+- [Features](../features/README.md) - Active features
+
+---
+
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)

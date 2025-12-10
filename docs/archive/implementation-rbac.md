@@ -1,3 +1,7 @@
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Multi-User Authentication & RBAC Implementation Summary
 
 ## Overview
@@ -210,3 +214,15 @@ If issues arise:
 
 ## Conclusion
 This implementation provides a production-ready, secure, multi-user authentication system that scales from small teams to larger organizations while maintaining backward compatibility and security best practices.
+
+---
+
+## Related Documents
+
+- [Archive Index](./README.md) - All implementation summaries
+- [Development Guide](../development/README.md) - Current development docs
+- [Features](../features/README.md) - Active features
+
+---
+
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)

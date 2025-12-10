@@ -92,13 +92,13 @@ MONITOR_DURATION=60 \
 ### 5. Comprehensive Documentation
 
 **Files Created:**
-- `docs/BROWSER-DIAGNOSTICS.md` - Detailed browser diagnostics guide
-- `docs/DIAGNOSTICS-GUIDE.md` - Overview and decision tree for all tools
+- `docs/troubleshooting/browser-diagnostics.md` - Detailed browser diagnostics guide
+- `docs/troubleshooting/diagnostics-guide.md` - Overview and decision tree for all tools
 - `scripts/README.md` - Script reference documentation
 
 **Files Modified:**
 - `README.md` - Added diagnostics section
-- `docs/PLUGIN-INSTALL-DIAGNOSTICS.md` - Added cross-references
+- `docs/troubleshooting/plugin-diagnostics.md` - Added cross-references
 
 **Content:**
 - Usage instructions for all tools
@@ -315,8 +315,8 @@ Artifact Generation
 
 ### Documentation
 
-- [BROWSER-DIAGNOSTICS.md](./BROWSER-DIAGNOSTICS.md) - Complete guide
-- [DIAGNOSTICS-GUIDE.md](./DIAGNOSTICS-GUIDE.md) - Overview and decision tree
+- [troubleshooting/browser-diagnostics.md](./troubleshooting/browser-diagnostics.md) - Complete guide
+- [troubleshooting/diagnostics-guide.md](./troubleshooting/diagnostics-guide.md) - Overview and decision tree
 - [scripts/README.md](../scripts/README.md) - Script reference
 
 ### Examples

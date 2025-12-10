@@ -162,7 +162,7 @@ Four roles with granular permissions:
 3. **Moderator** - Player management, limited admin
 4. **Viewer** - Read-only access
 
-See [IMPLEMENTATION_SUMMARY_RBAC.md](../../IMPLEMENTATION_SUMMARY_RBAC.md) for details.
+See [IMPLEMENTATION_SUMMARY_RBAC.md](../archive/implementation-rbac.md) for details.
 
 ### Webhook Security
 

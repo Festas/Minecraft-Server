@@ -1,3 +1,7 @@
+[← Back to Development](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -108,3 +112,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/Festas/Minecraft-Server/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/Festas/Minecraft-Server/releases/tag/v1.0.0
+
+---
+
+## Related Documents
+
+- [Contributing Guide](./contributing.md) - How to contribute
+- [Architecture Guide](./architecture.md) - System design
+- [Upgrade Guide](../admin/upgrade-guide.md) - Version upgrades
+
+---
+
+[← Back to Development](./README.md) | [Documentation Hub](../README.md)

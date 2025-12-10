@@ -36,7 +36,7 @@ docker run --rm \
 
 ### 2. Review the Changelog
 
-Check [CHANGELOG.md](../../CHANGELOG.md) for:
+Check [../development/changelog.md](../development/changelog.md) for:
 - Breaking changes
 - New features
 - Security fixes
@@ -476,7 +476,7 @@ If you encounter issues during upgrade:
 | Version | Release Date | Key Changes |
 |---------|--------------|-------------|
 | 1.0.0   | 2024-01-01   | Initial release |
-| Current | TBD          | See CHANGELOG.md |
+| Current | TBD          | See ../development/changelog.md |
 
 ---
 

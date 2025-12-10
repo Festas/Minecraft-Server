@@ -619,7 +619,7 @@ echo -e "\n=== Workflow Complete ==="
 - [admin/plugin-manager.md](./admin/plugin-manager.md) - Plugin manager features and usage
 - [SESSION-CSRF-DEBUG-IMPLEMENTATION.md](SESSION-CSRF-DEBUG-IMPLEMENTATION.md) - Technical implementation details
 - [REDIS-SESSION-TESTING.md](REDIS-SESSION-TESTING.md) - Redis session store setup
-- [PLUGIN-INSTALL-DIAGNOSTICS.md](PLUGIN-INSTALL-DIAGNOSTICS.md) - Diagnostic workflow for plugin installation
+- [troubleshooting/plugin-diagnostics.md](troubleshooting/plugin-diagnostics.md) - Diagnostic workflow for plugin installation
 
 ---
 
