@@ -48,6 +48,7 @@ const loggingRoutes = require('./routes/logging');
 const webhookRoutes = require('./routes/webhooks');
 const analyticsRoutes = require('./routes/analytics');
 const cicdRoutes = require('./routes/cicd');
+const apiKeyRoutes = require('./routes/apiKeys');
 
 
 // Initialize Express app
@@ -458,6 +459,7 @@ app.use('/api/webhooks', webhookRoutes); // Webhooks & Integrations
 app.use('/api', loggingRoutes); // Event logging and notifications
 app.use('/api/analytics', analyticsRoutes); // Analytics & Insights
 app.use('/api/cicd', cicdRoutes); // CI/CD Dashboard
+app.use('/api/api-keys', apiKeyRoutes); // API Key Management
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -251,6 +251,60 @@ class DatabaseService {
             CREATE INDEX IF NOT EXISTS idx_inbound_webhooks_enabled ON inbound_webhooks(enabled)
         `;
 
+        // Create table for API keys
+        const createApiKeysTable = `
+            CREATE TABLE IF NOT EXISTS api_keys (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                key_hash TEXT UNIQUE NOT NULL,
+                key_prefix TEXT NOT NULL,
+                scopes TEXT NOT NULL,
+                rate_limit_per_hour INTEGER DEFAULT 1000,
+                enabled INTEGER DEFAULT 1,
+                created_by TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                last_used TEXT,
+                use_count INTEGER DEFAULT 0,
+                expires_at TEXT
+            )
+        `;
+
+        // Create index on key_hash for fast lookups
+        const createApiKeysHashIndex = `
+            CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash)
+        `;
+
+        // Create index on enabled status for filtering
+        const createApiKeysEnabledIndex = `
+            CREATE INDEX IF NOT EXISTS idx_api_keys_enabled ON api_keys(enabled)
+        `;
+
+        // Create table for API key usage logs
+        const createApiKeyLogsTable = `
+            CREATE TABLE IF NOT EXISTS api_key_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                api_key_id TEXT NOT NULL,
+                endpoint TEXT NOT NULL,
+                method TEXT NOT NULL,
+                status_code INTEGER,
+                ip_address TEXT,
+                user_agent TEXT,
+                timestamp TEXT NOT NULL,
+                response_time_ms INTEGER,
+                FOREIGN KEY (api_key_id) REFERENCES api_keys(id)
+            )
+        `;
+
+        // Create index on api_key_id for log lookups
+        const createApiKeyLogsKeyIndex = `
+            CREATE INDEX IF NOT EXISTS idx_api_key_logs_key ON api_key_logs(api_key_id, timestamp DESC)
+        `;
+
+        // Create index on timestamp for chronological queries
+        const createApiKeyLogsTimeIndex = `
+            CREATE INDEX IF NOT EXISTS idx_api_key_logs_time ON api_key_logs(timestamp DESC)
+        `;
+
         this.db.exec(createPlayersTable);
         this.db.exec(createUsernameIndex);
         this.db.exec(createLastSeenIndex);
@@ -271,6 +325,12 @@ class DatabaseService {
         this.db.exec(createWebhookLogsTimeIndex);
         this.db.exec(createInboundWebhooksTable);
         this.db.exec(createInboundWebhooksEnabledIndex);
+        this.db.exec(createApiKeysTable);
+        this.db.exec(createApiKeysHashIndex);
+        this.db.exec(createApiKeysEnabledIndex);
+        this.db.exec(createApiKeyLogsTable);
+        this.db.exec(createApiKeyLogsKeyIndex);
+        this.db.exec(createApiKeyLogsTimeIndex);
     }
 
     /**
@@ -1195,6 +1255,231 @@ class DatabaseService {
         `);
 
         stmt.run(id);
+    }
+
+    // ============================================================================
+    // API Key Management
+    // ============================================================================
+
+    /**
+     * Create API key
+     * @param {object} keyData - API key data
+     * @returns {object} Created API key
+     */
+    createApiKey(keyData) {
+        const stmt = this.db.prepare(`
+            INSERT INTO api_keys (
+                id, name, key_hash, key_prefix, scopes, rate_limit_per_hour, 
+                enabled, created_by, created_at, expires_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
+        `);
+
+        stmt.run(
+            keyData.id,
+            keyData.name,
+            keyData.key_hash,
+            keyData.key_prefix,
+            JSON.stringify(keyData.scopes),
+            keyData.rate_limit_per_hour || 1000,
+            keyData.enabled !== undefined ? (keyData.enabled ? 1 : 0) : 1,
+            keyData.created_by,
+            keyData.expires_at || null
+        );
+
+        return this.getApiKey(keyData.id);
+    }
+
+    /**
+     * Get API key by ID
+     * @param {string} id - API key ID
+     * @returns {object|null} API key or null
+     */
+    getApiKey(id) {
+        const stmt = this.db.prepare('SELECT * FROM api_keys WHERE id = ?');
+        const key = stmt.get(id);
+
+        if (!key) return null;
+
+        return {
+            ...key,
+            scopes: JSON.parse(key.scopes),
+            enabled: key.enabled === 1
+        };
+    }
+
+    /**
+     * Get API key by key hash
+     * @param {string} keyHash - API key hash
+     * @returns {object|null} API key or null
+     */
+    getApiKeyByHash(keyHash) {
+        const stmt = this.db.prepare('SELECT * FROM api_keys WHERE key_hash = ? AND enabled = 1');
+        const key = stmt.get(keyHash);
+
+        if (!key) return null;
+
+        return {
+            ...key,
+            scopes: JSON.parse(key.scopes),
+            enabled: key.enabled === 1
+        };
+    }
+
+    /**
+     * Get all API keys
+     * @returns {Array} List of API keys
+     */
+    getAllApiKeys() {
+        const stmt = this.db.prepare('SELECT * FROM api_keys ORDER BY created_at DESC');
+        const keys = stmt.all();
+
+        return keys.map(key => ({
+            ...key,
+            scopes: JSON.parse(key.scopes),
+            enabled: key.enabled === 1
+        }));
+    }
+
+    /**
+     * Update API key
+     * @param {string} id - API key ID
+     * @param {object} updates - Fields to update
+     * @returns {object|null} Updated API key or null
+     */
+    updateApiKey(id, updates) {
+        const fields = [];
+        const values = [];
+
+        if (updates.name !== undefined) {
+            fields.push('name = ?');
+            values.push(updates.name);
+        }
+
+        if (updates.scopes !== undefined) {
+            fields.push('scopes = ?');
+            values.push(JSON.stringify(updates.scopes));
+        }
+
+        if (updates.rate_limit_per_hour !== undefined) {
+            fields.push('rate_limit_per_hour = ?');
+            values.push(updates.rate_limit_per_hour);
+        }
+
+        if (updates.enabled !== undefined) {
+            fields.push('enabled = ?');
+            values.push(updates.enabled ? 1 : 0);
+        }
+
+        if (updates.expires_at !== undefined) {
+            fields.push('expires_at = ?');
+            values.push(updates.expires_at);
+        }
+
+        if (fields.length === 0) {
+            return this.getApiKey(id);
+        }
+
+        values.push(id);
+
+        const stmt = this.db.prepare(`
+            UPDATE api_keys 
+            SET ${fields.join(', ')}
+            WHERE id = ?
+        `);
+
+        stmt.run(...values);
+
+        return this.getApiKey(id);
+    }
+
+    /**
+     * Delete API key (revoke)
+     * @param {string} id - API key ID
+     * @returns {boolean} Success
+     */
+    deleteApiKey(id) {
+        const stmt = this.db.prepare('DELETE FROM api_keys WHERE id = ?');
+        const result = stmt.run(id);
+        return result.changes > 0;
+    }
+
+    /**
+     * Update API key usage stats
+     * @param {string} id - API key ID
+     */
+    updateApiKeyStats(id) {
+        const stmt = this.db.prepare(`
+            UPDATE api_keys 
+            SET last_used = datetime('now'),
+                use_count = use_count + 1
+            WHERE id = ?
+        `);
+
+        stmt.run(id);
+    }
+
+    /**
+     * Log API key usage
+     * @param {object} logData - Log data
+     */
+    logApiKeyUsage(logData) {
+        const stmt = this.db.prepare(`
+            INSERT INTO api_key_logs (
+                api_key_id, endpoint, method, status_code, 
+                ip_address, user_agent, timestamp, response_time_ms
+            ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ?)
+        `);
+
+        stmt.run(
+            logData.api_key_id,
+            logData.endpoint,
+            logData.method,
+            logData.status_code,
+            logData.ip_address,
+            logData.user_agent,
+            logData.response_time_ms
+        );
+    }
+
+    /**
+     * Get API key usage logs
+     * @param {string} apiKeyId - API key ID
+     * @param {number} limit - Max number of logs to return
+     * @returns {Array} Usage logs
+     */
+    getApiKeyLogs(apiKeyId, limit = 100) {
+        const stmt = this.db.prepare(`
+            SELECT * FROM api_key_logs 
+            WHERE api_key_id = ? 
+            ORDER BY timestamp DESC 
+            LIMIT ?
+        `);
+
+        return stmt.all(apiKeyId, limit);
+    }
+
+    /**
+     * Get API key usage statistics
+     * @param {string} apiKeyId - API key ID
+     * @param {string} startDate - Start date (ISO format)
+     * @param {string} endDate - End date (ISO format)
+     * @returns {object} Usage statistics
+     */
+    getApiKeyUsageStats(apiKeyId, startDate, endDate) {
+        const stmt = this.db.prepare(`
+            SELECT 
+                COUNT(*) as total_requests,
+                AVG(response_time_ms) as avg_response_time,
+                MAX(response_time_ms) as max_response_time,
+                SUM(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 ELSE 0 END) as successful_requests,
+                SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) as failed_requests
+            FROM api_key_logs 
+            WHERE api_key_id = ?
+                AND timestamp >= ?
+                AND timestamp <= ?
+        `);
+
+        return stmt.get(apiKeyId, startDate, endDate);
     }
 
     /**
