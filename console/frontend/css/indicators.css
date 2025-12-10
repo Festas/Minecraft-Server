@@ -291,7 +291,6 @@
 /* TPS thresholds: 20 = perfect, 18+ = good, 15+ = warning, <15 = critical */
 .tps-fill.perfect { 
   background: var(--color-success); 
-  width: 100%; 
 }
 
 .tps-fill.good { 
