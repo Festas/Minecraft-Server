@@ -1,28 +1,32 @@
 /* Global Styles */
+/* Note: design-system.css is imported in HTML before this file */
+/* CSS reset (box-sizing) is handled in design-system.css */
+
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
+/* Legacy variable mappings - for backward compatibility */
 :root {
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --bg-tertiary: #3a3a3a;
-    --text-primary: #ffffff;
-    --text-secondary: #b0b0b0;
-    --accent-primary: #4a9eff;
-    --accent-success: #4caf50;
-    --accent-warning: #ff9800;
-    --accent-danger: #f44336;
-    --border-color: #444;
+    /* Map old variables to new design system */
+    --bg-primary: var(--color-bg-secondary, #1a1a1a);
+    --bg-secondary: var(--color-bg-tertiary, #2d2d2d);
+    --bg-tertiary: var(--color-bg-elevated, #3a3a3a);
+    --text-primary: var(--color-text-primary, #ffffff);
+    --text-secondary: var(--color-text-secondary, #b0b0b0);
+    --accent-primary: var(--color-info, #4a9eff);
+    --accent-success: var(--color-success, #4caf50);
+    --accent-warning: var(--color-warning, #ff9800);
+    --accent-danger: var(--color-error, #f44336);
+    --border-color: var(--color-border, #444);
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    line-height: 1.6;
+    font-family: var(--font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+    background-color: var(--color-bg-primary, var(--bg-primary));
+    color: var(--color-text-primary, var(--text-primary));
+    line-height: var(--leading-normal, 1.6);
 }
 
 /* Login Page */
@@ -31,21 +35,21 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    background: linear-gradient(135deg, var(--color-bg-primary, #1a1a1a) 0%, var(--color-bg-secondary, #2d2d2d) 100%);
 }
 
 .login-container {
     width: 100%;
     max-width: 400px;
-    padding: 20px;
+    padding: var(--space-5, 20px);
 }
 
 .login-box {
     background: var(--bg-secondary);
     border: 2px solid var(--border-color);
-    border-radius: 8px;
-    padding: 40px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    border-radius: var(--radius-md, 8px);
+    padding: var(--space-10, 40px);
+    box-shadow: var(--shadow-xl, 0 10px 40px rgba(0, 0, 0, 0.5));
 }
 
 .login-header {
@@ -54,36 +58,37 @@ body {
 }
 
 .login-header h1 {
-    font-size: 2em;
-    margin-bottom: 5px;
+    font-size: var(--text-3xl, 2em);
+    margin-bottom: var(--space-1, 5px);
     color: var(--accent-primary);
 }
 
 .login-header h2 {
-    font-size: 1.2em;
+    font-size: var(--text-xl, 1.2em);
     color: var(--text-secondary);
-    font-weight: normal;
+    font-weight: var(--font-normal, normal);
 }
 
 .login-form .form-group {
-    margin-bottom: 20px;
+    margin-bottom: var(--space-5, 20px);
 }
 
 .login-form label {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: var(--space-1, 5px);
     color: var(--text-secondary);
-    font-size: 0.9em;
+    font-size: var(--text-sm, 0.9em);
 }
 
 .login-form input {
     width: 100%;
-    padding: 12px;
+    padding: var(--space-3, 12px);
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     color: var(--text-primary);
-    font-size: 1em;
+    font-size: var(--text-base, 1em);
+    min-height: var(--touch-target-min, 44px); /* Touch-friendly */
 }
 
 .login-form input:focus {
