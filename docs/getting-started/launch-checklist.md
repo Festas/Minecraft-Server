@@ -1,4 +1,10 @@
-# Launch Checklist
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)
+
+---
+
+# Launch Checklist ✅
+
+<!-- Last Updated: 2025-12-10 -->
 
 This checklist ensures all systems are ready for production deployment.
 
@@ -47,7 +53,7 @@ This checklist ensures all systems are ready for production deployment.
 - [ ] `REDIS_PORT` configured
 
 ### Testing
-- [ ] Full QA checklist completed (see QA-CHECKLIST.md)
+- [ ] Full QA checklist completed (see [qa-checklist.md](./qa-checklist.md))
 - [ ] Backend tests passing (405+ tests)
 - [ ] Security audit completed (npm audit)
 - [ ] Load testing performed
@@ -56,7 +62,7 @@ This checklist ensures all systems are ready for production deployment.
 
 ### Documentation
 - [ ] README reviewed and accurate
-- [ ] DEPLOYMENT.md reviewed
+- [ ] [deployment.md](./deployment.md) reviewed
 - [ ] CONSOLE-SETUP.md reviewed
 - [ ] Admin guide created/reviewed (ADMIN-GUIDE.md)
 - [ ] Player documentation ready
@@ -233,3 +239,16 @@ If critical issues arise:
 **Rollback Deadline:** ________________
 
 **Notes:**
+
+---
+
+## Next Steps
+
+- 🔍 [QA Checklist](./qa-checklist.md) - Quality assurance testing
+- 📖 [Deployment Guide](./deployment.md) - Full deployment instructions
+- 🔧 [Administration](../admin/) - Server management after launch
+- 🆘 [Troubleshooting](../troubleshooting/) - Help with issues
+
+---
+
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)

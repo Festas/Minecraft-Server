@@ -1,4 +1,10 @@
-# Server Icon Setup Guide
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)
+
+---
+
+# Server Icon Setup Guide 🎨
+
+<!-- Last Updated: 2025-12-10 -->
 
 A custom server icon makes your server instantly recognizable in players' Minecraft server lists. This guide explains how to create and add a server icon for the festas_builds community server.
 
@@ -304,3 +310,16 @@ To change your server icon later:
 ---
 
 *Remember: Your server icon is part of your brand. Make it count!*
+
+---
+
+## Next Steps
+
+- 📖 [Deployment Guide](./deployment.md) - Full server deployment
+- 🌐 [Bedrock Edition Setup](./bedrock-setup.md) - Enable cross-platform play
+- ✅ [Launch Checklist](./launch-checklist.md) - Pre-launch validation
+- 🔧 [Administration](../admin/) - Server management
+
+---
+
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)

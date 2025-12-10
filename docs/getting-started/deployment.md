@@ -1,4 +1,10 @@
-# Minecraft Server Deployment Guide (Docker)
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)
+
+---
+
+# Deployment Guide (Docker) 📦
+
+<!-- Last Updated: 2025-12-10 -->
 
 This guide will walk you through deploying a containerized Minecraft server using Docker with automated GitHub Actions deployment.
 
@@ -101,7 +107,7 @@ sudo ufw reload
 sudo ufw status
 ```
 
-**For Bedrock Edition support**, port 19132 UDP is required. See [BEDROCK-SETUP.md](BEDROCK-SETUP.md) for details.
+**For Bedrock Edition support**, port 19132 UDP is required. See [bedrock-setup.md](./bedrock-setup.md) for details.
 
 **Alternative firewall configurations:**
 
@@ -893,3 +899,16 @@ If you encounter issues:
 ## License
 
 This deployment setup is provided as-is. Minecraft is owned by Mojang Studios. Please review and accept the [Minecraft EULA](https://account.mojang.com/documents/minecraft_eula) before running a server.
+
+---
+
+## Next Steps
+
+- 🐳 [Docker Setup Alternative](./docker.md) - Simplified Docker deployment
+- 🌐 [Bedrock Edition Setup](./bedrock-setup.md) - Enable cross-platform play
+- ✅ [Launch Checklist](./launch-checklist.md) - Pre-launch validation
+- 🎨 [Server Icon Setup](./server-icon.md) - Customize server branding
+
+---
+
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)
