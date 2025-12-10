@@ -48,7 +48,7 @@ const commandLimiter = rateLimit({
     message: 'Too many commands, please slow down',
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (req, res, next, options) => {
+    handler: (req, res, _next, _options) => {
         console.warn('[RATE_LIMIT] Command rate limit exceeded:', {
             ip: req.ip,
             sessionID: req.sessionID,
@@ -70,7 +70,7 @@ const serverControlLimiter = rateLimit({
     message: 'Too many server control requests, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (req, res, next, options) => {
+    handler: (req, res, _next, _options) => {
         console.warn('[RATE_LIMIT] Server control rate limit exceeded:', {
             ip: req.ip,
             path: req.path,
@@ -116,7 +116,7 @@ const apiLimiter = rateLimit({
     message: 'Too many requests, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
-    handler: (req, res, next, options) => {
+    handler: (req, res, _next, _options) => {
         console.warn('[RATE_LIMIT] API rate limit exceeded:', {
             ip: req.ip,
             path: req.path,

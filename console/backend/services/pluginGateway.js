@@ -192,6 +192,7 @@ class PluginGateway {
         const results = {};
         let overallHealthy = true;
 
+        // eslint-disable-next-line no-unused-vars
         for (const [pluginName, adapter] of this.adapters) {
             try {
                 results[pluginName] = await this.checkHealth(pluginName);

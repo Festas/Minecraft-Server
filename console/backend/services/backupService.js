@@ -10,16 +10,11 @@ const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { exec } = require('child_process');
-const util = require('util');
 const AdmZip = require('adm-zip');
 const database = require('./database');
-const auditLog = require('./auditLog');
 const { eventLogger, EVENT_TYPES, EVENT_CATEGORIES, EVENT_SEVERITY } = require('./eventLogger');
 const rconService = require('./rcon');
 const dockerService = require('./docker');
-
-const execPromise = util.promisify(exec);
 
 // Backup types
 const BACKUP_TYPES = {

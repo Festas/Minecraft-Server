@@ -22,7 +22,7 @@ const jobWorker = require('./services/jobWorker');
 const automationService = require('./services/automationService');
 const analyticsService = require('./services/analyticsService');
 const { initializeUsers } = require('./auth/auth');
-const { initializeSessionMiddleware, initializeSessionStore, getSessionMiddleware, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
+const { initializeSessionMiddleware, initializeSessionStore, getSessionStoreStatus, shutdownSessionStore } = require('./auth/session');
 const { validateTokenConfiguration } = require('./auth/bearerAuth');
 
 // Import middleware
@@ -64,6 +64,7 @@ const io = socketIo(server, {
 
 // Port configuration
 const PORT = process.env.CONSOLE_PORT || 3001;
+const HOST = '0.0.0.0';
 
 // Configure morgan logging
 const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
@@ -793,7 +794,6 @@ async function startServer() {
         // Step 2: Start the HTTP server
         console.log('[Startup] Step 2/3: Starting HTTP server...');
         await new Promise((resolve, reject) => {
-            const HOST = '0.0.0.0';
             server.listen(PORT, HOST, (err) => {
                 if (err) {
                     reject(err);
