@@ -1,7 +1,9 @@
 /**
  * Bearer Token Authentication Middleware
- * Supports stateless Bearer token authentication for plugin API
+ * Supports stateless Bearer token authentication for plugin API and API keys
  */
+
+const apiKeyService = require('../services/apiKeyService');
 
 /**
  * Verify Bearer token from Authorization header
@@ -35,7 +37,53 @@ function verifyBearerToken(req) {
 }
 
 /**
- * Authentication middleware that supports both session and Bearer token
+ * Verify API key from Authorization header
+ * @param {object} req - Express request object
+ * @returns {object|null} API key data if valid, null otherwise
+ */
+function verifyApiKey(req) {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return null;
+    }
+    
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    
+    // Check if it's an API key (starts with 'mcs_')
+    if (!token.startsWith('mcs_')) {
+        return null;
+    }
+    
+    // Validate the API key
+    const keyData = apiKeyService.validateApiKey(token);
+    
+    if (!keyData) {
+        console.log('[BearerAuth] Invalid or expired API key');
+        return null;
+    }
+    
+    // Log minimal key info (avoid exposing sensitive scope details in production)
+    if (process.env.NODE_ENV === 'development') {
+        console.log('[BearerAuth] Valid API key:', {
+            id: keyData.id,
+            name: keyData.name,
+            prefix: keyData.key_prefix,
+            scopes: keyData.scopes
+        });
+    } else {
+        console.log('[BearerAuth] Valid API key:', {
+            id: keyData.id,
+            name: keyData.name,
+            prefix: keyData.key_prefix
+        });
+    }
+    
+    return keyData;
+}
+
+/**
+ * Authentication middleware that supports session, Bearer token, and API keys
  */
 function requireAuthOrToken(req, res, next) {
     // Log authentication attempt
@@ -47,7 +95,16 @@ function requireAuthOrToken(req, res, next) {
         sessionAuthenticated: req.session?.authenticated || false
     });
     
-    // Check Bearer token first (stateless, preferred for API)
+    // Check API key first (most specific)
+    const apiKeyData = verifyApiKey(req);
+    if (apiKeyData) {
+        console.log('[Auth] API key authentication successful');
+        req.authenticatedVia = 'apiKey';
+        req.apiKey = apiKeyData;
+        return next();
+    }
+    
+    // Check Bearer token (for plugin admin)
     if (verifyBearerToken(req)) {
         console.log('[Auth] Bearer token authentication successful');
         req.authenticatedVia = 'bearer';
@@ -62,22 +119,54 @@ function requireAuthOrToken(req, res, next) {
     }
     
     // Neither auth method succeeded
-    console.log('[Auth] Authentication failed: no valid Bearer token or session');
+    console.log('[Auth] Authentication failed: no valid API key, Bearer token, or session');
     res.status(401).json({ 
         error: 'Authentication required',
-        message: 'Provide a valid Bearer token or authenticated session'
+        message: 'Provide a valid API key, Bearer token, or authenticated session'
     });
 }
 
 /**
- * Middleware to skip CSRF for Bearer token requests
+ * Middleware to skip CSRF for Bearer token and API key requests
  */
 function skipCsrfForBearer(req, res, next) {
-    // If authenticated via Bearer token, skip CSRF
-    if (req.headers.authorization?.startsWith('Bearer ') && verifyBearerToken(req)) {
-        req.skipCsrf = true;
+    // If authenticated via Bearer token or API key, skip CSRF
+    if (req.headers.authorization?.startsWith('Bearer ')) {
+        if (verifyBearerToken(req) || verifyApiKey(req)) {
+            req.skipCsrf = true;
+        }
     }
     next();
+}
+
+/**
+ * Middleware to require specific API key scope
+ * @param {string} scope - Required scope (e.g., 'server:read')
+ * @returns {Function} Express middleware
+ */
+function requireApiScope(scope) {
+    return (req, res, next) => {
+        // Only check scope for API key authentication
+        if (req.authenticatedVia !== 'apiKey') {
+            return next();
+        }
+
+        if (!req.apiKey) {
+            return res.status(403).json({
+                error: 'Forbidden',
+                message: 'API key authentication required'
+            });
+        }
+
+        if (!apiKeyService.hasScope(req.apiKey, scope)) {
+            return res.status(403).json({
+                error: 'Forbidden',
+                message: `API key lacks required scope: ${scope}`
+            });
+        }
+
+        next();
+    };
 }
 
 /**
@@ -109,6 +198,8 @@ function validateTokenConfiguration() {
 module.exports = {
     requireAuthOrToken,
     verifyBearerToken,
+    verifyApiKey,
     skipCsrfForBearer,
+    requireApiScope,
     validateTokenConfiguration
 };

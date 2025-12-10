@@ -139,7 +139,14 @@ const PERMISSIONS = {
     // CI/CD Dashboard
     CICD_VIEW: 'cicd:view',
     CICD_TRIGGER: 'cicd:trigger',
-    CICD_DOWNLOAD_ARTIFACTS: 'cicd:download_artifacts'
+    CICD_DOWNLOAD_ARTIFACTS: 'cicd:download_artifacts',
+    
+    // API Key Management
+    API_KEY_CREATE: 'api_key:create',
+    API_KEY_VIEW: 'api_key:view',
+    API_KEY_EDIT: 'api_key:edit',
+    API_KEY_REVOKE: 'api_key:revoke',
+    API_KEY_STATS: 'api_key:stats'
 };
 
 /**
@@ -254,6 +261,13 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.CICD_TRIGGER,
         PERMISSIONS.CICD_DOWNLOAD_ARTIFACTS,
         
+        // API Key Management (full access for admin)
+        PERMISSIONS.API_KEY_CREATE,
+        PERMISSIONS.API_KEY_VIEW,
+        PERMISSIONS.API_KEY_EDIT,
+        PERMISSIONS.API_KEY_REVOKE,
+        PERMISSIONS.API_KEY_STATS,
+        
         // No audit log access
     ],
     
@@ -322,6 +336,10 @@ const ROLE_PERMISSIONS = {
         
         // CI/CD Dashboard (view only)
         PERMISSIONS.CICD_VIEW,
+        
+        // API Key Management (view only for moderator)
+        PERMISSIONS.API_KEY_VIEW,
+        PERMISSIONS.API_KEY_STATS,
     ],
     
     [ROLES.VIEWER]: [
@@ -370,6 +388,9 @@ const ROLE_PERMISSIONS = {
         
         // CI/CD Dashboard (view only)
         PERMISSIONS.CICD_VIEW,
+        
+        // API Key Management (view only for viewer)
+        PERMISSIONS.API_KEY_VIEW,
     ]
 };
 
