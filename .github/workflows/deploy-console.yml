@@ -113,11 +113,11 @@ jobs:
       - name: Upload diagnostic scripts
         run: |
           echo "Uploading diagnostic scripts to server..."
-          scp -i ~/.ssh/id_rsa scripts/diagnose-plugins.sh \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/deploy/minecraft-server/scripts/
+          scp -i ~/.ssh/id_rsa scripts/diagnostics/diagnose-plugins.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/home/deploy/minecraft-server/scripts/diagnostics/
 
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "chmod +x /home/deploy/minecraft-server/scripts/diagnose-plugins.sh"
+            "mkdir -p /home/deploy/minecraft-server/scripts/diagnostics && chmod +x /home/deploy/minecraft-server/scripts/diagnostics/diagnose-plugins.sh"
 
       - name: Pre-deployment diagnostics and auto-fix
         id: pre_deploy_check
@@ -128,7 +128,7 @@ jobs:
             cd /home/deploy/minecraft-server
 
             # Run diagnostics in fix mode
-            ./scripts/diagnose-plugins.sh fix || true
+            ./scripts/diagnostics/diagnose-plugins.sh fix || true
 
             # Get the latest diagnostics directory
             DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | head -1)
@@ -731,7 +731,7 @@ jobs:
             cd /home/deploy/minecraft-server
 
             # Run diagnostics in fix mode with auto-restart enabled
-            AUTO_RESTART=true ./scripts/diagnose-plugins.sh fix || true
+            AUTO_RESTART=true ./scripts/diagnostics/diagnose-plugins.sh fix || true
 
             # Get the latest diagnostics directory
             DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | head -1)

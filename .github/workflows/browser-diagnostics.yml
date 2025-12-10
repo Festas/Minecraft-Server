@@ -107,7 +107,7 @@ jobs:
           EOF
           
           # Upload resource monitor script
-          scp -i ~/.ssh/id_rsa scripts/resource-monitor.sh \
+          scp -i ~/.ssh/id_rsa scripts/diagnostics/resource-monitor.sh \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/scripts/
           
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
@@ -134,7 +134,7 @@ jobs:
           
           # Run browser diagnostics and capture exit code
           EXIT_CODE=0
-          node scripts/browser-diagnostics.js || EXIT_CODE=$?
+          node scripts/diagnostics/browser-diagnostics.js || EXIT_CODE=$?
           
           # List generated files
           echo ""
@@ -161,8 +161,8 @@ jobs:
         run: |
           echo "Running API profiling..."
           
-          chmod +x scripts/api-profiler.sh
-          scripts/api-profiler.sh || true
+          chmod +x scripts/api-testing/api-profiler.sh
+          scripts/api-testing/api-profiler.sh || true
           
           # List generated files
           echo ""

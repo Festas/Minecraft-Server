@@ -290,7 +290,7 @@ jobs:
           EOF
 
           # Upload resource monitor script
-          scp -i ~/.ssh/id_rsa scripts/resource-monitor.sh \
+          scp -i ~/.ssh/id_rsa scripts/diagnostics/resource-monitor.sh \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/scripts/
 
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
@@ -323,14 +323,15 @@ jobs:
 
           echo "Uploading diagnostic scripts..."
           scp -i ~/.ssh/id_rsa \
-            scripts/diagnose-plugins.sh \
-            scripts/diagnose-plugins-advanced.sh \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/scripts/
+            scripts/diagnostics/diagnose-plugins.sh \
+            scripts/diagnostics/diagnose-plugins-advanced.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/scripts/diagnostics/
 
           echo "Setting executable permissions..."
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins.sh
-            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins-advanced.sh
+            mkdir -p ${{ env.DEPLOY_DIR }}/scripts/diagnostics
+            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnostics/diagnose-plugins.sh
+            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnostics/diagnose-plugins-advanced.sh
           EOF
 
           echo "✓ Diagnostic scripts uploaded"
@@ -351,7 +352,7 @@ jobs:
             cd ${{ env.DEPLOY_DIR }}
 
             # Run basic diagnostics
-            ./scripts/diagnose-plugins.sh ${{ github.event.inputs.backend_mode }} || true
+            ./scripts/diagnostics/diagnose-plugins.sh ${{ github.event.inputs.backend_mode }} || true
 
             # Find the most recent diagnostics directory and count fixes
             DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | grep -v advanced | head -1)
@@ -379,7 +380,7 @@ jobs:
             cd ${{ env.DEPLOY_DIR }}
 
             # Run advanced diagnostics
-            ./scripts/diagnose-plugins-advanced.sh || true
+            ./scripts/diagnostics/diagnose-plugins-advanced.sh || true
           EOF
 
           echo "✓ Advanced diagnostics completed"
@@ -414,7 +415,7 @@ jobs:
 
           # Run browser diagnostics and capture exit code
           EXIT_CODE=0
-          node scripts/browser-diagnostics.js || EXIT_CODE=$?
+          node scripts/diagnostics/browser-diagnostics.js || EXIT_CODE=$?
 
           # List generated files
           echo ""
@@ -447,8 +448,8 @@ jobs:
           echo "╚════════════════════════════════════════════════════════════════╝"
           echo ""
 
-          chmod +x scripts/api-profiler.sh
-          scripts/api-profiler.sh || true
+          chmod +x scripts/api-testing/api-profiler.sh
+          scripts/api-testing/api-profiler.sh || true
 
           # List generated files
           echo ""
@@ -609,8 +610,8 @@ jobs:
           echo ""
 
           # Make script executable and run it
-          chmod +x scripts/generate-diagnostics-summary.sh
-          if ! scripts/generate-diagnostics-summary.sh; then
+          chmod +x scripts/diagnostics/generate-diagnostics-summary.sh
+          if ! scripts/diagnostics/generate-diagnostics-summary.sh; then
             echo "⚠️  Warning: Summary generation encountered errors"
             echo "This may indicate missing diagnostic data, which is expected if some diagnostics were skipped"
             echo "Attempting to continue with available data..."

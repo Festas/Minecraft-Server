@@ -80,7 +80,7 @@ jobs:
 
             # Run the external diagnostics script
             export RCON_PASSWORD="${RCON_PASSWORD}"
-            bash scripts/diagnose.sh "${ACTION}"
+            bash scripts/diagnostics/diagnose.sh "${ACTION}"
 
             # Output the diagnostics directory path for artifact upload
             DIAG_DIR=$(ls -td /tmp/rcon-diagnostics-* 2>/dev/null | head -1)

@@ -49,14 +49,15 @@ jobs:
         run: |
           echo "Uploading diagnostic scripts..."
           scp -i ~/.ssh/id_rsa \
-            scripts/diagnose-plugins.sh \
-            scripts/diagnose-plugins-advanced.sh \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/scripts/
+            scripts/diagnostics/diagnose-plugins.sh \
+            scripts/diagnostics/diagnose-plugins-advanced.sh \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ env.DEPLOY_DIR }}/scripts/diagnostics/
           
           echo "Setting executable permissions..."
           ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins.sh
-            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnose-plugins-advanced.sh
+            mkdir -p ${{ env.DEPLOY_DIR }}/scripts/diagnostics
+            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnostics/diagnose-plugins.sh
+            chmod +x ${{ env.DEPLOY_DIR }}/scripts/diagnostics/diagnose-plugins-advanced.sh
           EOF
       
       - name: Run basic plugin diagnostics
@@ -69,7 +70,7 @@ jobs:
             cd ${{ env.DEPLOY_DIR }}
             
             # Run basic diagnostics
-            ./scripts/diagnose-plugins.sh ${{ github.event.inputs.mode }} || true
+            ./scripts/diagnostics/diagnose-plugins.sh ${{ github.event.inputs.mode }} || true
             
             # Find the most recent diagnostics directory and count fixes
             DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-* 2>/dev/null | grep -v advanced | head -1)
@@ -94,7 +95,7 @@ jobs:
             cd ${{ env.DEPLOY_DIR }}
             
             # Run advanced diagnostics
-            ./scripts/diagnose-plugins-advanced.sh || true
+            ./scripts/diagnostics/diagnose-plugins-advanced.sh || true
             
             # Find the most recent advanced diagnostics directory
             ADV_DIAG_DIR=$(ls -td /tmp/plugin-diagnostics-advanced-* 2>/dev/null | head -1)
