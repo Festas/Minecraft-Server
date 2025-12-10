@@ -143,7 +143,7 @@ Newcomer → Builder → Architect → Master Builder → Legend
 
 **Bedrock Port**: 19132 (UDP)
 
-**Documentation**: [BEDROCK-SETUP.md](BEDROCK-SETUP.md)
+**Documentation**: [docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md)
 
 ---
 
@@ -243,9 +243,9 @@ All features are fully documented:
 - **[COSMETICS.md](COSMETICS.md)** - Cosmetics & rewards
 - **[WELCOME-SYSTEM.md](WELCOME-SYSTEM.md)** - New player experience
 - **[CREATOR-TOOLS.md](CREATOR-TOOLS.md)** - Content creation tools
-- **[BEDROCK-SETUP.md](BEDROCK-SETUP.md)** - Cross-platform play
+- **[docs/getting-started/bedrock-setup.md](docs/getting-started/bedrock-setup.md)** - Cross-platform play
 - **[PLUGINS.md](PLUGINS.md)** - Complete plugin list
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Server deployment
+- **[docs/getting-started/deployment.md](docs/getting-started/deployment.md)** - Server deployment
 - **[ROADMAP.md](ROADMAP.md)** - Future plans
 - **[ADMIN-GUIDE.md](ADMIN-GUIDE.md)** - Administration guide
 

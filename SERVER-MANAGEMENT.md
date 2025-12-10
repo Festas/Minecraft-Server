@@ -854,7 +854,7 @@ nc -zv localhost 25565
 ## Additional Resources
 
 - **[README.md](README.md)** - Main documentation
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Initial deployment guide
+- **[docs/getting-started/deployment.md](docs/getting-started/deployment.md)** - Initial deployment guide
 - **[PLUGINS.md](PLUGINS.md)** - Plugin recommendations and setup
 - **[CONSOLE-SETUP.md](CONSOLE-SETUP.md)** - Web console setup
 - **[Paper Documentation](https://docs.papermc.io/)** - Paper server docs
@@ -871,7 +871,7 @@ If you encounter issues:
 3. Check container logs: `docker logs minecraft-server`
 4. Verify secrets are configured correctly
 5. Check server resources (disk, memory, CPU)
-6. Review [DEPLOYMENT.md](DEPLOYMENT.md) for setup issues
+6. Review [docs/getting-started/deployment.md](docs/getting-started/deployment.md) for setup issues
 
 For plugin-specific issues, see [PLUGINS.md](PLUGINS.md).
 

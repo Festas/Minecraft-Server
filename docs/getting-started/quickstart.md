@@ -1,4 +1,10 @@
-# Setup Complete! 🎉
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)
+
+---
+
+# Quick Start Guide 🚀
+
+<!-- Last Updated: 2025-12-10 -->
 
 Your Minecraft server deployment system is ready! Here's everything that was created:
 
@@ -47,7 +53,7 @@ git push
 
 ### 2️⃣ Setup Your Hetzner Server
 
-Follow the **Initial Server Setup** section in [DEPLOYMENT.md](DEPLOYMENT.md):
+Follow the **Initial Server Setup** section in [deployment.md](./deployment.md):
 
 - Install Java 17 on your server
 - Configure firewall to allow port 25565
@@ -95,7 +101,7 @@ Connect from your Minecraft client:
 ## 📖 Documentation Guide
 
 ### For Step-by-Step Instructions
-👉 **Read [DEPLOYMENT.md](DEPLOYMENT.md)** - This is your main guide!
+👉 **Read [deployment.md](./deployment.md)** - This is your main guide!
 
 It covers:
 - ✅ Prerequisites (Java, firewall, etc.)
@@ -110,10 +116,10 @@ It covers:
 - ✅ Security best practices
 
 ### For Quick Commands
-👉 **Use [QUICK-REFERENCE.md](QUICK-REFERENCE.md)** - Fast lookup for common tasks
+👉 **Use [Quick Reference](../../QUICK-REFERENCE.md)** - Fast lookup for common tasks
 
 ### For Docker Alternative
-👉 **See [DOCKER.md](DOCKER.md)** - If you prefer containerized deployment
+👉 **See [docker.md](./docker.md)** - If you prefer containerized deployment
 
 ## 🎮 How It Works
 
@@ -195,8 +201,8 @@ All files will be deployed to: `/home/deploy/minecraft-server/`
 
 ## 📞 Need Help?
 
-1. **Check [DEPLOYMENT.md](DEPLOYMENT.md)** - Detailed troubleshooting section
-2. **Check [QUICK-REFERENCE.md](QUICK-REFERENCE.md)** - Common commands
+1. **Check [deployment.md](./deployment.md)** - Detailed troubleshooting section
+2. **Check [Quick Reference](../../QUICK-REFERENCE.md)** - Common commands
 3. **View GitHub Actions logs** - See what went wrong in deployment
 4. **Check server logs** - `sudo journalctl -u minecraft.service -n 100`
 
@@ -216,7 +222,7 @@ All files will be deployed to: `/home/deploy/minecraft-server/`
 
 ---
 
-**Ready to deploy?** Start with [DEPLOYMENT.md](DEPLOYMENT.md) for the complete guide!
+**Ready to deploy?** Start with [deployment.md](./deployment.md) for the complete guide!
 
 ## 📊 What You Get
 
@@ -230,3 +236,16 @@ All files will be deployed to: `/home/deploy/minecraft-server/`
 ✨ **Version Control** - All configuration in Git  
 
 Enjoy your Minecraft server! 🎮⛏️
+
+---
+
+## Next Steps
+
+- 📖 [Full Deployment Guide](./deployment.md) - Complete step-by-step deployment instructions
+- 🐳 [Docker Setup](./docker.md) - Alternative containerized deployment
+- 🌐 [Bedrock Edition Setup](./bedrock-setup.md) - Enable cross-platform play
+- ✅ [Launch Checklist](./launch-checklist.md) - Pre-launch validation
+
+---
+
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)

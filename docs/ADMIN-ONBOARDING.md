@@ -340,11 +340,11 @@ Go to Console → Type: /say Server restarting in 5 minutes!
 - [Full Admin Guide](ADMIN-GUIDE.md) - Comprehensive administration guide
 - [Server Management](SERVER-MANAGEMENT.md) - Technical server management
 - [Plugin Guide](PLUGINS.md) - Plugin documentation
-- [Troubleshooting](DEPLOYMENT.md#troubleshooting) - Common issues
+- [Troubleshooting](./getting-started/deployment.md#troubleshooting) - Common issues
 
 ### Quick References
-- [Launch Checklist](LAUNCH-CHECKLIST.md) - Pre-launch validation
-- [QA Checklist](QA-CHECKLIST.md) - Quality assurance
+- [Launch Checklist](./getting-started/launch-checklist.md) - Pre-launch validation
+- [QA Checklist](./getting-started/qa-checklist.md) - Quality assurance
 - [Security Policy](SECURITY.md) - Security guidelines
 
 ### Support Channels

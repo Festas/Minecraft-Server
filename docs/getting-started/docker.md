@@ -1,4 +1,10 @@
-# Docker Setup (Optional Alternative)
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)
+
+---
+
+# Docker Setup Guide 🐳
+
+<!-- Last Updated: 2025-12-10 -->
 
 If you prefer to run the Minecraft server using Docker, follow this guide.
 
@@ -174,3 +180,16 @@ jobs:
 - **Learning Curve**: Requires Docker knowledge
 
 Choose the systemd approach for simplicity or Docker for flexibility!
+
+---
+
+## Next Steps
+
+- 📖 [Full Deployment Guide](./deployment.md) - Complete deployment with GitHub Actions
+- 🌐 [Bedrock Edition Setup](./bedrock-setup.md) - Enable cross-platform play
+- ✅ [Launch Checklist](./launch-checklist.md) - Pre-launch validation
+- 📊 [Server Management](../admin/) - Administration and monitoring
+
+---
+
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)

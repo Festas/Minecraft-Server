@@ -1,4 +1,10 @@
-# Bedrock Edition Setup Guide
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)
+
+---
+
+# Bedrock Edition Setup Guide 🎮
+
+<!-- Last Updated: 2025-12-10 -->
 
 This guide explains how to enable cross-platform play between Minecraft Java Edition and Bedrock Edition players on the festas_builds server.
 
@@ -528,3 +534,16 @@ After setup, verify everything works:
 ---
 
 *Built with ❤️ for the festas_builds community*
+
+---
+
+## Next Steps
+
+- 📖 [Full Deployment Guide](./deployment.md) - Complete server deployment
+- 🐳 [Docker Setup](./docker.md) - Alternative deployment method
+- ✅ [Launch Checklist](./launch-checklist.md) - Pre-launch validation
+- 🎨 [Server Icon Setup](./server-icon.md) - Customize server branding
+
+---
+
+← [Back to Getting Started](./README.md) | [Documentation Home](../README.md)

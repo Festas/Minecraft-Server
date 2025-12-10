@@ -462,7 +462,7 @@ echo "Upgrade complete! Monitor logs with: docker compose logs -f"
 
 If you encounter issues during upgrade:
 
-1. Check [Troubleshooting Guide](DEPLOYMENT.md#troubleshooting)
+1. Check [Troubleshooting Guide](docs/getting-started/deployment.md#troubleshooting)
 2. Review [GitHub Issues](https://github.com/Festas/Minecraft-Server/issues)
 3. Join our [Discord](https://discord.gg/your-server) for support
 4. Post detailed logs and steps to reproduce
