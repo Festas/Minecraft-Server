@@ -1,3 +1,7 @@
+[← Back to Troubleshooting](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Comprehensive Diagnostics Guide
 
 ## Overview
@@ -956,3 +960,16 @@ ls -lh /tmp/browser-diagnostics-*/
 ls -lh /tmp/api-profiler-*/
 ls -lh /tmp/resource-monitor-*/
 ```
+
+---
+
+## Related Documents
+
+- [Browser Diagnostics](./browser-diagnostics.md) - Frontend and API diagnostics
+- [Plugin Diagnostics](./plugin-diagnostics.md) - Plugin system testing
+- [Common Issues](./common-issues.md) - Quick solutions to common problems
+- [Development Guide](../development/README.md) - Development setup
+
+---
+
+[← Back to Troubleshooting](./README.md) | [Documentation Hub](../README.md)

@@ -1,3 +1,7 @@
+[← Back to Troubleshooting](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Browser Diagnostics Guide
 
 ## Overview
@@ -396,3 +400,16 @@ For issues with browser diagnostics:
 2. Review workflow run logs
 3. Download and examine artifacts
 4. File issue with diagnostic data attached
+
+---
+
+## Related Documents
+
+- [Diagnostics Guide](./diagnostics-guide.md) - Overview of all diagnostic tools
+- [Plugin Diagnostics](./plugin-diagnostics.md) - Plugin system testing
+- [Common Issues](./common-issues.md) - Quick solutions
+- [Scripts README](../../scripts/README.md) - Diagnostic scripts overview
+
+---
+
+[← Back to Troubleshooting](./README.md) | [Documentation Hub](../README.md)

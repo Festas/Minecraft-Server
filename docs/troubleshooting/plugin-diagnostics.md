@@ -1,3 +1,7 @@
+[← Back to Troubleshooting](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Plugin Install Diagnostics Workflow
 
 ## Overview
@@ -348,9 +352,9 @@ Resource Monitoring provides:
 ### Comprehensive Diagnostics
 
 For full-stack issue diagnosis, see:
-- [Diagnostics Guide](./DIAGNOSTICS-GUIDE.md) - Overview of all diagnostic tools
-- [Browser Diagnostics](./BROWSER-DIAGNOSTICS.md) - Frontend and API diagnostics
-- [API Authentication Guide](./API-AUTHENTICATION-GUIDE.md) - CSRF and session flow
+- [Diagnostics Guide](./diagnostics-guide.md) - Overview of all diagnostic tools
+- [Browser Diagnostics](./browser-diagnostics.md) - Frontend and API diagnostics
+- [API Authentication Guide](../API-AUTHENTICATION-GUIDE.md) - CSRF and session flow
 
 ## Support
 
@@ -366,3 +370,16 @@ If you encounter issues not covered in this guide:
    - Test scenario that failed
    - Relevant log excerpts
    - Steps to reproduce
+
+---
+
+## Related Documents
+
+- [Diagnostics Guide](./diagnostics-guide.md) - Overview of all diagnostic tools
+- [Browser Diagnostics](./browser-diagnostics.md) - Frontend testing
+- [Common Issues](./common-issues.md) - Quick solutions
+- [Plugin Manager API](../development/plugin-manager-api.md) - API documentation
+
+---
+
+[← Back to Troubleshooting](./README.md) | [Documentation Hub](../README.md)

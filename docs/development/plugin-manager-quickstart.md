@@ -1,3 +1,7 @@
+[← Back to Development](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Plugin Manager V2 - Quick Start Guide
 
 ## For Server Administrators
@@ -254,9 +258,9 @@ while True:
 
 ## Additional Resources
 
-- **Full Documentation:** See `docs/PLUGIN-MANAGER-V2.md`
-- **API Reference:** See `docs/admin/plugin-manager.md` section "Version 2"
-- **Migration Guide:** See `docs/PLUGIN-MANAGER-V2.md` section "Migration from V1"
+- **Full Documentation:** See [Plugin Manager API](./plugin-manager-api.md)
+- **API Reference:** See [Admin Plugin Manager Guide](../admin/plugin-manager.md) section "Version 2"
+- **Migration Guide:** See [Plugin Manager API](./plugin-manager-api.md) section "Migration from V1"
 
 ## Support
 
@@ -264,3 +268,16 @@ For issues or questions:
 1. Check server logs: `docker logs minecraft-console`
 2. Review documentation in `docs/`
 3. Open an issue on GitHub with logs and error details
+
+---
+
+## Related Documents
+
+- [Plugin Manager API](./plugin-manager-api.md) - Complete API documentation
+- [Plugin Diagnostics](../troubleshooting/plugin-diagnostics.md) - Troubleshooting guide
+- [Admin Plugin Manager](../admin/plugin-manager.md) - Management guide
+- [Security Guide](../admin/security.md) - Security best practices
+
+---
+
+[← Back to Development](./README.md) | [Documentation Hub](../README.md)

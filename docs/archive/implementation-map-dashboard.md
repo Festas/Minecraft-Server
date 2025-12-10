@@ -1,3 +1,7 @@
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)
+
+---
+
 # Map & Player Dashboard - Implementation Summary
 
 ## Overview
@@ -340,3 +344,15 @@ The implementation is production-ready pending manual UI testing with a live Dyn
 **Date**: December 9, 2024
 **Repository**: Festas/Minecraft-Server
 **Branch**: copilot/add-map-and-player-dashboard
+
+---
+
+## Related Documents
+
+- [Archive Index](./README.md) - All implementation summaries
+- [Development Guide](../development/README.md) - Current development docs
+- [Features](../features/README.md) - Active features
+
+---
+
+[← Back to Archive](./README.md) | [Documentation Hub](../README.md)
