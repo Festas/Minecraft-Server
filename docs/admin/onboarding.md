@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Admin Onboarding Guide
 
 Welcome to the Minecraft Server Console admin team! This guide will help you get started with managing the server.
@@ -337,15 +341,15 @@ Go to Console → Type: /say Server restarting in 5 minutes!
 ## Useful Resources
 
 ### Documentation
-- [Full Admin Guide](ADMIN-GUIDE.md) - Comprehensive administration guide
-- [Server Management](SERVER-MANAGEMENT.md) - Technical server management
-- [Plugin Guide](PLUGINS.md) - Plugin documentation
-- [Troubleshooting](./getting-started/deployment.md#troubleshooting) - Common issues
+- [Full Admin Guide](./admin-guide.md) - Comprehensive administration guide
+- [Server Management](./server-management.md) - Technical server management
+- [Plugin Guide](./plugins.md) - Plugin documentation
+- [Troubleshooting](../getting-started/deployment.md#troubleshooting) - Common issues
 
 ### Quick References
-- [Launch Checklist](./getting-started/launch-checklist.md) - Pre-launch validation
-- [QA Checklist](./getting-started/qa-checklist.md) - Quality assurance
-- [Security Policy](SECURITY.md) - Security guidelines
+- [Launch Checklist](../getting-started/launch-checklist.md) - Pre-launch validation
+- [QA Checklist](../getting-started/qa-checklist.md) - Quality assurance
+- [Security Policy](./security.md) - Security guidelines
 
 ### Support Channels
 - Team Discord - Real-time help from other admins
@@ -452,3 +456,16 @@ Good luck, and enjoy being part of the admin team! 🎮
 
 **Last Updated:** December 2024  
 **Questions?** Contact your team lead or check documentation
+
+---
+
+## Related Documents
+
+- [Admin Guide](./admin-guide.md) - Daily administration tasks
+- [Server Management](./server-management.md) - Technical operations
+- [Console Setup](./console-setup.md) - Web console configuration
+- [Security Policy](./security.md) - Security guidelines
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+- [Documentation Hub](../README.md) - All documentation
+
+[← Back to Admin Guide](./README.md)

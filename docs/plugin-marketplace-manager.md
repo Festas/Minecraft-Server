@@ -841,7 +841,7 @@ If issues persist:
    - Diagnostic output
 
 3. **Check documentation**:
-   - PLUGIN-MANAGER.md
+   - admin/plugin-manager.md
    - API.md
    - TROUBLESHOOTING.md
 

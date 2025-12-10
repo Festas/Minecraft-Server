@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Minecraft Console Setup Guide
 
 ## Overview
@@ -370,3 +374,15 @@ docker compose restart
 - 📦 **Backup Management** - Create and manage server backups
 - 🎨 **Minecraft Theme** - Dark mode with Minecraft-inspired design
 
+
+---
+
+## Related Documents
+
+- [Admin Guide](./admin-guide.md) - Daily administration tasks
+- [Server Management](./server-management.md) - Technical operations
+- [Onboarding Guide](./onboarding.md) - New admin training
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+- [Documentation Hub](../README.md) - All documentation
+
+[← Back to Admin Guide](./README.md)

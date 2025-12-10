@@ -36,7 +36,7 @@ Package 14 represents the final preparation phase for production launch, focusin
 ### 2. 🔒 Security Review & Enhancement
 
 **Documentation:**
-- Enhanced `SECURITY.md` with comprehensive sections:
+- Enhanced `docs/admin/security.md` with comprehensive sections:
   - Authentication & authorization details
   - Input validation & sanitization
   - Network security configuration
@@ -127,7 +127,7 @@ Package 14 represents the final preparation phase for production launch, focusin
   - Emergency procedures
   - Rollback procedures
 
-- `UPGRADE-GUIDE.md` - Safe upgrade procedures
+- `docs/admin/upgrade-guide.md` - Safe upgrade procedures
   - Upgrade strategies
   - Version-specific upgrades
   - Database migrations
@@ -149,7 +149,7 @@ Package 14 represents the final preparation phase for production launch, focusin
 **Updated:**
 - `README.md` - Added references to new documentation
 - `CHANGELOG.md` - Comprehensive Package 14 changelog
-- `SECURITY.md` - Enhanced security documentation
+- `docs/admin/security.md` - Enhanced security documentation
 
 ### 6. 🚀 Scripts & Automation
 
@@ -225,12 +225,12 @@ New Files Added:
 │   └── validate-launch.sh
 ├── docs/getting-started/launch-checklist.md
 ├── docs/getting-started/qa-checklist.md
-└── UPGRADE-GUIDE.md
+└── docs/admin/upgrade-guide.md
 
 Modified Files:
 ├── CHANGELOG.md (Package 14 updates)
 ├── README.md (new doc references)
-├── SECURITY.md (comprehensive enhancement)
+├── docs/admin/security.md (comprehensive enhancement)
 └── console/frontend/*.html (favicon links added)
 ```
 
@@ -341,8 +341,8 @@ The project is **ready for production deployment** following the launch checklis
 
 - [QA Checklist](../docs/getting-started/qa-checklist.md)
 - [Launch Checklist](../docs/getting-started/launch-checklist.md)
-- [Upgrade Guide](../UPGRADE-GUIDE.md)
-- [Security Policy](../SECURITY.md)
+- [Upgrade Guide](docs/admin/upgrade-guide.md)
+- [Security Policy](docs/admin/security.md)
 - [Admin Onboarding](ADMIN-ONBOARDING.md)
 - [Localization Guide](LOCALIZATION.md)
 - [CHANGELOG](../CHANGELOG.md)

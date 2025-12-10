@@ -266,7 +266,7 @@ Times may vary based on:
 
 ## Related Documentation
 
-- [Plugin Manager Guide](../PLUGIN-MANAGER.md) - Plugin management features
+- [Plugin Manager Guide](./admin/plugin-manager.md) - Plugin management features
 - [CSRF Fix Documentation](./CSRF-FIX-DOCUMENTATION.md) - CSRF implementation details
 - [Session/CSRF Debug Implementation](./SESSION-CSRF-DEBUG-IMPLEMENTATION.md) - Debug logging details
 - [API Documentation](./API.md) - API endpoint reference

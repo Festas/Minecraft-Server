@@ -1,3 +1,7 @@
+← [Back to Admin Guide](./README.md) | [Documentation Home](../README.md)
+
+---
+
 # Migration Guide: Bare-Metal to Containerized Minecraft Server
 
 This guide explains how to transition from running the Minecraft server as a bare-metal Java process to running it in a Docker container using the `itzg/minecraft-server` image.
@@ -262,5 +266,17 @@ The console and server communicate directly via the shared `caddy-network`, prov
 
 - [itzg/minecraft-server Documentation](https://docker-minecraft-server.readthedocs.io/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [CONSOLE-SETUP.md](./CONSOLE-SETUP.md) - Console configuration guide
-- [docs/getting-started/deployment.md](./docs/getting-started/deployment.md) - General deployment guide
+- [Console Setup](./console-setup.md) - Console configuration guide
+- [Deployment Guide](../getting-started/deployment.md) - General deployment guide
+
+---
+
+## Related Documents
+
+- [Admin Guide](./admin-guide.md) - Daily administration tasks
+- [Server Management](./server-management.md) - Technical operations
+- [Onboarding Guide](./onboarding.md) - New admin training
+- [Quick Reference](./cheatsheet.md) - Command cheat sheet
+- [Documentation Hub](../README.md) - All documentation
+
+[← Back to Admin Guide](./README.md)
