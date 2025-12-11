@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CI/CD Dashboard - Minecraft Console</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/theme-light.css" data-theme="light">
     <link rel="stylesheet" href="css/accessibility.css">
 </head>
@@ -24,9 +24,26 @@
     <!-- Sidebar Overlay (Mobile) -->
     <div class="sidebar-overlay"></div>
 
+    <div class="console-wrapper">
+        <!-- Header -->
+        <header class="console-header">
+            <div class="header-left">
+                <h1>🎮 Festas Builds - CI/CD Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <button id="themeToggle" aria-label="Toggle theme">
+                    <span class="theme-icon">☀️</span>
+                    <span class="theme-text">Light Mode</span>
+                </button>
+                <span id="currentUser" class="user-badge">Loading...</span>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
 
-                <!-- Sidebar -->
-            <aside class="sidebar">
+        <!-- Main Content -->
+        <div class="console-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar" role="navigation" aria-label="Main navigation">
                 <!-- Sidebar Header -->
                 <div class="sidebar-header">
                     <span class="sidebar-logo">🎮</span>
@@ -148,7 +165,8 @@
                 </nav>
             </aside>
 
-    <main id="main-content" class="main-content">
+            <!-- Main Content Area -->
+            <main id="main-content" class="main-content">
         <!-- Page Header -->
         <div class="page-header">
             <div>
@@ -246,7 +264,9 @@
                 </div>
             </div>
         </div>
-    </main>
+            </main>
+        </div>
+    </div>
 
     <script src="js/sidebar.js"></script>
     <script src="js/animations.js"></script>
