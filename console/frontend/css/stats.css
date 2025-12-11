@@ -1,4 +1,4 @@
-/* Map Page - BlueMap Embed */
+/* Stats Page - Plan Embed */
 
 .page-header {
     display: flex;
@@ -30,7 +30,7 @@
     flex-shrink: 0;
 }
 
-.map-status-bar {
+.stats-status-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -75,7 +75,7 @@
     color: var(--text-secondary);
 }
 
-.map-embed-container {
+.stats-embed-container {
     position: relative;
     width: 100%;
     height: calc(100vh - 200px);
@@ -86,13 +86,13 @@
     background: var(--color-bg-secondary);
 }
 
-.map-frame {
+.stats-frame {
     width: 100%;
     height: 100%;
     border: none;
 }
 
-.map-overlay {
+.stats-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -107,7 +107,7 @@
     gap: var(--space-3);
 }
 
-.map-overlay.hidden {
+.stats-overlay.hidden {
     display: none;
 }
 
@@ -124,7 +124,7 @@
     to { transform: rotate(360deg); }
 }
 
-.map-overlay p {
+.stats-overlay p {
     color: var(--text-secondary);
     font-size: 1rem;
 }
@@ -134,13 +134,13 @@
     margin-bottom: var(--space-2);
 }
 
-.map-overlay h3 {
+.stats-overlay h3 {
     margin: 0 0 var(--space-2) 0;
     color: var(--text-primary);
 }
 
 /* Fullscreen mode */
-.map-embed-container.fullscreen {
+.stats-embed-container.fullscreen {
     position: fixed;
     top: 0;
     left: 0;
@@ -167,7 +167,7 @@
         width: 100%;
     }
     
-    .map-embed-container {
+    .stats-embed-container {
         height: calc(100vh - 300px);
         min-height: 400px;
     }

@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Notifications - Minecraft Console</title>
+    <title>Player Analytics - Minecraft Server Console</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/console.css">
-    <link rel="stylesheet" href="css/discord.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
     <link rel="stylesheet" href="css/theme-light.css">
     <link rel="stylesheet" href="css/accessibility.css">
-
+    <link rel="stylesheet" href="css/stats.css">
 </head>
 <body>
     <!-- Skip to Content Link for Accessibility -->
@@ -28,19 +27,18 @@
     <!-- Sidebar Overlay (Mobile) -->
     <div class="sidebar-overlay"></div>
 
-
     <div class="console-wrapper">
         <!-- Header -->
         <header class="console-header">
             <div class="header-left">
-                <h1>🎮 Festas Builds - Discord Notifications</h1>
+                <h1>📊 Player Analytics</h1>
             </div>
             <div class="header-right">
                 <button id="themeToggle" aria-label="Toggle theme">
                     <span class="theme-icon">☀️</span>
                     <span class="theme-text">Light Mode</span>
                 </button>
-                <span id="currentUser" class="user-badge">Loading...</span>
+                <span id="currentUser" class="user-badge">Admin</span>
                 <button id="logoutBtn" class="btn btn-secondary">Logout</button>
             </div>
         </header>
@@ -91,7 +89,7 @@
                     </a>
                     <a class="nav-item" href="/console/backups.html">
                         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 1 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                         <span class="nav-text">Backups</span>
                     </a>
@@ -107,7 +105,7 @@
                         </svg>
                         <span class="nav-text">Map</span>
                     </a>
-                    <a class="nav-item" href="/console/stats.html">
+                    <a class="nav-item active" href="/console/stats.html">
                         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                         </svg>
@@ -122,125 +120,70 @@
                         </svg>
                         <span class="nav-text">Scheduler</span>
                     </a>
-                    <a class="nav-item active" href="/console/webhooks.html">
+                    <a class="nav-item" href="/console/webhooks.html">
                         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                         </svg>
                         <span class="nav-text">Discord</span>
                     </a>
-
                 </nav>
             </aside>
 
-            <!-- Main Content Area -->
+            <!-- Main Content -->
             <main id="main-content" class="main-content">
                 <!-- Page Header -->
-                <div class="discord-header">
-                    <h1>Discord Notifications</h1>
-                    
-                    <!-- Status Indicator -->
-                    <div class="status-indicator" id="status-indicator">
-                        <span class="status-dot"></span>
-                        <span id="status-text">Not configured</span>
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1 class="page-title">📊 Player Analytics</h1>
+                        <p class="page-subtitle">Powered by Plan</p>
                     </div>
-                </div>
-
-                <!-- Setup Guide -->
-                <div class="setup-guide">
-                    <h2>📖 Setup Guide</h2>
-                    <ol>
-                        <li>Open Discord → Server Settings → Integrations</li>
-                        <li>Create Webhook → Copy URL</li>
-                        <li>Paste URL below and select which events to send</li>
-                    </ol>
-                </div>
-
-                <!-- Configuration Card -->
-                <div class="config-card">
-                    <h3>Webhook Configuration</h3>
-                    
-                    <!-- Webhook URL Input -->
-                    <div class="webhook-url-group">
-                        <input 
-                            type="url" 
-                            id="discord-webhook-url" 
-                            class="webhook-url-input"
-                            placeholder="https://discord.com/api/webhooks/..."
-                            aria-label="Discord webhook URL"
-                        />
-                        <button 
-                            id="test-webhook-btn" 
-                            class="btn-test-discord"
-                            aria-label="Test Discord webhook"
-                        >
-                            Test
+                    <div class="page-header-actions">
+                        <button id="fullscreenBtn" class="btn btn-secondary" title="Fullscreen">
+                            <span>⛶</span> Fullscreen
                         </button>
+                        <a href="https://mc-stats.festas-builds.com" target="_blank" class="btn btn-primary">
+                            <span>↗</span> Open in New Tab
+                        </a>
                     </div>
-
-                    <!-- Events Section -->
-                    <div class="events-section">
-                        <h4>Events to Send:</h4>
-                        <div class="events-grid" id="events-grid">
-                            <label class="event-toggle">
-                                <input type="checkbox" id="event-server-start" value="server.start" checked>
-                                <span class="event-icon">🟢</span>
-                                <span class="event-label">Server Start</span>
-                            </label>
-                            <label class="event-toggle">
-                                <input type="checkbox" id="event-server-stop" value="server.stop" checked>
-                                <span class="event-icon">🔴</span>
-                                <span class="event-label">Server Stop</span>
-                            </label>
-                            <label class="event-toggle">
-                                <input type="checkbox" id="event-player-join" value="player.join">
-                                <span class="event-icon">👋</span>
-                                <span class="event-label">Player Join</span>
-                            </label>
-                            <label class="event-toggle">
-                                <input type="checkbox" id="event-player-leave" value="player.leave">
-                                <span class="event-icon">👋</span>
-                                <span class="event-label">Player Leave</span>
-                            </label>
-                            <label class="event-toggle">
-                                <input type="checkbox" id="event-backup-complete" value="backup.completed" checked>
-                                <span class="event-icon">💾</span>
-                                <span class="event-label">Backup Complete</span>
-                            </label>
-                            <label class="event-toggle">
-                                <input type="checkbox" id="event-backup-failed" value="backup.failed" checked>
-                                <span class="event-icon">⚠️</span>
-                                <span class="event-label">Backup Failed</span>
-                            </label>
-                            <label class="event-toggle event-toggle-full">
-                                <input type="checkbox" id="event-low-tps" value="alert.low_tps" checked>
-                                <span class="event-icon">📉</span>
-                                <span class="event-label">Low TPS Warning</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Save Button -->
-                    <button id="save-config-btn" class="btn-save-discord">
-                        Save Settings
-                    </button>
                 </div>
 
-                <!-- Recent Notifications -->
-                <div class="notifications-log">
-                    <h3>Recent Notifications (last 10)</h3>
-                    <div class="notification-list" id="notification-list">
-                        <div class="loading">Loading notifications...</div>
+                <!-- Connection Status -->
+                <div class="stats-status-bar">
+                    <div class="status-indicator" id="statsStatus">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Connecting to Plan...</span>
+                    </div>
+                </div>
+
+                <!-- Plan Embed -->
+                <div class="stats-embed-container" id="statsContainer">
+                    <iframe 
+                        id="planFrame"
+                        src="https://mc-stats.festas-builds.com"
+                        class="stats-frame"
+                        title="Plan - Player Analytics"
+                        allowfullscreen
+                    ></iframe>
+                    
+                    <!-- Loading/Error States -->
+                    <div id="statsLoading" class="stats-overlay">
+                        <div class="loading-spinner"></div>
+                        <p>Loading Plan Analytics...</p>
+                    </div>
+                    
+                    <div id="statsError" class="stats-overlay hidden">
+                        <div class="error-icon">⚠️</div>
+                        <h3>Plan Not Available</h3>
+                        <p>Make sure Plan plugin is running and accessible.</p>
+                        <button id="retryStatsBtn" class="btn btn-primary">Retry Connection</button>
                     </div>
                 </div>
             </main>
         </div>
     </div>
-
+    
     <script src="js/sidebar.js"></script>
-    <script src="js/animations.js"></script>
     <script src="js/themeManager.js"></script>
-    <script src="js/accessibility.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/webhooks.js"></script>
+    <script src="js/stats.js"></script>
 </body>
 </html>

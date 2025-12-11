@@ -1,23 +1,23 @@
-// BlueMap Integration
-const BLUEMAP_URL = 'https://mc-map.festas-builds.com';
+// Plan Analytics Integration
+const PLAN_URL = 'https://mc-stats.festas-builds.com';
 
 document.addEventListener('DOMContentLoaded', () => {
-    initBlueMap();
+    initPlan();
     initFullscreen();
     setupAuth();
 });
 
-function initBlueMap() {
-    const frame = document.getElementById('bluemapFrame');
-    const loading = document.getElementById('mapLoading');
-    const error = document.getElementById('mapError');
+function initPlan() {
+    const frame = document.getElementById('planFrame');
+    const loading = document.getElementById('statsLoading');
+    const error = document.getElementById('statsError');
     const statusDot = document.querySelector('.status-dot');
     const statusText = document.querySelector('.status-text');
 
     frame.onload = () => {
         loading.classList.add('hidden');
         statusDot.classList.add('connected');
-        statusText.textContent = 'Connected to BlueMap';
+        statusText.textContent = 'Connected to Plan';
     };
 
     frame.onerror = () => {
@@ -28,15 +28,15 @@ function initBlueMap() {
     };
 
     // Retry button
-    document.getElementById('retryBtn')?.addEventListener('click', () => {
+    document.getElementById('retryStatsBtn')?.addEventListener('click', () => {
         error.classList.add('hidden');
         loading.classList.remove('hidden');
-        frame.src = BLUEMAP_URL;
+        frame.src = PLAN_URL;
     });
 }
 
 function initFullscreen() {
-    const container = document.getElementById('mapContainer');
+    const container = document.getElementById('statsContainer');
     const btn = document.getElementById('fullscreenBtn');
     
     btn?.addEventListener('click', () => {
