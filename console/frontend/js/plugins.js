@@ -1,19 +1,27 @@
-// Plugin Manager UI Logic
+// Plugin Manager V2 UI Logic - Job Queue System
 
-let csrfToken = '';
+let bearerToken = '';
 let plugins = [];
-let history = [];
+let jobs = [];
+let pollInterval = null;
+let healthCheckInterval = null;
+let filteredJobs = [];
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
-    await fetchCsrfToken();
+    await loadMetaInfo();
+    await promptForBearerToken();
+    await checkHealth();
     await loadPlugins();
-    await loadHistory();
+    await loadJobs();
+    await loadRecentActivity();
     initializeEventListeners();
+    startJobPolling();
+    startHealthPolling();
 });
 
-// Check authentication
+// Check authentication (still needed for UI access)
 async function checkAuth() {
     try {
         const response = await fetch('/api/session', {
@@ -27,29 +35,264 @@ async function checkAuth() {
         }
         
         document.getElementById('currentUser').textContent = data.username;
+        document.getElementById('currentUserInfo').textContent = `User: ${data.username}`;
     } catch (error) {
         console.error('Auth check failed:', error);
         window.location.href = '/console/login.html';
     }
 }
 
-// Fetch CSRF token
-async function fetchCsrfToken() {
+// Load meta information (Minecraft version, domain)
+async function loadMetaInfo() {
     try {
-        const response = await fetch('/api/csrf-token', {
+        // Try to get server info from server status endpoint
+        const response = await fetch('/api/server/status', {
             credentials: 'same-origin'
         });
-        const data = await response.json();
-        csrfToken = data.csrfToken;
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Update Minecraft version
+            const version = data.version || 'Unknown';
+            document.getElementById('minecraftVersion').textContent = `Minecraft: ${version}`;
+            
+            // Get domain from env variable or window location
+            // Domain should be injected into .env during deployment
+            const domain = window.location.hostname;
+            document.getElementById('domainInfo').textContent = `Domain: ${domain}`;
+        }
     } catch (error) {
-        console.error('Failed to fetch CSRF token:', error);
+        console.error('Error loading meta info:', error);
+        // Set defaults
+        document.getElementById('minecraftVersion').textContent = 'Minecraft: Unknown';
+        document.getElementById('domainInfo').textContent = `Domain: ${window.location.hostname}`;
+    }
+}
+
+// Check backend health
+async function checkHealth() {
+    try {
+        const response = await fetch('/api/v2/plugins/health', {
+            headers: bearerToken ? {
+                'Authorization': `Bearer ${bearerToken}`
+            } : {}
+        });
+        
+        const healthIndicator = document.getElementById('healthIndicator');
+        const healthDot = healthIndicator.querySelector('.health-dot');
+        const healthText = healthIndicator.querySelector('.health-text');
+        const backendWarning = document.getElementById('backendWarning');
+        const backendWarningMessage = document.getElementById('backendWarningMessage');
+        const missingSecretsWarning = document.getElementById('missingSecretsWarning');
+        const missingSecretsMessage = document.getElementById('missingSecretsMessage');
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.status === 'healthy') {
+                healthDot.style.background = '#48bb78'; // green
+                healthText.textContent = 'Healthy';
+                healthIndicator.title = 'Backend is healthy';
+                backendWarning.style.display = 'none';
+            } else {
+                healthDot.style.background = '#f6ad55'; // orange
+                healthText.textContent = 'Degraded';
+                healthIndicator.title = 'Backend is in degraded state';
+                
+                // Show warning
+                backendWarning.style.display = 'block';
+                const issues = [];
+                if (data.checks) {
+                    for (const [key, check] of Object.entries(data.checks)) {
+                        if (!check.healthy) {
+                            issues.push(`${key}: ${check.message || 'unhealthy'}`);
+                        }
+                    }
+                }
+                backendWarningMessage.textContent = `Backend checks failed: ${issues.join(', ')}`;
+            }
+            
+            // Check for missing PLUGIN_ADMIN_TOKEN
+            if (!bearerToken) {
+                missingSecretsWarning.style.display = 'block';
+                missingSecretsMessage.textContent = 'PLUGIN_ADMIN_TOKEN is not configured. Some features may be limited. Please set it in your .env file and refresh the page.';
+            }
+        } else if (response.status === 503) {
+            healthDot.style.background = '#f56565'; // red
+            healthText.textContent = 'Unhealthy';
+            healthIndicator.title = 'Backend is unhealthy';
+            
+            backendWarning.style.display = 'block';
+            backendWarningMessage.textContent = 'Plugin manager backend is unhealthy. Some operations may fail.';
+        } else {
+            healthDot.style.background = '#cbd5e0'; // gray
+            healthText.textContent = 'Unknown';
+            healthIndicator.title = 'Unable to check backend health';
+        }
+    } catch (error) {
+        console.error('Health check failed:', error);
+        const healthIndicator = document.getElementById('healthIndicator');
+        const healthDot = healthIndicator.querySelector('.health-dot');
+        const healthText = healthIndicator.querySelector('.health-text');
+        
+        healthDot.style.background = '#cbd5e0'; // gray
+        healthText.textContent = 'Error';
+        healthIndicator.title = 'Error checking backend health';
+    }
+}
+
+// Start health polling
+function startHealthPolling() {
+    // Poll every 30 seconds to reduce server load
+    healthCheckInterval = setInterval(() => {
+        checkHealth();
+    }, 30000);
+}
+
+// Load recent activity from backend
+async function loadRecentActivity() {
+    try {
+        const activityList = document.getElementById('recentActivityList');
+        
+        // For now, use recent jobs as activity
+        // In the future, this could pull from a dedicated history API
+        const response = await fetch('/api/v2/plugins/jobs?limit=10', {
+            headers: {
+                'Authorization': `Bearer ${bearerToken}`
+            }
+        });
+        
+        if (!response.ok) {
+            activityList.innerHTML = '<div class="empty-state">Unable to load activity</div>';
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.jobs && data.jobs.length > 0) {
+            const completedJobs = getCompletedJobs(data.jobs);
+            
+            if (completedJobs.length === 0) {
+                activityList.innerHTML = '<div class="empty-state">No recent activity</div>';
+                return;
+            }
+            
+            activityList.innerHTML = completedJobs.slice(0, 5).map(job => {
+                const duration = job.completedAt && job.startedAt 
+                    ? formatDuration(new Date(job.completedAt) - new Date(job.startedAt))
+                    : 'N/A';
+                
+                const statusIcon = job.status === 'completed' ? '✅' : '❌';
+                const statusClass = job.status === 'completed' ? 'success' : 'error';
+                
+                return `
+                    <div class="activity-item" style="padding: 0.75rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <strong>${statusIcon} ${job.action}</strong>: ${job.pluginName || 'Unknown'}
+                            <div style="font-size: 0.85rem; opacity: 0.7; margin-top: 0.25rem;">
+                                ${new Date(job.completedAt).toLocaleString()} • Duration: ${duration}
+                            </div>
+                        </div>
+                        <span class="badge badge-${statusClass}">${job.status}</span>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            activityList.innerHTML = '<div class="empty-state">No recent activity</div>';
+        }
+    } catch (error) {
+        console.error('Error loading recent activity:', error);
+        document.getElementById('recentActivityList').innerHTML = '<div class="empty-state">Error loading activity</div>';
+    }
+}
+
+// Format duration in ms to human readable
+function formatDuration(ms) {
+    if (!ms || ms < 0) return 'N/A';
+    
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes % 60}m`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${seconds % 60}s`;
+    } else {
+        return `${seconds}s`;
+    }
+}
+
+// Filter jobs by completion status
+function getCompletedJobs(jobs) {
+    return jobs.filter(job => 
+        job.status === 'completed' || job.status === 'failed'
+    );
+}
+
+// Prompt for Bearer token
+async function promptForBearerToken() {
+    // Check if token is in localStorage
+    const storedToken = localStorage.getItem('pluginAdminToken');
+    
+    if (storedToken) {
+        bearerToken = storedToken;
+        // Verify token works
+        try {
+            const response = await fetch('/api/v2/plugins/health', {
+                headers: {
+                    'Authorization': `Bearer ${bearerToken}`
+                }
+            });
+            
+            if (response.ok) {
+                showToast('Bearer token loaded from storage', 'success');
+                return;
+            }
+        } catch (error) {
+            console.error('Stored token invalid:', error);
+        }
+    }
+    
+    // Prompt for token
+    const token = prompt('Enter Plugin Admin Bearer Token (PLUGIN_ADMIN_TOKEN):\n\nThis token is required for plugin operations and can be found in your .env file.');
+    
+    if (!token) {
+        showToast('Bearer token required for plugin operations', 'error');
+        return;
+    }
+    
+    bearerToken = token;
+    
+    // Verify token
+    try {
+        const response = await fetch('/api/v2/plugins/health', {
+            headers: {
+                'Authorization': `Bearer ${bearerToken}`
+            }
+        });
+        
+        if (response.ok) {
+            localStorage.setItem('pluginAdminToken', bearerToken);
+            showToast('Bearer token verified and saved', 'success');
+        } else {
+            showToast('Invalid Bearer token', 'error');
+            bearerToken = '';
+        }
+    } catch (error) {
+        console.error('Token verification failed:', error);
+        showToast('Failed to verify token', 'error');
+        bearerToken = '';
     }
 }
 
 // Initialize event listeners
 function initializeEventListeners() {
-    // Initialize data-href navigation (CSP compliant)
-    initializeDataHrefNavigation();
+    // Initialize data-href navigation
+    if (typeof initializeDataHrefNavigation === 'function') {
+        initializeDataHrefNavigation();
+    }
     
     // Logout
     document.getElementById('logoutBtn').addEventListener('click', logout);
@@ -60,905 +303,494 @@ function initializeEventListeners() {
         if (e.key === 'Enter') handleInstall();
     });
     
-    // Bulk install
-    document.getElementById('bulkInstallBtn').addEventListener('click', showBulkModal);
-    document.getElementById('bulkInstallStart').addEventListener('click', handleBulkInstall);
-    document.getElementById('bulkCancel').addEventListener('click', hideBulkModal);
-    
-    // Refresh
+    // Refresh buttons
+    document.getElementById('refreshJobsBtn').addEventListener('click', loadJobs);
     document.getElementById('refreshPluginsBtn').addEventListener('click', loadPlugins);
+    document.getElementById('refreshActivityBtn').addEventListener('click', loadRecentActivity);
     
-    // Clear history
-    document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
+    // Job search/filter
+    document.getElementById('jobSearchInput').addEventListener('input', (e) => {
+        filterJobs(e.target.value);
+    });
     
     // Modal close
-    document.getElementById('confirmNo').addEventListener('click', hideConfirmModal);
-    document.getElementById('optionsCancel').addEventListener('click', hideOptionsModal);
+    document.getElementById('jobModalClose').addEventListener('click', hideJobModal);
     
-    // File upload handlers
-    const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('pluginFile');
-    const selectFileBtn = document.getElementById('selectFileBtn');
-    
-    if (selectFileBtn && fileInput && uploadArea) {
-        // Select file button
-        selectFileBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            fileInput.click();
-        });
-        
-        // File input change
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files.length > 0) {
-                handleFileUpload(e.target.files[0]);
-            }
-        });
-        
-        // Drag and drop
-        uploadArea.addEventListener('click', () => {
-            if (!uploadArea.classList.contains('uploading')) {
-                fileInput.click();
-            }
-        });
-        
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('drag-over');
-        });
-        
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('drag-over');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('drag-over');
-            
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                const file = e.dataTransfer.files[0];
-                if (file.name.endsWith('.jar')) {
-                    handleFileUpload(file);
-                } else {
-                    showToast('Please upload a .jar file', 'error');
-                }
-            }
-        });
-    }
-    
-    // Event delegation for plugin actions (CSP compliant)
+    // Event delegation for plugin actions
     document.addEventListener('click', function(e) {
-        // Handle plugin rollback
-        if (e.target && e.target.matches('.plugin-rollback-btn')) {
-            var pluginName = e.target.dataset.plugin;
+        // Handle enable/disable toggle
+        if (e.target && e.target.matches('.plugin-toggle')) {
+            const pluginName = e.target.dataset.plugin;
+            const enabled = e.target.checked;
             if (pluginName) {
-                rollbackPlugin(pluginName);
+                togglePlugin(pluginName, enabled);
             }
         }
         
-        // Handle plugin uninstall
+        // Handle uninstall
         if (e.target && e.target.matches('.plugin-uninstall-btn')) {
-            var pluginName = e.target.dataset.plugin;
+            const pluginName = e.target.dataset.plugin;
             if (pluginName) {
                 confirmUninstall(pluginName);
             }
         }
         
-        // Handle option item selection
-        if (e.target && (e.target.matches('.option-item') || e.target.closest('.option-item'))) {
-            var optionItem = e.target.matches('.option-item') ? e.target : e.target.closest('.option-item');
-            var url = optionItem.dataset.url;
-            var downloadUrl = optionItem.dataset.downloadUrl;
-            if (url && downloadUrl) {
-                selectOption(url, downloadUrl);
+        // Handle job details
+        if (e.target && e.target.matches('.job-details-btn')) {
+            const jobId = e.target.dataset.jobId;
+            if (jobId) {
+                showJobDetails(jobId);
             }
         }
-    });
-    
-    // Event delegation for change events (for checkboxes)
-    document.addEventListener('change', function(e) {
-        if (e.target && e.target.matches('.plugin-toggle-input')) {
-            var pluginName = e.target.dataset.plugin;
-            var enabled = e.target.checked;
-            if (pluginName) {
-                togglePlugin(pluginName, enabled);
+        
+        // Handle job cancel
+        if (e.target && e.target.matches('.job-cancel-btn')) {
+            const jobId = e.target.dataset.jobId;
+            if (jobId) {
+                cancelJob(jobId);
             }
         }
     });
 }
 
-// Logout
-async function logout() {
-    try {
-        await fetch('/api/logout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'CSRF-Token': csrfToken
-            },
-            credentials: 'same-origin'
-        });
-        window.location.href = '/console/login.html';
-    } catch (error) {
-        console.error('Logout failed:', error);
+// Start polling for job updates
+function startJobPolling() {
+    // Poll every 2 seconds
+    pollInterval = setInterval(() => {
+        loadJobs();
+    }, 2000);
+}
+
+// Stop polling
+function stopJobPolling() {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
     }
 }
 
-// Load plugins
+// Load plugins list
 async function loadPlugins() {
     try {
-        const response = await fetch('/api/plugins', {
+        const response = await fetch('/api/v2/plugins/list', {
             headers: {
-                'CSRF-Token': csrfToken
-            },
-            credentials: 'same-origin'
+                'Authorization': `Bearer ${bearerToken}`
+            }
         });
-        
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
-        }
         
         const data = await response.json();
         
-        // Always expect plugins array, even if empty
-        if (data.plugins) {
+        if (data.success) {
             plugins = data.plugins;
-            renderPlugins();
-            
-            // Show error toast if there was an error but we got data
-            if (data.error) {
-                showToast(data.error, 'warning');
-            }
+            renderPluginsList();
         } else {
-            // Unexpected response format
-            console.error('Unexpected response format:', data);
-            plugins = [];
-            renderPlugins();
-            showToast('Failed to load plugins: unexpected server response', 'error');
+            showToast('Failed to load plugins', 'error');
         }
     } catch (error) {
-        console.error('Failed to load plugins:', error);
-        // Set empty array and render to show empty state
-        plugins = [];
-        renderPlugins();
-        showToast('Failed to load plugins. Please check your connection and try again.', 'error');
+        console.error('Error loading plugins:', error);
+        showToast('Error loading plugins', 'error');
     }
 }
 
-// Render plugins list
-function renderPlugins() {
-    const container = document.getElementById('pluginsList');
-    const count = document.getElementById('pluginCount');
-    
-    count.textContent = plugins.length;
-    
-    if (plugins.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">🔌</div>
-                <p>No plugins installed yet</p>
-                <p>Install your first plugin using the URL field above</p>
-            </div>
-        `;
-        return;
+// Load jobs
+async function loadJobs() {
+    try {
+        const response = await fetch('/api/v2/plugins/jobs?limit=20', {
+            headers: {
+                'Authorization': `Bearer ${bearerToken}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            jobs = data.jobs;
+            filteredJobs = jobs; // Initialize filtered jobs
+            renderJobsLists();
+        }
+    } catch (error) {
+        console.error('Error loading jobs:', error);
     }
-    
-    container.innerHTML = plugins.map(plugin => `
-        <div class="plugin-item" data-plugin="${plugin.name}">
-            <div class="plugin-info">
-                <div class="plugin-toggle">
-                    <label class="toggle-switch">
-                        <input type="checkbox" ${plugin.enabled ? 'checked' : ''} 
-                               class="plugin-toggle-input" data-plugin="${plugin.name}">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="plugin-details">
-                    <div class="plugin-name">${escapeHtml(plugin.name)}</div>
-                    <div class="plugin-meta">
-                        ${plugin.version ? `<span class="plugin-version">v${escapeHtml(plugin.version)}</span>` : ''}
-                        <span class="plugin-source">${escapeHtml(plugin.source || 'unknown')}</span>
-                        ${plugin.category ? `<span class="plugin-category">${escapeHtml(plugin.category)}</span>` : ''}
-                    </div>
-                    ${plugin.description ? `<div class="plugin-description">${escapeHtml(plugin.description)}</div>` : ''}
-                </div>
-            </div>
-            <div class="plugin-actions">
-                ${plugin.hasBackup ? `<button class="action-btn plugin-rollback-btn" data-plugin="${plugin.name}" title="Rollback to backup">↩️</button>` : ''}
-                <button class="action-btn danger plugin-uninstall-btn" data-plugin="${plugin.name}" title="Uninstall">🗑️</button>
-            </div>
-        </div>
-    `).join('');
 }
 
-// Handle plugin installation
+// Filter jobs by search term
+function filterJobs(searchTerm) {
+    if (!searchTerm || searchTerm.trim() === '') {
+        filteredJobs = jobs;
+    } else {
+        const term = searchTerm.toLowerCase();
+        filteredJobs = jobs.filter(job => {
+            const pluginName = (job.pluginName || '').toLowerCase();
+            const action = (job.action || '').toLowerCase();
+            return pluginName.includes(term) || action.includes(term);
+        });
+    }
+    renderJobsLists();
+}
+
+// Handle install
 async function handleInstall() {
     const url = document.getElementById('pluginUrl').value.trim();
     const customName = document.getElementById('customName').value.trim();
     
     if (!url) {
-        showToast('Please enter a plugin URL', 'error');
+        showToast('Please enter a plugin URL', 'warning');
         return;
     }
     
+    if (!bearerToken) {
+        await promptForBearerToken();
+        if (!bearerToken) return;
+    }
+    
     try {
-        showToast('Installing plugin...', 'info');
-        
-        const response = await fetch('/api/plugins/install', {
+        const response = await fetch('/api/v2/plugins/job', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'CSRF-Token': csrfToken
+                'Authorization': `Bearer ${bearerToken}`
             },
-            credentials: 'same-origin',
-            body: JSON.stringify({ url, customName: customName || null })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-            // Enhanced error display with details from backend
-            let errorMessage = result.error || 'Installation failed';
-            
-            // Add additional details if available
-            if (result.details) {
-                errorMessage += `\n${result.details}`;
-            }
-            
-            // Add timestamp info if available
-            if (result.timestamp) {
-                console.error('Error timestamp:', result.timestamp);
-            }
-            
-            // Log original error for debugging
-            if (result.originalError && result.originalError !== result.error) {
-                console.error('Backend error details:', result.originalError);
-            }
-            
-            throw new Error(errorMessage);
-        }
-        
-        handleInstallResult(result, url);
-    } catch (error) {
-        console.error('Install error:', error);
-        showToast(`Installation failed: ${error.message}`, 'error');
-    }
-}
-
-// Handle installation result
-function handleInstallResult(result, url) {
-    if (result.status === 'multiple-options') {
-        showOptionsModal(result.options, url);
-    } else if (result.status === 'conflict') {
-        showConflictDialog(result, url);
-    } else if (result.status === 'installed') {
-        showToast(`✅ Successfully installed ${result.pluginName} v${result.version}`, 'success');
-        document.getElementById('pluginUrl').value = '';
-        document.getElementById('customName').value = '';
-        loadPlugins();
-        loadHistory();
-    } else {
-        // Handle unexpected status
-        console.error('Unexpected install result status:', result.status);
-        showToast('Installation completed with unexpected status. Please refresh the page.', 'warning');
-    }
-}
-
-// Show options modal for multiple JARs
-function showOptionsModal(options, url) {
-    const modal = document.getElementById('optionsModal');
-    const list = document.getElementById('optionsList');
-    
-    list.innerHTML = options.map((option, index) => `
-        <div class="option-item ${index === 0 ? 'recommended' : ''}" data-url="${url}" data-download-url="${option.downloadUrl}">
-            <div class="option-name">${escapeHtml(option.filename)} ${index === 0 ? '← Recommended' : ''}</div>
-            <div class="option-size">${formatBytes(option.size)}</div>
-        </div>
-    `).join('');
-    
-    modal.classList.remove('hidden');
-}
-
-// Select option from multiple JARs
-async function selectOption(originalUrl, selectedUrl) {
-    hideOptionsModal();
-    
-    try {
-        showToast('Installing selected plugin...', 'info');
-        
-        const response = await fetch('/api/plugins/install', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'CSRF-Token': csrfToken
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({ 
-                url: originalUrl,
-                selectedOption: selectedUrl 
+            body: JSON.stringify({
+                action: 'install',
+                url: url,
+                options: customName ? { customName } : {}
             })
         });
         
-        const result = await response.json();
+        const data = await response.json();
         
-        if (!response.ok) {
-            // Enhanced error display with details from backend
-            let errorMessage = result.error || 'Installation failed';
-            
-            // Add additional details if available
-            if (result.details) {
-                errorMessage += `\n${result.details}`;
-            }
-            
-            // Log backend error details for debugging
-            if (result.originalError && result.originalError !== result.error) {
-                console.error('Backend error details:', result.originalError);
-            }
-            
-            throw new Error(errorMessage);
+        if (data.success) {
+            showToast(`Install job created: ${data.job.id}`, 'success');
+            document.getElementById('pluginUrl').value = '';
+            document.getElementById('customName').value = '';
+            await loadJobs();
+        } else {
+            showToast(data.error || 'Failed to create install job', 'error');
         }
-        
-        handleInstallResult(result, originalUrl);
     } catch (error) {
-        console.error('Install error:', error);
-        showToast(`Installation failed: ${error.message}`, 'error');
+        console.error('Error creating install job:', error);
+        showToast('Error creating install job', 'error');
     }
 }
 
-// Show conflict dialog (plugin exists)
-function showConflictDialog(result, url) {
-    const { pluginName, currentVersion, newVersion, comparison } = result;
-    
-    let title, message, actions;
-    
-    if (comparison === 'upgrade') {
-        title = '⬆️ Update Available';
-        message = `${pluginName} v${currentVersion} → v${newVersion}`;
-        actions = [
-            { label: 'Update', value: 'update', class: 'btn-primary' },
-            { label: 'Skip', value: null, class: 'btn-secondary' }
-        ];
-    } else if (comparison === 'downgrade') {
-        title = '⚠️ Downgrade Warning';
-        message = `${pluginName} v${currentVersion} → v${newVersion} (older version)`;
-        actions = [
-            { label: 'Downgrade Anyway', value: 'downgrade', class: 'btn-warning' },
-            { label: 'Keep Current', value: null, class: 'btn-secondary' }
-        ];
-    } else {
-        title = 'ℹ️ Same Version';
-        message = `${pluginName} v${currentVersion} is already installed`;
-        actions = [
-            { label: 'Reinstall', value: 'reinstall', class: 'btn-primary' },
-            { label: 'Keep Current', value: null, class: 'btn-secondary' }
-        ];
-    }
-    
-    showConfirmModal(title, message, (action) => {
-        if (action) {
-            proceedWithInstall(url, pluginName, action);
-        }
-    }, actions);
-}
-
-// Proceed with installation after conflict
-async function proceedWithInstall(url, pluginName, action) {
-    try {
-        showToast(`${action === 'update' ? 'Updating' : action === 'downgrade' ? 'Downgrading' : 'Reinstalling'} plugin...`, 'info');
-        
-        const response = await fetch('/api/plugins/proceed-install', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'CSRF-Token': csrfToken
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({ url, pluginName, action })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) {
-            // Enhanced error display with details from backend
-            let errorMessage = result.error || 'Installation failed';
-            
-            // Add additional details if available
-            if (result.details) {
-                errorMessage += `\n${result.details}`;
-            }
-            
-            // Log backend error details for debugging
-            if (result.originalError && result.originalError !== result.error) {
-                console.error('Backend error details:', result.originalError);
-            }
-            
-            throw new Error(errorMessage);
-        }
-        
-        showToast(`✅ Successfully ${action === 'update' ? 'updated' : action === 'downgrade' ? 'downgraded' : 'reinstalled'} ${result.pluginName} to v${result.version}`, 'success');
-        document.getElementById('pluginUrl').value = '';
-        document.getElementById('customName').value = '';
-        loadPlugins();
-        loadHistory();
-    } catch (error) {
-        console.error('Install error:', error);
-        showToast(`Installation failed: ${error.message}`, 'error');
-    }
-}
-
-// Toggle plugin enabled state
+// Toggle plugin
 async function togglePlugin(pluginName, enabled) {
+    if (!bearerToken) {
+        await promptForBearerToken();
+        if (!bearerToken) return;
+    }
+    
     try {
-        const response = await fetch('/api/plugins/toggle', {
+        const response = await fetch('/api/v2/plugins/job', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'CSRF-Token': csrfToken
+                'Authorization': `Bearer ${bearerToken}`
             },
-            credentials: 'same-origin',
-            body: JSON.stringify({ pluginName, enabled })
+            body: JSON.stringify({
+                action: enabled ? 'enable' : 'disable',
+                name: pluginName
+            })
         });
         
-        if (!response.ok) {
-            const result = await response.json();
-            throw new Error(result.error || 'Toggle failed');
-        }
+        const data = await response.json();
         
-        showToast(`Plugin ${enabled ? 'enabled' : 'disabled'}`, 'success');
-        loadPlugins();
-        loadHistory();
+        if (data.success) {
+            showToast(`${enabled ? 'Enable' : 'Disable'} job created for ${pluginName}`, 'success');
+            await loadJobs();
+        } else {
+            showToast(data.error || 'Failed to create toggle job', 'error');
+            await loadPlugins(); // Reload to reset toggle
+        }
     } catch (error) {
-        console.error('Toggle error:', error);
-        showToast(`Failed to toggle plugin: ${error.message}`, 'error');
-        loadPlugins(); // Reload to reset state
+        console.error('Error creating toggle job:', error);
+        showToast('Error creating toggle job', 'error');
+        await loadPlugins(); // Reload to reset toggle
     }
 }
 
 // Confirm uninstall
 function confirmUninstall(pluginName) {
-    const actions = [
-        { label: 'Delete JAR Only', value: 'jar', class: 'btn-warning' },
-        { label: 'Delete JAR + Configs', value: 'full', class: 'btn-danger' },
-        { label: 'Cancel', value: null, class: 'btn-secondary' }
-    ];
-    
-    showConfirmModal(
-        'Uninstall Plugin',
-        `Do you want to uninstall ${pluginName}?`,
-        (action) => {
-            if (action) {
-                uninstallPlugin(pluginName, action === 'full');
-            }
-        },
-        actions
-    );
+    if (confirm(`Are you sure you want to uninstall ${pluginName}?\n\nThis will delete the plugin JAR file.`)) {
+        uninstallPlugin(pluginName);
+    }
 }
 
 // Uninstall plugin
-async function uninstallPlugin(pluginName, deleteConfigs) {
+async function uninstallPlugin(pluginName) {
+    if (!bearerToken) {
+        await promptForBearerToken();
+        if (!bearerToken) return;
+    }
+    
     try {
-        showToast('Uninstalling plugin...', 'info');
-        
-        const response = await fetch('/api/plugins/uninstall', {
+        const response = await fetch('/api/v2/plugins/job', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'CSRF-Token': csrfToken
+                'Authorization': `Bearer ${bearerToken}`
             },
-            credentials: 'same-origin',
-            body: JSON.stringify({ pluginName, deleteConfigs })
+            body: JSON.stringify({
+                action: 'uninstall',
+                name: pluginName,
+                options: { deleteConfigs: false }
+            })
         });
-        
-        if (!response.ok) {
-            const result = await response.json();
-            throw new Error(result.error || 'Uninstall failed');
-        }
-        
-        showToast(`✅ Successfully uninstalled ${pluginName}`, 'success');
-        loadPlugins();
-        loadHistory();
-    } catch (error) {
-        console.error('Uninstall error:', error);
-        showToast(`Uninstall failed: ${error.message}`, 'error');
-    }
-}
-
-// Rollback plugin
-async function rollbackPlugin(pluginName) {
-    showConfirmModal(
-        'Rollback Plugin',
-        `Are you sure you want to rollback ${pluginName} to the backup version?`,
-        async (confirmed) => {
-            if (!confirmed) return;
-            
-            try {
-                showToast('Rolling back plugin...', 'info');
-                
-                const response = await fetch('/api/plugins/rollback', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'CSRF-Token': csrfToken
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ pluginName })
-                });
-                
-                if (!response.ok) {
-                    const result = await response.json();
-                    throw new Error(result.error || 'Rollback failed');
-                }
-                
-                const result = await response.json();
-                showToast(`✅ Successfully rolled back ${pluginName} to v${result.version}`, 'success');
-                loadPlugins();
-                loadHistory();
-            } catch (error) {
-                console.error('Rollback error:', error);
-                showToast(`Rollback failed: ${error.message}`, 'error');
-            }
-        }
-    );
-}
-
-// Load history
-async function loadHistory() {
-    try {
-        const response = await fetch('/api/plugins/history', {
-            headers: {
-                'CSRF-Token': csrfToken
-            },
-            credentials: 'same-origin'
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
-        }
         
         const data = await response.json();
         
-        if (data.history) {
-            history = data.history;
-            renderHistory();
+        if (data.success) {
+            showToast(`Uninstall job created for ${pluginName}`, 'success');
+            await loadJobs();
         } else {
-            console.warn('No history data received');
-            history = [];
-            renderHistory();
+            showToast(data.error || 'Failed to create uninstall job', 'error');
         }
     } catch (error) {
-        console.error('Failed to load history:', error);
-        // Don't show error toast for history - it's not critical
-        history = [];
-        renderHistory();
+        console.error('Error creating uninstall job:', error);
+        showToast('Error creating uninstall job', 'error');
     }
 }
 
-// Render history
-function renderHistory() {
-    const container = document.getElementById('historyList');
-    
-    if (history.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <p>No installation history yet</p>
-            </div>
-        `;
+// Cancel job
+async function cancelJob(jobId) {
+    if (!confirm('Are you sure you want to cancel this job?')) {
         return;
     }
     
-    container.innerHTML = history.slice(0, 20).map(entry => {
-        const icon = getHistoryIcon(entry.action);
-        const time = formatTime(entry.timestamp);
+    if (!bearerToken) {
+        await promptForBearerToken();
+        if (!bearerToken) return;
+    }
+    
+    try {
+        const response = await fetch(`/api/v2/plugins/job/${jobId}/cancel`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${bearerToken}`
+            }
+        });
         
-        return `
-            <div class="history-item">
-                <div class="history-icon">${icon}</div>
-                <div class="history-details">
-                    <div class="history-action">${formatHistoryAction(entry)}</div>
-                    <div class="history-time">${time}</div>
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Job cancelled', 'success');
+            await loadJobs();
+        } else {
+            showToast(data.error || 'Failed to cancel job', 'error');
+        }
+    } catch (error) {
+        console.error('Error cancelling job:', error);
+        showToast('Error cancelling job', 'error');
+    }
+}
+
+// Show job details modal
+async function showJobDetails(jobId) {
+    const modal = document.getElementById('jobModal');
+    const title = document.getElementById('jobModalTitle');
+    const content = document.getElementById('jobModalContent');
+    
+    // Find job
+    const job = jobs.find(j => j.id === jobId);
+    
+    if (!job) {
+        showToast('Job not found', 'error');
+        return;
+    }
+    
+    title.textContent = `Job: ${job.id}`;
+    
+    let html = `
+        <div class="job-details">
+            <p><strong>Action:</strong> ${job.action}</p>
+            <p><strong>Plugin:</strong> ${job.pluginName || 'N/A'}</p>
+            <p><strong>URL:</strong> ${job.url || 'N/A'}</p>
+            <p><strong>Status:</strong> <span class="status-${job.status}">${job.status}</span></p>
+            <p><strong>Created:</strong> ${formatDate(job.createdAt)}</p>
+            ${job.startedAt ? `<p><strong>Started:</strong> ${formatDate(job.startedAt)}</p>` : ''}
+            ${job.completedAt ? `<p><strong>Completed:</strong> ${formatDate(job.completedAt)}</p>` : ''}
+            ${job.error ? `<p><strong>Error:</strong> <span style="color: #e53e3e">${job.error}</span></p>` : ''}
+        </div>
+        
+        ${job.logs && job.logs.length > 0 ? `
+            <div class="job-logs">
+                <h4>Logs:</h4>
+                <div class="logs-container" style="background: #1a202c; color: #e2e8f0; padding: 1rem; border-radius: 4px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.875rem;">
+                    ${job.logs.map(log => `
+                        <div class="log-entry">
+                            <span style="color: #a0aec0">${formatTime(log.timestamp)}</span> ${escapeHtml(log.message)}
+                        </div>
+                    `).join('')}
                 </div>
             </div>
-        `;
-    }).join('');
-}
-
-// Get history icon
-function getHistoryIcon(action) {
-    const icons = {
-        'installed': '✅',
-        'updated': '⬆️',
-        'downgraded': '⬇️',
-        'reinstalled': '🔄',
-        'uninstalled': '🗑️',
-        'rolled-back': '↩️',
-        'enabled': '✅',
-        'disabled': '⏸️'
-    };
-    return icons[action] || '📝';
-}
-
-// Format history action
-function formatHistoryAction(entry) {
-    const action = entry.action.charAt(0).toUpperCase() + entry.action.slice(1);
-    const version = entry.version ? ` v${entry.version}` : '';
-    return `${action} ${escapeHtml(entry.plugin)}${version}`;
-}
-
-// Clear history
-async function clearHistory() {
-    showConfirmModal(
-        'Clear History',
-        'Are you sure you want to clear all installation history?',
-        async (confirmed) => {
-            if (!confirmed) return;
-            
-            try {
-                // Clear history by writing empty array
-                history = [];
-                renderHistory();
-                showToast('History cleared', 'success');
-            } catch (error) {
-                console.error('Failed to clear history:', error);
-                showToast('Failed to clear history', 'error');
-            }
-        }
-    );
-}
-
-// Bulk install modal
-function showBulkModal() {
-    document.getElementById('bulkModal').classList.remove('hidden');
-    document.getElementById('bulkUrls').value = '';
-    document.getElementById('bulkProgress').classList.add('hidden');
-}
-
-function hideBulkModal() {
-    document.getElementById('bulkModal').classList.add('hidden');
-}
-
-// Handle bulk install
-async function handleBulkInstall() {
-    const urlsText = document.getElementById('bulkUrls').value.trim();
+        ` : '<p>No logs yet.</p>'}
+    `;
     
-    if (!urlsText) {
-        showToast('Please enter at least one URL', 'error');
-        return;
-    }
-    
-    const urls = urlsText.split('\n').map(u => u.trim()).filter(u => u);
-    
-    if (urls.length === 0) {
-        showToast('No valid URLs found', 'error');
-        return;
-    }
-    
-    const progressDiv = document.getElementById('bulkProgress');
-    progressDiv.classList.remove('hidden');
-    progressDiv.innerHTML = '';
-    
-    for (let i = 0; i < urls.length; i++) {
-        const url = urls[i];
-        const progressItem = document.createElement('div');
-        progressItem.className = 'progress-item pending';
-        progressItem.textContent = `⏳ ${url}`;
-        progressDiv.appendChild(progressItem);
-        
-        try {
-            const response = await fetch('/api/plugins/install', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'CSRF-Token': csrfToken
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ url })
-            });
-            
-            const result = await response.json();
-            
-            if (response.ok && result.status === 'installed') {
-                progressItem.className = 'progress-item success';
-                progressItem.textContent = `✅ ${result.pluginName} v${result.version}`;
-            } else {
-                progressItem.className = 'progress-item error';
-                progressItem.textContent = `❌ ${url} - ${result.error || 'Failed'}`;
-            }
-        } catch (error) {
-            progressItem.className = 'progress-item error';
-            progressItem.textContent = `❌ ${url} - ${error.message}`;
-        }
-    }
-    
-    loadPlugins();
-    loadHistory();
-    showToast('Bulk installation completed', 'info');
-}
-
-// Utility functions
-function showConfirmModal(title, message, callback, actions = null) {
-    const modal = document.getElementById('confirmModal');
-    document.getElementById('confirmTitle').textContent = title;
-    document.getElementById('confirmMessage').textContent = message;
-    
-    if (actions) {
-        const actionsDiv = modal.querySelector('.modal-actions');
-        actionsDiv.innerHTML = actions.map(action => 
-            `<button class="btn ${action.class}" data-value="${action.value || ''}">${action.label}</button>`
-        ).join('');
-        
-        actionsDiv.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const value = btn.dataset.value;
-                hideConfirmModal();
-                callback(value || null);
-            });
-        });
-    } else {
-        document.getElementById('confirmYes').onclick = () => {
-            hideConfirmModal();
-            callback(true);
-        };
-    }
-    
+    content.innerHTML = html;
     modal.classList.remove('hidden');
 }
 
-function hideConfirmModal() {
-    document.getElementById('confirmModal').classList.add('hidden');
+// Hide job modal
+function hideJobModal() {
+    document.getElementById('jobModal').classList.add('hidden');
 }
 
-function hideOptionsModal() {
-    document.getElementById('optionsModal').classList.add('hidden');
-}
-
-function formatBytes(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-}
-
-function formatTime(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now - date;
+// Render plugins list
+function renderPluginsList() {
+    const container = document.getElementById('pluginsList');
+    const countBadge = document.getElementById('pluginCount');
     
-    if (diff < 60000) return 'Just now';
-    if (diff < 3600000) return Math.floor(diff / 60000) + ' minutes ago';
-    if (diff < 86400000) return Math.floor(diff / 3600000) + ' hours ago';
-    if (diff < 604800000) return Math.floor(diff / 86400000) + ' days ago';
+    countBadge.textContent = plugins.length;
     
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    if (plugins.length === 0) {
+        container.innerHTML = '<div class="empty-state">No plugins installed</div>';
+        return;
+    }
+    
+    const html = plugins.map(plugin => `
+        <div class="plugin-item">
+            <div class="plugin-info">
+                <div class="plugin-header">
+                    <h4 class="plugin-name">${escapeHtml(plugin.name)}</h4>
+                    <span class="plugin-version">${escapeHtml(plugin.version || 'Unknown')}</span>
+                </div>
+                <p class="plugin-description">${escapeHtml(plugin.description || 'No description')}</p>
+            </div>
+            <div class="plugin-actions">
+                <label class="toggle-switch">
+                    <input type="checkbox" class="plugin-toggle" data-plugin="${escapeHtml(plugin.name)}" ${plugin.enabled ? 'checked' : ''}>
+                    <span class="toggle-slider"></span>
+                </label>
+                <button class="btn btn-sm btn-danger plugin-uninstall-btn" data-plugin="${escapeHtml(plugin.name)}">
+                    🗑️ Uninstall
+                </button>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
 }
 
+// Render jobs lists
+function renderJobsLists() {
+    // Use filtered jobs or all jobs
+    const jobsToRender = filteredJobs || jobs;
+    
+    // Split jobs into active and recent
+    const activeJobs = jobsToRender.filter(j => ['queued', 'running'].includes(j.status));
+    const recentJobs = jobsToRender.slice(0, 10);
+    
+    // Update active jobs count
+    document.getElementById('activeJobsCount').textContent = activeJobs.length;
+    
+    // Render active jobs
+    const activeContainer = document.getElementById('activeJobsList');
+    if (activeJobs.length === 0) {
+        activeContainer.innerHTML = '<div class="empty-state">No active jobs</div>';
+    } else {
+        activeContainer.innerHTML = activeJobs.map(renderJobItem).join('');
+    }
+    
+    // Render recent jobs
+    const recentContainer = document.getElementById('recentJobsList');
+    if (recentJobs.length === 0) {
+        recentContainer.innerHTML = '<div class="empty-state">No recent jobs</div>';
+    } else {
+        recentContainer.innerHTML = recentJobs.map(renderJobItem).join('');
+    }
+}
+
+// Render individual job item
+function renderJobItem(job) {
+    const statusColors = {
+        queued: '#805ad5',
+        running: '#3182ce',
+        completed: '#38a169',
+        failed: '#e53e3e',
+        cancelled: '#718096'
+    };
+    
+    const statusIcons = {
+        queued: '⏳',
+        running: '⚙️',
+        completed: '✅',
+        failed: '❌',
+        cancelled: '🚫'
+    };
+    
+    // Calculate duration
+    let duration = 'N/A';
+    if (job.completedAt && job.startedAt) {
+        const durationMs = new Date(job.completedAt) - new Date(job.startedAt);
+        duration = formatDuration(durationMs);
+    } else if (job.startedAt && job.status === 'running') {
+        const durationMs = new Date() - new Date(job.startedAt);
+        duration = formatDuration(durationMs) + ' (running)';
+    }
+    
+    return `
+        <div class="job-item" data-status="${job.status}">
+            <div class="job-info">
+                <div class="job-header">
+                    <span class="job-icon">${statusIcons[job.status]}</span>
+                    <strong>${job.action}</strong>
+                    ${job.pluginName ? `<span class="job-plugin-name">${escapeHtml(job.pluginName)}</span>` : ''}
+                </div>
+                <div class="job-meta">
+                    <span class="job-id" style="font-family: monospace; font-size: 0.75rem; color: #718096">${job.id}</span>
+                    <span class="job-time">${formatDate(job.createdAt)}</span>
+                    ${duration !== 'N/A' ? `<span class="job-duration" style="color: #4a5568;">• Duration: ${duration}</span>` : ''}
+                </div>
+                ${job.error ? `<div class="job-error" style="color: #e53e3e; font-size: 0.875rem; margin-top: 0.25rem;">${escapeHtml(job.error)}</div>` : ''}
+            </div>
+            <div class="job-actions">
+                <span class="job-status" style="background: ${statusColors[job.status]}; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">
+                    ${job.status.toUpperCase()}
+                </span>
+                <button class="btn btn-sm job-details-btn" data-job-id="${job.id}">Details</button>
+                ${['queued', 'running'].includes(job.status) ? `
+                    <button class="btn btn-sm btn-danger job-cancel-btn" data-job-id="${job.id}">Cancel</button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+// Utility functions
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString();
+}
+
+function formatTime(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString();
 }
 
 function showToast(message, type = 'info') {
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(message, type);
+    if (typeof showNotification === 'function') {
+        showNotification(message, type);
     } else {
-        console.log(`[${type.toUpperCase()}] ${message}`);
+        console.log(`[${type.toUpperCase()}]`, message);
+        alert(message);
     }
 }
 
-// Handle file upload
-async function handleFileUpload(file) {
-    const uploadArea = document.getElementById('uploadArea');
-    const uploadContent = uploadArea.querySelector('.upload-content');
-    const uploadProgress = document.getElementById('uploadProgress');
-    const progressBar = document.getElementById('uploadProgressBar');
-    const uploadStatus = document.getElementById('uploadStatus');
-    
-    // Validate file
-    if (!file.name.endsWith('.jar')) {
-        showToast('Please select a .jar file', 'error');
-        return;
-    }
-    
-    if (file.size > 100 * 1024 * 1024) { // 100MB
-        showToast('File size exceeds 100MB limit', 'error');
-        return;
-    }
-    
-    // Show progress
-    uploadArea.classList.add('uploading');
-    uploadContent.classList.add('hidden');
-    uploadProgress.classList.remove('hidden');
-    uploadStatus.textContent = 'Uploading...';
-    progressBar.style.width = '0%';
-    
-    try {
-        const formData = new FormData();
-        formData.append('plugin', file);
-        
-        const xhr = new XMLHttpRequest();
-        
-        // Upload progress
-        xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-                const percentComplete = (e.loaded / e.total) * 100;
-                progressBar.style.width = percentComplete + '%';
-                uploadStatus.textContent = `Uploading... ${Math.round(percentComplete)}%`;
-            }
-        });
-        
-        // Upload complete
-        xhr.addEventListener('load', async () => {
-            if (xhr.status === 200) {
-                uploadStatus.textContent = 'Processing...';
-                progressBar.style.width = '100%';
-                
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    
-                    if (response.success || response.status) {
-                        showToast(`Plugin ${response.pluginName} ${response.status} successfully!`, 'success');
-                        await loadPlugins();
-                        await loadHistory();
-                        
-                        // Reset upload area
-                        setTimeout(() => {
-                            resetUploadArea();
-                        }, 2000);
-                    } else {
-                        throw new Error(response.error || response.details || 'Upload failed');
-                    }
-                } catch (parseError) {
-                    throw new Error('Failed to parse server response');
-                }
-            } else {
-                let errorMessage = 'Upload failed';
-                try {
-                    const errorResponse = JSON.parse(xhr.responseText);
-                    errorMessage = errorResponse.details || errorResponse.error || errorMessage;
-                } catch (e) {
-                    errorMessage = xhr.statusText || errorMessage;
-                }
-                throw new Error(errorMessage);
-            }
-        });
-        
-        // Upload error
-        xhr.addEventListener('error', () => {
-            throw new Error('Upload failed. Network error.');
-        });
-        
-        // Upload abort
-        xhr.addEventListener('abort', () => {
-            throw new Error('Upload cancelled');
-        });
-        
-        // Send request
-        xhr.open('POST', '/api/plugins/upload');
-        xhr.setRequestHeader('CSRF-Token', csrfToken);
-        xhr.send(formData);
-        
-    } catch (error) {
-        console.error('Upload error:', error);
-        showToast(error.message || 'Upload failed', 'error');
-        resetUploadArea();
-    }
-}
-
-// Reset upload area
-function resetUploadArea() {
-    const uploadArea = document.getElementById('uploadArea');
-    const uploadContent = uploadArea.querySelector('.upload-content');
-    const uploadProgress = document.getElementById('uploadProgress');
-    const progressBar = document.getElementById('uploadProgressBar');
-    const fileInput = document.getElementById('pluginFile');
-    
-    uploadArea.classList.remove('uploading');
-    uploadContent.classList.remove('hidden');
-    uploadProgress.classList.add('hidden');
-    progressBar.style.width = '0%';
-    
-    if (fileInput) {
-        fileInput.value = '';
-    }
+function logout() {
+    localStorage.removeItem('pluginAdminToken');
+    window.location.href = '/console/login.html';
 }

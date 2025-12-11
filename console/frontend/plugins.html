@@ -9,9 +9,9 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/console.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
+    <link rel="stylesheet" href="css/plugins.css">
     <link rel="stylesheet" href="css/theme-light.css">
     <link rel="stylesheet" href="css/accessibility.css">
-    <link rel="stylesheet" href="css/plugins.css">
 </head>
 <body>
     <!-- Skip to Content Link for Accessibility -->
@@ -27,18 +27,26 @@
     <!-- Sidebar Overlay (Mobile) -->
     <div class="sidebar-overlay"></div>
 
-
     <div class="console-wrapper">
         <!-- Header -->
         <header class="console-header">
             <div class="header-left">
                 <h1>🎮 Festas Builds - Plugin Manager</h1>
+                <div class="header-meta" id="headerMeta" style="font-size: 0.85rem; opacity: 0.9; margin-top: 0.25rem;">
+                    <span id="minecraftVersion">Loading...</span> • 
+                    <span id="domainInfo">Loading...</span> • 
+                    <span id="currentUserInfo">Admin</span>
+                </div>
             </div>
             <div class="header-right">
                 <button id="themeToggle" aria-label="Toggle theme">
                     <span class="theme-icon">☀️</span>
                     <span class="theme-text">Light Mode</span>
                 </button>
+                <div id="healthIndicator" class="health-indicator" style="display: inline-flex; align-items: center; margin-right: 1rem;" title="Backend health status">
+                    <span class="health-dot" style="width: 10px; height: 10px; border-radius: 50%; background: #888; display: inline-block; margin-right: 0.5rem;"></span>
+                    <span class="health-text">Checking...</span>
+                </div>
                 <span id="currentUser" class="user-badge">Admin</span>
                 <button id="logoutBtn" class="btn btn-secondary">Logout</button>
             </div>
@@ -46,7 +54,7 @@
 
         <!-- Main Content -->
         <div class="console-layout">
-                        <!-- Sidebar -->
+            <!-- Sidebar -->
             <aside class="sidebar">
                 <!-- Sidebar Header -->
                 <div class="sidebar-header">
@@ -94,13 +102,13 @@
                         </svg>
                         <span class="nav-text">Backups</span>
                     </a>
-                    <a class="nav-item" href="/console/plugins-v2.html" data-href="/console/plugins-v2.html">
+                    <a class="nav-item active" href="/console/plugins-v2.html" data-href="/console/plugins-v2.html">
                         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z"/>
                         </svg>
                         <span class="nav-text">Plugins</span>
                     </a>
-                    <a class="nav-item active" href="/console/plugins.html" data-href="/console/plugins.html">
+                    <a class="nav-item" href="/console/plugins.html" data-href="/console/plugins.html">
                         <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z"/>
                         </svg>
@@ -173,73 +181,128 @@
             <main id="main-content" class="main-content">
                 <!-- Plugin Manager Section -->
                 <section id="pluginManager" class="content-section active">
+                    <!-- Page Header -->
+                    <div class="page-header">
+                        <h1 class="page-title">Plugin Manager</h1>
+                    </div>
+
+                    <!-- Missing Secrets Warning (hidden by default) -->
+                    <div id="missingSecretsWarning" class="card" style="display: none; background: #c53030; color: white; margin-bottom: 1rem;">
+                        <h4>⚠️ Configuration Warning</h4>
+                        <p id="missingSecretsMessage" style="margin: 0.5rem 0 0 0; opacity: 0.9;"></p>
+                    </div>
+                    
+                    <!-- Backend Degraded Warning (hidden by default) -->
+                    <div id="backendWarning" class="card" style="display: none; background: #dd6b20; color: white; margin-bottom: 1rem;">
+                        <h4>⚠️ Backend Status Warning</h4>
+                        <p id="backendWarningMessage" style="margin: 0.5rem 0 0 0; opacity: 0.9;"></p>
+                    </div>
+                    
+                    <!-- New Plugin Guidance Banner -->
+                    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 1rem;">
+                        <h4>🌟 Find New Plugins</h4>
+                        <p style="margin: 0.5rem 0 1rem 0; opacity: 0.95;">
+                            Discover thousands of quality plugins for your server from these trusted sources:
+                        </p>
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                            <a href="https://modrinth.com/plugins?g=bukkit" target="_blank" rel="noopener noreferrer" 
+                               class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                📦 Modrinth Plugins
+                            </a>
+                            <a href="https://dev.bukkit.org/bukkit-plugins" target="_blank" rel="noopener noreferrer" 
+                               class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                🔧 Bukkit Plugins
+                            </a>
+                            <a href="https://www.spigotmc.org/resources/categories/spigot.4/" target="_blank" rel="noopener noreferrer" 
+                               class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                🌊 Spigot Resources
+                            </a>
+                        </div>
+                        <p style="margin: 1rem 0 0 0; opacity: 0.85; font-size: 0.9rem;">
+                            💡 Tip: Copy the direct .jar download URL and paste it below for quick installation!
+                        </p>
+                    </div>
+                    
+                    <!-- Info Banner -->
+                    <div class="card info-banner" style="background: #2c5282; color: white; margin-bottom: 1rem;">
+                        <h4>✨ Plugin Manager V2 - Job Queue System</h4>
+                        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
+                            This version uses a job queue for plugin operations. Jobs are processed asynchronously and you can monitor their status in real-time.
+                            No more frozen UI! All operations return immediately and you can track progress.
+                        </p>
+                    </div>
+
                     <!-- Quick Install -->
                     <div class="card plugin-install-card">
-                        <h3>📦 Install Plugin</h3>
+                        <h3>📦 Quick Install</h3>
                         <div class="install-form">
-                            <!-- URL Installation -->
-                            <div class="form-section">
-                                <h4>Install from URL</h4>
-                                <div class="form-group">
-                                    <input 
-                                        type="text" 
-                                        id="pluginUrl" 
-                                        placeholder="Paste plugin URL here (Direct JAR, GitHub release, Modrinth)..." 
-                                        class="input url-input"
-                                    >
-                                </div>
-                                <div class="form-group">
-                                    <input 
-                                        type="text" 
-                                        id="customName" 
-                                        placeholder="Custom name (optional - auto-detected from plugin.yml)" 
-                                        class="input"
-                                    >
-                                </div>
-                                <div class="form-actions">
-                                    <button id="installBtn" class="btn btn-primary">
-                                        ⬇️ Install from URL
-                                    </button>
-                                    <button id="bulkInstallBtn" class="btn btn-secondary">
-                                        📋 Bulk Install
-                                    </button>
-                                    <a href="/console/marketplace.html" class="btn btn-success">
-                                        🏪 Browse Marketplace
-                                    </a>
-                                </div>
+                            <div class="form-group">
+                                <input 
+                                    type="text" 
+                                    id="pluginUrl" 
+                                    placeholder="Paste plugin URL here (Direct JAR, GitHub release, Modrinth)..." 
+                                    class="input url-input"
+                                >
                             </div>
-                            
-                            <!-- File Upload -->
-                            <div class="form-section">
-                                <h4>Upload Plugin File</h4>
-                                <div class="upload-area" id="uploadArea">
-                                    <input 
-                                        type="file" 
-                                        id="pluginFile" 
-                                        accept=".jar" 
-                                        style="display: none;"
-                                    >
-                                    <div class="upload-content">
-                                        <p>📁 Drag & drop a .jar file here</p>
-                                        <p>or</p>
-                                        <button id="selectFileBtn" class="btn btn-secondary">
-                                            Select File
-                                        </button>
-                                    </div>
-                                    <div id="uploadProgress" class="upload-progress hidden">
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" id="uploadProgressBar"></div>
-                                        </div>
-                                        <p id="uploadStatus">Uploading...</p>
-                                    </div>
-                                </div>
-                                <p class="help-text">Maximum file size: 100MB. Only .jar files are accepted.</p>
+                            <div class="form-group">
+                                <input 
+                                    type="text" 
+                                    id="customName" 
+                                    placeholder="Custom name (optional - auto-detected from plugin.yml)" 
+                                    class="input"
+                                >
+                            </div>
+                            <div class="form-actions">
+                                <button id="installBtn" class="btn btn-primary">
+                                    ⬇️ Install Plugin
+                                </button>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Active Jobs -->
+                    <div class="card hover-lift">
+                        <div class="card-header">
+                            <h3>⚙️ Active Jobs <span id="activeJobsCount" class="badge">0</span></h3>
+                            <div class="card-actions">
+                                <button id="refreshJobsBtn" class="btn btn-sm">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div id="activeJobsList" class="jobs-list">
+                            <div class="empty-state">No active jobs</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Jobs -->
+                    <div class="card hover-lift">
+                        <div class="card-header">
+                            <h3>📜 Recent Jobs</h3>
+                            <div class="card-actions">
+                                <input type="text" id="jobSearchInput" placeholder="Filter by plugin name or action..." 
+                                       class="search-input" style="width: 250px; margin-right: 0.5rem;">
+                                <button id="showAllJobsBtn" class="btn btn-sm">View All</button>
+                            </div>
+                        </div>
+                        <div id="recentJobsList" class="jobs-list">
+                            <div class="loading">Loading jobs...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="card hover-lift">
+                        <div class="card-header">
+                            <h3>📊 Recent Activity</h3>
+                            <div class="card-actions">
+                                <button id="refreshActivityBtn" class="btn btn-sm">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div id="recentActivityList" class="activity-list">
+                            <div class="loading">Loading activity...</div>
+                        </div>
+                    </div>
+
                     <!-- Installed Plugins -->
-                    <div class="card">
+                    <div class="card hover-lift">
                         <div class="card-header">
                             <h3>🔌 Installed Plugins <span id="pluginCount" class="badge">0</span></h3>
                             <div class="card-actions">
@@ -250,99 +313,34 @@
                             <div class="loading">Loading plugins...</div>
                         </div>
                     </div>
-
-                    <!-- Installation History -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h3>📜 Installation History</h3>
-                            <div class="card-actions">
-                                <button id="clearHistoryBtn" class="btn btn-sm btn-danger">Clear</button>
-                            </div>
-                        </div>
-                        <div id="historyList" class="history-list">
-                            <div class="loading">Loading history...</div>
-                        </div>
-                    </div>
                 </section>
             </main>
         </div>
     </div>
 
-    <!-- Confirmation Modal -->
-    <div id="confirmModal" class="modal hidden">
-        <div class="modal-content">
-            <h3 id="confirmTitle">Confirm Action</h3>
-            <p id="confirmMessage">Are you sure?</p>
-            <div class="modal-actions">
-                <button id="confirmYes" class="btn btn-danger">Confirm</button>
-                <button id="confirmNo" class="btn btn-secondary">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Multi-Option Modal (for GitHub releases with multiple JARs) -->
-    <div id="optionsModal" class="modal hidden">
-        <div class="modal-content">
-            <h3>Select Plugin File</h3>
-            <p>Multiple JAR files found. Please select which one to download:</p>
-            <div id="optionsList" class="options-list"></div>
-            <div class="modal-actions">
-                <button id="optionsCancel" class="btn btn-secondary">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bulk Install Modal -->
-    <div id="bulkModal" class="modal hidden">
+    <!-- Job Details Modal -->
+    <div id="jobModal" class="modal hidden">
         <div class="modal-content modal-large">
-            <h3>Bulk Install Plugins</h3>
-            <p>Enter one URL per line:</p>
-            <textarea id="bulkUrls" rows="10" class="textarea" placeholder="https://example.com/plugin1.jar
-https://example.com/plugin2.jar
-https://example.com/plugin3.jar"></textarea>
-            <div class="modal-actions">
-                <button id="bulkInstallStart" class="btn btn-primary">Install All</button>
-                <button id="bulkCancel" class="btn btn-secondary">Cancel</button>
+            <h3 id="jobModalTitle">Job Details</h3>
+            <div id="jobModalContent">
+                <!-- Dynamic content -->
             </div>
-            <div id="bulkProgress" class="bulk-progress hidden"></div>
+            <div class="modal-actions">
+                <button id="jobModalClose" class="btn btn-secondary">Close</button>
+            </div>
         </div>
     </div>
 
     <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Debug Panel (Hidden by default) -->
-    <div id="debugPanel" style="position: fixed; bottom: 10px; right: 10px; z-index: 10000;">
-        <button id="debugBtn" class="btn btn-sm" style="background: #ff4444; color: white;" title="Show Debug Diagnostics">
-            🐛 Debug
-        </button>
-    </div>
-
     <!-- Scripts -->
     <script src="js/sidebar.js"></script>
-    <script src="js/animations.js"></script>
-    <script src="js/diagnostics.js"></script>
     <script src="js/themeManager.js"></script>
+    <script src="js/animations.js"></script>
     <script src="js/accessibility.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/plugins.js"></script>
-    <script>
-        // Initialize debug button
-        document.addEventListener('DOMContentLoaded', function() {
-            const debugBtn = document.getElementById('debugBtn');
-            if (debugBtn) {
-                debugBtn.addEventListener('click', function() {
-                    window.PluginManagerDiagnostics.export();
-                    
-                    // Show download option
-                    const shouldDownload = confirm('Diagnostics exported to console. Download as JSON file?');
-                    if (shouldDownload) {
-                        window.PluginManagerDiagnostics.download();
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 </html>
