@@ -11,280 +11,7 @@
     <link rel="stylesheet" href="css/minecraft-theme.css">
     <link rel="stylesheet" href="css/theme-light.css">
     <link rel="stylesheet" href="css/accessibility.css">
-    <style>
-        .task-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .task-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .task-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .task-card-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 0;
-        }
-
-        .task-card-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .task-card-body {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            color: var(--text-color);
-        }
-
-        .task-card-info {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .task-card-stats {
-            display: flex;
-            gap: 20px;
-        }
-
-        .task-stat {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .task-stat-label {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .task-stat-value {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .task-type-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .task-type-backup {
-            background: #3498db;
-            color: white;
-        }
-
-        .task-type-restart {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .task-type-broadcast {
-            background: #9b59b6;
-            color: white;
-        }
-
-        .task-type-command {
-            background: #f39c12;
-            color: white;
-        }
-
-        .task-status-enabled {
-            color: #27ae60;
-            font-weight: bold;
-        }
-
-        .task-status-disabled {
-            color: #95a5a6;
-            font-weight: bold;
-        }
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: 8px;
-            padding: 24px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-color);
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            background: var(--input-bg);
-            color: var(--text-color);
-        }
-
-        .form-group textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 24px;
-        }
-
-        .history-entry {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 8px;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .history-status {
-            font-weight: bold;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        .status-success {
-            background: #27ae60;
-            color: white;
-        }
-
-        .status-failed {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .status-partial {
-            background: #f39c12;
-            color: white;
-        }
-
-        .cron-helper {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        .cron-examples {
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 12px;
-            margin-top: 8px;
-            font-size: 12px;
-        }
-
-        .cron-examples strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .cron-examples div {
-            margin: 4px 0;
-        }
-
-        .config-editor {
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 12px;
-            margin-top: 8px;
-        }
-
-        .config-field {
-            margin-bottom: 12px;
-        }
-
-        .config-field:last-child {
-            margin-bottom: 0;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-    </style>
+    <link rel="stylesheet" href="css/automation.css">
 </head>
 <body>
     <!-- Skip to Content Link for Accessibility -->
@@ -412,8 +139,65 @@
                     <button id="goBackBtn" class="btn btn-primary" style="margin-top: 10px;">Return to Console</button>
                 </div>
 
+                <!-- Stats Row -->
+                <div id="statsRow" class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-icon">📋</span>
+                            <div class="stat-card-content">
+                                <div class="stat-card-label">Total Tasks</div>
+                                <div class="stat-card-value" id="totalTasks">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-icon">✅</span>
+                            <div class="stat-card-content">
+                                <div class="stat-card-label">Active</div>
+                                <div class="stat-card-value" id="activeTasks">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-icon">⏸️</span>
+                            <div class="stat-card-content">
+                                <div class="stat-card-label">Paused</div>
+                                <div class="stat-card-value" id="pausedTasks">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-icon">📊</span>
+                            <div class="stat-card-content">
+                                <div class="stat-card-label">Runs Today</div>
+                                <div class="stat-card-value" id="runsToday">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline Section -->
+                <div id="timelineSection" class="timeline-section">
+                    <h3>⏰ Upcoming Executions (Next 24 Hours)</h3>
+                    <div id="timelineContainer" class="timeline-container">
+                        <div class="timeline-empty">
+                            <div class="timeline-empty-icon">⏰</div>
+                            <p>No upcoming executions scheduled</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-button active" data-tab="tasks">📋 Tasks</button>
+                    <button class="tab-button" data-tab="history">📊 History</button>
+                </div>
+
                 <!-- Scheduled Tasks Section -->
-                <section id="tasks" class="content-section active">
+                <section id="tasks" class="tab-content active">
                     <div class="card">
                         <div class="card-header">
                             <h3>Scheduled Tasks</h3>
@@ -430,7 +214,7 @@
                 </section>
 
                 <!-- History Section -->
-                <section id="history" class="content-section">
+                <section id="history" class="tab-content">
                     <div class="card">
                         <div class="card-header">
                             <h3>Execution History</h3>
@@ -481,14 +265,37 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="taskType">Task Type *</label>
-                    <select id="taskType" name="task_type" required>
-                        <option value="">Select task type...</option>
-                        <option value="backup">Backup</option>
-                        <option value="restart">Restart</option>
-                        <option value="broadcast">Broadcast</option>
-                        <option value="command">Custom Command</option>
-                    </select>
+                    <label>Task Type *</label>
+                    <div class="task-type-selector">
+                        <div class="task-type-option">
+                            <input type="radio" id="typeBackup" name="task_type" value="backup" required>
+                            <label for="typeBackup" class="task-type-card">
+                                <span class="task-type-icon">💾</span>
+                                <span class="task-type-label">Backup</span>
+                            </label>
+                        </div>
+                        <div class="task-type-option">
+                            <input type="radio" id="typeRestart" name="task_type" value="restart" required>
+                            <label for="typeRestart" class="task-type-card">
+                                <span class="task-type-icon">🔄</span>
+                                <span class="task-type-label">Restart</span>
+                            </label>
+                        </div>
+                        <div class="task-type-option">
+                            <input type="radio" id="typeBroadcast" name="task_type" value="broadcast" required>
+                            <label for="typeBroadcast" class="task-type-card">
+                                <span class="task-type-icon">📢</span>
+                                <span class="task-type-label">Broadcast</span>
+                            </label>
+                        </div>
+                        <div class="task-type-option">
+                            <input type="radio" id="typeCommand" name="task_type" value="command" required>
+                            <label for="typeCommand" class="task-type-card">
+                                <span class="task-type-icon">⚡</span>
+                                <span class="task-type-label">Command</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -496,6 +303,12 @@
                     <input type="text" id="cronExpression" name="cron_expression" required placeholder="0 */6 * * *">
                     <div class="cron-helper">
                         Format: minute hour day month weekday
+                    </div>
+                    <div class="preset-buttons">
+                        <button type="button" class="preset-button" data-cron="*/30 * * * *">Every 30 min</button>
+                        <button type="button" class="preset-button" data-cron="0 */6 * * *">Every 6h</button>
+                        <button type="button" class="preset-button" data-cron="0 0 * * *">Daily</button>
+                        <button type="button" class="preset-button" data-cron="0 3 * * 0">Weekly</button>
                     </div>
                     <div class="cron-examples">
                         <strong>Common Examples:</strong>
