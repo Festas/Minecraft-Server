@@ -176,7 +176,7 @@ function initCommandAutocomplete() {
     });
     
     commandInput.addEventListener('keydown', (e) => {
-        const autocompleteVisible = autocompleteDiv.style.display !== 'none' && autocompleteSuggestions.length > 0;
+        const autocompleteVisible = autocompleteDiv.style.display === 'block' && autocompleteSuggestions.length > 0;
         
         if (autocompleteVisible) {
             if (e.key === 'ArrowDown') {

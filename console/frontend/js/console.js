@@ -64,13 +64,17 @@ function renderLog(log) {
     }
     
     // Auto-scroll if enabled
-    const shouldAutoScroll = autoScroll && isScrolledToBottom();
-    if (shouldAutoScroll) {
-        consoleOutput.scrollTop = consoleOutput.scrollHeight;
-        if (logPreview) {
-            logPreview.scrollTop = logPreview.scrollHeight;
+    if (autoScroll) {
+        const shouldAutoScroll = isScrolledToBottom();
+        if (shouldAutoScroll) {
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            if (logPreview) {
+                logPreview.scrollTop = logPreview.scrollHeight;
+            }
+            hideScrollIndicator();
+        } else {
+            showScrollIndicator();
         }
-        hideScrollIndicator();
     } else if (!isScrolledToBottom()) {
         showScrollIndicator();
     }
@@ -139,17 +143,17 @@ function formatTimestamp(timestamp) {
 }
 
 function formatLogMessage(message) {
-    // Escape HTML to prevent XSS
-    const escapeHtml = (text) => {
+    // Use global escapeHtml function if available, otherwise define inline
+    const escaper = typeof escapeHtml !== 'undefined' ? escapeHtml : (text) => {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     };
     
-    let formatted = escapeHtml(message);
+    let formatted = escaper(message);
     
     // Highlight player names <Name>
-    formatted = formatted.replace(/&lt;([^&]+)&gt;/g, '<span class="log-player">&lt;$1&gt;</span>');
+    formatted = formatted.replace(/&lt;([^<>&]+)&gt;/g, '<span class="log-player">&lt;$1&gt;</span>');
     
     // Highlight coordinates (X, Y, Z)
     formatted = formatted.replace(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/g, 
@@ -346,7 +350,7 @@ function updateLogCounts() {
     document.getElementById('logCountChat').textContent = logCounts.chat;
     
     // JOIN/LEAVE count is sum of join and leave
-    const joinLeaveCount = (logCounts.join || 0) + (logCounts.leave || 0);
+    const joinLeaveCount = logCounts.join + logCounts.leave;
     document.getElementById('logCountJoin').textContent = joinLeaveCount;
 }
 
