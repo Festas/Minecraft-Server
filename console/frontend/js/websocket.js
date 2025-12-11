@@ -3,6 +3,11 @@ let socket = null;
 let isConnected = false;
 
 function initializeWebSocket() {
+    // Update status to connecting
+    if (typeof updateConsoleStatus === 'function') {
+        updateConsoleStatus('connecting');
+    }
+    
     // Connect to Socket.io
     socket = io({
         transports: ['websocket'],
@@ -14,12 +19,18 @@ function initializeWebSocket() {
         console.log('WebSocket connected');
         isConnected = true;
         showNotification('Connected to server', 'success');
+        if (typeof updateConsoleStatus === 'function') {
+            updateConsoleStatus('connected');
+        }
     });
 
     socket.on('disconnect', () => {
         console.log('WebSocket disconnected');
         isConnected = false;
         showNotification('Disconnected from server', 'warning');
+        if (typeof updateConsoleStatus === 'function') {
+            updateConsoleStatus('disconnected');
+        }
     });
 
     socket.on('error', (error) => {

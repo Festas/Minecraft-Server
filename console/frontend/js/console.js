@@ -12,7 +12,8 @@ let logCounts = {
     warn: 0,
     error: 0,
     chat: 0,
-    join: 0
+    join: 0,
+    leave: 0
 };
 
 function appendLog(log) {
@@ -185,7 +186,8 @@ function clearLogs() {
         warn: 0,
         error: 0,
         chat: 0,
-        join: 0
+        join: 0,
+        leave: 0
     };
     updateLogCounts();
     
