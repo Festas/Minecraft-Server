@@ -776,13 +776,15 @@ class BackupService {
             }
 
             // Get backup directory stats for total space
+            // Note: These are estimated values. For production use, consider implementing
+            // actual filesystem space checking using a library like 'check-disk-space'
+            // or platform-specific commands (df on Linux, wmic on Windows)
             let totalSpace = 10 * 1024 * 1024 * 1024; // Default 10GB
             let freeSpace = 0;
 
             try {
                 const stats = await fs.stat(this.backupsDir);
-                // Try to get filesystem stats (this is approximated)
-                // In production, you might want to use a library like 'check-disk-space'
+                // Using conservative estimate for now
                 totalSpace = 50 * 1024 * 1024 * 1024; // 50GB estimate
                 freeSpace = totalSpace - totalSize;
             } catch (error) {

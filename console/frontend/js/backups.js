@@ -292,7 +292,10 @@
             const weeks = Math.floor(diffDays / 7);
             return `${weeks} week${weeks !== 1 ? 's' : ''} ago`;
         } else if (diffDays < 365) {
-            const months = Math.floor(diffDays / 30);
+            // More accurate month calculation using actual date difference
+            const monthsDiff = (now.getFullYear() - date.getFullYear()) * 12 + 
+                               (now.getMonth() - date.getMonth());
+            const months = Math.max(1, monthsDiff);
             return `${months} month${months !== 1 ? 's' : ''} ago`;
         } else {
             const years = Math.floor(diffDays / 365);
@@ -346,7 +349,8 @@
                 const progressPercent = document.getElementById('backup-progress-percent');
                 
                 if (job.status === 'running') {
-                    // Simulate progress for running jobs
+                    // Simulate progress for running jobs (backend doesn't report actual progress yet)
+                    // TODO: Implement real progress tracking in backend for more accurate feedback
                     const progress = Math.min(90, attempts * 3);
                     if (progressFill) progressFill.style.width = progress + '%';
                     if (progressPercent) progressPercent.textContent = progress + '%';

@@ -470,4 +470,46 @@ describe('Backup Routes', () => {
             expect(response.body.error).toContain('Disk full');
         });
     });
+
+    describe('GET /api/backups/storage', () => {
+        it('should return storage information', async () => {
+            const mockStorageInfo = {
+                totalSpace: 50 * 1024 * 1024 * 1024, // 50GB
+                usedSpace: 5 * 1024 * 1024 * 1024,   // 5GB
+                freeSpace: 45 * 1024 * 1024 * 1024,  // 45GB
+                backupCount: 10,
+                byType: {
+                    full: 3 * 1024 * 1024 * 1024,
+                    world: 1.5 * 1024 * 1024 * 1024,
+                    plugins: 0.3 * 1024 * 1024 * 1024,
+                    config: 0.2 * 1024 * 1024 * 1024
+                },
+                lastBackup: '2024-01-15T10:30:00Z'
+            };
+
+            backupService.getStorageInfo.mockResolvedValue(mockStorageInfo);
+
+            const response = await request(app)
+                .get('/api/backups/storage');
+
+            expect(response.status).toBe(200);
+            expect(response.body).toHaveProperty('totalSpace');
+            expect(response.body).toHaveProperty('usedSpace');
+            expect(response.body).toHaveProperty('freeSpace');
+            expect(response.body).toHaveProperty('backupCount');
+            expect(response.body).toHaveProperty('byType');
+            expect(response.body).toHaveProperty('lastBackup');
+            expect(response.body.backupCount).toBe(10);
+        });
+
+        it('should handle storage info errors', async () => {
+            backupService.getStorageInfo.mockRejectedValue(new Error('Cannot access backup directory'));
+
+            const response = await request(app)
+                .get('/api/backups/storage');
+
+            expect(response.status).toBe(500);
+            expect(response.body.error).toBe('Failed to get storage info');
+        });
+    });
 });
