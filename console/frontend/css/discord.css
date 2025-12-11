@@ -187,6 +187,10 @@
     }
 }
 
+.event-toggle-full {
+    grid-column: 1 / -1;
+}
+
 .event-toggle {
     display: flex;
     align-items: center;
@@ -338,4 +342,27 @@
     border-radius: 6px;
     color: var(--discord-success);
     margin-bottom: var(--space-4, 16px);
+}
+
+/* Toast Animation Keyframes */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
 }

@@ -106,7 +106,7 @@
                 // Check appropriate event checkboxes
                 const eventTypes = discordWebhook.event_types || [];
                 eventTypes.forEach(eventType => {
-                    const eventId = eventType.replace('.', '-');
+                    const eventId = eventType.replace(/\./g, '-');
                     const checkbox = document.getElementById(`event-${eventId}`);
                     if (checkbox) {
                         checkbox.checked = true;
