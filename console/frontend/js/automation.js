@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners
     setupEventListeners();
     
+    // Initialize tabs
+    initTabs();
+    
+    // Initialize preset buttons
+    initPresets();
+    
     // Load initial data
     loadTasks();
     loadHistory();
@@ -167,10 +173,15 @@ function setupEventListeners() {
     // Task form submit
     document.getElementById('taskForm').addEventListener('submit', handleTaskFormSubmit);
     
-    // Task type change - update config fields
-    document.getElementById('taskType').addEventListener('change', (e) => {
-        updateConfigFields(e.target.value);
-    });
+    // Task type change - update config fields (for radio buttons)
+    const taskTypeRadios = document.querySelectorAll('input[name="task_type"]');
+    if (taskTypeRadios.length > 0) {
+        taskTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                updateConfigFields(e.target.value);
+            });
+        });
+    }
     
     // History filter
     document.getElementById('historyFilter').addEventListener('change', loadHistory);
@@ -203,6 +214,10 @@ async function loadTasks() {
         
         const data = await response.json();
         displayTasks(data.tasks);
+        
+        // Update stats and timeline
+        updateStats(data.tasks);
+        renderTimeline(data.tasks);
     } catch (error) {
         console.error('Error loading tasks:', error);
         showError('Failed to load scheduled tasks');
@@ -270,12 +285,23 @@ function createTaskCard(task) {
     const taskTypeClass = `task-type-${task.task_type}`;
     const statusClass = task.enabled ? 'task-status-enabled' : 'task-status-disabled';
     const statusText = task.enabled ? 'Enabled' : 'Disabled';
+    const cardStatusClass = task.enabled ? 'status-enabled' : 'status-disabled';
+    
+    // Task type icons
+    const taskIcons = {
+        backup: '💾',
+        restart: '🔄',
+        broadcast: '📢',
+        command: '⚡'
+    };
+    
+    const taskIcon = taskIcons[task.task_type] || '📋';
     
     return `
-        <div class="task-card">
+        <div class="task-card ${cardStatusClass}">
             <div class="task-card-header">
                 <div>
-                    <h3 class="task-card-title">${escapeHtml(task.name)}</h3>
+                    <h3 class="task-card-title">${taskIcon} ${escapeHtml(task.name)}</h3>
                     <span class="task-type-badge ${taskTypeClass}">${task.task_type}</span>
                     <span class="${statusClass}" style="margin-left: 8px;">${statusText}</span>
                 </div>
@@ -291,7 +317,7 @@ function createTaskCard(task) {
                     ${task.description ? `<p>${escapeHtml(task.description)}</p>` : ''}
                     <p><strong>Schedule:</strong> <code>${escapeHtml(task.cron_expression)}</code></p>
                     ${task.last_run ? `<p><strong>Last Run:</strong> ${formatDate(task.last_run)}</p>` : ''}
-                    ${task.next_run ? `<p><strong>Next Run:</strong> ${formatDate(task.next_run)}</p>` : ''}
+                    ${task.next_run ? `<p><strong>Next Run:</strong> ${formatRelativeTime(new Date(task.next_run))}</p>` : ''}
                 </div>
                 <div class="task-card-stats">
                     <div class="task-stat">
@@ -322,7 +348,13 @@ function openTaskModal(task = null) {
         title.textContent = 'Edit Task';
         document.getElementById('taskName').value = task.name;
         document.getElementById('taskDescription').value = task.description || '';
-        document.getElementById('taskType').value = task.task_type;
+        
+        // Set radio button for task type
+        const taskTypeRadio = document.querySelector(`input[name="task_type"][value="${task.task_type}"]`);
+        if (taskTypeRadio) {
+            taskTypeRadio.checked = true;
+        }
+        
         document.getElementById('cronExpression').value = task.cron_expression;
         document.getElementById('taskEnabled').checked = task.enabled;
         
@@ -566,6 +598,9 @@ async function loadHistory() {
         
         const data = await response.json();
         displayHistory(data.history);
+        
+        // Update runs today stat from history
+        updateRunsTodayStat(data.history);
     } catch (error) {
         console.error('Error loading history:', error);
         showError('Failed to load execution history');
@@ -631,6 +666,180 @@ function showError(message) {
     } else {
         alert('Error: ' + message);
     }
+}
+
+// ============================================
+// New Functions for Enhanced UI
+// ============================================
+
+/**
+ * Update stats row with task counts
+ */
+function updateStats(tasks) {
+    const total = tasks.length;
+    const active = tasks.filter(t => t.enabled).length;
+    const paused = tasks.filter(t => !t.enabled).length;
+    
+    document.getElementById('totalTasks').textContent = total;
+    document.getElementById('activeTasks').textContent = active;
+    document.getElementById('pausedTasks').textContent = paused;
+}
+
+/**
+ * Update runs today stat from history
+ */
+function updateRunsTodayStat(history) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const runsToday = history.filter(entry => {
+        const executedDate = new Date(entry.executed_at);
+        executedDate.setHours(0, 0, 0, 0);
+        return executedDate.getTime() === today.getTime();
+    }).length;
+    
+    document.getElementById('runsToday').textContent = runsToday;
+}
+
+/**
+ * Render timeline of upcoming executions in next 24 hours
+ */
+function renderTimeline(tasks) {
+    const container = document.getElementById('timelineContainer');
+    const now = new Date();
+    const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    
+    // Filter enabled tasks with next_run within 24 hours
+    const upcomingTasks = tasks
+        .filter(task => {
+            if (!task.enabled || !task.next_run) return false;
+            const nextRun = new Date(task.next_run);
+            return nextRun >= now && nextRun <= next24h;
+        })
+        .sort((a, b) => new Date(a.next_run) - new Date(b.next_run));
+    
+    if (upcomingTasks.length === 0) {
+        container.innerHTML = `
+            <div class="timeline-empty">
+                <div class="timeline-empty-icon">⏰</div>
+                <p>No upcoming executions scheduled in the next 24 hours</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Task type icons
+    const taskIcons = {
+        backup: '💾',
+        restart: '🔄',
+        broadcast: '📢',
+        command: '⚡'
+    };
+    
+    container.innerHTML = upcomingTasks.map(task => {
+        const icon = taskIcons[task.task_type] || '📋';
+        const relativeTime = formatRelativeTime(new Date(task.next_run));
+        
+        return `
+            <div class="timeline-item">
+                <div class="timeline-time">${relativeTime}</div>
+                <div class="timeline-content">
+                    <div class="timeline-task-name">${icon} ${escapeHtml(task.name)}</div>
+                    <div class="timeline-task-type">
+                        <span class="task-type-badge task-type-${task.task_type}">${task.task_type}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Format date/time relative to now (e.g., "In 2h", "3m ago")
+ */
+function formatRelativeTime(date) {
+    const now = new Date();
+    const diffMs = date - now;
+    const diffMinutes = Math.floor(Math.abs(diffMs) / 60000);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    
+    const isPast = diffMs < 0;
+    const prefix = isPast ? '' : 'In ';
+    const suffix = isPast ? ' ago' : '';
+    
+    if (diffDays > 0) {
+        return `${prefix}${diffDays}d${suffix}`;
+    } else if (diffHours > 0) {
+        return `${prefix}${diffHours}h${suffix}`;
+    } else if (diffMinutes > 0) {
+        return `${prefix}${diffMinutes}m${suffix}`;
+    } else {
+        return 'Now';
+    }
+}
+
+/**
+ * Initialize tab navigation
+ */
+function initTabs() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    if (tabButtons.length === 0) {
+        return;
+    }
+    
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const targetTab = button.dataset.tab;
+            
+            // Update active button
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            
+            // Update active content
+            tabContents.forEach(content => {
+                if (content.id === targetTab) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+            
+            // Load data for the selected tab
+            if (targetTab === 'history') {
+                loadHistory();
+            }
+        });
+    });
+}
+
+/**
+ * Initialize preset buttons for cron expressions
+ */
+function initPresets() {
+    const presetButtons = document.querySelectorAll('.preset-button');
+    const cronInput = document.getElementById('cronExpression');
+    
+    if (!cronInput || presetButtons.length === 0) {
+        return;
+    }
+    
+    presetButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const cronExpression = button.dataset.cron;
+            if (cronInput) {
+                cronInput.value = cronExpression;
+                
+                // Visual feedback
+                button.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    button.style.transform = '';
+                }, 100);
+            }
+        });
+    });
 }
 
 async function logout() {
