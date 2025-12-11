@@ -15,13 +15,13 @@
 .page-title {
     margin: 0 0 var(--space-1) 0;
     font-size: 1.75rem;
-    color: var(--text-primary);
+    color: var(--color-text-primary);
 }
 
 .page-subtitle {
     margin: 0;
     font-size: 0.95rem;
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
 }
 
 .page-header-actions {
@@ -72,7 +72,7 @@
 
 .status-text {
     font-size: 0.9rem;
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
 }
 
 .stats-embed-container {
@@ -125,7 +125,7 @@
 }
 
 .stats-overlay p {
-    color: var(--text-secondary);
+    color: var(--color-text-secondary);
     font-size: 1rem;
 }
 
@@ -136,7 +136,7 @@
 
 .stats-overlay h3 {
     margin: 0 0 var(--space-2) 0;
-    color: var(--text-primary);
+    color: var(--color-text-primary);
 }
 
 /* Fullscreen mode */
