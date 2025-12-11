@@ -318,15 +318,20 @@ async function loadPlayerHistoryForModal(playerIdentifier) {
                 const actionDate = new Date(action.performed_at);
                 const timeAgo = formatRelativeTime(actionDate);
                 
+                // Use escapeHtml to prevent XSS
+                const actionType = window.escapeHtml ? window.escapeHtml(action.action_type.replace('_', ' ')) : action.action_type.replace('_', ' ');
+                const performedBy = window.escapeHtml ? window.escapeHtml(action.performed_by) : action.performed_by;
+                const reason = action.reason ? (window.escapeHtml ? window.escapeHtml(action.reason) : action.reason) : '';
+                
                 item.innerHTML = `
                     <div class="modal-history-header">
-                        <span class="modal-history-type">${action.action_type.replace('_', ' ')}</span>
+                        <span class="modal-history-type">${actionType}</span>
                         <span class="modal-history-time">${timeAgo}</span>
                     </div>
                     <div class="modal-history-details">
-                        by ${action.performed_by}
+                        by ${performedBy}
                     </div>
-                    ${action.reason ? `<div class="modal-history-reason">${action.reason}</div>` : ''}
+                    ${reason ? `<div class="modal-history-reason">${reason}</div>` : ''}
                 `;
                 
                 activityList.appendChild(item);
@@ -336,7 +341,7 @@ async function loadPlayerHistoryForModal(playerIdentifier) {
         }
     } catch (error) {
         console.error('Error loading player history:', error);
-        activityList.innerHTML = '<p class="loading-text" style="color: var(--color-error);">Failed to load activity</p>';
+        activityList.innerHTML = '<p class="loading-text loading-error">Failed to load activity</p>';
     }
 }
 
@@ -344,6 +349,9 @@ async function loadPlayerHistoryForModal(playerIdentifier) {
  * Initialize modal event handlers
  */
 function initModalEvents() {
+    const modal = document.getElementById('playerModal');
+    if (!modal) return;
+    
     // Close button
     const closeBtn = document.getElementById('closePlayerModal');
     if (closeBtn) {
@@ -351,14 +359,11 @@ function initModalEvents() {
     }
     
     // Close on overlay click
-    const modal = document.getElementById('playerModal');
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closePlayerModal();
-            }
-        });
-    }
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closePlayerModal();
+        }
+    });
     
     // Modal action buttons
     const modalKickBtn = document.getElementById('modalKickBtn');
@@ -432,7 +437,8 @@ function initModalEvents() {
  * Teleport player to target
  */
 async function teleportPlayer(player) {
-    const target = await showPrompt('Teleport Player', 'Enter target (player name or coordinates "x y z"):');
+    // Use browser prompt as showPrompt doesn't exist yet
+    const target = prompt('Enter target (player name or coordinates "x y z"):');
     if (!target) return;
     
     try {
@@ -608,7 +614,8 @@ async function changeGamemode(player, mode) {
 
 async function warnPlayer(player, reason) {
     if (!reason) {
-        reason = await showPrompt('Warn Player', 'Enter warning reason:');
+        // Use browser prompt as showPrompt doesn't exist yet
+        reason = prompt('Enter warning reason:');
         if (!reason) return;
     }
 
@@ -633,10 +640,11 @@ async function warnPlayer(player, reason) {
 }
 
 async function mutePlayer(player) {
-    const reason = await showPrompt('Mute Player', 'Enter reason for mute:');
+    // Use browser prompt as showPrompt doesn't exist yet
+    const reason = prompt('Enter reason for mute:');
     if (!reason) return;
     
-    const duration = await showPrompt('Mute Duration', 'Enter duration (e.g., 1h, 30m, leave blank for permanent):');
+    const duration = prompt('Enter duration (e.g., 1h, 30m, leave blank for permanent):');
 
     try {
         const response = await apiRequest('/api/players/mute', {
