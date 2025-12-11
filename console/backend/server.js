@@ -197,6 +197,9 @@ function generateCsrfToken() {
     return crypto.randomBytes(32).toString('hex');
 }
 
+// Regex pattern for static asset file types (compiled once for performance)
+const IMAGE_FONT_PATTERN = /\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/i;
+
 // Serve static frontend files with cache-busting headers
 // CSS/JS files use must-revalidate so browsers check for updates after each deployment
 // Images/fonts can be cached longer since they change less frequently
@@ -204,20 +207,23 @@ app.use('/console', express.static(path.join(__dirname, '../frontend'), {
     etag: true,
     lastModified: true,
     setHeaders: (res, filePath) => {
+        // Extract file extension once for consistent checking
+        const ext = path.extname(filePath).toLowerCase();
+        
         // For CSS/JS files, require revalidation on every request
         // This ensures users always get the latest version after deployments
-        if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+        if (ext === '.css' || ext === '.js') {
             res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         }
         // For HTML files, never cache (always fetch fresh)
-        else if (filePath.endsWith('.html')) {
+        else if (ext === '.html') {
             res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
             res.setHeader('Pragma', 'no-cache');
             res.setHeader('Expires', '0');
         }
         // For images and fonts, allow moderate caching (1 day)
         // These change less frequently and benefit from caching
-        else if (filePath.match(/\.(png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+        else if (IMAGE_FONT_PATTERN.test(filePath)) {
             res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
         }
     }
