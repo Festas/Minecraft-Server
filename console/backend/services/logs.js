@@ -79,19 +79,44 @@ class LogsService extends EventEmitter {
      * @param {string} logLine - Log line to parse
      */
     parsePlayerEvents(logLine) {
-        // Match player joined: "PlayerName joined the game"
+        // Strip ANSI codes first
+        const cleanLine = logLine.replace(/\x1b\[[0-9;]*m/g, '');
+        
+        // Match player joined: Look for "Username joined the game" anywhere in the line
         // Minecraft usernames: 3-16 chars, alphanumeric and underscores only
-        const joinMatch = logLine.match(/([a-zA-Z0-9_]{3,16}) joined the game/);
+        const joinMatch = cleanLine.match(/\]: ([a-zA-Z0-9_]{3,16}) joined the game/);
         if (joinMatch) {
             const username = joinMatch[1];
+            console.log(`[Logs] Detected player join: ${username}`);
+            this.emit('player-joined', { username });
+            return;
+        }
+
+        // Also try without the "]: " prefix for compatibility
+        // Use negative lookbehind to ensure we don't match mid-word
+        const joinMatchAlt = cleanLine.match(/(?:^|\s)([a-zA-Z0-9_]{3,16}) joined the game$/);
+        if (joinMatchAlt) {
+            const username = joinMatchAlt[1];
+            console.log(`[Logs] Detected player join (alt): ${username}`);
             this.emit('player-joined', { username });
             return;
         }
 
         // Match player left: "PlayerName left the game"
-        const leaveMatch = logLine.match(/([a-zA-Z0-9_]{3,16}) left the game/);
+        const leaveMatch = cleanLine.match(/\]: ([a-zA-Z0-9_]{3,16}) left the game/);
         if (leaveMatch) {
             const username = leaveMatch[1];
+            console.log(`[Logs] Detected player leave: ${username}`);
+            this.emit('player-left', { username });
+            return;
+        }
+
+        // Also try without the "]: " prefix for compatibility
+        // Use negative lookbehind to ensure we don't match mid-word
+        const leaveMatchAlt = cleanLine.match(/(?:^|\s)([a-zA-Z0-9_]{3,16}) left the game$/);
+        if (leaveMatchAlt) {
+            const username = leaveMatchAlt[1];
+            console.log(`[Logs] Detected player leave (alt): ${username}`);
             this.emit('player-left', { username });
             return;
         }
