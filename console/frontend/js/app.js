@@ -339,7 +339,7 @@ async function controlServer(action) {
         
         if (data.success) {
             showNotification(data.message || `${action} successful`, 'success');
-            setTimeout(() => loadServerStatus(), 2000);
+            setTimeout(() => loadDashboard(), 2000);
         } else {
             showNotification(data.error || `${action} failed`, 'error');
         }
@@ -348,23 +348,12 @@ async function controlServer(action) {
     }
 }
 
+/**
+ * Load server status (legacy function - delegates to loadDashboard)
+ * @deprecated Use loadDashboard() instead for full dashboard data
+ */
 async function loadServerStatus() {
-    try {
-        const response = await fetch('/api/server/status', {
-            credentials: 'same-origin'
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to load server status');
-        }
-        
-        const data = await response.json();
-        updateServerStatus(data);
-    } catch (error) {
-        console.error('Error loading server status:', error);
-        // Update with empty stats to show offline/default values
-        updateServerStatus({ status: 'offline' });
-    }
+    return loadDashboard();
 }
 
 function updateServerStatus(stats) {

@@ -59,8 +59,12 @@ class PluginIntegrationService {
                 // Example: "TPS from last 1m, 5m, 15m: 20.0, 20.0, 20.0"
                 const tpsMatch = tpsResult.response.match(/TPS.*?:\s*([\d.]+)/i);
                 if (tpsMatch) {
-                    metrics.tps = parseFloat(tpsMatch[1]);
-                    metrics.available = true;
+                    const tpsValue = parseFloat(tpsMatch[1]);
+                    // Validate TPS is in reasonable range (0-20)
+                    if (!isNaN(tpsValue) && tpsValue >= 0 && tpsValue <= 20) {
+                        metrics.tps = tpsValue;
+                        metrics.available = true;
+                    }
                 }
             }
 
@@ -71,8 +75,12 @@ class PluginIntegrationService {
                 const memoryMatch = healthResult.response.match(/Memory.*?(\d+(?:\.\d+)?)\s*(\w+).*?\/\s*(\d+(?:\.\d+)?)\s*(\w+)/i);
                 
                 if (cpuMatch) {
-                    metrics.cpu = parseFloat(cpuMatch[1]);
-                    metrics.available = true;
+                    const cpuValue = parseFloat(cpuMatch[1]);
+                    // Validate CPU is in reasonable range (0-100%)
+                    if (!isNaN(cpuValue) && cpuValue >= 0 && cpuValue <= 100) {
+                        metrics.cpu = cpuValue;
+                        metrics.available = true;
+                    }
                 }
                 
                 if (memoryMatch) {
@@ -81,12 +89,15 @@ class PluginIntegrationService {
                     const total = parseFloat(memoryMatch[3]);
                     const totalUnit = memoryMatch[4];
                     
-                    metrics.memory = {
-                        used: `${used}${usedUnit}`,
-                        total: `${total}${totalUnit}`,
-                        percentage: (used / total) * 100
-                    };
-                    metrics.available = true;
+                    // Validate memory values are positive and used <= total
+                    if (!isNaN(used) && !isNaN(total) && used > 0 && total > 0 && used <= total) {
+                        metrics.memory = {
+                            used: `${used}${usedUnit}`,
+                            total: `${total}${totalUnit}`,
+                            percentage: (used / total) * 100
+                        };
+                        metrics.available = true;
+                    }
                 }
             }
 
