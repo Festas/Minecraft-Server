@@ -22,6 +22,20 @@ router.use(requireAuth);
 router.use(backupRateLimiter);
 
 /**
+ * GET /backups/storage
+ * Get storage usage information
+ */
+router.get('/storage', requirePermission(PERMISSIONS.BACKUP_VIEW), async (req, res) => {
+    try {
+        const storageInfo = await backupService.getStorageInfo();
+        res.json(storageInfo);
+    } catch (error) {
+        console.error('Error getting storage info:', error);
+        res.status(500).json({ error: 'Failed to get storage info' });
+    }
+});
+
+/**
  * GET /backups/jobs
  * Get list of backup jobs with their status
  */

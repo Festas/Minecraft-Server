@@ -11,341 +11,7 @@
     <link rel="stylesheet" href="css/minecraft-theme.css">
     <link rel="stylesheet" href="css/theme-light.css">
     <link rel="stylesheet" href="css/accessibility.css">
-    <style>
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .tab {
-            padding: 12px 24px;
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-muted);
-            transition: all 0.2s;
-        }
-
-        .tab:hover {
-            color: var(--text-color);
-            background: var(--card-bg);
-        }
-
-        .tab.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .backup-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .backup-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .backup-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .backup-card-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 0;
-        }
-
-        .backup-card-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .backup-card-body {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-            color: var(--text-color);
-        }
-
-        .backup-info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .backup-info-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-
-        .backup-info-value {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .status-success {
-            background: #27ae60;
-            color: white;
-        }
-
-        .status-pending {
-            background: #f39c12;
-            color: white;
-        }
-
-        .status-running {
-            background: #3498db;
-            color: white;
-        }
-
-        .status-failed {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .backup-type-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .type-full {
-            background: #9b59b6;
-            color: white;
-        }
-
-        .type-world {
-            background: #3498db;
-            color: white;
-        }
-
-        .type-plugins {
-            background: #e67e22;
-            color: white;
-        }
-
-        .type-config {
-            background: #1abc9c;
-            color: white;
-        }
-
-        .type-migration {
-            background: #2c3e50;
-            color: white;
-        }
-
-        .create-backup-form {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--text-color);
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 14px;
-            background: var(--input-bg);
-            color: var(--text-color);
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: 8px;
-            padding: 24px;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-            width: 90%;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-muted);
-        }
-
-        .modal-close:hover {
-            color: var(--text-color);
-        }
-
-        .preview-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .preview-item {
-            padding: 8px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .preview-item:last-child {
-            border-bottom: none;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: var(--border-color);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 8px;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: var(--primary-color);
-            transition: width 0.3s;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        .alert {
-            padding: 12px 16px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-        }
-
-        .alert-info {
-            background: #e3f2fd;
-            color: #1565c0;
-            border: 1px solid #90caf9;
-        }
-
-        .alert-warning {
-            background: #fff3e0;
-            color: #e65100;
-            border: 1px solid #ffb74d;
-        }
-
-        .alert-danger {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ef5350;
-        }
-
-        .migration-wizard {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .wizard-step {
-            display: none;
-        }
-
-        .wizard-step.active {
-            display: block;
-        }
-
-        .wizard-nav {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 24px;
-            padding-top: 16px;
-            border-top: 1px solid var(--border-color);
-        }
-    </style>
+    <link rel="stylesheet" href="css/backups.css">
 </head>
 <body>
     <!-- Skip to Content Link for Accessibility -->
@@ -466,6 +132,44 @@
                 </div>
             </div>
 
+            <!-- Storage Overview -->
+            <div class="storage-overview">
+                <h3>Storage Overview</h3>
+                
+                <div class="storage-bar-container">
+                    <div class="storage-bar-label">
+                        <span>Storage Usage</span>
+                        <span id="storage-usage-text">Loading...</span>
+                    </div>
+                    <div class="storage-bar">
+                        <div class="storage-bar-fill" id="storage-bar-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="storage-stats">
+                    <div class="storage-stat-item">
+                        <span class="storage-stat-label">Total Backups</span>
+                        <span class="storage-stat-value" id="total-backups">0</span>
+                    </div>
+                    <div class="storage-stat-item">
+                        <span class="storage-stat-label">Total Size</span>
+                        <span class="storage-stat-value" id="total-size">0 MB</span>
+                    </div>
+                    <div class="storage-stat-item">
+                        <span class="storage-stat-label">Last Backup</span>
+                        <span class="storage-stat-value" id="last-backup">Never</span>
+                    </div>
+                    <div class="storage-stat-item">
+                        <span class="storage-stat-label">Available Space</span>
+                        <span class="storage-stat-value" id="available-space">0 GB</span>
+                    </div>
+                </div>
+
+                <div class="storage-chart" id="storage-chart-container">
+                    <!-- Chart will be rendered here -->
+                </div>
+            </div>
+
             <!-- Tabs -->
             <div class="tabs">
                 <button class="tab active" data-tab="backups">Backups</button>
@@ -487,11 +191,14 @@
                         <div class="form-group">
                             <label for="backup-type">Backup Type *</label>
                             <select id="backup-type" name="type" required>
-                                <option value="full">Full (World + Plugins + Config)</option>
-                                <option value="world">World Only</option>
-                                <option value="plugins">Plugins Only</option>
-                                <option value="config">Config Only</option>
+                                <option value="full">📦 Full (World + Plugins + Config)</option>
+                                <option value="world">🌍 World Only</option>
+                                <option value="plugins">🔌 Plugins Only</option>
+                                <option value="config">⚙️ Config Only</option>
                             </select>
+                            <div class="estimated-size" id="estimated-size" style="display: none;">
+                                <strong>Estimated Size:</strong> <span id="estimated-size-value">Calculating...</span>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="retention-policy">Retention Policy *</label>
@@ -502,8 +209,17 @@
                                 <option value="permanent">Permanent</option>
                             </select>
                         </div>
+                        <div class="progress-container" id="backup-progress-container">
+                            <div class="progress-info">
+                                <span>Creating backup...</span>
+                                <span id="backup-progress-percent">0%</span>
+                            </div>
+                            <div class="backup-progress active">
+                                <div class="backup-progress-fill" id="backup-progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">Create Backup</button>
+                            <button type="submit" class="btn btn-primary" id="create-backup-btn">Create Backup</button>
                         </div>
                     </form>
                 </div>
