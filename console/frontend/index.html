@@ -299,25 +299,82 @@
                 </section>
 
                 <!-- Console Section -->
-                <section id="console" class="content-section">
-                    <div class="card console-card">
+                <section id="console" class="content-section console-page">
+                    <!-- Console Header Bar -->
+                    <div class="console-header-bar">
                         <h3>Console Output</h3>
-                        <div class="log-controls">
-                            <button id="clearLogsBtn" class="btn btn-sm">Clear</button>
-                            <button id="downloadLogsBtn" class="btn btn-sm">Download</button>
+                        <div class="console-status">
+                            <span class="console-status-dot"></span>
+                            <span id="consoleStatusText">Disconnected</span>
+                        </div>
+                    </div>
+
+                    <!-- Log Filter Tabs -->
+                    <div class="log-filter-tabs">
+                        <button class="log-filter-tab active" data-filter="all">
+                            All <span class="log-count" id="logCountAll">0</span>
+                        </button>
+                        <button class="log-filter-tab" data-filter="info">
+                            INFO <span class="log-count" id="logCountInfo">0</span>
+                        </button>
+                        <button class="log-filter-tab" data-filter="warn">
+                            WARN <span class="log-count" id="logCountWarn">0</span>
+                        </button>
+                        <button class="log-filter-tab" data-filter="error">
+                            ERROR <span class="log-count" id="logCountError">0</span>
+                        </button>
+                        <button class="log-filter-tab" data-filter="chat">
+                            CHAT <span class="log-count" id="logCountChat">0</span>
+                        </button>
+                        <button class="log-filter-tab" data-filter="join">
+                            JOIN/LEAVE <span class="log-count" id="logCountJoin">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Log Controls Bar -->
+                    <div class="log-controls-bar">
+                        <div class="log-search-container">
                             <input type="text" id="logSearchInput" placeholder="Search logs..." class="search-input">
+                            <button id="clearSearchBtn" class="btn btn-sm" title="Clear search">✕</button>
+                            <span class="search-results-count" id="searchResultsCount"></span>
+                            <button id="searchPrevBtn" class="search-nav-btn btn btn-sm" title="Previous match">↑</button>
+                            <button id="searchNextBtn" class="search-nav-btn btn btn-sm" title="Next match">↓</button>
                         </div>
+                        <div class="log-action-buttons">
+                            <button id="pauseLogsBtn" class="btn btn-sm">⏸️ Pause</button>
+                            <button id="autoScrollBtn" class="btn btn-sm active">📜 Auto-scroll</button>
+                            <button id="clearLogsBtn" class="btn btn-sm">🗑️ Clear</button>
+                            <button id="downloadLogsBtn" class="btn btn-sm">💾 Download</button>
+                        </div>
+                    </div>
+
+                    <!-- Console Output -->
+                    <div class="console-output-wrapper">
                         <div id="consoleOutput" class="console-output"></div>
-                        
-                        <div class="command-input-container">
-                            <input 
-                                type="text" 
-                                id="commandInput" 
-                                placeholder="Enter command (e.g., say Hello World)" 
-                                class="command-input"
-                            >
-                            <button id="sendCommandBtn" class="btn btn-primary">Send</button>
+                        <div class="console-scroll-indicator" id="scrollIndicator">
+                            <button class="scroll-to-bottom-btn">↓ New logs available - Click to scroll</button>
                         </div>
+                    </div>
+                    
+                    <!-- Command Input -->
+                    <div class="command-input-container">
+                        <input 
+                            type="text" 
+                            id="commandInput" 
+                            placeholder="Enter command (e.g., say Hello World)" 
+                            class="command-input"
+                            autocomplete="off"
+                        >
+                        <div class="command-autocomplete" id="commandAutocomplete"></div>
+                        <button id="sendCommandBtn" class="btn btn-primary">Send</button>
+                    </div>
+
+                    <!-- Keyboard Shortcuts Hints -->
+                    <div class="command-hints">
+                        <span class="hint">↑↓ History</span>
+                        <span class="hint">Tab Autocomplete</span>
+                        <span class="hint">Enter Send</span>
+                        <span class="hint">Ctrl+F Search</span>
                     </div>
                 </section>
 

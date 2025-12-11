@@ -154,3 +154,134 @@ function getCommandSuggestions(input) {
         cmd.toLowerCase().startsWith(lowercaseInput)
     );
 }
+
+// Command autocomplete functionality
+let autocompleteIndex = -1;
+let autocompleteSuggestions = [];
+let isAutocompleteVisible = false;
+
+function initCommandAutocomplete() {
+    const commandInput = document.getElementById('commandInput');
+    const autocompleteDiv = document.getElementById('commandAutocomplete');
+    
+    if (!commandInput || !autocompleteDiv) return;
+    
+    commandInput.addEventListener('input', (e) => {
+        const input = e.target.value;
+        
+        if (input.trim().length > 0) {
+            showAutocompleteSuggestions(input);
+        } else {
+            hideAutocomplete();
+        }
+    });
+    
+    commandInput.addEventListener('keydown', (e) => {
+        if (isAutocompleteVisible && autocompleteSuggestions.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                autocompleteIndex = Math.min(autocompleteIndex + 1, autocompleteSuggestions.length - 1);
+                updateAutocompleteHighlight();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                autocompleteIndex = Math.max(autocompleteIndex - 1, 0);
+                updateAutocompleteHighlight();
+            } else if (e.key === 'Tab' || (e.key === 'Enter' && autocompleteIndex >= 0)) {
+                e.preventDefault();
+                if (autocompleteIndex >= 0 && autocompleteIndex < autocompleteSuggestions.length) {
+                    selectAutocompleteSuggestion(autocompleteSuggestions[autocompleteIndex]);
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                hideAutocomplete();
+            }
+        } else if (e.key === 'Escape') {
+            hideAutocomplete();
+        }
+    });
+    
+    // Hide autocomplete when clicking outside
+    document.addEventListener('click', (e) => {
+        const clickedInput = commandInput === e.target || commandInput.contains(e.target);
+        const clickedAutocomplete = autocompleteDiv === e.target || autocompleteDiv.contains(e.target);
+        
+        if (!clickedInput && !clickedAutocomplete) {
+            hideAutocomplete();
+        }
+    });
+}
+
+function showAutocompleteSuggestions(input) {
+    const autocompleteDiv = document.getElementById('commandAutocomplete');
+    if (!autocompleteDiv) return;
+    
+    const suggestions = getCommandSuggestions(input);
+    autocompleteSuggestions = suggestions;
+    
+    if (suggestions.length === 0) {
+        hideAutocomplete();
+        return;
+    }
+    
+    autocompleteDiv.innerHTML = '';
+    autocompleteIndex = 0;
+    isAutocompleteVisible = true;
+    
+    suggestions.forEach((cmd, index) => {
+        const item = document.createElement('div');
+        item.className = 'autocomplete-item';
+        if (index === 0) item.classList.add('highlighted');
+        item.textContent = cmd;
+        
+        item.addEventListener('click', () => {
+            selectAutocompleteSuggestion(cmd);
+        });
+        
+        item.addEventListener('mouseenter', () => {
+            autocompleteIndex = index;
+            updateAutocompleteHighlight();
+        });
+        
+        autocompleteDiv.appendChild(item);
+    });
+    
+    autocompleteDiv.style.display = 'block';
+}
+
+function updateAutocompleteHighlight() {
+    const autocompleteDiv = document.getElementById('commandAutocomplete');
+    if (!autocompleteDiv) return;
+    
+    const items = autocompleteDiv.querySelectorAll('.autocomplete-item');
+    items.forEach((item, index) => {
+        if (index === autocompleteIndex) {
+            item.classList.add('highlighted');
+            item.scrollIntoView({ block: 'nearest' });
+        } else {
+            item.classList.remove('highlighted');
+        }
+    });
+}
+
+function selectAutocompleteSuggestion(command) {
+    const commandInput = document.getElementById('commandInput');
+    if (commandInput) {
+        commandInput.value = command;
+        commandInput.focus();
+    }
+    hideAutocomplete();
+}
+
+function hideAutocomplete() {
+    const autocompleteDiv = document.getElementById('commandAutocomplete');
+    if (autocompleteDiv) {
+        autocompleteDiv.style.display = 'none';
+        autocompleteDiv.innerHTML = '';
+    }
+    autocompleteIndex = -1;
+    autocompleteSuggestions = [];
+    isAutocompleteVisible = false;
+}
+
+// Initialize autocomplete on page load
+document.addEventListener('DOMContentLoaded', initCommandAutocomplete);
