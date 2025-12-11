@@ -742,6 +742,71 @@ class BackupService {
     }
 
     /**
+     * Get storage information
+     */
+    async getStorageInfo() {
+        try {
+            const db = database.db;
+            
+            // Get all successful backups
+            const backups = db.prepare(`
+                SELECT type, file_size, created_at 
+                FROM backup_jobs 
+                WHERE status = ?
+                ORDER BY created_at DESC
+            `).all(JOB_STATUS.SUCCESS);
+
+            // Calculate total size and breakdown by type
+            let totalSize = 0;
+            const byType = {};
+            let lastBackupDate = null;
+
+            for (const backup of backups) {
+                const size = backup.file_size || 0;
+                totalSize += size;
+
+                if (!byType[backup.type]) {
+                    byType[backup.type] = 0;
+                }
+                byType[backup.type] += size;
+
+                if (!lastBackupDate || new Date(backup.created_at) > new Date(lastBackupDate)) {
+                    lastBackupDate = backup.created_at;
+                }
+            }
+
+            // Get backup directory stats for total space
+            // Note: These are estimated values. For production use, consider implementing
+            // actual filesystem space checking using a library like 'check-disk-space'
+            // or platform-specific commands (df on Linux, wmic on Windows)
+            let totalSpace = 10 * 1024 * 1024 * 1024; // Default 10GB
+            let freeSpace = 0;
+
+            try {
+                const stats = await fs.stat(this.backupsDir);
+                // Using conservative estimate for now
+                totalSpace = 50 * 1024 * 1024 * 1024; // 50GB estimate
+                freeSpace = totalSpace - totalSize;
+            } catch (error) {
+                console.warn('[Backup] Could not get filesystem stats:', error.message);
+                freeSpace = totalSpace - totalSize;
+            }
+
+            return {
+                totalSpace,
+                usedSpace: totalSize,
+                freeSpace: Math.max(0, freeSpace),
+                backupCount: backups.length,
+                byType,
+                lastBackup: lastBackupDate
+            };
+        } catch (error) {
+            console.error('[Backup] Error getting storage info:', error);
+            throw error;
+        }
+    }
+
+    /**
      * Clean up old backups based on retention policy
      */
     async cleanupOldBackups() {

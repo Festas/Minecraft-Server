@@ -24,6 +24,7 @@
         setupForms();
 
         // Load initial data
+        loadStorageInfo();
         loadBackupJobs();
         loadRestoreJobs();
         loadMigrationJobs();
@@ -31,6 +32,7 @@
         // Set up auto-refresh
         setInterval(() => {
             refreshActiveJobs();
+            loadStorageInfo();
         }, 5000); // Refresh every 5 seconds
 
         console.log('[Backups] Initialization complete');
@@ -116,6 +118,287 @@
                 await createMigrationExport();
             });
         }
+
+        // Backup type change handler for estimated size
+        const backupTypeSelect = document.getElementById('backup-type');
+        if (backupTypeSelect) {
+            backupTypeSelect.addEventListener('change', () => {
+                updateEstimatedSize(backupTypeSelect.value);
+            });
+            // Show estimated size on load
+            updateEstimatedSize(backupTypeSelect.value);
+        }
+    }
+
+    /**
+     * Load storage information
+     */
+    async function loadStorageInfo() {
+        try {
+            const response = await fetch('/api/backups/storage');
+            if (!response.ok) {
+                console.warn('[Backups] Storage endpoint not available yet');
+                return;
+            }
+
+            const data = await response.json();
+            renderStorageOverview(data);
+        } catch (error) {
+            console.error('[Backups] Error loading storage info:', error);
+        }
+    }
+
+    /**
+     * Render storage overview
+     */
+    function renderStorageOverview(data) {
+        // Update storage bar
+        const storageBarFill = document.getElementById('storage-bar-fill');
+        const storageUsageText = document.getElementById('storage-usage-text');
+        
+        if (data.totalSpace && data.usedSpace !== undefined) {
+            const percentage = (data.usedSpace / data.totalSpace * 100).toFixed(1);
+            storageBarFill.style.width = percentage + '%';
+            storageUsageText.textContent = `${formatBytes(data.usedSpace)} / ${formatBytes(data.totalSpace)} (${percentage}%)`;
+            
+            // Update bar color based on usage
+            storageBarFill.classList.remove('warning', 'danger');
+            if (percentage > 90) {
+                storageBarFill.classList.add('danger');
+            } else if (percentage > 75) {
+                storageBarFill.classList.add('warning');
+            }
+        }
+
+        // Update stats
+        document.getElementById('total-backups').textContent = data.backupCount || 0;
+        document.getElementById('total-size').textContent = formatBytes(data.usedSpace || 0);
+        document.getElementById('available-space').textContent = formatBytes(data.freeSpace || 0);
+        document.getElementById('last-backup').textContent = data.lastBackup 
+            ? formatRelativeTime(new Date(data.lastBackup)) 
+            : 'Never';
+
+        // Update chart if data available
+        if (data.byType) {
+            updateStorageChart(data.byType);
+        }
+    }
+
+    /**
+     * Update storage chart
+     */
+    function updateStorageChart(byType) {
+        const chartContainer = document.getElementById('storage-chart-container');
+        if (!chartContainer) return;
+
+        // Simple text-based breakdown for now (can be enhanced with chart library)
+        const types = Object.entries(byType);
+        if (types.length === 0) {
+            chartContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center;">No backup data</p>';
+            return;
+        }
+
+        const total = types.reduce((sum, [_, size]) => sum + size, 0);
+        chartContainer.innerHTML = `
+            <div style="width: 100%; max-width: 400px;">
+                ${types.map(([type, size]) => {
+                    const percent = total > 0 ? (size / total * 100).toFixed(1) : 0;
+                    const icon = getBackupTypeIcon(type);
+                    return `
+                        <div style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 14px;">
+                                <span>${icon} ${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                                <span style="font-weight: 600;">${formatBytes(size)} (${percent}%)</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: var(--border-color); border-radius: 4px; overflow: hidden;">
+                                <div style="height: 100%; width: ${percent}%; background: ${getTypeColor(type)}; transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+
+    /**
+     * Get backup type icon
+     */
+    function getBackupTypeIcon(type) {
+        const icons = {
+            full: '📦',
+            world: '🌍',
+            plugins: '🔌',
+            config: '⚙️',
+            migration: '🚀'
+        };
+        return icons[type] || '📄';
+    }
+
+    /**
+     * Get type color for chart
+     */
+    function getTypeColor(type) {
+        const colors = {
+            full: '#9b59b6',
+            world: '#3498db',
+            plugins: '#e67e22',
+            config: '#1abc9c',
+            migration: '#2c3e50'
+        };
+        return colors[type] || '#95a5a6';
+    }
+
+    /**
+     * Update estimated size based on backup type
+     */
+    function updateEstimatedSize(type) {
+        const estimatedSizeEl = document.getElementById('estimated-size');
+        const estimatedSizeValue = document.getElementById('estimated-size-value');
+        
+        if (!estimatedSizeEl || !estimatedSizeValue) return;
+
+        // Show estimated size (these are rough estimates)
+        const estimates = {
+            full: '500-2000 MB',
+            world: '300-1500 MB',
+            plugins: '50-200 MB',
+            config: '1-5 MB'
+        };
+
+        estimatedSizeValue.textContent = estimates[type] || 'Unknown';
+        estimatedSizeEl.style.display = 'block';
+    }
+
+    /**
+     * Format relative time
+     */
+    function formatRelativeTime(date) {
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffSecs < 60) {
+            return 'Just now';
+        } else if (diffMins < 60) {
+            return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+        } else if (diffHours < 24) {
+            return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+        } else if (diffDays < 7) {
+            return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+        } else if (diffDays < 30) {
+            const weeks = Math.floor(diffDays / 7);
+            return `${weeks} week${weeks !== 1 ? 's' : ''} ago`;
+        } else if (diffDays < 365) {
+            // More accurate month calculation using actual date difference
+            const monthsDiff = (now.getFullYear() - date.getFullYear()) * 12 + 
+                               (now.getMonth() - date.getMonth());
+            const months = Math.max(1, monthsDiff);
+            return `${months} month${months !== 1 ? 's' : ''} ago`;
+        } else {
+            const years = Math.floor(diffDays / 365);
+            return `${years} year${years !== 1 ? 's' : ''} ago`;
+        }
+    }
+
+    /**
+     * Show backup progress
+     */
+    function showBackupProgress(jobId) {
+        const progressContainer = document.getElementById('backup-progress-container');
+        const createBtn = document.getElementById('create-backup-btn');
+        
+        if (progressContainer) {
+            progressContainer.classList.add('active');
+        }
+        
+        if (createBtn) {
+            createBtn.disabled = true;
+            createBtn.textContent = 'Creating...';
+        }
+
+        // Start polling for progress
+        pollBackupProgress(jobId);
+    }
+
+    /**
+     * Poll backup progress
+     */
+    async function pollBackupProgress(jobId) {
+        const maxAttempts = 120; // 10 minutes with 5 second intervals
+        let attempts = 0;
+
+        const pollInterval = setInterval(async () => {
+            attempts++;
+
+            try {
+                const response = await fetch(`/api/backups/jobs/${jobId}`);
+                if (!response.ok) {
+                    clearInterval(pollInterval);
+                    hideBackupProgress();
+                    return;
+                }
+
+                const data = await response.json();
+                const job = data.job;
+
+                // Update progress bar (estimate based on status)
+                const progressFill = document.getElementById('backup-progress-fill');
+                const progressPercent = document.getElementById('backup-progress-percent');
+                
+                if (job.status === 'running') {
+                    // Simulate progress for running jobs (backend doesn't report actual progress yet)
+                    // TODO: Implement real progress tracking in backend for more accurate feedback
+                    const progress = Math.min(90, attempts * 3);
+                    if (progressFill) progressFill.style.width = progress + '%';
+                    if (progressPercent) progressPercent.textContent = progress + '%';
+                } else if (job.status === 'success') {
+                    if (progressFill) progressFill.style.width = '100%';
+                    if (progressPercent) progressPercent.textContent = '100%';
+                    clearInterval(pollInterval);
+                    setTimeout(() => {
+                        hideBackupProgress();
+                        loadBackupJobs();
+                        loadStorageInfo();
+                    }, 1000);
+                } else if (job.status === 'failed') {
+                    clearInterval(pollInterval);
+                    hideBackupProgress();
+                    showNotification('Backup failed: ' + (job.error_message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                console.error('[Backups] Error polling backup progress:', error);
+            }
+
+            if (attempts >= maxAttempts) {
+                clearInterval(pollInterval);
+                hideBackupProgress();
+            }
+        }, 5000);
+    }
+
+    /**
+     * Hide backup progress
+     */
+    function hideBackupProgress() {
+        const progressContainer = document.getElementById('backup-progress-container');
+        const createBtn = document.getElementById('create-backup-btn');
+        const progressFill = document.getElementById('backup-progress-fill');
+        const progressPercent = document.getElementById('backup-progress-percent');
+        
+        if (progressContainer) {
+            progressContainer.classList.remove('active');
+        }
+        
+        if (createBtn) {
+            createBtn.disabled = false;
+            createBtn.textContent = 'Create Backup';
+        }
+        
+        if (progressFill) progressFill.style.width = '0%';
+        if (progressPercent) progressPercent.textContent = '0%';
     }
 
     /**
@@ -253,69 +536,83 @@
             return;
         }
 
-        container.innerHTML = backupJobs.map(job => `
-            <div class="backup-card">
-                <div class="backup-card-header">
-                    <h4 class="backup-card-title">${escapeHtml(job.name)}</h4>
-                    <div class="backup-card-actions">
-                        ${job.status === 'success' ? `
-                            <button class="btn btn-sm btn-secondary" onclick="previewBackup('${job.id}')"
-                                    title="Preview contents">
-                                👁️ Preview
-                            </button>
-                            <button class="btn btn-sm btn-primary" onclick="downloadBackup('${job.id}')"
-                                    title="Download backup">
-                                ⬇️ Download
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteBackup('${job.id}')"
-                                    title="Delete backup">
-                                🗑️ Delete
-                            </button>
-                        ` : ''}
+        container.innerHTML = backupJobs.map(job => {
+            const icon = getBackupTypeIcon(job.type);
+            const relativeTime = formatRelativeTime(new Date(job.created_at));
+            
+            return `
+                <div class="backup-card">
+                    <div class="backup-card-header">
+                        <h4 class="backup-card-title">${escapeHtml(job.name)}</h4>
+                        <div class="backup-card-actions">
+                            ${job.status === 'success' ? `
+                                <button class="btn btn-sm btn-secondary" onclick="previewBackup('${job.id}')"
+                                        title="Preview contents">
+                                    👁️ Preview
+                                </button>
+                                <button class="btn btn-sm btn-primary" onclick="downloadBackup('${job.id}')"
+                                        title="Download backup">
+                                    ⬇️ Download
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteBackup('${job.id}')"
+                                        title="Delete backup">
+                                    🗑️ Delete
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
+                    <div class="backup-card-body">
+                        <div class="backup-info-item">
+                            <span class="backup-info-label">Type</span>
+                            <span class="backup-info-value">
+                                <span class="backup-type-badge type-${job.type}">
+                                    <span class="backup-type-icon">${icon}</span>
+                                    ${job.type}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="backup-info-item">
+                            <span class="backup-info-label">Status</span>
+                            <span class="backup-info-value">
+                                <span class="status-badge status-${job.status}">${job.status}</span>
+                            </span>
+                        </div>
+                        <div class="backup-info-item">
+                            <span class="backup-info-label">Created</span>
+                            <span class="backup-info-value">
+                                ${formatDate(job.created_at)}
+                                <div class="relative-time">${relativeTime}</div>
+                            </span>
+                        </div>
+                        <div class="backup-info-item">
+                            <span class="backup-info-label">Size</span>
+                            <span class="backup-info-value">${job.file_size ? formatBytes(job.file_size) : 'N/A'}</span>
+                        </div>
+                        <div class="backup-info-item">
+                            <span class="backup-info-label">Retention</span>
+                            <span class="backup-info-value">${job.retention_policy}</span>
+                        </div>
+                        <div class="backup-info-item">
+                            <span class="backup-info-label">Created By</span>
+                            <span class="backup-info-value">${escapeHtml(job.created_by)}</span>
+                        </div>
+                    </div>
+                    ${job.status === 'running' || job.status === 'pending' ? `
+                        <div class="backup-progress active" style="margin-top: 16px;">
+                            <div class="backup-progress-fill" style="width: ${job.status === 'pending' ? '10' : '50'}%"></div>
+                        </div>
+                        <div style="text-align: center; margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+                            ${job.status === 'pending' ? 'Queued...' : 'In progress...'}
+                        </div>
+                    ` : ''}
+                    ${job.error_message ? `
+                        <div class="alert alert-danger" style="margin-top: 12px;">
+                            <strong>Error:</strong> ${escapeHtml(job.error_message)}
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="backup-card-body">
-                    <div class="backup-info-item">
-                        <span class="backup-info-label">Type</span>
-                        <span class="backup-info-value">
-                            <span class="backup-type-badge type-${job.type}">${job.type}</span>
-                        </span>
-                    </div>
-                    <div class="backup-info-item">
-                        <span class="backup-info-label">Status</span>
-                        <span class="backup-info-value">
-                            <span class="status-badge status-${job.status}">${job.status}</span>
-                        </span>
-                    </div>
-                    <div class="backup-info-item">
-                        <span class="backup-info-label">Created</span>
-                        <span class="backup-info-value">${formatDate(job.created_at)}</span>
-                    </div>
-                    <div class="backup-info-item">
-                        <span class="backup-info-label">Size</span>
-                        <span class="backup-info-value">${job.file_size ? formatBytes(job.file_size) : 'N/A'}</span>
-                    </div>
-                    <div class="backup-info-item">
-                        <span class="backup-info-label">Retention</span>
-                        <span class="backup-info-value">${job.retention_policy}</span>
-                    </div>
-                    <div class="backup-info-item">
-                        <span class="backup-info-label">Created By</span>
-                        <span class="backup-info-value">${escapeHtml(job.created_by)}</span>
-                    </div>
-                </div>
-                ${job.status === 'running' ? `
-                    <div class="progress-bar">
-                        <div class="progress-bar-fill" style="width: 50%"></div>
-                    </div>
-                ` : ''}
-                ${job.error_message ? `
-                    <div class="alert alert-danger" style="margin-top: 12px;">
-                        <strong>Error:</strong> ${escapeHtml(job.error_message)}
-                    </div>
-                ` : ''}
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     /**
@@ -537,8 +834,20 @@
                 throw new Error(error.error || 'Failed to create backup');
             }
 
-            showNotification('Backup created successfully', 'success');
+            const result = await response.json();
+            showNotification('Backup job created successfully', 'success');
             form.reset();
+            
+            // Hide estimated size
+            const estimatedSizeEl = document.getElementById('estimated-size');
+            if (estimatedSizeEl) {
+                estimatedSizeEl.style.display = 'none';
+            }
+
+            // Show progress indicator
+            if (result.jobId) {
+                showBackupProgress(result.jobId);
+            }
             
             // Reload backups list
             setTimeout(() => loadBackupJobs(), 1000);
