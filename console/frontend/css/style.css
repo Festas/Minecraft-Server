@@ -1,5 +1,7 @@
-/* Global Styles */
-/* Note: design-system.css is imported in HTML before this file */
+/* Legacy Global Styles */
+/* Note: This file contains legacy styles for backward compatibility */
+/* Modern styles are in main.css (which imports design-system.css, cards.css, etc.) */
+/* Some conflicting legacy styles have been commented out to prevent override issues */
 /* CSS reset (box-sizing) is handled in design-system.css */
 
 * {
@@ -291,18 +293,19 @@ body {
     gap: 8px;
 }
 
-.status-indicator {
+/* Legacy status-indicator - removed to avoid conflict with indicators.css */
+/* .status-indicator {
     font-size: 1.2em;
-}
+} */
 
-/* Cards */
-.card {
+/* Legacy card styles - removed to avoid conflict with cards.css */
+/* .card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
-}
+} */
 
 .card h3 {
     margin-bottom: 15px;
@@ -334,11 +337,12 @@ body {
     margin-bottom: 20px;
 }
 
-.stat-value {
+/* Legacy stat-value - removed to avoid conflict with cards.css and indicators.css */
+/* .stat-value {
     font-size: 1.5em;
     color: var(--accent-primary);
     font-weight: bold;
-}
+} */
 
 /* Form Elements */
 .input,
