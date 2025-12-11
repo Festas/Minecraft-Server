@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map & Dashboard - Minecraft Server Console</title>
+    <title>Live Server Map - Minecraft Server Console</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/main.css">
@@ -32,7 +32,7 @@
         <!-- Header -->
         <header class="console-header">
             <div class="header-left">
-                <h1>🗺️ Map & Player Dashboard</h1>
+                <h1>🗺️ Live Server Map</h1>
             </div>
             <div class="header-right">
                 <button id="themeToggle" aria-label="Toggle theme">
@@ -40,7 +40,6 @@
                     <span class="theme-text">Light Mode</span>
                 </button>
                 <span id="currentUser" class="user-badge">Admin</span>
-                <button id="backToConsole" class="btn btn-secondary">← Back to Console</button>
                 <button id="logoutBtn" class="btn btn-secondary">Logout</button>
             </div>
         </header>
@@ -48,7 +47,7 @@
         <!-- Main Content -->
         <div class="console-layout">
             <!-- Sidebar -->
-            <aside class="sidebar">
+            <aside class="sidebar" role="navigation" aria-label="Main navigation">
                 <!-- Sidebar Header -->
                 <div class="sidebar-header">
                     <span class="sidebar-logo">🎮</span>
@@ -107,6 +106,12 @@
                         </svg>
                         <span class="nav-text">Map</span>
                     </a>
+                    <a class="nav-item" href="/console/stats.html">
+                        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        <span class="nav-text">Stats</span>
+                    </a>
 
                     <!-- AUTOMATION Section -->
                     <div class="nav-section-header">Automation</div>
@@ -126,130 +131,62 @@
                 </nav>
             </aside>
 
-            <!-- Main Content with Map Layout -->
-            <main id="main-content" class="main-content map-page">
+            <!-- Main Content -->
+            <main id="main-content" class="main-content">
                 <!-- Page Header -->
                 <div class="page-header">
-                    <h1 class="page-title">Server Map</h1>
+                    <div class="page-header-content">
+                        <h1 class="page-title">🗺️ Live Server Map</h1>
+                        <p class="page-subtitle">Powered by BlueMap</p>
+                    </div>
+                    <div class="page-header-actions">
+                        <button id="fullscreenBtn" class="btn btn-secondary" title="Fullscreen">
+                            <span>⛶</span> Fullscreen
+                        </button>
+                        <a href="https://mc-map.festas-builds.com" target="_blank" class="btn btn-primary">
+                            <span>↗</span> Open in New Tab
+                        </a>
+                    </div>
                 </div>
 
-                <div class="map-layout">
-            <!-- Map Configuration Panel (collapsible on mobile) -->
-            <aside class="map-sidebar" id="mapSidebar">
-                <div class="sidebar-header">
-                    <h3>Map Controls</h3>
-                    <button class="btn btn-sm" id="toggleSidebar" aria-label="Toggle sidebar">◀</button>
-                </div>
-                
-                <!-- Map Source Selection -->
-                <div class="card">
-                    <h4>Map Source</h4>
-                    <div id="mapSourceStatus" class="status-indicator">
+                <!-- Connection Status -->
+                <div class="map-status-bar">
+                    <div class="status-indicator" id="mapStatus">
                         <span class="status-dot"></span>
-                        <span class="status-text">Checking...</span>
-                    </div>
-                    <select id="mapSourceSelect" class="select">
-                        <option value="dynmap">Dynmap</option>
-                        <option value="bluemap">BlueMap</option>
-                    </select>
-                    <p class="help-text">Select your preferred map plugin</p>
-                </div>
-
-                <!-- World Selection -->
-                <div class="card">
-                    <h4>World</h4>
-                    <select id="worldSelect" class="select">
-                        <option value="">Loading worlds...</option>
-                    </select>
-                </div>
-
-                <!-- Player List -->
-                <div class="card">
-                    <h4>Online Players <span id="onlineCount">(0)</span></h4>
-                    <div id="mapPlayersList" class="map-players-list">
-                        <p class="no-players">No players online</p>
+                        <span class="status-text">Connecting to BlueMap...</span>
                     </div>
                 </div>
 
-                <!-- Refresh Controls -->
-                <div class="card">
-                    <h4>Auto-Refresh</h4>
-                    <label class="toggle-label">
-                        <input type="checkbox" id="autoRefreshToggle" checked>
-                        <span>Update player positions every 5s</span>
-                    </label>
-                    <button id="refreshNowBtn" class="btn btn-primary btn-block">
-                        🔄 Refresh Now
-                    </button>
-                </div>
-            </aside>
-
-            <!-- Map Display Area -->
-            <div class="map-content">
-                <!-- Map iframe container -->
-                <div id="mapContainer" class="map-container">
-                    <div id="mapPlaceholder" class="map-placeholder">
-                        <div class="placeholder-content">
-                            <h2>🗺️ Map & Player Dashboard</h2>
-                            <p>Configure Dynmap or BlueMap integration to view your world map</p>
-                            <div id="setupInstructions" class="setup-instructions">
-                                <h3>Setup Instructions:</h3>
-                                <ol>
-                                    <li>Install Dynmap or BlueMap plugin on your server</li>
-                                    <li>Configure the plugin to enable web access</li>
-                                    <li>Set environment variables in .env:
-                                        <ul>
-                                            <li><code>DYNMAP_ENABLED=true</code></li>
-                                            <li><code>DYNMAP_BASE_URL=http://your-server:8123</code></li>
-                                        </ul>
-                                    </li>
-                                    <li>Restart the console backend</li>
-                                </ol>
-                                <p class="help-text">See <a href="/docs/map-dashboard.md" target="_blank">documentation</a> for detailed setup instructions.</p>
-                            </div>
-                        </div>
-                    </div>
+                <!-- BlueMap Embed -->
+                <div class="map-embed-container" id="mapContainer">
                     <iframe 
-                        id="mapFrame" 
-                        class="map-frame hidden"
-                        title="Minecraft World Map"
-                        sandbox="allow-scripts allow-same-origin"
+                        id="bluemapFrame"
+                        src="https://mc-map.festas-builds.com"
+                        class="map-frame"
+                        title="BlueMap - Live Server Map"
+                        allowfullscreen
                     ></iframe>
-                </div>
-
-                <!-- Player Info Modal -->
-                <div id="playerModal" class="modal hidden" role="dialog" aria-labelledby="playerModalTitle">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3 id="playerModalTitle">Player Information</h3>
-                            <button class="modal-close" aria-label="Close modal">&times;</button>
-                        </div>
-                        <div class="modal-body" id="playerModalBody">
-                            <!-- Player info will be dynamically inserted here -->
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" id="closeModalBtn">Close</button>
-                        </div>
+                    
+                    <!-- Loading/Error States -->
+                    <div id="mapLoading" class="map-overlay">
+                        <div class="loading-spinner"></div>
+                        <p>Loading BlueMap...</p>
+                    </div>
+                    
+                    <div id="mapError" class="map-overlay hidden">
+                        <div class="error-icon">⚠️</div>
+                        <h3>BlueMap Not Available</h3>
+                        <p>Make sure BlueMap is running and accessible.</p>
+                        <button id="retryBtn" class="btn btn-primary">Retry Connection</button>
                     </div>
                 </div>
-
-                <!-- Player Overlay (for clickable markers on top of iframe) -->
-                <div id="playerOverlay" class="player-overlay hidden">
-                    <!-- Player markers will be positioned absolutely here -->
-                </div>
-            </div>
-        </div>
-        </main>
+            </main>
         </div>
     </div>
 
-    <!-- Scripts - Load in correct order for dependencies -->
+    <!-- Scripts -->
     <script src="js/sidebar.js"></script>
     <script src="js/themeManager.js"></script>
-    <script src="js/animations.js"></script>
-    <script src="js/accessibility.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/notifications.js"></script>
     <script src="js/map.js"></script>
 </body>
 </html>
