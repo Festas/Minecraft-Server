@@ -2,7 +2,9 @@
 .console-page {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 150px);
+    /* Height: full viewport minus header (approx 80px) and padding (approx 70px) */
+    height: calc(100vh - var(--space-16) - var(--space-12) - 80px);
+    min-height: 500px;
     gap: 12px;
 }
 

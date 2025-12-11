@@ -158,6 +158,7 @@ function getCommandSuggestions(input) {
 // Command autocomplete functionality
 let autocompleteIndex = -1;
 let autocompleteSuggestions = [];
+let isAutocompleteVisible = false;
 
 function initCommandAutocomplete() {
     const commandInput = document.getElementById('commandInput');
@@ -176,9 +177,7 @@ function initCommandAutocomplete() {
     });
     
     commandInput.addEventListener('keydown', (e) => {
-        const autocompleteVisible = autocompleteDiv.style.display === 'block' && autocompleteSuggestions.length > 0;
-        
-        if (autocompleteVisible) {
+        if (isAutocompleteVisible && autocompleteSuggestions.length > 0) {
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 autocompleteIndex = Math.min(autocompleteIndex + 1, autocompleteSuggestions.length - 1);
@@ -196,6 +195,8 @@ function initCommandAutocomplete() {
                 e.preventDefault();
                 hideAutocomplete();
             }
+        } else if (e.key === 'Escape') {
+            hideAutocomplete();
         }
     });
     
@@ -221,6 +222,7 @@ function showAutocompleteSuggestions(input) {
     
     autocompleteDiv.innerHTML = '';
     autocompleteIndex = 0;
+    isAutocompleteVisible = true;
     
     suggestions.forEach((cmd, index) => {
         const item = document.createElement('div');
@@ -275,6 +277,7 @@ function hideAutocomplete() {
     }
     autocompleteIndex = -1;
     autocompleteSuggestions = [];
+    isAutocompleteVisible = false;
 }
 
 // Initialize autocomplete on page load

@@ -65,8 +65,7 @@ function renderLog(log) {
     
     // Auto-scroll if enabled
     if (autoScroll) {
-        const shouldAutoScroll = isScrolledToBottom();
-        if (shouldAutoScroll) {
+        if (isScrolledToBottom()) {
             consoleOutput.scrollTop = consoleOutput.scrollHeight;
             if (logPreview) {
                 logPreview.scrollTop = logPreview.scrollHeight;
@@ -276,7 +275,7 @@ function highlightCurrentMatch() {
 function updateSearchResultsCount() {
     const countElement = document.getElementById('searchResultsCount');
     if (countElement) {
-        if (searchMatches.length > 0) {
+        if (searchMatches.length > 0 && currentMatchIndex >= 0) {
             countElement.textContent = `${currentMatchIndex + 1}/${searchMatches.length}`;
             countElement.style.display = 'inline';
         } else if (searchTerm) {
