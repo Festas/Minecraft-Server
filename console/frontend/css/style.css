@@ -267,6 +267,8 @@ body {
     padding: 20px;
 }
 
+/* Base section visibility - !important ensures these rules cannot be overridden
+   by section-specific CSS files that load later (console.css, players.css, etc.) */
 .content-section {
     display: none !important;
 }
