@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/console.css">
+    <link rel="stylesheet" href="css/players.css">
     <link rel="stylesheet" href="css/minecraft-theme.css">
     <link rel="stylesheet" href="css/theme-light.css">
     <link rel="stylesheet" href="css/accessibility.css">
@@ -380,59 +381,104 @@
 
                 <!-- Players Section -->
                 <section id="players" class="content-section">
+                    <!-- Page Header with Search -->
+                    <div class="players-header">
+                        <h2>Player Management</h2>
+                        <input 
+                            type="text" 
+                            id="playerSearchInput" 
+                            class="player-search-input" 
+                            placeholder="🔍 Search players..."
+                            aria-label="Search players"
+                        >
+                    </div>
+
+                    <!-- Online Players Card -->
                     <div class="card">
-                        <h3>Online Players <span id="onlinePlayersCount">(0 online)</span></h3>
-                        <p class="section-description">Currently connected players</p>
-                        <div id="onlinePlayersList" class="players-list">
+                        <h3>
+                            Online Players 
+                            <span id="onlinePlayersCount" class="player-count-badge">0 online</span>
+                        </h3>
+                        <div id="onlinePlayersList" class="players-grid">
                             <p class="no-players">No players are currently online</p>
                         </div>
                     </div>
                     
+                    <!-- All Players Card with Sort Tabs -->
                     <div class="card">
-                        <h3>All Players <span id="totalPlayersCount">(0 total)</span></h3>
-                        <p class="section-description">All players who have ever joined, sorted by total playtime</p>
-                        <div id="allPlayersList" class="players-list">
+                        <h3>
+                            All Players 
+                            <span id="totalPlayersCount" class="player-count-badge">0 total</span>
+                        </h3>
+                        
+                        <!-- Sort Tabs -->
+                        <div class="player-sort-tabs">
+                            <button class="sort-tab active" data-sort="playtime">
+                                ⏱️ By Playtime
+                            </button>
+                            <button class="sort-tab" data-sort="recent">
+                                🕒 Recently Active
+                            </button>
+                            <button class="sort-tab" data-sort="name">
+                                🔤 By Name
+                            </button>
+                        </div>
+                        
+                        <div id="allPlayersList" class="players-grid">
                             <p class="no-players">No players have joined yet</p>
                         </div>
                     </div>
                     
+                    <!-- Quick Actions Card -->
                     <div class="card">
-                        <h3>Player Management</h3>
-                        <div class="player-actions-form">
-                            <input type="text" id="playerNameInput" placeholder="Player name" class="input">
-                            <div class="action-buttons">
-                                <button class="btn" id="kickPlayerBtn">Kick</button>
-                                <button class="btn" id="banPlayerBtn">Ban</button>
-                                <button class="btn" id="warnPlayerBtn">Warn</button>
+                        <h3>Quick Actions</h3>
+                        <div class="quick-action-form">
+                            <input 
+                                type="text" 
+                                id="playerNameInput" 
+                                placeholder="Enter player name" 
+                                class="form-input"
+                            >
+                            <div class="quick-action-buttons">
+                                <button class="btn btn-danger" id="kickPlayerBtn">Kick</button>
+                                <button class="btn btn-danger" id="banPlayerBtn">Ban</button>
+                                <button class="btn btn-warning" id="warnPlayerBtn">Warn</button>
                                 <button class="btn" id="mutePlayerBtn">Mute</button>
-                                <button class="btn" id="opPlayerBtn">OP</button>
+                                <button class="btn btn-success" id="opPlayerBtn">OP</button>
                                 <button class="btn" id="deopPlayerBtn">De-OP</button>
+                                <button class="btn btn-primary" id="teleportPlayerBtn">Teleport</button>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Whitelist Card -->
                     <div class="card">
                         <h3>Whitelist Management</h3>
                         <div class="whitelist-controls">
                             <div class="whitelist-add-form">
-                                <input type="text" id="whitelistPlayerInput" placeholder="Player name" class="input">
-                                <input type="text" id="whitelistNotesInput" placeholder="Notes (optional)" class="input">
+                                <input 
+                                    type="text" 
+                                    id="whitelistPlayerInput" 
+                                    placeholder="Player name" 
+                                    class="form-input"
+                                >
+                                <input 
+                                    type="text" 
+                                    id="whitelistNotesInput" 
+                                    placeholder="Notes (optional)" 
+                                    class="form-input"
+                                >
                                 <button class="btn btn-primary" id="addToWhitelistBtn">Add to Whitelist</button>
                             </div>
-                            <div id="whitelistList" class="whitelist-list">
+                            <div id="whitelistList" class="whitelist-grid">
                                 <p class="loading-text">Loading whitelist...</p>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Action History Card -->
                     <div class="card">
                         <h3>Action History</h3>
-                        <div class="action-history-controls">
-                            <select id="actionHistoryFilter" class="input">
-                                <option value="all">All Players</option>
-                            </select>
-                            <button class="btn btn-sm" id="refreshHistoryBtn">Refresh</button>
-                        </div>
                         <div id="actionHistoryList" class="action-history-list">
                             <p class="loading-text">Loading action history...</p>
                         </div>
@@ -494,6 +540,74 @@
 
     <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Player Detail Modal -->
+    <div id="playerModal" class="player-modal-overlay">
+        <div class="player-modal-content">
+            <!-- Close Button -->
+            <button class="player-modal-close" id="closePlayerModal" aria-label="Close modal">
+                ✕
+            </button>
+            
+            <!-- Modal Header -->
+            <div class="player-modal-header">
+                <img 
+                    id="modalPlayerAvatar" 
+                    src="" 
+                    alt="Player Avatar" 
+                    class="modal-player-avatar"
+                >
+                <div class="player-modal-title">
+                    <h3 id="modalPlayerName" class="player-modal-name">Player Name</h3>
+                    <div id="modalPlayerStatus" class="player-modal-status offline">
+                        <span class="player-modal-status-dot"></span>
+                        <span>Offline</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="player-modal-body">
+                <!-- Stats Grid -->
+                <div class="player-modal-stats">
+                    <div class="modal-stat">
+                        <span id="modalTotalPlaytime" class="modal-stat-value">0h 0m</span>
+                        <span class="modal-stat-label">Total Playtime</span>
+                    </div>
+                    <div class="modal-stat">
+                        <span id="modalFirstJoined" class="modal-stat-value">Unknown</span>
+                        <span class="modal-stat-label">First Joined</span>
+                    </div>
+                    <div class="modal-stat">
+                        <span id="modalLastSeen" class="modal-stat-value">Unknown</span>
+                        <span class="modal-stat-label">Last Seen</span>
+                    </div>
+                    <div class="modal-stat">
+                        <span id="modalSessions" class="modal-stat-value">0</span>
+                        <span class="modal-stat-label">Sessions</span>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="player-modal-actions">
+                    <button class="btn btn-danger" id="modalKickBtn">Kick</button>
+                    <button class="btn btn-danger" id="modalBanBtn">Ban</button>
+                    <button class="btn btn-warning" id="modalWarnBtn">Warn</button>
+                    <button class="btn" id="modalMuteBtn">Mute</button>
+                    <button class="btn btn-success" id="modalOpBtn">OP</button>
+                    <button class="btn btn-primary" id="modalTeleportBtn">Teleport</button>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="player-modal-history">
+                    <h4>Recent Activity</h4>
+                    <div id="modalActivityList">
+                        <p class="loading-text">Loading activity...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="/socket.io/socket.io.js"></script>

@@ -1,0 +1,695 @@
+/*
+ * PLAYERS SECTION - Modern Player Management UI
+ * 
+ * Provides styles for:
+ * - Player cards with Minotar avatars
+ * - Search and filter controls
+ * - Sort tabs
+ * - Player detail modal
+ * - Whitelist grid
+ * - Action history
+ */
+
+/* ==========================================================================
+   PLAYERS HEADER
+   ========================================================================== */
+
+.players-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.players-header h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.player-search-input {
+  flex: 1;
+  min-width: 250px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.player-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-muted);
+}
+
+.player-search-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.player-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-primary-muted);
+  color: var(--color-primary);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   PLAYERS GRID
+   ========================================================================== */
+
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+/* Empty state */
+.no-players {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ==========================================================================
+   PLAYER CARD
+   ========================================================================== */
+
+.player-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.player-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
+}
+
+.player-card.online {
+  border-left-color: var(--color-success);
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, rgba(34, 197, 94, 0.05) 100%);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .player-card:hover {
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   PLAYER CARD AVATAR
+   ========================================================================== */
+
+.player-card-avatar {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.player-card-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  background: var(--color-success);
+  border: 2px solid var(--color-bg-secondary);
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 8px var(--color-success);
+}
+
+/* Pulse animation for online indicator */
+@keyframes pulse-indicator {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.online-indicator::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: var(--radius-full);
+  background: var(--color-success);
+  opacity: 0.5;
+  animation: pulse-indicator 2s ease-in-out infinite;
+}
+
+/* Disable animation for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .online-indicator::after {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   PLAYER CARD INFO
+   ========================================================================== */
+
+.player-card-info {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.player-card-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-card-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-card-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.player-card-stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.player-card-stat-icon {
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   PLAYER CARD ACTIONS
+   ========================================================================== */
+
+.player-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.player-card-actions .btn {
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   SORT TABS
+   ========================================================================== */
+
+.player-sort-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.sort-tab {
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.sort-tab:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+  color: var(--color-text-primary);
+}
+
+.sort-tab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   QUICK ACTION FORM
+   ========================================================================== */
+
+.quick-action-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.quick-action-form input {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+}
+
+.quick-action-form input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-muted);
+}
+
+.quick-action-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-2);
+}
+
+.quick-action-buttons .btn {
+  padding: var(--space-3) var(--space-4);
+  font-size: 0.9rem;
+}
+
+/* ==========================================================================
+   PLAYER MODAL
+   ========================================================================== */
+
+.player-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-normal), visibility var(--transition-normal);
+}
+
+.player-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.player-modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  transform: scale(0.95);
+  opacity: 0;
+  transition: transform var(--transition-normal), opacity var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.player-modal-overlay.active .player-modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Modal close button */
+.player-modal-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  z-index: 10;
+}
+
+.player-modal-close:hover {
+  background: var(--color-error);
+  border-color: var(--color-error);
+  color: white;
+}
+
+/* ==========================================================================
+   PLAYER MODAL HEADER
+   ========================================================================== */
+
+.player-modal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+}
+
+.modal-player-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-xl);
+  border: 3px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  object-fit: cover;
+}
+
+.player-modal-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-modal-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-1) 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-modal-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.player-modal-status.online {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-success);
+}
+
+.player-modal-status.offline {
+  background: rgba(100, 116, 139, 0.15);
+  color: var(--color-text-muted);
+}
+
+.player-modal-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+
+/* ==========================================================================
+   PLAYER MODAL BODY
+   ========================================================================== */
+
+.player-modal-body {
+  padding: var(--space-6);
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+/* Custom scrollbar */
+.player-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.player-modal-body::-webkit-scrollbar-track {
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+}
+
+.player-modal-body::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.player-modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-hover);
+}
+
+/* ==========================================================================
+   PLAYER MODAL STATS
+   ========================================================================== */
+
+.player-modal-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.modal-stat {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.modal-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.modal-stat-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  display: block;
+}
+
+/* ==========================================================================
+   PLAYER MODAL ACTIONS
+   ========================================================================== */
+
+.player-modal-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.player-modal-actions .btn {
+  padding: var(--space-3);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   PLAYER MODAL HISTORY
+   ========================================================================== */
+
+.player-modal-history {
+  margin-top: var(--space-4);
+}
+
+.player-modal-history h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.modal-history-item {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.modal-history-item:last-child {
+  margin-bottom: 0;
+}
+
+.modal-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.modal-history-type {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-transform: capitalize;
+}
+
+.modal-history-time {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.modal-history-details {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.modal-history-reason {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Color coding for different action types */
+.modal-history-item[data-action="kick"],
+.modal-history-item[data-action="ban"] {
+  border-left-color: var(--color-error);
+}
+
+.modal-history-item[data-action="warn"] {
+  border-left-color: var(--color-warning);
+}
+
+.modal-history-item[data-action="mute"] {
+  border-left-color: var(--color-info);
+}
+
+.modal-history-item[data-action="op"],
+.modal-history-item[data-action="deop"] {
+  border-left-color: var(--color-success);
+}
+
+/* ==========================================================================
+   WHITELIST GRID
+   ========================================================================== */
+
+.whitelist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.whitelist-grid-item {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.whitelist-grid-item:hover {
+  border-color: var(--color-border-hover);
+  transform: translateY(-2px);
+}
+
+.whitelist-player-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.whitelist-player-meta {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.whitelist-player-actions {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.whitelist-player-actions .btn {
+  width: 100%;
+  padding: var(--space-2);
+  font-size: 0.875rem;
+}
+
+/* ==========================================================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================================================== */
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .players-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .player-modal-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .player-modal-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-action-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .whitelist-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .players-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
