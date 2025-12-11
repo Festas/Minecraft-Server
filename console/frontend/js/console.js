@@ -1,4 +1,8 @@
 // Console log management
+// Constants
+const SCROLL_BOTTOM_THRESHOLD = 50; // pixels from bottom to consider "at bottom"
+
+// State variables
 let logsPaused = false;
 let autoScroll = true;
 let logs = [];
@@ -141,8 +145,8 @@ function formatTimestamp(timestamp) {
 }
 
 function formatLogMessage(message) {
-    // Note: Depends on global escapeHtml function from app.js
-    // app.js must be loaded before console.js (see index.html script order)
+    // Note: Depends on global escapeHtml function from utils.js
+    // utils.js is loaded before console.js (see index.html script order)
     let formatted = escapeHtml(message);
     
     // Highlight player names <Name>
@@ -368,9 +372,6 @@ function toggleAutoScroll() {
         }
     }
 }
-
-// Scroll threshold constant
-const SCROLL_BOTTOM_THRESHOLD = 50; // pixels from bottom to consider "at bottom"
 
 // Helper function to determine if log should be displayed for current filter
 function shouldDisplayLogForFilter(logType, filter) {
