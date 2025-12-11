@@ -189,13 +189,14 @@
 }
 
 .command-code {
-    background: var(--color-bg-code, #2d3748);
-    color: var(--color-primary, #4a9eff);
+    background: var(--color-bg-code, #1a202c);
+    color: #63b3ed;
     padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
     border-radius: var(--radius-sm, 4px);
     font-family: 'Courier New', Courier, monospace;
     white-space: nowrap;
     font-size: var(--text-sm, 0.875rem);
+    font-weight: 500;
 }
 
 .command-desc {
@@ -260,5 +261,4 @@
         align-items: flex-start;
     }
 }
-
 

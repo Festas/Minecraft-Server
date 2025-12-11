@@ -65,10 +65,15 @@ const pluginCommands = {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    await checkAuth();
-    await loadMetaInfo();
-    await loadPlugins();
-    initializeEventListeners();
+    try {
+        await checkAuth();
+        await loadMetaInfo();
+        await loadPlugins();
+        initializeEventListeners();
+    } catch (error) {
+        console.error('Initialization failed:', error);
+        showToast('Failed to initialize plugins page. Please refresh the page.', 'error');
+    }
 });
 
 // Check authentication
@@ -211,20 +216,26 @@ function renderPluginCard(plugin) {
 }
 
 // Initialize accordion functionality
+// Note: Only one plugin can be expanded at a time to keep the UI clean and focused
+// This encourages users to review one plugin's commands at a time
 function initAccordion() {
     document.querySelectorAll('.plugin-accordion-header').forEach(header => {
         header.addEventListener('click', () => {
             const item = header.parentElement;
             const isOpen = item.classList.contains('open');
             
-            // Close all others
+            // Close all other items for a cleaner, more focused UI
             document.querySelectorAll('.plugin-accordion-item.open').forEach(i => {
-                i.classList.remove('open');
+                if (i !== item) {
+                    i.classList.remove('open');
+                }
             });
             
-            // Toggle current
+            // Toggle current item
             if (!isOpen) {
                 item.classList.add('open');
+            } else {
+                item.classList.remove('open');
             }
         });
     });
@@ -288,6 +299,29 @@ function showToast(message, type = 'info') {
     if (typeof showNotification === 'function') {
         showNotification(message, type);
     } else {
+        // Fallback: create a simple toast notification
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'error' ? '#f56565' : type === 'warning' ? '#ed8936' : type === 'success' ? '#48bb78' : '#4299e1'};
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 10000;
+            max-width: 400px;
+            animation: slideIn 0.3s ease-out;
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+        
         console.log(`[${type.toUpperCase()}]`, message);
     }
 }
