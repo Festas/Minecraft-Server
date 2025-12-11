@@ -44,8 +44,7 @@ function renderLog(log) {
     const type = parseLogType(log.message);
     
     // Check if log matches current filter
-    if (currentFilter !== 'all' && type !== currentFilter && 
-        !(currentFilter === 'join' && (type === 'join' || type === 'leave'))) {
+    if (!shouldDisplayLogForFilter(type, currentFilter)) {
         logLine.style.display = 'none';
     }
     
@@ -142,14 +141,9 @@ function formatTimestamp(timestamp) {
 }
 
 function formatLogMessage(message) {
-    // Use global escapeHtml function if available, otherwise define inline
-    const escaper = typeof escapeHtml !== 'undefined' ? escapeHtml : (text) => {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    };
-    
-    let formatted = escaper(message);
+    // Note: Depends on global escapeHtml function from app.js
+    // app.js must be loaded before console.js (see index.html script order)
+    let formatted = escapeHtml(message);
     
     // Highlight player names <Name>
     formatted = formatted.replace(/&lt;([^<>&]+)&gt;/g, '<span class="log-player">&lt;$1&gt;</span>');
@@ -375,12 +369,21 @@ function toggleAutoScroll() {
     }
 }
 
+// Scroll threshold constant
+const SCROLL_BOTTOM_THRESHOLD = 50; // pixels from bottom to consider "at bottom"
+
+// Helper function to determine if log should be displayed for current filter
+function shouldDisplayLogForFilter(logType, filter) {
+    if (filter === 'all') return true;
+    if (filter === 'join') return logType === 'join' || logType === 'leave';
+    return logType === filter;
+}
+
 function isScrolledToBottom() {
     const consoleOutput = document.getElementById('consoleOutput');
     if (!consoleOutput) return true;
     
-    const threshold = 50; // pixels from bottom
-    return consoleOutput.scrollHeight - consoleOutput.scrollTop - consoleOutput.clientHeight < threshold;
+    return consoleOutput.scrollHeight - consoleOutput.scrollTop - consoleOutput.clientHeight < SCROLL_BOTTOM_THRESHOLD;
 }
 
 function showScrollIndicator() {

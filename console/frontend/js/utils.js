@@ -51,3 +51,13 @@ function initializeDataHrefNavigation() {
 
 // Export navigation initializer
 window.initializeDataHrefNavigation = initializeDataHrefNavigation;
+
+// HTML escape function to prevent XSS attacks
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Export escapeHtml for use in other scripts
+window.escapeHtml = escapeHtml;
