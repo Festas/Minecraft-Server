@@ -223,7 +223,7 @@ app.use('/console', express.static(path.join(__dirname, '../frontend'), {
         }
         // For images and fonts, allow moderate caching (1 day)
         // These change less frequently and benefit from caching
-        else if (IMAGE_FONT_PATTERN.test(filePath)) {
+        else if (IMAGE_FONT_PATTERN.test(ext)) {
             res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
         }
     }
