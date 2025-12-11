@@ -141,148 +141,44 @@
                         <h1 class="page-title">Plugin Manager</h1>
                     </div>
 
-                    <!-- Missing Secrets Warning (hidden by default) -->
-                    <div id="missingSecretsWarning" class="card" style="display: none; background: #c53030; color: white; margin-bottom: 1rem;">
-                        <h4>⚠️ Configuration Warning</h4>
-                        <p id="missingSecretsMessage" style="margin: 0.5rem 0 0 0; opacity: 0.9;"></p>
-                    </div>
-                    
-                    <!-- Backend Degraded Warning (hidden by default) -->
-                    <div id="backendWarning" class="card" style="display: none; background: #dd6b20; color: white; margin-bottom: 1rem;">
-                        <h4>⚠️ Backend Status Warning</h4>
-                        <p id="backendWarningMessage" style="margin: 0.5rem 0 0 0; opacity: 0.9;"></p>
-                    </div>
-                    
-                    <!-- New Plugin Guidance Banner -->
-                    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 1rem;">
-                        <h4>🌟 Find New Plugins</h4>
-                        <p style="margin: 0.5rem 0 1rem 0; opacity: 0.95;">
-                            Discover thousands of quality plugins for your server from these trusted sources:
-                        </p>
-                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                            <a href="https://modrinth.com/plugins?g=bukkit" target="_blank" rel="noopener noreferrer" 
-                               class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                                📦 Modrinth Plugins
-                            </a>
-                            <a href="https://dev.bukkit.org/bukkit-plugins" target="_blank" rel="noopener noreferrer" 
-                               class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                                🔧 Bukkit Plugins
-                            </a>
-                            <a href="https://www.spigotmc.org/resources/categories/spigot.4/" target="_blank" rel="noopener noreferrer" 
-                               class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
-                                🌊 Spigot Resources
-                            </a>
+                    <!-- Plugin Overview Stats -->
+                    <div class="plugin-stats-row">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalPlugins">0</div>
+                            <div class="stat-label">Total Plugins</div>
                         </div>
-                        <p style="margin: 1rem 0 0 0; opacity: 0.85; font-size: 0.9rem;">
-                            💡 Tip: Copy the direct .jar download URL and paste it below for quick installation!
-                        </p>
-                    </div>
-                    
-                    <!-- Info Banner -->
-                    <div class="card info-banner" style="background: #2c5282; color: white; margin-bottom: 1rem;">
-                        <h4>✨ Plugin Manager V2 - Job Queue System</h4>
-                        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
-                            This version uses a job queue for plugin operations. Jobs are processed asynchronously and you can monitor their status in real-time.
-                            No more frozen UI! All operations return immediately and you can track progress.
-                        </p>
-                    </div>
-
-                    <!-- Quick Install -->
-                    <div class="card plugin-install-card">
-                        <h3>📦 Quick Install</h3>
-                        <div class="install-form">
-                            <div class="form-group">
-                                <input 
-                                    type="text" 
-                                    id="pluginUrl" 
-                                    placeholder="Paste plugin URL here (Direct JAR, GitHub release, Modrinth)..." 
-                                    class="input url-input"
-                                >
-                            </div>
-                            <div class="form-group">
-                                <input 
-                                    type="text" 
-                                    id="customName" 
-                                    placeholder="Custom name (optional - auto-detected from plugin.yml)" 
-                                    class="input"
-                                >
-                            </div>
-                            <div class="form-actions">
-                                <button id="installBtn" class="btn btn-primary">
-                                    ⬇️ Install Plugin
-                                </button>
-                            </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="enabledPlugins">0</div>
+                            <div class="stat-label">Enabled</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="disabledPlugins">0</div>
+                            <div class="stat-label">Disabled</div>
                         </div>
                     </div>
 
-                    <!-- Active Jobs -->
-                    <div class="card hover-lift">
-                        <div class="card-header">
-                            <h3>⚙️ Active Jobs <span id="activeJobsCount" class="badge">0</span></h3>
-                            <div class="card-actions">
-                                <button id="refreshJobsBtn" class="btn btn-sm">🔄 Refresh</button>
-                            </div>
-                        </div>
-                        <div id="activeJobsList" class="jobs-list">
-                            <div class="empty-state">No active jobs</div>
-                        </div>
+                    <!-- Search/Filter -->
+                    <div class="plugin-search-bar">
+                        <input type="text" id="pluginSearchInput" placeholder="Search plugins..." class="search-input">
+                        <select id="pluginFilterSelect" class="filter-select">
+                            <option value="all">All Plugins</option>
+                            <option value="enabled">Enabled Only</option>
+                            <option value="disabled">Disabled Only</option>
+                        </select>
                     </div>
 
-                    <!-- Recent Jobs -->
-                    <div class="card hover-lift">
+                    <!-- Installed Plugins Grid -->
+                    <div class="card">
                         <div class="card-header">
-                            <h3>📜 Recent Jobs</h3>
-                            <div class="card-actions">
-                                <input type="text" id="jobSearchInput" placeholder="Filter by plugin name or action..." 
-                                       class="search-input" style="width: 250px; margin-right: 0.5rem;">
-                                <button id="showAllJobsBtn" class="btn btn-sm">View All</button>
-                            </div>
+                            <h3>🔌 Installed Plugins</h3>
+                            <button id="refreshPluginsBtn" class="btn btn-sm">🔄 Refresh</button>
                         </div>
-                        <div id="recentJobsList" class="jobs-list">
-                            <div class="loading">Loading jobs...</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Recent Activity -->
-                    <div class="card hover-lift">
-                        <div class="card-header">
-                            <h3>📊 Recent Activity</h3>
-                            <div class="card-actions">
-                                <button id="refreshActivityBtn" class="btn btn-sm">🔄 Refresh</button>
-                            </div>
-                        </div>
-                        <div id="recentActivityList" class="activity-list">
-                            <div class="loading">Loading activity...</div>
-                        </div>
-                    </div>
-
-                    <!-- Installed Plugins -->
-                    <div class="card hover-lift">
-                        <div class="card-header">
-                            <h3>🔌 Installed Plugins <span id="pluginCount" class="badge">0</span></h3>
-                            <div class="card-actions">
-                                <button id="refreshPluginsBtn" class="btn btn-sm">🔄 Refresh</button>
-                            </div>
-                        </div>
-                        <div id="pluginsList" class="plugins-list">
+                        <div id="pluginsList" class="plugins-accordion">
                             <div class="loading">Loading plugins...</div>
                         </div>
                     </div>
                 </section>
             </main>
-        </div>
-    </div>
-
-    <!-- Job Details Modal -->
-    <div id="jobModal" class="modal hidden">
-        <div class="modal-content modal-large">
-            <h3 id="jobModalTitle">Job Details</h3>
-            <div id="jobModalContent">
-                <!-- Dynamic content -->
-            </div>
-            <div class="modal-actions">
-                <button id="jobModalClose" class="btn btn-secondary">Close</button>
-            </div>
         </div>
     </div>
 
