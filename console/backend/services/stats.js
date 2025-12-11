@@ -1,5 +1,6 @@
 const dockerService = require('./docker');
 const rconService = require('./rcon');
+const pluginIntegration = require('./pluginIntegration');
 const path = require('path');
 
 class StatsService {
@@ -46,6 +47,13 @@ class StatsService {
             // Get Minecraft version from server
             const version = await this.getMinecraftVersion();
 
+            // Get plugin metrics (TPS, CPU, Memory)
+            const pluginMetrics = await pluginIntegration.getCombinedMetrics();
+
+            // Use plugin data when available, fall back to Docker stats
+            const memory = pluginMetrics.memory || (resourceStats ? resourceStats.memory : null);
+            const cpu = pluginMetrics.cpu || (resourceStats ? resourceStats.cpu : null);
+
             const stats = {
                 status: status.running ? 'online' : 'offline',
                 rconConnected: rconService.isConnected(),
@@ -55,11 +63,12 @@ class StatsService {
                     max: playerInfo.max,
                     list: playerInfo.players
                 },
-                tps: 20.0, // Default TPS (would need plugin for real data)
-                memory: resourceStats ? resourceStats.memory : null,
-                cpu: resourceStats ? resourceStats.cpu : null,
+                tps: pluginMetrics.tps,
+                memory: memory,
+                cpu: cpu,
                 version: version,
-                worldSize: worldSize
+                worldSize: worldSize,
+                dataSources: pluginMetrics.dataSources
             };
 
             // Update cache

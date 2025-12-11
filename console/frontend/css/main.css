@@ -61,3 +61,189 @@
    SMALL COMPONENTS
    ========================================================================== */
 @import url('badges.css');
+
+/* ==========================================================================
+   ANALYTICS & PLAYER COMPONENTS
+   ========================================================================== */
+
+/* Analytics Grid */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+}
+
+@media (min-width: 640px) {
+    .analytics-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Analytics Stat Card */
+.analytics-stat {
+    text-align: center;
+}
+
+.analytics-value {
+    font-size: var(--text-3xl);
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.analytics-label {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Analytics Source Indicator */
+.analytics-source {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--surface-elevated);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.source-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    position: relative;
+}
+
+.source-dot.connected {
+    background: var(--success);
+    box-shadow: 0 0 0 2px var(--success-subtle);
+}
+
+.source-dot.connected::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background: var(--success);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0;
+        transform: scale(1.5);
+    }
+}
+
+/* Top Players List */
+.top-players-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.top-player-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--surface-elevated);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+}
+
+.top-player-item:hover {
+    background: var(--surface-hover);
+    transform: translateX(4px);
+}
+
+.top-player-rank {
+    font-size: var(--text-lg);
+    font-weight: bold;
+    color: var(--primary);
+    min-width: 2rem;
+    text-align: center;
+}
+
+.top-player-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border-color);
+    background: var(--surface-base);
+}
+
+.top-player-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.top-player-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.top-player-playtime {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+/* Player Cards (for player list with avatars) */
+.player-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--surface-elevated);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+}
+
+.player-card:hover {
+    background: var(--surface-hover);
+}
+
+.player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border-color);
+    background: var(--surface-base);
+}
+
+.player-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.player-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-playtime {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+/* Text Muted Helper */
+.text-muted {
+    color: var(--text-muted);
+}

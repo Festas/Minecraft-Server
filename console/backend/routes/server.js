@@ -8,6 +8,7 @@ const { logAuditEvent, AUDIT_EVENTS, getClientIp } = require('../services/auditL
 const dockerService = require('../services/docker');
 const rconService = require('../services/rcon');
 const statsService = require('../services/stats');
+const pluginIntegration = require('../services/pluginIntegration');
 const { exec } = require('child_process');
 const util = require('util');
 const path = require('path');
@@ -30,6 +31,45 @@ router.get('/status', async (req, res) => {
     } catch (error) {
         console.error('Error getting server status:', error);
         res.status(500).json({ error: 'Failed to get server status' });
+    }
+});
+
+/**
+ * GET /server/dashboard
+ * Get server stats + analytics from Plan
+ */
+router.get('/dashboard', async (req, res) => {
+    try {
+        const [stats, analytics] = await Promise.all([
+            statsService.getServerStats(),
+            pluginIntegration.getDashboardAnalytics()
+        ]);
+
+        res.json({
+            ...stats,
+            analytics
+        });
+    } catch (error) {
+        console.error('Error getting dashboard data:', error);
+        res.status(500).json({ error: 'Failed to get dashboard data' });
+    }
+});
+
+/**
+ * GET /server/plugins/status
+ * Get which plugins are available
+ */
+router.get('/plugins/status', async (req, res) => {
+    try {
+        const status = await pluginIntegration.checkPluginStatus();
+        res.json(status);
+    } catch (error) {
+        console.error('Error checking plugin status:', error);
+        res.status(500).json({ 
+            spark: false,
+            plan: false,
+            serverTap: false
+        });
     }
 });
 
