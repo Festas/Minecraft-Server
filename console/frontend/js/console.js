@@ -21,6 +21,14 @@ let logCounts = {
 };
 
 function appendLog(log) {
+    // Filter out internal RCON polling commands that spam the console
+    if (log.message && (
+        log.message.includes('[Essentials] Rcon issued server command: /list') ||
+        log.message.includes('Rcon issued server command: /list')
+    )) {
+        return; // Skip this log entry
+    }
+    
     logs.push(log);
     
     // Keep only last 1000 logs
