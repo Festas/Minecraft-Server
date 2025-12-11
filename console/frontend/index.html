@@ -217,6 +217,54 @@
                         </div>
                     </div>
 
+                    <!-- Player Analytics Section -->
+                    <div class="section">
+                        <div class="card card-full hover-lift">
+                            <div class="card-header">
+                                <h3 class="card-title">Player Analytics</h3>
+                                <span class="analytics-source" id="analyticsSource">
+                                    <span class="source-dot"></span>
+                                    <span class="source-text">Loading...</span>
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="analytics-grid">
+                                    <div class="analytics-stat">
+                                        <div class="analytics-value" id="playersToday">-</div>
+                                        <div class="analytics-label">Players Today</div>
+                                    </div>
+                                    <div class="analytics-stat">
+                                        <div class="analytics-value" id="playersWeek">-</div>
+                                        <div class="analytics-label">This Week</div>
+                                    </div>
+                                    <div class="analytics-stat">
+                                        <div class="analytics-value" id="peakPlayers">-</div>
+                                        <div class="analytics-label">Peak Players</div>
+                                    </div>
+                                    <div class="analytics-stat">
+                                        <div class="analytics-value" id="avgSession">-</div>
+                                        <div class="analytics-label">Avg Session</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Players Section -->
+                    <div class="section">
+                        <div class="card card-full hover-lift">
+                            <div class="card-header">
+                                <h3 class="card-title">Top Players</h3>
+                                <span class="text-muted">By playtime</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="top-players-list" id="topPlayersList">
+                                    <p class="text-muted">Loading top players...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Quick Actions Section -->
                     <div class="section">
                         <div class="card card-full hover-lift">
@@ -369,35 +417,6 @@
                             <option value="spectator">Spectator</option>
                         </select>
                         <button id="setGamemodeBtn" class="btn btn-primary">Set Gamemode</button>
-                    </div>
-                </section>
-
-                <!-- Backups Section -->
-                <section id="backups" class="content-section">
-                    <div class="card">
-                        <h3>Backups</h3>
-                        <button id="createBackupBtn" class="btn btn-primary">Create Backup Now</button>
-                        <div id="backupsList" class="backups-list">
-                            <p>Loading backups...</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Settings Section -->
-                <section id="settings" class="content-section">
-                    <div class="card">
-                        <h3>Console Settings</h3>
-                        <div class="settings-form">
-                            <label>
-                                <input type="checkbox" id="autoScrollSetting" checked> Auto-scroll logs
-                            </label>
-                            <label>
-                                <input type="checkbox" id="soundAlertsSetting"> Sound alerts
-                            </label>
-                            <label>
-                                <input type="checkbox" id="colorCodesSetting" checked> Color-coded logs
-                            </label>
-                        </div>
                     </div>
                 </section>
             </main>

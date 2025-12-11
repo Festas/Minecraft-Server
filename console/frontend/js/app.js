@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startStatsPolling();
     
     // Initial data load
-    loadServerStatus();
+    loadDashboard();
     loadPlayers();
 });
 
@@ -339,7 +339,7 @@ async function controlServer(action) {
         
         if (data.success) {
             showNotification(data.message || `${action} successful`, 'success');
-            setTimeout(() => loadServerStatus(), 2000);
+            setTimeout(() => loadDashboard(), 2000);
         } else {
             showNotification(data.error || `${action} failed`, 'error');
         }
@@ -348,23 +348,12 @@ async function controlServer(action) {
     }
 }
 
+/**
+ * Load server status (legacy function - delegates to loadDashboard)
+ * @deprecated Use loadDashboard() instead for full dashboard data
+ */
 async function loadServerStatus() {
-    try {
-        const response = await fetch('/api/server/status', {
-            credentials: 'same-origin'
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to load server status');
-        }
-        
-        const data = await response.json();
-        updateServerStatus(data);
-    } catch (error) {
-        console.error('Error loading server status:', error);
-        // Update with empty stats to show offline/default values
-        updateServerStatus({ status: 'offline' });
-    }
+    return loadDashboard();
 }
 
 function updateServerStatus(stats) {
@@ -552,10 +541,196 @@ function formatUptime(seconds) {
     return `${minutes}m`;
 }
 
+/**
+ * Load dashboard data (server stats + analytics)
+ */
+async function loadDashboard() {
+    try {
+        const response = await fetch('/api/server/dashboard', {
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to load dashboard data');
+        }
+        
+        const data = await response.json();
+        updateServerStatus(data);
+        
+        // Update analytics if available
+        if (data.analytics) {
+            updateAnalytics(data.analytics);
+        }
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+        // Fall back to basic server status
+        try {
+            const response = await fetch('/api/server/status', {
+                credentials: 'same-origin'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                updateServerStatus(data);
+            }
+        } catch (fallbackError) {
+            console.error('Fallback failed:', fallbackError);
+            updateServerStatus({ status: 'offline' });
+        }
+        // Show unavailable analytics
+        updateAnalytics({ available: false });
+    }
+}
+
+/**
+ * Update analytics section
+ */
+function updateAnalytics(analytics) {
+    const sourceIndicator = document.getElementById('analyticsSource');
+    const sourceDot = sourceIndicator?.querySelector('.source-dot');
+    const sourceText = sourceIndicator?.querySelector('.source-text');
+    
+    if (analytics.available) {
+        if (sourceDot) sourceDot.classList.add('connected');
+        if (sourceText) sourceText.textContent = analytics.source === 'plan' ? 'Plan' : 'Live';
+        
+        // Update stat values
+        const playersToday = document.getElementById('playersToday');
+        if (playersToday) playersToday.textContent = analytics.playersToday || 0;
+        
+        const playersWeek = document.getElementById('playersWeek');
+        if (playersWeek) playersWeek.textContent = analytics.playersWeek || 0;
+        
+        const peakPlayers = document.getElementById('peakPlayers');
+        if (peakPlayers) peakPlayers.textContent = analytics.peakPlayers || 0;
+        
+        const avgSession = document.getElementById('avgSession');
+        if (avgSession) {
+            avgSession.textContent = analytics.avgSessionLength 
+                ? formatSessionLength(analytics.avgSessionLength) 
+                : '-';
+        }
+        
+        // Update top players
+        if (analytics.topPlayers) {
+            updateTopPlayers(analytics.topPlayers);
+        }
+    } else {
+        if (sourceDot) sourceDot.classList.remove('connected');
+        if (sourceText) sourceText.textContent = 'Unavailable';
+        
+        // Show placeholder values
+        const playersToday = document.getElementById('playersToday');
+        if (playersToday) playersToday.textContent = '-';
+        
+        const playersWeek = document.getElementById('playersWeek');
+        if (playersWeek) playersWeek.textContent = '-';
+        
+        const peakPlayers = document.getElementById('peakPlayers');
+        if (peakPlayers) peakPlayers.textContent = '-';
+        
+        const avgSession = document.getElementById('avgSession');
+        if (avgSession) avgSession.textContent = '-';
+        
+        // Clear top players
+        const topPlayersList = document.getElementById('topPlayersList');
+        if (topPlayersList) {
+            topPlayersList.innerHTML = '<p class="text-muted">Analytics unavailable - Install Plan plugin</p>';
+        }
+    }
+}
+
+/**
+ * Update top players list with avatars
+ */
+function updateTopPlayers(players) {
+    const topPlayersList = document.getElementById('topPlayersList');
+    if (!topPlayersList) return;
+    
+    if (!players || players.length === 0) {
+        topPlayersList.innerHTML = '<p class="text-muted">No player data available</p>';
+        return;
+    }
+    
+    topPlayersList.innerHTML = players.map((player, index) => {
+        const avatarUrl = getPlayerAvatar(player.name, 32);
+        const fallbackAvatar = getFallbackAvatar(32);
+        const playtime = formatPlaytime(player.playtime);
+        const rank = index + 1;
+        
+        return `
+            <div class="top-player-item">
+                <span class="top-player-rank">#${rank}</span>
+                <img class="top-player-avatar" 
+                     src="${avatarUrl}" 
+                     alt="${escapeHtml(player.name)}"
+                     onerror="this.src='${fallbackAvatar}'">
+                <div class="top-player-info">
+                    <div class="top-player-name">${escapeHtml(player.name)}</div>
+                    <div class="top-player-playtime">${playtime}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Get Minotar avatar URL
+ */
+function getPlayerAvatar(playerName, size = 32) {
+    return `https://minotar.net/avatar/${encodeURIComponent(playerName)}/${size}`;
+}
+
+/**
+ * Get fallback avatar (SVG data URI)
+ */
+function getFallbackAvatar(size = 32) {
+    // Simple SVG placeholder
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 32 32"><rect width="32" height="32" fill="%23374151"/><text x="16" y="20" text-anchor="middle" fill="%239CA3AF" font-family="sans-serif" font-size="16">?</text></svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+/**
+ * Format playtime from minutes to readable format
+ */
+function formatPlaytime(minutes) {
+    if (!minutes) return '0m';
+    
+    const days = Math.floor(minutes / 1440);
+    const hours = Math.floor((minutes % 1440) / 60);
+    const mins = Math.floor(minutes % 60);
+    
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+}
+
+/**
+ * Format session length from seconds to readable format
+ */
+function formatSessionLength(seconds) {
+    if (!seconds) return '0s';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${seconds}s`;
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 function startStatsPolling() {
     // Poll stats every 5 seconds
     statsInterval = setInterval(() => {
-        loadServerStatus();
+        loadDashboard();
         loadPlayers();
     }, 5000);
 }
