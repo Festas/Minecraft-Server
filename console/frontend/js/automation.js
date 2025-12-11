@@ -174,11 +174,14 @@ function setupEventListeners() {
     document.getElementById('taskForm').addEventListener('submit', handleTaskFormSubmit);
     
     // Task type change - update config fields (for radio buttons)
-    document.querySelectorAll('input[name="task_type"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            updateConfigFields(e.target.value);
+    const taskTypeRadios = document.querySelectorAll('input[name="task_type"]');
+    if (taskTypeRadios.length > 0) {
+        taskTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                updateConfigFields(e.target.value);
+            });
         });
-    });
+    }
     
     // History filter
     document.getElementById('historyFilter').addEventListener('change', loadHistory);
@@ -783,6 +786,10 @@ function initTabs() {
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
     
+    if (tabButtons.length === 0) {
+        return;
+    }
+    
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const targetTab = button.dataset.tab;
@@ -815,16 +822,22 @@ function initPresets() {
     const presetButtons = document.querySelectorAll('.preset-button');
     const cronInput = document.getElementById('cronExpression');
     
+    if (!cronInput || presetButtons.length === 0) {
+        return;
+    }
+    
     presetButtons.forEach(button => {
         button.addEventListener('click', () => {
             const cronExpression = button.dataset.cron;
-            cronInput.value = cronExpression;
-            
-            // Visual feedback
-            button.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                button.style.transform = '';
-            }, 100);
+            if (cronInput) {
+                cronInput.value = cronExpression;
+                
+                // Visual feedback
+                button.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    button.style.transform = '';
+                }, 100);
+            }
         });
     });
 }
