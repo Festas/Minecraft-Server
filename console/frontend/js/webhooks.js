@@ -1,716 +1,416 @@
 /**
- * Webhooks Frontend Module
- * 
- * Manages webhooks and integrations UI
+ * Discord Notifications Frontend Module
+ * Simplified Discord-only webhook management
  */
 
 (function() {
     'use strict';
 
     // State
-    let webhooks = [];
-    let inboundWebhooks = [];
-    let deliveryLogs = [];
-    let currentTab = 'outbound';
+    let discordConfig = {
+        webhookUrl: '',
+        events: []
+    };
+    let notificationHistory = [];
 
-    // Event types for outbound webhooks
-    const EVENT_TYPES = [
-        { id: 'server.start', label: 'Server Start' },
-        { id: 'server.stop', label: 'Server Stop' },
-        { id: 'server.restart', label: 'Server Restart' },
-        { id: 'server.crash', label: 'Server Crash' },
-        { id: 'player.join', label: 'Player Join' },
-        { id: 'player.leave', label: 'Player Leave' },
-        { id: 'player.chat', label: 'Player Chat' },
-        { id: 'player.death', label: 'Player Death' },
-        { id: 'player.kick', label: 'Player Kick' },
-        { id: 'player.ban', label: 'Player Ban' },
-        { id: 'automation.executed', label: 'Automation Executed' },
-        { id: 'backup.completed', label: 'Backup Completed' },
-        { id: 'backup.failed', label: 'Backup Failed' },
-        { id: 'alert.critical', label: 'Critical Alert' },
-        { id: 'alert.warning', label: 'Warning Alert' },
-        { id: '*', label: 'All Events' }
-    ];
-
-    // Action types for inbound webhooks
-    const ACTION_TYPES = [
-        { id: 'server.start', label: 'Start Server' },
-        { id: 'server.stop', label: 'Stop Server' },
-        { id: 'server.restart', label: 'Restart Server' },
-        { id: 'command.execute', label: 'Execute Command' },
-        { id: 'broadcast', label: 'Broadcast Message' },
-        { id: 'player.kick', label: 'Kick Player' },
-        { id: 'player.ban', label: 'Ban Player' },
-        { id: 'automation.trigger', label: 'Trigger Automation' }
+    // Simplified event types for Discord
+    const DISCORD_EVENTS = [
+        { id: 'server.start', icon: '🟢', label: 'Server Start' },
+        { id: 'server.stop', icon: '🔴', label: 'Server Stop' },
+        { id: 'player.join', icon: '👋', label: 'Player Join' },
+        { id: 'player.leave', icon: '👋', label: 'Player Leave' },
+        { id: 'backup.completed', icon: '💾', label: 'Backup Complete' },
+        { id: 'backup.failed', icon: '⚠️', label: 'Backup Failed' },
+        { id: 'alert.low_tps', icon: '📉', label: 'Low TPS Warning' }
     ];
 
     /**
-     * Initialize the webhooks page
+     * Initialize the Discord notifications page
      */
     function init() {
-        console.log('[Webhooks] Initializing...');
-
-        // Set up tab switching
-        setupTabs();
+        console.log('[Discord] Initializing...');
 
         // Set up event listeners
         setupEventListeners();
 
-        // Populate event types and actions
-        populateEventTypes();
-        populateActionTypes();
+        // Load configuration
+        loadDiscordConfig();
 
-        // Load initial data
-        loadWebhooks();
-        loadInboundWebhooks();
-        loadDeliveryLogs();
+        // Load notification history
+        loadNotificationHistory();
 
-        console.log('[Webhooks] Initialized');
-    }
-
-    /**
-     * Set up tab switching
-     */
-    function setupTabs() {
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabId = tab.dataset.tab;
-                switchTab(tabId);
-            });
-        });
-    }
-
-    /**
-     * Switch to a different tab
-     */
-    function switchTab(tabId) {
-        currentTab = tabId;
-
-        // Update tab buttons
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.tab === tabId);
-        });
-
-        // Update tab content
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.toggle('active', content.id === `tab-${tabId}`);
-        });
-
-        // Load data for the active tab
-        if (tabId === 'outbound') {
-            loadWebhooks();
-        } else if (tabId === 'inbound') {
-            loadInboundWebhooks();
-        } else if (tabId === 'logs') {
-            loadDeliveryLogs();
-        }
+        console.log('[Discord] Initialized');
     }
 
     /**
      * Set up event listeners
      */
     function setupEventListeners() {
-        // Create webhook button
-        document.getElementById('create-webhook-btn')?.addEventListener('click', () => {
-            openWebhookModal();
-        });
+        // Test webhook button
+        const testBtn = document.getElementById('test-webhook-btn');
+        if (testBtn) {
+            testBtn.addEventListener('click', testDiscordWebhook);
+        }
 
-        // Create inbound webhook button
-        document.getElementById('create-inbound-webhook-btn')?.addEventListener('click', () => {
-            openInboundWebhookModal();
-        });
+        // Save configuration button
+        const saveBtn = document.getElementById('save-config-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', saveDiscordConfig);
+        }
 
-        // Webhook form submit
-        document.getElementById('webhook-form')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            saveWebhook();
-        });
-
-        // Inbound webhook form submit
-        document.getElementById('inbound-webhook-form')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            saveInboundWebhook();
-        });
-
-        // Close modals
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', closeAllModals);
-        });
-
-        // Template selector
-        document.getElementById('webhook-template')?.addEventListener('change', (e) => {
-            applyTemplate(e.target.value);
-        });
-
-        // Log filter
-        document.getElementById('log-filter-success')?.addEventListener('change', () => {
-            loadDeliveryLogs();
+        // Event toggle checkboxes - add visual feedback
+        const eventToggles = document.querySelectorAll('.event-toggle');
+        eventToggles.forEach(toggle => {
+            const checkbox = toggle.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        toggle.classList.add('checked');
+                    } else {
+                        toggle.classList.remove('checked');
+                    }
+                });
+                // Initialize state
+                if (checkbox.checked) {
+                    toggle.classList.add('checked');
+                }
+            }
         });
     }
 
     /**
-     * Populate event type checkboxes
+     * Load Discord configuration from backend
      */
-    function populateEventTypes() {
-        const container = document.getElementById('event-types-checkboxes');
-        if (!container) return;
-
-        container.innerHTML = '';
-        EVENT_TYPES.forEach(eventType => {
-            const div = document.createElement('div');
-            div.className = 'checkbox-item';
-            div.innerHTML = `
-                <input type="checkbox" id="event-${eventType.id}" value="${eventType.id}">
-                <label for="event-${eventType.id}">${eventType.label}</label>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    /**
-     * Populate action type checkboxes
-     */
-    function populateActionTypes() {
-        const container = document.getElementById('inbound-actions-checkboxes');
-        if (!container) return;
-
-        container.innerHTML = '';
-        ACTION_TYPES.forEach(actionType => {
-            const div = document.createElement('div');
-            div.className = 'checkbox-item';
-            div.innerHTML = `
-                <input type="checkbox" id="action-${actionType.id}" value="${actionType.id}">
-                <label for="action-${actionType.id}">${actionType.label}</label>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    /**
-     * Load webhooks from API
-     */
-    async function loadWebhooks() {
+    async function loadDiscordConfig() {
         try {
-            const response = await apiRequest('/api/webhooks');
-            webhooks = response.webhooks || [];
-            renderWebhooks();
-            updateStats();
+            const response = await fetch('/api/webhooks', {
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                console.log('[Discord] No existing configuration found');
+                updateStatus(false);
+                return;
+            }
+
+            const data = await response.json();
+            const webhooks = data.webhooks || [];
+
+            // Find Discord webhook (first enabled webhook or any webhook)
+            const discordWebhook = webhooks.find(w => w.enabled) || webhooks[0];
+
+            if (discordWebhook) {
+                // Populate UI with existing config
+                document.getElementById('discord-webhook-url').value = discordWebhook.url || '';
+                
+                // Check appropriate event checkboxes
+                const eventTypes = discordWebhook.event_types || [];
+                eventTypes.forEach(eventType => {
+                    const eventId = eventType.replace('.', '-');
+                    const checkbox = document.getElementById(`event-${eventId}`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.closest('.event-toggle')?.classList.add('checked');
+                    }
+                });
+
+                discordConfig = {
+                    id: discordWebhook.id,
+                    webhookUrl: discordWebhook.url,
+                    events: eventTypes
+                };
+
+                updateStatus(true);
+            } else {
+                updateStatus(false);
+            }
         } catch (error) {
-            console.error('[Webhooks] Error loading webhooks:', error);
-            showNotification('Failed to load webhooks', 'error');
+            console.error('[Discord] Error loading configuration:', error);
+            updateStatus(false);
         }
     }
 
     /**
-     * Render webhooks list
+     * Update status indicator
      */
-    function renderWebhooks() {
-        const container = document.getElementById('webhooks-list');
-        if (!container) return;
+    function updateStatus(connected) {
+        const indicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
 
-        if (webhooks.length === 0) {
-            container.innerHTML = '<p class="text-muted">No webhooks configured. Create one to get started!</p>';
+        if (indicator && statusText) {
+            if (connected) {
+                indicator.className = 'status-indicator connected';
+                statusText.textContent = 'Connected';
+            } else {
+                indicator.className = 'status-indicator disconnected';
+                statusText.textContent = 'Not configured';
+            }
+        }
+    }
+
+    /**
+     * Test Discord webhook
+     */
+    async function testDiscordWebhook() {
+        const webhookUrl = document.getElementById('discord-webhook-url').value.trim();
+        
+        if (!webhookUrl) {
+            showToast('Please enter a webhook URL first', 'error');
             return;
         }
 
-        container.innerHTML = webhooks.map(webhook => `
-            <div class="webhook-card" data-id="${escapeHtml(webhook.id)}">
-                <div class="webhook-card-header">
-                    <h3 class="webhook-card-title">${escapeHtml(webhook.name)}</h3>
-                    <div class="webhook-card-actions">
-                        <span class="badge ${webhook.enabled ? 'badge-enabled' : 'badge-disabled'}">
-                            ${webhook.enabled ? 'Enabled' : 'Disabled'}
-                        </span>
-                        <button class="btn btn-sm btn-secondary" onclick="webhooksModule.testWebhook('${escapeHtml(webhook.id)}')">
-                            Test
-                        </button>
-                        <button class="btn btn-sm btn-primary" onclick="webhooksModule.editWebhook('${escapeHtml(webhook.id)}')">
-                            Edit
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="webhooksModule.deleteWebhook('${escapeHtml(webhook.id)}')">
-                            Delete
-                        </button>
-                    </div>
-                </div>
-                <div class="webhook-card-body">
-                    <div class="webhook-info-item">
-                        <div class="webhook-info-label">URL</div>
-                        <div class="webhook-info-value">${escapeHtml(webhook.url)}</div>
-                    </div>
-                    <div class="webhook-info-item">
-                        <div class="webhook-info-label">Method</div>
-                        <div class="webhook-info-value">${escapeHtml(webhook.method)}</div>
-                    </div>
-                    <div class="webhook-info-item">
-                        <div class="webhook-info-label">Events</div>
-                        <div class="webhook-info-value">
-                            ${webhook.event_types.slice(0, 3).map(e => 
-                                `<span class="event-type-tag">${escapeHtml(e)}</span>`
-                            ).join('')}
-                            ${webhook.event_types.length > 3 ? `<span class="event-type-tag">+${webhook.event_types.length - 3} more</span>` : ''}
-                        </div>
-                    </div>
-                    <div class="webhook-info-item">
-                        <div class="webhook-info-label">Deliveries</div>
-                        <div class="webhook-info-value">${webhook.trigger_count || 0}</div>
-                    </div>
-                    <div class="webhook-info-item">
-                        <div class="webhook-info-label">Failures</div>
-                        <div class="webhook-info-value">${webhook.failure_count || 0}</div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    /**
-     * Load inbound webhooks
-     */
-    async function loadInboundWebhooks() {
-        try {
-            const response = await apiRequest('/api/webhooks/inbound/all');
-            inboundWebhooks = response.webhooks || [];
-            renderInboundWebhooks();
-        } catch (error) {
-            console.error('[Webhooks] Error loading inbound webhooks:', error);
-            showNotification('Failed to load inbound webhooks', 'error');
-        }
-    }
-
-    /**
-     * Render inbound webhooks
-     */
-    function renderInboundWebhooks() {
-        const container = document.getElementById('inbound-webhooks-list');
-        if (!container) return;
-
-        if (inboundWebhooks.length === 0) {
-            container.innerHTML = '<p class="text-muted">No inbound webhooks configured.</p>';
+        if (!webhookUrl.startsWith('https://discord.com/api/webhooks/') && 
+            !webhookUrl.startsWith('https://discordapp.com/api/webhooks/')) {
+            showToast('Please enter a valid Discord webhook URL', 'error');
             return;
         }
 
-        container.innerHTML = inboundWebhooks.map(webhook => {
-            const webhookUrl = `${window.location.origin}/api/webhooks/receive/${escapeHtml(webhook.id)}`;
+        const testBtn = document.getElementById('test-webhook-btn');
+        const originalText = testBtn.textContent;
+        testBtn.disabled = true;
+        testBtn.textContent = 'Testing...';
+
+        try {
+            // Send test message directly to Discord
+            const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    embeds: [{
+                        title: '🧪 Test Notification',
+                        description: 'This is a test message from Festas Builds Minecraft Console.',
+                        color: 0x5865F2, // Discord blue
+                        timestamp: new Date().toISOString(),
+                        footer: {
+                            text: 'Discord Notifications Test'
+                        }
+                    }]
+                })
+            });
+
+            if (response.ok || response.status === 204) {
+                showToast('Test message sent successfully! Check your Discord channel.', 'success');
+                updateStatus(true);
+            } else {
+                const errorText = await response.text();
+                console.error('[Discord] Test failed:', errorText);
+                showToast('Test failed. Please check the webhook URL.', 'error');
+            }
+        } catch (error) {
+            console.error('[Discord] Error testing webhook:', error);
+            showToast('Failed to send test message. Please check your connection.', 'error');
+        } finally {
+            testBtn.disabled = false;
+            testBtn.textContent = originalText;
+        }
+    }
+
+    /**
+     * Save Discord configuration
+     */
+    async function saveDiscordConfig() {
+        const webhookUrl = document.getElementById('discord-webhook-url').value.trim();
+        
+        if (!webhookUrl) {
+            showToast('Please enter a webhook URL', 'error');
+            return;
+        }
+
+        if (!webhookUrl.startsWith('https://discord.com/api/webhooks/') && 
+            !webhookUrl.startsWith('https://discordapp.com/api/webhooks/')) {
+            showToast('Please enter a valid Discord webhook URL', 'error');
+            return;
+        }
+
+        // Get selected events
+        const selectedEvents = [];
+        document.querySelectorAll('.event-toggle input[type="checkbox"]:checked').forEach(checkbox => {
+            selectedEvents.push(checkbox.value);
+        });
+
+        if (selectedEvents.length === 0) {
+            showToast('Please select at least one event type', 'error');
+            return;
+        }
+
+        const saveBtn = document.getElementById('save-config-btn');
+        const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+            const webhookData = {
+                name: 'Discord Notifications',
+                description: 'Discord webhook for server notifications',
+                url: webhookUrl,
+                method: 'POST',
+                event_types: selectedEvents,
+                enabled: true,
+                verify_ssl: true
+            };
+
+            let response;
+            if (discordConfig.id) {
+                // Update existing webhook
+                response = await fetch(`/api/webhooks/${discordConfig.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': window.csrfToken || ''
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(webhookData)
+                });
+            } else {
+                // Create new webhook
+                response = await fetch('/api/webhooks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-csrf-token': window.csrfToken || ''
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(webhookData)
+                });
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                discordConfig.id = data.webhook?.id || discordConfig.id;
+                discordConfig.webhookUrl = webhookUrl;
+                discordConfig.events = selectedEvents;
+                
+                showToast('Configuration saved successfully!', 'success');
+                updateStatus(true);
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to save configuration');
+            }
+        } catch (error) {
+            console.error('[Discord] Error saving configuration:', error);
+            showToast(error.message || 'Failed to save configuration', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
+        }
+    }
+
+    /**
+     * Load notification history
+     */
+    async function loadNotificationHistory() {
+        const container = document.getElementById('notification-list');
+        if (!container) return;
+
+        try {
+            const response = await fetch('/api/webhooks/logs/all?limit=10', {
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load notification history');
+            }
+
+            const data = await response.json();
+            notificationHistory = data.logs || [];
+
+            renderNotificationHistory();
+        } catch (error) {
+            console.error('[Discord] Error loading notification history:', error);
+            container.innerHTML = '<div class="empty-notifications">Unable to load notification history</div>';
+        }
+    }
+
+    /**
+     * Render notification history
+     */
+    function renderNotificationHistory() {
+        const container = document.getElementById('notification-list');
+        if (!container) return;
+
+        if (notificationHistory.length === 0) {
+            container.innerHTML = '<div class="empty-notifications">No notifications sent yet</div>';
+            return;
+        }
+
+        container.innerHTML = notificationHistory.map(notification => {
+            const success = notification.success;
+            const icon = success ? '✓' : '✗';
+            const eventLabel = getEventLabel(notification.event_type);
+            const relativeTime = formatRelativeTime(new Date(notification.triggered_at));
+            
             return `
-                <div class="webhook-card" data-id="${escapeHtml(webhook.id)}">
-                    <div class="webhook-card-header">
-                        <h3 class="webhook-card-title">${escapeHtml(webhook.name)}</h3>
-                        <div class="webhook-card-actions">
-                            <span class="badge ${webhook.enabled ? 'badge-enabled' : 'badge-disabled'}">
-                                ${webhook.enabled ? 'Enabled' : 'Disabled'}
-                            </span>
-                            <button class="btn btn-sm btn-primary" onclick="webhooksModule.editInboundWebhook('${escapeHtml(webhook.id)}')">
-                                Edit
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="webhooksModule.deleteInboundWebhook('${escapeHtml(webhook.id)}')">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                    <div class="webhook-card-body">
-                        <div class="webhook-info-item">
-                            <div class="webhook-info-label">Webhook URL</div>
-                            <div class="webhook-info-value">
-                                <code>${webhookUrl}</code>
-                                <button class="btn btn-sm" onclick="webhooksModule.copyToClipboard('${webhookUrl}')">
-                                    Copy
-                                </button>
-                            </div>
-                        </div>
-                        <div class="webhook-info-item">
-                            <div class="webhook-info-label">Actions</div>
-                            <div class="webhook-info-value">
-                                ${webhook.actions.map(a => 
-                                    `<span class="event-type-tag">${a.type}</span>`
-                                ).join('')}
-                            </div>
-                        </div>
-                        <div class="webhook-info-item">
-                            <div class="webhook-info-label">Use Count</div>
-                            <div class="webhook-info-value">${webhook.use_count || 0}</div>
-                        </div>
-                    </div>
+                <div class="notification-item ${success ? 'success' : 'error'}">
+                    <span class="notification-status">${icon}</span>
+                    <span class="notification-message">${escapeHtml(eventLabel)}</span>
+                    <span class="notification-time">${relativeTime}</span>
                 </div>
             `;
         }).join('');
     }
 
     /**
-     * Load delivery logs
+     * Get event label from event type
      */
-    async function loadDeliveryLogs() {
-        try {
-            const filter = document.getElementById('log-filter-success')?.value;
-            const url = filter ? `/api/webhooks/logs/all?success=${filter}` : '/api/webhooks/logs/all';
-            
-            const response = await apiRequest(url);
-            deliveryLogs = response.logs || [];
-            renderDeliveryLogs();
-        } catch (error) {
-            console.error('[Webhooks] Error loading delivery logs:', error);
-            showNotification('Failed to load delivery logs', 'error');
-        }
+    function getEventLabel(eventType) {
+        const event = DISCORD_EVENTS.find(e => e.id === eventType);
+        return event ? `${event.icon} ${event.label}` : eventType;
     }
 
     /**
-     * Render delivery logs
+     * Format relative time (e.g., "2 min ago")
      */
-    function renderDeliveryLogs() {
-        const container = document.getElementById('delivery-logs-list');
-        if (!container) return;
+    function formatRelativeTime(date) {
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSec = Math.floor(diffMs / 1000);
+        const diffMin = Math.floor(diffSec / 60);
+        const diffHour = Math.floor(diffMin / 60);
+        const diffDay = Math.floor(diffHour / 24);
 
-        if (deliveryLogs.length === 0) {
-            container.innerHTML = '<p class="text-muted">No delivery logs found.</p>';
+        if (diffSec < 60) return 'just now';
+        if (diffMin < 60) return `${diffMin} min ago`;
+        if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
+        if (diffDay < 7) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+        return date.toLocaleDateString();
+    }
+
+    /**
+     * Show toast notification
+     */
+    function showToast(message, type = 'info') {
+        // Use global notification function if available
+        if (typeof window.showNotification === 'function') {
+            window.showNotification(message, type);
             return;
         }
 
-        container.innerHTML = deliveryLogs.map(log => `
-            <div class="log-entry ${log.success ? 'success' : 'error'}">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <div>
-                        <strong>${escapeHtml(log.webhook_name)}</strong>
-                        <span class="badge ${log.success ? 'badge-success' : 'badge-error'}">
-                            ${log.success ? 'Success' : 'Failed'}
-                        </span>
-                    </div>
-                    <div class="text-muted">${formatDateTime(log.triggered_at)}</div>
-                </div>
-                <div style="font-size: 14px;">
-                    <div><strong>Event:</strong> ${log.event_type}</div>
-                    <div><strong>URL:</strong> ${escapeHtml(log.url)}</div>
-                    ${log.response_status ? `<div><strong>Status:</strong> ${log.response_status}</div>` : ''}
-                    ${log.response_time_ms ? `<div><strong>Response Time:</strong> ${log.response_time_ms}ms</div>` : ''}
-                    ${log.error_message ? `<div><strong>Error:</strong> ${escapeHtml(log.error_message)}</div>` : ''}
-                </div>
-            </div>
-        `).join('');
+        // Fallback: create simple toast
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: ${type === 'success' ? '#3BA55D' : type === 'error' ? '#ED4245' : '#5865F2'};
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+        `;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
-
-    /**
-     * Update stats
-     */
-    function updateStats() {
-        const totalWebhooks = webhooks.length;
-        const enabledWebhooks = webhooks.filter(w => w.enabled).length;
-        const totalDeliveries = webhooks.reduce((sum, w) => sum + (w.trigger_count || 0), 0);
-        const recentFailures = webhooks.reduce((sum, w) => sum + (w.failure_count || 0), 0);
-
-        document.getElementById('stat-total-webhooks').textContent = totalWebhooks;
-        document.getElementById('stat-enabled-webhooks').textContent = enabledWebhooks;
-        document.getElementById('stat-total-deliveries').textContent = totalDeliveries;
-        document.getElementById('stat-recent-failures').textContent = recentFailures;
-    }
-
-    /**
-     * Open webhook modal
-     */
-    function openWebhookModal(webhook = null) {
-        const modal = document.getElementById('webhook-modal');
-        const form = document.getElementById('webhook-form');
-        
-        // Reset form
-        form.reset();
-        document.getElementById('webhook-id').value = '';
-        
-        // Clear event type selections
-        document.querySelectorAll('#event-types-checkboxes input').forEach(cb => {
-            cb.checked = false;
-        });
-
-        if (webhook) {
-            // Edit mode
-            document.getElementById('webhook-modal-title').textContent = 'Edit Webhook';
-            document.getElementById('webhook-id').value = webhook.id;
-            document.getElementById('webhook-name').value = webhook.name;
-            document.getElementById('webhook-description').value = webhook.description || '';
-            document.getElementById('webhook-url').value = webhook.url;
-            document.getElementById('webhook-method').value = webhook.method;
-            document.getElementById('webhook-enabled').checked = webhook.enabled;
-            document.getElementById('webhook-verify-ssl').checked = webhook.verify_ssl;
-
-            // Check event types
-            webhook.event_types.forEach(eventType => {
-                const checkbox = document.getElementById(`event-${eventType}`);
-                if (checkbox) checkbox.checked = true;
-            });
-        } else {
-            // Create mode
-            document.getElementById('webhook-modal-title').textContent = 'Create Webhook';
-            document.getElementById('webhook-enabled').checked = true;
-            document.getElementById('webhook-verify-ssl').checked = true;
-        }
-
-        modal.classList.add('active');
-    }
-
-    /**
-     * Apply template
-     */
-    function applyTemplate(templateId) {
-        if (!templateId) return;
-
-        // Templates can pre-fill certain fields
-        // For now, just show a notification
-        showNotification(`${templateId} template selected. Configure the webhook URL.`, 'info');
-    }
-
-    /**
-     * Save webhook
-     */
-    async function saveWebhook() {
-        const webhookId = document.getElementById('webhook-id').value;
-        const name = document.getElementById('webhook-name').value.trim();
-        const description = document.getElementById('webhook-description').value.trim();
-        const url = document.getElementById('webhook-url').value.trim();
-        const method = document.getElementById('webhook-method').value;
-        const enabled = document.getElementById('webhook-enabled').checked;
-        const verify_ssl = document.getElementById('webhook-verify-ssl').checked;
-
-        // Get selected event types
-        const event_types = Array.from(
-            document.querySelectorAll('#event-types-checkboxes input:checked')
-        ).map(cb => cb.value);
-
-        if (event_types.length === 0) {
-            showNotification('Please select at least one event type', 'error');
-            return;
-        }
-
-        const webhookData = {
-            name,
-            description,
-            url,
-            method,
-            event_types,
-            enabled,
-            verify_ssl
-        };
-
-        try {
-            if (webhookId) {
-                // Update existing webhook
-                await apiRequest(`/api/webhooks/${webhookId}`, 'PUT', webhookData);
-                showNotification('Webhook updated successfully', 'success');
-            } else {
-                // Create new webhook
-                await apiRequest('/api/webhooks', 'POST', webhookData);
-                showNotification('Webhook created successfully', 'success');
-            }
-
-            closeAllModals();
-            loadWebhooks();
-        } catch (error) {
-            console.error('[Webhooks] Error saving webhook:', error);
-            showNotification(error.message || 'Failed to save webhook', 'error');
-        }
-    }
-
-    /**
-     * Open inbound webhook modal
-     */
-    function openInboundWebhookModal(webhook = null) {
-        const modal = document.getElementById('inbound-webhook-modal');
-        const form = document.getElementById('inbound-webhook-form');
-        
-        // Reset form
-        form.reset();
-        document.getElementById('inbound-webhook-id').value = '';
-        
-        // Clear action selections
-        document.querySelectorAll('#inbound-actions-checkboxes input').forEach(cb => {
-            cb.checked = false;
-        });
-
-        if (webhook) {
-            // Edit mode
-            document.getElementById('inbound-webhook-modal-title').textContent = 'Edit Inbound Webhook';
-            document.getElementById('inbound-webhook-id').value = webhook.id;
-            document.getElementById('inbound-webhook-name').value = webhook.name;
-            document.getElementById('inbound-webhook-description').value = webhook.description || '';
-            document.getElementById('inbound-webhook-enabled').checked = webhook.enabled;
-            document.getElementById('inbound-webhook-allowed-ips').value = 
-                webhook.allowed_ips ? webhook.allowed_ips.join(', ') : '';
-
-            // Check actions
-            webhook.actions.forEach(action => {
-                const checkbox = document.getElementById(`action-${action.type}`);
-                if (checkbox) checkbox.checked = true;
-            });
-        } else {
-            // Create mode
-            document.getElementById('inbound-webhook-modal-title').textContent = 'Create Inbound Webhook';
-            document.getElementById('inbound-webhook-enabled').checked = true;
-        }
-
-        modal.classList.add('active');
-    }
-
-    /**
-     * Save inbound webhook
-     */
-    async function saveInboundWebhook() {
-        const webhookId = document.getElementById('inbound-webhook-id').value;
-        const name = document.getElementById('inbound-webhook-name').value.trim();
-        const description = document.getElementById('inbound-webhook-description').value.trim();
-        const enabled = document.getElementById('inbound-webhook-enabled').checked;
-        const allowedIpsStr = document.getElementById('inbound-webhook-allowed-ips').value.trim();
-
-        // Get selected actions
-        const selectedActions = Array.from(
-            document.querySelectorAll('#inbound-actions-checkboxes input:checked')
-        ).map(cb => cb.value);
-
-        if (selectedActions.length === 0) {
-            showNotification('Please select at least one action', 'error');
-            return;
-        }
-
-        // Parse allowed IPs
-        const allowed_ips = allowedIpsStr 
-            ? allowedIpsStr.split(',').map(ip => ip.trim()).filter(ip => ip)
-            : null;
-
-        // Build actions array
-        const actions = selectedActions.map(actionType => ({
-            type: actionType,
-            data: {}
-        }));
-
-        const webhookData = {
-            name,
-            description,
-            actions,
-            allowed_ips,
-            permissions_required: [], // Will be determined by backend based on actions
-            enabled
-        };
-
-        try {
-            if (webhookId) {
-                // Update existing webhook
-                await apiRequest(`/api/webhooks/inbound/${webhookId}`, 'PUT', webhookData);
-                showNotification('Inbound webhook updated successfully', 'success');
-            } else {
-                // Create new webhook
-                await apiRequest('/api/webhooks/inbound', 'POST', webhookData);
-                showNotification('Inbound webhook created successfully', 'success');
-            }
-
-            closeAllModals();
-            loadInboundWebhooks();
-        } catch (error) {
-            console.error('[Webhooks] Error saving inbound webhook:', error);
-            showNotification(error.message || 'Failed to save inbound webhook', 'error');
-        }
-    }
-
-    /**
-     * Edit webhook
-     */
-    async function editWebhook(webhookId) {
-        const webhook = webhooks.find(w => w.id === webhookId);
-        if (webhook) {
-            openWebhookModal(webhook);
-        }
-    }
-
-    /**
-     * Edit inbound webhook
-     */
-    async function editInboundWebhook(webhookId) {
-        const webhook = inboundWebhooks.find(w => w.id === webhookId);
-        if (webhook) {
-            openInboundWebhookModal(webhook);
-        }
-    }
-
-    /**
-     * Delete webhook
-     */
-    async function deleteWebhook(webhookId) {
-        if (!confirm('Are you sure you want to delete this webhook?')) {
-            return;
-        }
-
-        try {
-            await apiRequest(`/api/webhooks/${webhookId}`, 'DELETE');
-            showNotification('Webhook deleted successfully', 'success');
-            loadWebhooks();
-        } catch (error) {
-            console.error('[Webhooks] Error deleting webhook:', error);
-            showNotification(error.message || 'Failed to delete webhook', 'error');
-        }
-    }
-
-    /**
-     * Delete inbound webhook
-     */
-    async function deleteInboundWebhook(webhookId) {
-        if (!confirm('Are you sure you want to delete this inbound webhook?')) {
-            return;
-        }
-
-        try {
-            await apiRequest(`/api/webhooks/inbound/${webhookId}`, 'DELETE');
-            showNotification('Inbound webhook deleted successfully', 'success');
-            loadInboundWebhooks();
-        } catch (error) {
-            console.error('[Webhooks] Error deleting inbound webhook:', error);
-            showNotification(error.message || 'Failed to delete inbound webhook', 'error');
-        }
-    }
-
-    /**
-     * Test webhook
-     */
-    async function testWebhook(webhookId) {
-        try {
-            showNotification('Sending test webhook...', 'info');
-            const response = await apiRequest(`/api/webhooks/${webhookId}/test`, 'POST');
-            
-            if (response.success) {
-                showNotification('Test webhook delivered successfully!', 'success');
-            } else {
-                showNotification('Test webhook failed', 'error');
-            }
-        } catch (error) {
-            console.error('[Webhooks] Error testing webhook:', error);
-            showNotification(error.message || 'Failed to test webhook', 'error');
-        }
-    }
-
-    /**
-     * Copy to clipboard
-     */
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            showNotification('Copied to clipboard', 'success');
-        }).catch(err => {
-            console.error('[Webhooks] Failed to copy:', err);
-            showNotification('Failed to copy to clipboard', 'error');
-        });
-    }
-
-    /**
-     * Close all modals
-     */
-    function closeAllModals() {
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.classList.remove('active');
-        });
-    }
-
-    // Export public API
-    window.webhooksModule = {
-        editWebhook,
-        editInboundWebhook,
-        deleteWebhook,
-        deleteInboundWebhook,
-        testWebhook,
-        copyToClipboard
-    };
 
     // Initialize when DOM is ready
     if (document.readyState === 'loading') {
