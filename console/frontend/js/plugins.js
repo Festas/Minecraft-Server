@@ -118,16 +118,19 @@ async function loadMetaInfo() {
 // Load plugins list
 async function loadPlugins() {
     try {
-        const response = await fetch('/api/plugins/list', {
+        const response = await fetch('/api/plugins', {
             credentials: 'same-origin'
         });
         
         const data = await response.json();
         
-        if (data.success) {
+        if (data.plugins) {
             plugins = data.plugins || [];
             updateStats();
             renderPluginsList();
+            if (data.error) {
+                showToast(data.error, 'warning');
+            }
         } else {
             showToast('Failed to load plugins', 'error');
         }
