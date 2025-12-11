@@ -202,7 +202,10 @@ function initCommandAutocomplete() {
     
     // Hide autocomplete when clicking outside
     document.addEventListener('click', (e) => {
-        if (!commandInput.contains(e.target) && !autocompleteDiv.contains(e.target)) {
+        const clickedInput = commandInput === e.target || commandInput.contains(e.target);
+        const clickedAutocomplete = autocompleteDiv === e.target || autocompleteDiv.contains(e.target);
+        
+        if (!clickedInput && !clickedAutocomplete) {
             hideAutocomplete();
         }
     });
