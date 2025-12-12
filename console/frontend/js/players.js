@@ -74,18 +74,11 @@ function createPlayerCard(player) {
             lastSeenStr = formatRelativeTime(lastSeenDate);
         }
     }
-    
-    // Use Minotar avatar with fallback
-    const avatarUrl = `https://minotar.net/avatar/${player.username}/64.png`;
-    
+
+    // Avatar HTML-Gerüst OHNE <img>
     playerCard.innerHTML = `
         <div class="player-card-info">
             <div class="player-card-avatar">
-                <img 
-                    src="${avatarUrl}" 
-                    alt="${player.username}" 
-                    onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect fill=%22%23666%22 width=%2264%22 height=%2264%22/></svg>'"
-                >
                 ${player.isOnline ? '<div class="online-indicator"></div>' : ''}
             </div>
             <div class="player-card-details">
@@ -103,12 +96,34 @@ function createPlayerCard(player) {
             </div>
         </div>
     `;
-    
+
+    // Avatar-Fallback (SVG placeholder)
+    const fallbackAvatar = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect fill='#666' width='64' height='64'/></svg>";
+    const avatarUrl = `https://minotar.net/avatar/${player.username}/64.png`;
+
+    // Image dynamisch erzeugen und einbauen
+    const avatarDiv = playerCard.querySelector('.player-card-avatar');
+    const img = document.createElement('img');
+    img.src = avatarUrl;
+    img.alt = player.username;
+
+    img.onerror = function () {
+        // Verzögerung, damit wirklich erst nach echtem Fehler das Fallback greift
+        setTimeout(() => {
+            if (!img.complete || img.naturalWidth === 0) {
+                img.src = fallbackAvatar;
+            }
+        }, 350); // 350ms Warten, ggf. anpassen
+    };
+
+    // Image als erstes Kind in Avatar-Div setzen
+    avatarDiv.insertBefore(img, avatarDiv.firstChild);
+
     // Add click handler to open modal
     playerCard.addEventListener('click', () => {
         openPlayerModal(player);
     });
-    
+
     return playerCard;
 }
 
