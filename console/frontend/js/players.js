@@ -76,7 +76,7 @@ function createPlayerCard(player) {
     }
     
     // Use Minotar avatar with fallback
-    const avatarUrl = `https://minotar.net/avatar/${player.username}/64`;
+    const avatarUrl = `https://minotar.net/avatar/${player.username}/64.png`;
     
     playerCard.innerHTML = `
         <div class="player-card-info">
