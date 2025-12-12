@@ -3,6 +3,15 @@ let allPlayersData = [];
 let currentSort = 'playtime'; // default sort
 
 /**
+ * Generate fallback avatar SVG
+ * @param {number} size - Size of the avatar in pixels
+ * @returns {string} Data URL for the SVG
+ */
+function generateFallbackAvatar(size) {
+    return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'><rect fill='%23666' width='${size}' height='${size}'/></svg>`;
+}
+
+/**
  * Load avatar image with robust error handling
  * Only falls back to placeholder after timeout or real network failure
  * @param {string} avatarUrl - The Minotar URL to load
@@ -142,7 +151,7 @@ function createPlayerCard(player) {
     `;
 
     // Avatar URLs
-    const fallbackAvatar = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect fill='%23666' width='64' height='64'/></svg>";
+    const fallbackAvatar = generateFallbackAvatar(64);
     const avatarUrl = `https://minotar.net/avatar/${player.username}/64.png`;
 
     // Get avatar container
@@ -160,6 +169,10 @@ function createPlayerCard(player) {
     // Load avatar with robust fallback handling
     loadAvatarWithFallback(avatarUrl, fallbackAvatar, 2000).then(finalUrl => {
         img.src = finalUrl;
+        img.style.opacity = '1';
+    }).catch(error => {
+        console.error('Error loading avatar for', player.username, error);
+        img.src = fallbackAvatar;
         img.style.opacity = '1';
     });
 
@@ -297,7 +310,7 @@ function openPlayerModal(player) {
     
     // Populate modal with player data
     const avatarUrl = `https://minotar.net/avatar/${player.username}/128.png`;
-    const fallbackAvatar = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><rect fill='%23666' width='128' height='128'/></svg>";
+    const fallbackAvatar = generateFallbackAvatar(128);
     const img = document.getElementById('modalPlayerAvatar');
     
     // Reset opacity for loading state
@@ -307,6 +320,10 @@ function openPlayerModal(player) {
     // Load avatar with robust fallback handling
     loadAvatarWithFallback(avatarUrl, fallbackAvatar, 2000).then(finalUrl => {
         img.src = finalUrl;
+        img.style.opacity = '1';
+    }).catch(error => {
+        console.error('Error loading modal avatar for', player.username, error);
+        img.src = fallbackAvatar;
         img.style.opacity = '1';
     });
     
