@@ -237,7 +237,7 @@ function openPlayerModal(player) {
     if (!modal) return;
     
     // Populate modal with player data
-    const avatarUrl = `https://minotar.net/avatar/${player.username}/128`;
+    const avatarUrl = `https://minotar.net/avatar/${player.username}/128.png`;
     document.getElementById('modalPlayerAvatar').src = avatarUrl;
     document.getElementById('modalPlayerName').textContent = player.username;
     
