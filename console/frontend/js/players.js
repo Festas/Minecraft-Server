@@ -253,7 +253,16 @@ function openPlayerModal(player) {
     
     // Populate modal with player data
     const avatarUrl = `https://minotar.net/avatar/${player.username}/128.png`;
-    document.getElementById('modalPlayerAvatar').src = avatarUrl;
+    const fallbackAvatar = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><rect fill='#666' width='128' height='128'/></svg>";
+    const img = document.getElementById('modalPlayerAvatar');
+    img.src = avatarUrl;
+    img.onerror = function() {
+        setTimeout(() => {
+            if (!img.complete || img.naturalWidth === 0) {
+                img.src = fallbackAvatar;
+        }
+    }, 350);
+};
     document.getElementById('modalPlayerName').textContent = player.username;
     
     // Update status
