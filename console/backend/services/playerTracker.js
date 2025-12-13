@@ -1,11 +1,18 @@
 const EventEmitter = require('events');
 const database = require('./database');
 const mojangService = require('./mojang');
+const rconService = require('./rcon');
 
 /**
  * Player Tracking Service
  * Tracks all players who have joined the server, their playtime, and last seen timestamp
  * Uses SQLite database for persistence and Mojang API for UUID tracking
+ * 
+ * RCON Integration:
+ * - Polls RCON /list command periodically to get actual online players
+ * - Only updates last_seen for RCON-confirmed online players
+ * - Automatically removes zombie/ghost sessions that are not on the server
+ * - Includes error tolerance to prevent false removals during RCON failures
  */
 class PlayerTrackerService extends EventEmitter {
     constructor() {
@@ -18,6 +25,19 @@ class PlayerTrackerService extends EventEmitter {
         
         // Session timeout - how long before a session is considered stale
         this.sessionTimeoutMs = parseInt(process.env.PLAYER_SESSION_TIMEOUT_MS) || 180000; // Default: 3 minutes
+        
+        // RCON polling configuration
+        this.rconPollIntervalMs = parseInt(process.env.RCON_POLL_INTERVAL_MS) || 60000; // Default: 60 seconds (same as heartbeat)
+        this.rconPollInterval = null;
+        
+        // RCON error tolerance - allow N consecutive failures before giving up on RCON
+        this.rconMaxFailures = parseInt(process.env.RCON_MAX_FAILURES) || 3; // Default: 3 failures
+        this.rconConsecutiveFailures = 0;
+        this.rconLastSuccessTime = null;
+        
+        // Cache of RCON-confirmed online players (usernames)
+        this.rconOnlinePlayers = new Set();
+        this.rconLastPollTime = null;
     }
 
     /**
@@ -31,9 +51,13 @@ class PlayerTrackerService extends EventEmitter {
             // Start heartbeat timer
             this.startHeartbeat();
             
+            // Start RCON polling
+            this.startRconPolling();
+            
             const playerCount = database.getPlayerCount();
             console.log(`Player tracker initialized with ${playerCount} players`);
             console.log(`Watchdog enabled: heartbeat=${this.heartbeatIntervalMs / 1000}s, timeout=${this.sessionTimeoutMs / 1000}s`);
+            console.log(`RCON polling enabled: interval=${this.rconPollIntervalMs / 1000}s, max_failures=${this.rconMaxFailures}`);
         } catch (error) {
             console.error('Error initializing player tracker:', error);
             throw error;
@@ -66,20 +90,123 @@ class PlayerTrackerService extends EventEmitter {
     }
 
     /**
+     * Start RCON polling to get actual online players
+     */
+    startRconPolling() {
+        if (this.rconPollInterval) {
+            clearInterval(this.rconPollInterval);
+        }
+
+        // Do an immediate poll
+        this.pollRconOnlinePlayers();
+
+        this.rconPollInterval = setInterval(() => {
+            this.pollRconOnlinePlayers();
+        }, this.rconPollIntervalMs);
+
+        console.log(`RCON polling started (interval: ${this.rconPollIntervalMs}ms)`);
+    }
+
+    /**
+     * Stop RCON polling timer
+     */
+    stopRconPolling() {
+        if (this.rconPollInterval) {
+            clearInterval(this.rconPollInterval);
+            this.rconPollInterval = null;
+        }
+    }
+
+    /**
+     * Poll RCON for actual online players
+     * Updates the rconOnlinePlayers cache with current server player list
+     */
+    async pollRconOnlinePlayers() {
+        try {
+            // Check if RCON is connected
+            if (!rconService.isConnected()) {
+                this.rconConsecutiveFailures++;
+                console.warn(`RCON polling: Not connected (failure ${this.rconConsecutiveFailures}/${this.rconMaxFailures})`);
+                return;
+            }
+
+            // Get player list from RCON
+            const playerList = await rconService.getPlayers();
+            
+            if (!playerList || !Array.isArray(playerList.players)) {
+                this.rconConsecutiveFailures++;
+                console.warn(`RCON polling: Invalid response (failure ${this.rconConsecutiveFailures}/${this.rconMaxFailures})`);
+                return;
+            }
+
+            // Success! Reset failure counter and update cache
+            this.rconConsecutiveFailures = 0;
+            this.rconLastSuccessTime = Date.now();
+            this.rconLastPollTime = Date.now();
+            
+            // Update online players cache
+            this.rconOnlinePlayers.clear();
+            playerList.players.forEach(username => {
+                this.rconOnlinePlayers.add(username);
+            });
+
+            const onlineCount = this.rconOnlinePlayers.size;
+            if (onlineCount > 0) {
+                console.log(`RCON polling: ${onlineCount} player(s) online: ${Array.from(this.rconOnlinePlayers).join(', ')}`);
+            } else {
+                console.log(`RCON polling: No players online`);
+            }
+
+        } catch (error) {
+            this.rconConsecutiveFailures++;
+            console.error(`RCON polling error (failure ${this.rconConsecutiveFailures}/${this.rconMaxFailures}):`, error.message);
+        }
+    }
+
+    /**
+     * Check if RCON data is reliable
+     * Returns false if we've had too many consecutive failures
+     */
+    isRconReliable() {
+        return this.rconConsecutiveFailures < this.rconMaxFailures;
+    }
+
+    /**
      * Update all active sessions (called by heartbeat)
+     * Now only updates last_seen for RCON-confirmed online players
      */
     updateActiveSessions() {
-        // Update last_seen for all active sessions
+        // Check if RCON data is reliable
+        if (!this.isRconReliable()) {
+            console.warn(`Heartbeat: RCON unreliable (${this.rconConsecutiveFailures} failures), skipping last_seen updates`);
+            // Don't update anyone's last_seen if RCON is failing
+            // This prevents false timeouts during temporary RCON issues
+            return;
+        }
+
+        // Only update last_seen for players confirmed by RCON
+        let updatedCount = 0;
+        let skippedCount = 0;
+
         for (const [uuid, session] of this.activeSessions) {
             try {
-                database.updateLastSeen(uuid);
+                // Only update if player is in RCON's online list
+                if (this.rconOnlinePlayers.has(session.username)) {
+                    database.updateLastSeen(uuid);
+                    updatedCount++;
+                } else {
+                    // Player is in our sessions but not in RCON list
+                    // Don't update their last_seen - let the watchdog handle it
+                    skippedCount++;
+                    console.log(`Heartbeat: Skipping ${session.username} (not in RCON list)`);
+                }
             } catch (error) {
                 console.error(`Error updating session for ${session.username}:`, error);
             }
         }
 
-        if (this.activeSessions.size > 0) {
-            console.log(`Heartbeat: Updated ${this.activeSessions.size} active session(s)`);
+        if (updatedCount > 0 || skippedCount > 0) {
+            console.log(`Heartbeat: Updated ${updatedCount} session(s), skipped ${skippedCount}`);
         }
 
         // Watchdog: Check for stale sessions and remove them
@@ -90,21 +217,40 @@ class PlayerTrackerService extends EventEmitter {
      * Watchdog: Check for stale sessions and automatically remove them
      * This handles cases where players disconnect without a proper leave event
      * (e.g., crash, network loss, or abrupt connection termination)
+     * 
+     * Enhanced with RCON integration:
+     * - Players not in RCON list stop getting last_seen updates
+     * - After timeout period, they are automatically removed
+     * - Comprehensive logging for troubleshooting
      */
     checkForStaleSessions() {
         try {
             const stalePlayers = database.getPlayersWithStaleSessions(this.sessionTimeoutMs);
             
+            if (stalePlayers.length === 0) {
+                return; // No stale sessions, nothing to do
+            }
+
+            console.log(`Watchdog: Found ${stalePlayers.length} stale session(s) to clean up`);
+            
             for (const player of stalePlayers) {
-                console.warn(`Watchdog: Detected stale session for ${player.username} (last seen: ${player.last_seen})`);
+                const lastSeenDate = new Date(player.last_seen);
+                const timeSinceLastSeen = Date.now() - lastSeenDate.getTime();
+                const minutesSinceLastSeen = Math.floor(timeSinceLastSeen / 60000);
+                
+                console.warn(`Watchdog: Removing stale session for player "${player.username}":`);
+                console.warn(`  - UUID: ${player.uuid}`);
+                console.warn(`  - Last seen: ${player.last_seen} (${minutesSinceLastSeen} minutes ago)`);
+                console.warn(`  - Timeout threshold: ${this.sessionTimeoutMs / 60000} minutes`);
+                console.warn(`  - Reason: Player not confirmed by RCON, last_seen exceeded timeout`);
                 
                 // Automatically call playerLeft to clean up the session
                 this.playerLeft(player.username)
                     .then(() => {
-                        console.log(`Watchdog: Automatically removed ${player.username} due to session timeout`);
+                        console.log(`✓ Watchdog: Successfully removed "${player.username}" (zombie session cleanup)`);
                     })
                     .catch(error => {
-                        console.error(`Watchdog: Error removing stale session for ${player.username}:`, error);
+                        console.error(`✗ Watchdog: Error removing stale session for ${player.username}:`, error);
                     });
             }
         } catch (error) {
@@ -227,7 +373,15 @@ class PlayerTrackerService extends EventEmitter {
             heartbeatIntervalMs: this.heartbeatIntervalMs,
             sessionTimeoutMs: this.sessionTimeoutMs,
             heartbeatIntervalSeconds: this.heartbeatIntervalMs / 1000,
-            sessionTimeoutSeconds: this.sessionTimeoutMs / 1000
+            sessionTimeoutSeconds: this.sessionTimeoutMs / 1000,
+            rconPollIntervalMs: this.rconPollIntervalMs,
+            rconPollIntervalSeconds: this.rconPollIntervalMs / 1000,
+            rconMaxFailures: this.rconMaxFailures,
+            rconConsecutiveFailures: this.rconConsecutiveFailures,
+            rconReliable: this.isRconReliable(),
+            rconLastPollTime: this.rconLastPollTime,
+            rconLastSuccessTime: this.rconLastSuccessTime,
+            rconOnlineCount: this.rconOnlinePlayers.size
         };
     }
 
@@ -272,6 +426,9 @@ class PlayerTrackerService extends EventEmitter {
         try {
             // Stop heartbeat
             this.stopHeartbeat();
+
+            // Stop RCON polling
+            this.stopRconPolling();
 
             // End all active sessions
             for (const [uuid, session] of this.activeSessions) {
