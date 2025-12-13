@@ -4,6 +4,26 @@
 
 The player tracking system maintains a comprehensive database of all players who have ever joined the server, tracking their playtime, session history, and online status. The system is designed to be crash-resilient and require no manual intervention.
 
+**Key Features:**
+- **RCON-based tracking:** Uses Minecraft server as source of truth for online status
+- **Zombie session detection:** Automatically removes players who disconnect abruptly
+- **Error tolerance:** Handles temporary RCON failures gracefully
+- **Comprehensive logging:** Detailed logs for troubleshooting and monitoring
+
+## Requirements
+
+1. **RCON enabled on Minecraft server** with proper configuration:
+   - `enable-rcon=true` in `server.properties`
+   - Valid `rcon.password` set
+   - `rcon.port` accessible (default: 25575)
+
+2. **Environment variables configured:**
+   - `RCON_HOST`: Minecraft server hostname (default: `minecraft-server`)
+   - `RCON_PORT`: RCON port (default: `25575`)
+   - `RCON_PASSWORD`: RCON password (must match server.properties)
+
+3. **Network connectivity:** Console backend must be able to reach Minecraft server's RCON port
+
 ## Architecture
 
 ### Components
@@ -15,10 +35,17 @@ The player tracking system maintains a comprehensive database of all players who
 
 2. **Player Tracker Service** (`services/playerTracker.js`)
    - Manages player sessions and events
-   - Periodic heartbeat updates (every 60 seconds)
+   - RCON-based online player polling (every 60 seconds)
+   - Periodic heartbeat watchdog checks
    - Graceful shutdown handling
 
-3. **Mojang API Service** (`services/mojang.js`)
+3. **RCON Service** (`services/rcon.js`)
+   - Communicates with Minecraft server via RCON protocol
+   - Polls `/list` command for actual online players
+   - Automatic reconnection on connection loss
+   - Used as source of truth for online status
+
+4. **Mojang API Service** (`services/mojang.js`)
    - Fetches player UUIDs from Mojang API
    - Caches results to minimize API calls
    - Fallback UUID generation for offline mode
@@ -57,9 +84,9 @@ CREATE TABLE players (
 ### Player Heartbeat
 
 Every 60 seconds:
-1. Player tracker iterates through active sessions
-2. Database updates `last_seen` timestamp for each active player
-3. Ensures accurate tracking even if player doesn't disconnect properly
+1. **RCON polls the Minecraft server** to get the actual list of online players via `/list` command
+2. Player tracker **only updates `last_seen`** for players confirmed by RCON
+3. Players not in the RCON list do NOT get their `last_seen` updated
 4. **Watchdog checks for stale sessions** (players with `last_seen` older than timeout)
 
 ### Player Disconnect
@@ -71,27 +98,50 @@ Every 60 seconds:
 5. Session marked as ended (current_session_start set to NULL)
 6. Last seen timestamp updated
 
-### Watchdog: Automatic Timeout Detection
+### Watchdog: Automatic Timeout Detection with RCON Integration
 
-**Problem:** Players who disconnect abruptly (crash, network loss, abrupt client termination) remain online in the backend indefinitely because no `player-left` event is triggered.
+**Problem:** Players who disconnect abruptly (crash, network loss, abrupt client termination) remain online in the backend indefinitely because no `player-left` event is triggered. The old system updated `last_seen` for ALL active sessions indiscriminately, preventing timeout detection.
 
-**Solution:** Every heartbeat interval (60 seconds), the watchdog checks for stale sessions:
+**Solution:** RCON-based tracking with intelligent watchdog:
 
-1. Query database for players with active sessions where `last_seen` exceeds timeout threshold
-2. Default timeout: **3 minutes** (180 seconds) of inactivity
-3. Automatically call `playerLeft()` for stale sessions
-4. Log the automatic removal with warning level
-5. Clean up both in-memory `activeSessions` map and database `current_session_start` field
+1. **RCON Polling** (every 60 seconds by default):
+   - Polls Minecraft server via RCON `/list` command to get actual online players
+   - Caches the list of RCON-confirmed online players
+   - Includes error tolerance (3 consecutive failures allowed by default)
+
+2. **Selective Last Seen Updates**:
+   - **Only** updates `last_seen` for players confirmed by RCON as online
+   - Players NOT in RCON list stop getting `last_seen` updates
+   - This allows their timestamp to become stale naturally
+
+3. **Watchdog Detection** (runs every heartbeat):
+   - Query database for players with active sessions where `last_seen` exceeds timeout threshold
+   - Default timeout: **3 minutes** (180 seconds) of inactivity
+   - Automatically call `playerLeft()` for stale sessions
+   - Comprehensive logging with player details, timeout duration, and reason
+
+4. **Error Tolerance**:
+   - Allows up to 3 consecutive RCON failures before considering RCON unreliable
+   - During RCON failures: NO `last_seen` updates (prevents false timeouts)
+   - Automatically recovers when RCON connection is restored
 
 **Configuration:**
-- Heartbeat interval: 60 seconds (configurable via `heartbeatIntervalMs`)
-- Session timeout: 3 minutes (configurable via `sessionTimeoutMs`)
+- Heartbeat interval: 60 seconds (configurable via `PLAYER_HEARTBEAT_INTERVAL_MS`)
+- Session timeout: 3 minutes (configurable via `PLAYER_SESSION_TIMEOUT_MS`)
+- RCON poll interval: 60 seconds (configurable via `RCON_POLL_INTERVAL_MS`)
+- RCON max failures: 3 (configurable via `RCON_MAX_FAILURES`)
 - Use `setSessionTimeout(ms)` to adjust timeout programmatically
 
 **Logging:**
-- `console.warn()` when stale session detected
-- `console.log()` when player automatically removed
-- Distinguishes automatic timeouts from normal disconnect events
+- `console.log()` for successful RCON polls with player count
+- `console.warn()` for RCON connection failures with retry count
+- `console.warn()` for each stale session detected with full details:
+  - Player username and UUID
+  - Last seen timestamp and minutes elapsed
+  - Timeout threshold
+  - Removal reason
+- `console.log()` with ✓ when player successfully removed (zombie cleanup)
+- `console.error()` if automatic removal fails
 
 ### Crash Recovery
 
@@ -164,6 +214,8 @@ Each player card shows:
 
 ### Heartbeat Interval
 
+Controls how often the watchdog checks for stale sessions (NOT when `last_seen` is updated - that's controlled by RCON polling).
+
 **Environment variable:**
 ```bash
 PLAYER_HEARTBEAT_INTERVAL_MS=60000  # Default: 60 seconds
@@ -175,6 +227,8 @@ this.heartbeatIntervalMs = 60000; // 60 seconds
 ```
 
 ### Session Timeout (Watchdog)
+
+Controls how long a player can be inactive before being automatically removed.
 
 **Environment variable:**
 ```bash
@@ -192,7 +246,39 @@ this.sessionTimeoutMs = 180000; // 3 minutes (180 seconds)
 playerTracker.setSessionTimeout(300000); // Set to 5 minutes
 ```
 
-**Getting current configuration:**
+### RCON Polling Interval
+
+Controls how often the system polls the Minecraft server for actual online players.
+
+**Environment variable:**
+```bash
+RCON_POLL_INTERVAL_MS=60000  # Default: 60 seconds
+```
+
+**Default in code:**
+```javascript
+this.rconPollIntervalMs = 60000; // 60 seconds
+```
+
+**Recommendation:** Keep RCON poll interval equal to or less than heartbeat interval for optimal accuracy.
+
+### RCON Error Tolerance
+
+Controls how many consecutive RCON failures are tolerated before considering RCON unreliable.
+
+**Environment variable:**
+```bash
+RCON_MAX_FAILURES=3  # Default: 3 consecutive failures
+```
+
+**Default in code:**
+```javascript
+this.rconMaxFailures = 3; // 3 failures
+```
+
+**Behavior:** When RCON failures exceed this threshold, the system stops updating `last_seen` timestamps to prevent false timeouts during RCON connection issues.
+
+### Getting Current Configuration
 
 ```javascript
 const config = playerTracker.getWatchdogConfig();
@@ -200,7 +286,15 @@ const config = playerTracker.getWatchdogConfig();
 //   heartbeatIntervalMs: 60000,
 //   sessionTimeoutMs: 180000,
 //   heartbeatIntervalSeconds: 60,
-//   sessionTimeoutSeconds: 180
+//   sessionTimeoutSeconds: 180,
+//   rconPollIntervalMs: 60000,
+//   rconPollIntervalSeconds: 60,
+//   rconMaxFailures: 3,
+//   rconConsecutiveFailures: 0,
+//   rconReliable: true,
+//   rconLastPollTime: 1702461234567,
+//   rconLastSuccessTime: 1702461234567,
+//   rconOnlineCount: 2
 // }
 ```
 
@@ -308,23 +402,32 @@ To manually import old data (if needed):
 
 If you're integrating with the player tracking system via API or custom plugins:
 
-**Important:** The watchdog relies on the `last_seen` timestamp being updated regularly. The system automatically updates this during the heartbeat interval (every 60 seconds) for tracked sessions.
+**Important:** The system now uses **RCON-based tracking**. The `last_seen` timestamp is ONLY updated for players confirmed by RCON as online. Manual `last_seen` updates are generally NOT needed.
+
+**How the system works:**
+
+1. **RCON Polling:** Every 60 seconds, the system polls the Minecraft server via RCON `/list` to get actual online players
+2. **Selective Updates:** Only players in the RCON list get their `last_seen` timestamp updated
+3. **Automatic Cleanup:** Players not in the RCON list eventually timeout and are automatically removed
 
 **Recommendations for external integrations:**
 
-1. **Keep sessions alive:** Ensure your integration doesn't interfere with the log-based tracking system
-2. **Manual heartbeat (if needed):** If you're managing sessions programmatically, call `database.updateLastSeen(uuid)` regularly
-3. **Session timeout awareness:** Design your client/plugin to handle automatic disconnection after 3 minutes of inactivity
-4. **Event-based tracking:** Prefer using the existing `player-joined` and `player-left` events over custom session management
+1. **Don't manually update `last_seen`:** The RCON system handles this automatically
+2. **Rely on RCON:** Trust the Minecraft server as the source of truth for online status
+3. **Session timeout awareness:** Players are removed after 3 minutes without RCON confirmation
+4. **Event-based tracking:** Use `player-joined` and `player-left` events for custom logic
+5. **RCON requirements:** Ensure RCON is properly configured and accessible
 
-**Example: Custom heartbeat in a plugin**
+**When to manually update `last_seen` (rare cases):**
+
+Only if you have a custom system that bypasses RCON entirely:
 
 ```javascript
-// Update last_seen for a player (if managing sessions outside log tracking)
+// Only needed for non-RCON custom integrations (not recommended)
 database.updateLastSeen(playerUuid);
 ```
 
-**Note:** The built-in system already handles heartbeats for all active sessions, so additional heartbeat calls are only needed for custom integrations that bypass the standard event system.
+**Note:** The RCON-based system is self-sufficient and requires no manual intervention for standard Minecraft server setups. External heartbeat calls are unnecessary and may interfere with zombie session detection.
 
 ## Future Enhancements
 
