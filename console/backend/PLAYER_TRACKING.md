@@ -60,6 +60,7 @@ Every 60 seconds:
 1. Player tracker iterates through active sessions
 2. Database updates `last_seen` timestamp for each active player
 3. Ensures accurate tracking even if player doesn't disconnect properly
+4. **Watchdog checks for stale sessions** (players with `last_seen` older than timeout)
 
 ### Player Disconnect
 
@@ -70,11 +71,34 @@ Every 60 seconds:
 5. Session marked as ended (current_session_start set to NULL)
 6. Last seen timestamp updated
 
+### Watchdog: Automatic Timeout Detection
+
+**Problem:** Players who disconnect abruptly (crash, network loss, abrupt client termination) remain online in the backend indefinitely because no `player-left` event is triggered.
+
+**Solution:** Every heartbeat interval (60 seconds), the watchdog checks for stale sessions:
+
+1. Query database for players with active sessions where `last_seen` exceeds timeout threshold
+2. Default timeout: **3 minutes** (180 seconds) of inactivity
+3. Automatically call `playerLeft()` for stale sessions
+4. Log the automatic removal with warning level
+5. Clean up both in-memory `activeSessions` map and database `current_session_start` field
+
+**Configuration:**
+- Heartbeat interval: 60 seconds (configurable via `heartbeatIntervalMs`)
+- Session timeout: 3 minutes (configurable via `sessionTimeoutMs`)
+- Use `setSessionTimeout(ms)` to adjust timeout programmatically
+
+**Logging:**
+- `console.warn()` when stale session detected
+- `console.log()` when player automatically removed
+- Distinguishes automatic timeouts from normal disconnect events
+
 ### Crash Recovery
 
 - All writes are immediate (no debouncing)
 - WAL mode ensures database consistency
 - Heartbeat ensures recent activity is recorded
+- **Watchdog automatically removes ghost sessions** caused by crashes
 - On restart, active sessions are automatically closed during shutdown
 
 ## API Endpoints
@@ -140,10 +164,44 @@ Each player card shows:
 
 ### Heartbeat Interval
 
-Configured in `playerTracker.js`:
+**Environment variable:**
+```bash
+PLAYER_HEARTBEAT_INTERVAL_MS=60000  # Default: 60 seconds
+```
 
+**Default in code:**
 ```javascript
 this.heartbeatIntervalMs = 60000; // 60 seconds
+```
+
+### Session Timeout (Watchdog)
+
+**Environment variable:**
+```bash
+PLAYER_SESSION_TIMEOUT_MS=180000  # Default: 3 minutes (180 seconds)
+```
+
+**Default in code:**
+```javascript
+this.sessionTimeoutMs = 180000; // 3 minutes (180 seconds)
+```
+
+**Adjusting timeout at runtime:**
+
+```javascript
+playerTracker.setSessionTimeout(300000); // Set to 5 minutes
+```
+
+**Getting current configuration:**
+
+```javascript
+const config = playerTracker.getWatchdogConfig();
+// Returns: {
+//   heartbeatIntervalMs: 60000,
+//   sessionTimeoutMs: 180000,
+//   heartbeatIntervalSeconds: 60,
+//   sessionTimeoutSeconds: 180
+// }
 ```
 
 ### Database Location
@@ -243,6 +301,30 @@ To manually import old data (if needed):
 2. For each player, call `database.upsertPlayer()` with UUID and username
 3. Use Mojang API to fetch correct UUIDs
 4. Update total_playtime_ms and session_count manually
+
+## Client Integration & Heartbeat Recommendations
+
+### For API Clients and Plugins
+
+If you're integrating with the player tracking system via API or custom plugins:
+
+**Important:** The watchdog relies on the `last_seen` timestamp being updated regularly. The system automatically updates this during the heartbeat interval (every 60 seconds) for tracked sessions.
+
+**Recommendations for external integrations:**
+
+1. **Keep sessions alive:** Ensure your integration doesn't interfere with the log-based tracking system
+2. **Manual heartbeat (if needed):** If you're managing sessions programmatically, call `database.updateLastSeen(uuid)` regularly
+3. **Session timeout awareness:** Design your client/plugin to handle automatic disconnection after 3 minutes of inactivity
+4. **Event-based tracking:** Prefer using the existing `player-joined` and `player-left` events over custom session management
+
+**Example: Custom heartbeat in a plugin**
+
+```javascript
+// Update last_seen for a player (if managing sessions outside log tracking)
+database.updateLastSeen(playerUuid);
+```
+
+**Note:** The built-in system already handles heartbeats for all active sessions, so additional heartbeat calls are only needed for custom integrations that bypass the standard event system.
 
 ## Future Enhancements
 

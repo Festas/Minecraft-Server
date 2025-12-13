@@ -386,6 +386,21 @@ class DatabaseService {
     }
 
     /**
+     * Set player's last seen timestamp to a specific value (for testing)
+     * @param {string} uuid - Player UUID
+     * @param {string} timestamp - ISO timestamp string
+     */
+    setLastSeen(uuid, timestamp) {
+        const stmt = this.db.prepare(`
+            UPDATE players
+            SET last_seen = ?
+            WHERE uuid = ?
+        `);
+
+        stmt.run(timestamp, uuid);
+    }
+
+    /**
      * End a player session and update total playtime
      * @param {string} uuid - Player UUID
      * @returns {number} Session duration in milliseconds
@@ -465,6 +480,21 @@ class DatabaseService {
         const stmt = this.db.prepare('SELECT COUNT(*) as count FROM players');
         const result = stmt.get();
         return result.count;
+    }
+
+    /**
+     * Get players with stale sessions (last_seen older than timeout)
+     * @param {number} timeoutMs - Timeout in milliseconds
+     * @returns {Array} Array of player records with stale sessions
+     */
+    getPlayersWithStaleSessions(timeoutMs) {
+        const stmt = this.db.prepare(`
+            SELECT uuid, username, last_seen, current_session_start
+            FROM players
+            WHERE current_session_start IS NOT NULL
+            AND (julianday('now') - julianday(last_seen)) * 86400000 > ?
+        `);
+        return stmt.all(timeoutMs);
     }
 
     // ========================================================================

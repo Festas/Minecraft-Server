@@ -12,7 +12,12 @@ class PlayerTrackerService extends EventEmitter {
         super();
         this.activeSessions = new Map(); // uuid -> { username, startTime }
         this.heartbeatInterval = null;
-        this.heartbeatIntervalMs = 60000; // 60 seconds
+        
+        // Heartbeat interval - check active sessions and run watchdog
+        this.heartbeatIntervalMs = parseInt(process.env.PLAYER_HEARTBEAT_INTERVAL_MS) || 60000; // Default: 60 seconds
+        
+        // Session timeout - how long before a session is considered stale
+        this.sessionTimeoutMs = parseInt(process.env.PLAYER_SESSION_TIMEOUT_MS) || 180000; // Default: 3 minutes
     }
 
     /**
@@ -28,6 +33,7 @@ class PlayerTrackerService extends EventEmitter {
             
             const playerCount = database.getPlayerCount();
             console.log(`Player tracker initialized with ${playerCount} players`);
+            console.log(`Watchdog enabled: heartbeat=${this.heartbeatIntervalMs / 1000}s, timeout=${this.sessionTimeoutMs / 1000}s`);
         } catch (error) {
             console.error('Error initializing player tracker:', error);
             throw error;
@@ -63,6 +69,7 @@ class PlayerTrackerService extends EventEmitter {
      * Update all active sessions (called by heartbeat)
      */
     updateActiveSessions() {
+        // Update last_seen for all active sessions
         for (const [uuid, session] of this.activeSessions) {
             try {
                 database.updateLastSeen(uuid);
@@ -73,6 +80,35 @@ class PlayerTrackerService extends EventEmitter {
 
         if (this.activeSessions.size > 0) {
             console.log(`Heartbeat: Updated ${this.activeSessions.size} active session(s)`);
+        }
+
+        // Watchdog: Check for stale sessions and remove them
+        this.checkForStaleSessions();
+    }
+
+    /**
+     * Watchdog: Check for stale sessions and automatically remove them
+     * This handles cases where players disconnect without a proper leave event
+     * (e.g., crash, network loss, or abrupt connection termination)
+     */
+    checkForStaleSessions() {
+        try {
+            const stalePlayers = database.getPlayersWithStaleSessions(this.sessionTimeoutMs);
+            
+            for (const player of stalePlayers) {
+                console.warn(`Watchdog: Detected stale session for ${player.username} (last seen: ${player.last_seen})`);
+                
+                // Automatically call playerLeft to clean up the session
+                this.playerLeft(player.username)
+                    .then(() => {
+                        console.log(`Watchdog: Automatically removed ${player.username} due to session timeout`);
+                    })
+                    .catch(error => {
+                        console.error(`Watchdog: Error removing stale session for ${player.username}:`, error);
+                    });
+            }
+        } catch (error) {
+            console.error('Watchdog: Error checking for stale sessions:', error);
         }
     }
 
@@ -180,6 +216,31 @@ class PlayerTrackerService extends EventEmitter {
      */
     getPlayerStats(username) {
         return database.getPlayerByUsername(username);
+    }
+
+    /**
+     * Get watchdog configuration
+     * @returns {Object} Watchdog configuration
+     */
+    getWatchdogConfig() {
+        return {
+            heartbeatIntervalMs: this.heartbeatIntervalMs,
+            sessionTimeoutMs: this.sessionTimeoutMs,
+            heartbeatIntervalSeconds: this.heartbeatIntervalMs / 1000,
+            sessionTimeoutSeconds: this.sessionTimeoutMs / 1000
+        };
+    }
+
+    /**
+     * Set session timeout (for configuration or testing)
+     * @param {number} timeoutMs - Timeout in milliseconds
+     */
+    setSessionTimeout(timeoutMs) {
+        if (timeoutMs < 1000) {
+            throw new Error('Session timeout must be at least 1000ms (1 second)');
+        }
+        this.sessionTimeoutMs = timeoutMs;
+        console.log(`Session timeout updated to ${timeoutMs}ms (${timeoutMs / 1000}s)`);
     }
 
     /**
