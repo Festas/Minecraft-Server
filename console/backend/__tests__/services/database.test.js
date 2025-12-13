@@ -279,8 +279,7 @@ describe('DatabaseService', () => {
 
             // Manually set old last_seen for first player (5 seconds ago)
             const oldTimestamp = new Date(Date.now() - 5000).toISOString();
-            database.db.prepare('UPDATE players SET last_seen = ? WHERE uuid = ?')
-                .run(oldTimestamp, 'uuid-1');
+            database.setLastSeen('uuid-1', oldTimestamp);
 
             // Wait a bit then check for stale sessions (timeout: 2 seconds)
             setTimeout(() => {

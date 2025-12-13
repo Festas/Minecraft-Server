@@ -256,8 +256,7 @@ describe('PlayerTrackerService', () => {
             // Manually set last_seen to old timestamp to simulate stale session
             const player = database.getPlayerByUsername('StalePlayer');
             const oldTimestamp = new Date(Date.now() - 5000).toISOString(); // 5 seconds ago
-            database.db.prepare('UPDATE players SET last_seen = ? WHERE uuid = ?')
-                .run(oldTimestamp, player.uuid);
+            database.setLastSeen(player.uuid, oldTimestamp);
             
             // Run watchdog check
             playerTracker.checkForStaleSessions();
@@ -315,8 +314,11 @@ describe('PlayerTrackerService', () => {
             
             // Make all sessions stale
             const oldTimestamp = new Date(Date.now() - 5000).toISOString();
-            database.db.prepare('UPDATE players SET last_seen = ? WHERE current_session_start IS NOT NULL')
-                .run(oldTimestamp);
+            const stalePlayers = ['StalePlayer1', 'StalePlayer2', 'StalePlayer3'];
+            stalePlayers.forEach(name => {
+                const p = database.getPlayerByUsername(name);
+                database.setLastSeen(p.uuid, oldTimestamp);
+            });
             
             // Run watchdog check
             playerTracker.checkForStaleSessions();

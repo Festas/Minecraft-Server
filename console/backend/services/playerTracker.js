@@ -99,11 +99,13 @@ class PlayerTrackerService extends EventEmitter {
                 console.warn(`Watchdog: Detected stale session for ${player.username} (last seen: ${player.last_seen})`);
                 
                 // Automatically call playerLeft to clean up the session
-                this.playerLeft(player.username).catch(error => {
-                    console.error(`Watchdog: Error removing stale session for ${player.username}:`, error);
-                });
-                
-                console.log(`Watchdog: Automatically removed ${player.username} due to session timeout`);
+                this.playerLeft(player.username)
+                    .then(() => {
+                        console.log(`Watchdog: Automatically removed ${player.username} due to session timeout`);
+                    })
+                    .catch(error => {
+                        console.error(`Watchdog: Error removing stale session for ${player.username}:`, error);
+                    });
             }
         } catch (error) {
             console.error('Watchdog: Error checking for stale sessions:', error);

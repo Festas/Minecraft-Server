@@ -386,6 +386,21 @@ class DatabaseService {
     }
 
     /**
+     * Set player's last seen timestamp to a specific value (for testing)
+     * @param {string} uuid - Player UUID
+     * @param {string} timestamp - ISO timestamp string
+     */
+    setLastSeen(uuid, timestamp) {
+        const stmt = this.db.prepare(`
+            UPDATE players
+            SET last_seen = ?
+            WHERE uuid = ?
+        `);
+
+        stmt.run(timestamp, uuid);
+    }
+
+    /**
      * End a player session and update total playtime
      * @param {string} uuid - Player UUID
      * @returns {number} Session duration in milliseconds

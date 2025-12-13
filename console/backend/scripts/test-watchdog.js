@@ -79,8 +79,7 @@ async function main() {
     console.log('5. Simulating Player2 crash (aging last_seen timestamp)...');
     const player2 = database.getPlayerByUsername('Player2');
     const oldTimestamp = new Date(Date.now() - 15000).toISOString(); // 15 seconds ago
-    database.db.prepare('UPDATE players SET last_seen = ? WHERE uuid = ?')
-        .run(oldTimestamp, player2.uuid);
+    database.setLastSeen(player2.uuid, oldTimestamp);
     console.log(`   Player2 last_seen set to 15 seconds ago`);
     console.log(`   Active sessions: ${playerTracker.activeSessions.size}`);
     console.log();
