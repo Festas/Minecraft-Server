@@ -224,5 +224,112 @@ describe('PlayerTrackerService', () => {
             database.initialize();
         });
     });
+
+    describe('watchdog', () => {
+        it('should have default timeout configuration', () => {
+            const config = playerTracker.getWatchdogConfig();
+            expect(config.sessionTimeoutMs).toBe(180000); // 3 minutes
+            expect(config.heartbeatIntervalMs).toBe(60000); // 60 seconds
+        });
+
+        it('should allow setting session timeout', () => {
+            playerTracker.setSessionTimeout(120000); // 2 minutes
+            const config = playerTracker.getWatchdogConfig();
+            expect(config.sessionTimeoutMs).toBe(120000);
+            
+            // Reset to default
+            playerTracker.setSessionTimeout(180000);
+        });
+
+        it('should reject invalid timeout values', () => {
+            expect(() => playerTracker.setSessionTimeout(500)).toThrow();
+        });
+
+        it('should detect and remove stale sessions', async () => {
+            // Set a very short timeout for testing (2 seconds)
+            playerTracker.setSessionTimeout(2000);
+            
+            // Add a player
+            await playerTracker.playerJoined('StalePlayer');
+            expect(playerTracker.activeSessions.size).toBe(1);
+            
+            // Manually set last_seen to old timestamp to simulate stale session
+            const player = database.getPlayerByUsername('StalePlayer');
+            const oldTimestamp = new Date(Date.now() - 5000).toISOString(); // 5 seconds ago
+            database.db.prepare('UPDATE players SET last_seen = ? WHERE uuid = ?')
+                .run(oldTimestamp, player.uuid);
+            
+            // Run watchdog check
+            playerTracker.checkForStaleSessions();
+            
+            // Wait a bit for async playerLeft to complete
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Session should be removed
+            expect(playerTracker.activeSessions.size).toBe(0);
+            
+            // Player should have no active session in DB
+            const updatedPlayer = database.getPlayerByUsername('StalePlayer');
+            expect(updatedPlayer.current_session_start).toBeNull();
+            
+            // Reset timeout to default
+            playerTracker.setSessionTimeout(180000);
+        });
+
+        it('should not remove active sessions within timeout', async () => {
+            // Set a reasonable timeout
+            playerTracker.setSessionTimeout(60000); // 1 minute
+            
+            // Add a player
+            await playerTracker.playerJoined('ActivePlayer');
+            expect(playerTracker.activeSessions.size).toBe(1);
+            
+            // Update last_seen to recent timestamp (within timeout)
+            database.updateLastSeen('uuid-activeplayer');
+            
+            // Run watchdog check
+            playerTracker.checkForStaleSessions();
+            
+            // Wait a bit
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Session should still be active
+            expect(playerTracker.activeSessions.size).toBe(1);
+            
+            // Clean up
+            await playerTracker.playerLeft('ActivePlayer');
+            
+            // Reset timeout to default
+            playerTracker.setSessionTimeout(180000);
+        });
+
+        it('should handle multiple stale sessions', async () => {
+            // Set a very short timeout for testing
+            playerTracker.setSessionTimeout(2000);
+            
+            // Add multiple players
+            await playerTracker.playerJoined('StalePlayer1');
+            await playerTracker.playerJoined('StalePlayer2');
+            await playerTracker.playerJoined('StalePlayer3');
+            expect(playerTracker.activeSessions.size).toBe(3);
+            
+            // Make all sessions stale
+            const oldTimestamp = new Date(Date.now() - 5000).toISOString();
+            database.db.prepare('UPDATE players SET last_seen = ? WHERE current_session_start IS NOT NULL')
+                .run(oldTimestamp);
+            
+            // Run watchdog check
+            playerTracker.checkForStaleSessions();
+            
+            // Wait for async operations
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // All sessions should be removed
+            expect(playerTracker.activeSessions.size).toBe(0);
+            
+            // Reset timeout to default
+            playerTracker.setSessionTimeout(180000);
+        });
+    });
 });
 

@@ -467,6 +467,21 @@ class DatabaseService {
         return result.count;
     }
 
+    /**
+     * Get players with stale sessions (last_seen older than timeout)
+     * @param {number} timeoutMs - Timeout in milliseconds
+     * @returns {Array} Array of player records with stale sessions
+     */
+    getPlayersWithStaleSessions(timeoutMs) {
+        const stmt = this.db.prepare(`
+            SELECT uuid, username, last_seen, current_session_start
+            FROM players
+            WHERE current_session_start IS NOT NULL
+            AND (julianday('now') - julianday(last_seen)) * 86400000 > ?
+        `);
+        return stmt.all(timeoutMs);
+    }
+
     // ========================================================================
     // PLAYER ACTIONS HISTORY METHODS
     // ========================================================================

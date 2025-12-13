@@ -265,4 +265,55 @@ describe('DatabaseService', () => {
             expect(database.getPlayerCount()).toBe(2);
         });
     });
+
+    describe('getPlayersWithStaleSessions', () => {
+        it('should return players with stale sessions', (done) => {
+            const timestamp = new Date().toISOString();
+            const sessionStart = Date.now();
+
+            // Create two players with active sessions
+            database.upsertPlayer('uuid-1', 'StalePlayer', timestamp);
+            database.upsertPlayer('uuid-2', 'ActivePlayer', timestamp);
+            database.startSession('uuid-1', sessionStart);
+            database.startSession('uuid-2', sessionStart);
+
+            // Manually set old last_seen for first player (5 seconds ago)
+            const oldTimestamp = new Date(Date.now() - 5000).toISOString();
+            database.db.prepare('UPDATE players SET last_seen = ? WHERE uuid = ?')
+                .run(oldTimestamp, 'uuid-1');
+
+            // Wait a bit then check for stale sessions (timeout: 2 seconds)
+            setTimeout(() => {
+                const stalePlayers = database.getPlayersWithStaleSessions(2000);
+
+                expect(stalePlayers).toHaveLength(1);
+                expect(stalePlayers[0].username).toBe('StalePlayer');
+                expect(stalePlayers[0].uuid).toBe('uuid-1');
+
+                done();
+            }, 100);
+        });
+
+        it('should return empty array when no stale sessions', () => {
+            const timestamp = new Date().toISOString();
+            const sessionStart = Date.now();
+
+            database.upsertPlayer('uuid-1', 'ActivePlayer', timestamp);
+            database.startSession('uuid-1', sessionStart);
+            database.updateLastSeen('uuid-1'); // Update to current time
+
+            const stalePlayers = database.getPlayersWithStaleSessions(60000); // 60 second timeout
+            expect(stalePlayers).toEqual([]);
+        });
+
+        it('should not return players without active sessions', () => {
+            const timestamp = new Date().toISOString();
+
+            // Create player without active session
+            database.upsertPlayer('uuid-1', 'InactivePlayer', timestamp);
+
+            const stalePlayers = database.getPlayersWithStaleSessions(1000);
+            expect(stalePlayers).toEqual([]);
+        });
+    });
 });
