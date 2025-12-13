@@ -152,7 +152,12 @@ class PlayerTrackerService extends EventEmitter {
 
             const onlineCount = this.rconOnlinePlayers.size;
             if (onlineCount > 0) {
-                console.log(`RCON polling: ${onlineCount} player(s) online: ${Array.from(this.rconOnlinePlayers).join(', ')}`);
+                // Limit player list display to first 10 players to avoid excessive logging
+                const playerNames = Array.from(this.rconOnlinePlayers);
+                const displayList = onlineCount > 10 
+                    ? `${playerNames.slice(0, 10).join(', ')} ... (${onlineCount - 10} more)`
+                    : playerNames.join(', ');
+                console.log(`RCON polling: ${onlineCount} player(s) online: ${displayList}`);
             } else {
                 console.log(`RCON polling: No players online`);
             }
@@ -210,7 +215,10 @@ class PlayerTrackerService extends EventEmitter {
         }
 
         // Watchdog: Check for stale sessions and remove them
-        this.checkForStaleSessions();
+        // Don't await - let it run asynchronously to avoid blocking heartbeat
+        this.checkForStaleSessions().catch(error => {
+            console.error('Error in watchdog check:', error);
+        });
     }
 
     /**
@@ -223,7 +231,7 @@ class PlayerTrackerService extends EventEmitter {
      * - After timeout period, they are automatically removed
      * - Comprehensive logging for troubleshooting
      */
-    checkForStaleSessions() {
+    async checkForStaleSessions() {
         try {
             const stalePlayers = database.getPlayersWithStaleSessions(this.sessionTimeoutMs);
             
@@ -233,6 +241,7 @@ class PlayerTrackerService extends EventEmitter {
 
             console.log(`Watchdog: Found ${stalePlayers.length} stale session(s) to clean up`);
             
+            // Process stale sessions sequentially to ensure proper cleanup
             for (const player of stalePlayers) {
                 const lastSeenDate = new Date(player.last_seen);
                 const timeSinceLastSeen = Date.now() - lastSeenDate.getTime();
@@ -245,13 +254,12 @@ class PlayerTrackerService extends EventEmitter {
                 console.warn(`  - Reason: Player not confirmed by RCON, last_seen exceeded timeout`);
                 
                 // Automatically call playerLeft to clean up the session
-                this.playerLeft(player.username)
-                    .then(() => {
-                        console.log(`✓ Watchdog: Successfully removed "${player.username}" (zombie session cleanup)`);
-                    })
-                    .catch(error => {
-                        console.error(`✗ Watchdog: Error removing stale session for ${player.username}:`, error);
-                    });
+                try {
+                    await this.playerLeft(player.username);
+                    console.log(`✓ Watchdog: Successfully removed "${player.username}" (zombie session cleanup)`);
+                } catch (error) {
+                    console.error(`✗ Watchdog: Error removing stale session for ${player.username}:`, error);
+                }
             }
         } catch (error) {
             console.error('Watchdog: Error checking for stale sessions:', error);

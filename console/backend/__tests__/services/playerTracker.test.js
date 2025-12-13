@@ -272,9 +272,9 @@ describe('PlayerTrackerService', () => {
             database.setLastSeen(player.uuid, oldTimestamp);
             
             // Run watchdog check
-            playerTracker.checkForStaleSessions();
+            await playerTracker.checkForStaleSessions();
             
-            // Wait a bit for async playerLeft to complete
+            // Wait a bit for async operations to complete
             await new Promise(resolve => setTimeout(resolve, 100));
             
             // Session should be removed
@@ -300,7 +300,7 @@ describe('PlayerTrackerService', () => {
             database.updateLastSeen('uuid-activeplayer');
             
             // Run watchdog check
-            playerTracker.checkForStaleSessions();
+            await playerTracker.checkForStaleSessions();
             
             // Wait a bit
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -334,7 +334,7 @@ describe('PlayerTrackerService', () => {
             });
             
             // Run watchdog check
-            playerTracker.checkForStaleSessions();
+            await playerTracker.checkForStaleSessions();
             
             // Wait for async operations
             await new Promise(resolve => setTimeout(resolve, 200));
