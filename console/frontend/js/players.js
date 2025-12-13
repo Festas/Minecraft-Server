@@ -2,6 +2,59 @@
 let allPlayersData = [];
 let currentSort = 'playtime'; // default sort
 
+/**
+ * Generate fallback avatar SVG
+ * @param {number} size - Size of the avatar in pixels
+ * @returns {string} Data URL for the SVG
+ */
+function generateFallbackAvatar(size) {
+    return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}'><rect fill='%23666' width='${size}' height='${size}'/></svg>`;
+}
+
+/**
+ * Load avatar image with robust error handling
+ * Only falls back to placeholder after timeout or real network failure
+ * @param {string} avatarUrl - The Minotar URL to load
+ * @param {string} fallbackUrl - The fallback SVG data URL
+ * @param {number} timeout - Milliseconds to wait before fallback (default 2000)
+ * @returns {Promise<string>} The URL to use (either original or fallback)
+ */
+function loadAvatarWithFallback(avatarUrl, fallbackUrl, timeout = 2000) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        let hasResolved = false;
+        
+        // Set a timeout for fallback
+        const timeoutId = setTimeout(() => {
+            if (!hasResolved) {
+                hasResolved = true;
+                resolve(fallbackUrl);
+            }
+        }, timeout);
+        
+        // On successful load
+        img.onload = () => {
+            if (!hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeoutId);
+                resolve(avatarUrl);
+            }
+        };
+        
+        // On error (real network failure)
+        img.onerror = () => {
+            if (!hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeoutId);
+                resolve(fallbackUrl);
+            }
+        };
+        
+        // Start loading
+        img.src = avatarUrl;
+    });
+}
+
 async function loadPlayers() {
     try {
         // Fetch all players with stats
@@ -97,27 +150,31 @@ function createPlayerCard(player) {
         </div>
     `;
 
-    // Avatar-Fallback (SVG placeholder)
-    const fallbackAvatar = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect fill='#666' width='64' height='64'/></svg>";
+    // Avatar URLs
+    const fallbackAvatar = generateFallbackAvatar(64);
     const avatarUrl = `https://minotar.net/avatar/${player.username}/64.png`;
 
-    // Image dynamisch erzeugen und einbauen
+    // Get avatar container
     const avatarDiv = playerCard.querySelector('.player-card-avatar');
+    
+    // Create image element
     const img = document.createElement('img');
-    img.src = avatarUrl;
     img.alt = player.username;
-
-    img.onerror = function () {
-        // Verzögerung, damit wirklich erst nach echtem Fehler das Fallback greift
-        setTimeout(() => {
-            if (!img.complete || img.naturalWidth === 0) {
-                img.src = fallbackAvatar;
-            }
-        }, 350); // 350ms Warten, ggf. anpassen
-    };
-
-    // Image als erstes Kind in Avatar-Div setzen
+    img.style.opacity = '0';
+    img.style.transition = 'opacity 0.2s ease-in-out';
+    
+    // Insert image into avatar div
     avatarDiv.insertBefore(img, avatarDiv.firstChild);
+    
+    // Load avatar with robust fallback handling
+    loadAvatarWithFallback(avatarUrl, fallbackAvatar, 2000).then(finalUrl => {
+        img.src = finalUrl;
+        img.style.opacity = '1';
+    }).catch(error => {
+        console.error('Error loading avatar for', player.username, error);
+        img.src = fallbackAvatar;
+        img.style.opacity = '1';
+    });
 
     // Add click handler to open modal
     playerCard.addEventListener('click', () => {
@@ -253,16 +310,23 @@ function openPlayerModal(player) {
     
     // Populate modal with player data
     const avatarUrl = `https://minotar.net/avatar/${player.username}/128.png`;
-    const fallbackAvatar = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><rect fill='#666' width='128' height='128'/></svg>";
+    const fallbackAvatar = generateFallbackAvatar(128);
     const img = document.getElementById('modalPlayerAvatar');
-    img.src = avatarUrl;
-    img.onerror = function() {
-        setTimeout(() => {
-            if (!img.complete || img.naturalWidth === 0) {
-                img.src = fallbackAvatar;
-        }
-    }, 350);
-};
+    
+    // Reset opacity for loading state
+    img.style.opacity = '0.3';
+    img.style.transition = 'opacity 0.2s ease-in-out';
+    
+    // Load avatar with robust fallback handling
+    loadAvatarWithFallback(avatarUrl, fallbackAvatar, 2000).then(finalUrl => {
+        img.src = finalUrl;
+        img.style.opacity = '1';
+    }).catch(error => {
+        console.error('Error loading modal avatar for', player.username, error);
+        img.src = fallbackAvatar;
+        img.style.opacity = '1';
+    });
+    
     document.getElementById('modalPlayerName').textContent = player.username;
     
     // Update status
