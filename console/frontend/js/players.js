@@ -152,7 +152,7 @@ function createPlayerCard(player) {
 
     // Avatar URLs
     const fallbackAvatar = generateFallbackAvatar(64);
-    const avatarUrl = `https://minotar.net/avatar/${player.username}/64.png`;
+    const avatarUrl = `https://mc-heads.net/avatar/${player.username}/64`;
 
     // Get avatar container
     const avatarDiv = playerCard.querySelector('.player-card-avatar');
@@ -309,7 +309,7 @@ function openPlayerModal(player) {
     if (!modal) return;
     
     // Populate modal with player data
-    const avatarUrl = `https://minotar.net/avatar/${player.username}/128.png`;
+    const avatarUrl = `https://mc-heads.net/avatar/${player.username}/128`;
     const fallbackAvatar = generateFallbackAvatar(128);
     const img = document.getElementById('modalPlayerAvatar');
     
