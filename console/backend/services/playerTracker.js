@@ -38,6 +38,10 @@ class PlayerTrackerService extends EventEmitter {
         // Cache of RCON-confirmed online players (usernames)
         this.rconOnlinePlayers = new Set();
         this.rconLastPollTime = null;
+        
+        // Logging configuration
+        this.maxPlayersInLog = 10; // Limit player list display to prevent excessive logging
+        this.maxStaleSessionsPerRun = 20; // Limit stale session processing to prevent blocking
     }
 
     /**
@@ -152,10 +156,10 @@ class PlayerTrackerService extends EventEmitter {
 
             const onlineCount = this.rconOnlinePlayers.size;
             if (onlineCount > 0) {
-                // Limit player list display to first 10 players to avoid excessive logging
+                // Limit player list display to prevent excessive logging
                 const playerNames = Array.from(this.rconOnlinePlayers);
-                const displayList = onlineCount > 10 
-                    ? `${playerNames.slice(0, 10).join(', ')} ... (${onlineCount - 10} more)`
+                const displayList = onlineCount > this.maxPlayersInLog
+                    ? `${playerNames.slice(0, this.maxPlayersInLog).join(', ')} ... (${onlineCount - this.maxPlayersInLog} more)`
                     : playerNames.join(', ');
                 console.log(`RCON polling: ${onlineCount} player(s) online: ${displayList}`);
             } else {
@@ -230,6 +234,10 @@ class PlayerTrackerService extends EventEmitter {
      * - Players not in RCON list stop getting last_seen updates
      * - After timeout period, they are automatically removed
      * - Comprehensive logging for troubleshooting
+     * 
+     * Note: This method is async to properly handle playerLeft() calls.
+     * It's called from updateActiveSessions() with fire-and-forget pattern
+     * to avoid blocking the heartbeat interval.
      */
     async checkForStaleSessions() {
         try {
@@ -241,8 +249,17 @@ class PlayerTrackerService extends EventEmitter {
 
             console.log(`Watchdog: Found ${stalePlayers.length} stale session(s) to clean up`);
             
+            // Limit processing to prevent blocking in case of many stale sessions
+            const playersToProcess = stalePlayers.slice(0, this.maxStaleSessionsPerRun);
+            if (stalePlayers.length > this.maxStaleSessionsPerRun) {
+                console.warn(`Watchdog: Processing ${this.maxStaleSessionsPerRun} of ${stalePlayers.length} stale sessions (rate limited)`);
+            }
+            
             // Process stale sessions sequentially to ensure proper cleanup
-            for (const player of stalePlayers) {
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const player of playersToProcess) {
                 const lastSeenDate = new Date(player.last_seen);
                 const timeSinceLastSeen = Date.now() - lastSeenDate.getTime();
                 const minutesSinceLastSeen = Math.floor(timeSinceLastSeen / 60000);
@@ -257,10 +274,14 @@ class PlayerTrackerService extends EventEmitter {
                 try {
                     await this.playerLeft(player.username);
                     console.log(`✓ Watchdog: Successfully removed "${player.username}" (zombie session cleanup)`);
+                    successCount++;
                 } catch (error) {
                     console.error(`✗ Watchdog: Error removing stale session for ${player.username}:`, error);
+                    errorCount++;
                 }
             }
+            
+            console.log(`Watchdog: Cleanup complete - ${successCount} removed, ${errorCount} errors`);
         } catch (error) {
             console.error('Watchdog: Error checking for stale sessions:', error);
         }
