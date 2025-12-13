@@ -12,8 +12,12 @@ class PlayerTrackerService extends EventEmitter {
         super();
         this.activeSessions = new Map(); // uuid -> { username, startTime }
         this.heartbeatInterval = null;
-        this.heartbeatIntervalMs = 60000; // 60 seconds
-        this.sessionTimeoutMs = 180000; // 3 minutes - timeout for stale sessions
+        
+        // Heartbeat interval - check active sessions and run watchdog
+        this.heartbeatIntervalMs = parseInt(process.env.PLAYER_HEARTBEAT_INTERVAL_MS) || 60000; // Default: 60 seconds
+        
+        // Session timeout - how long before a session is considered stale
+        this.sessionTimeoutMs = parseInt(process.env.PLAYER_SESSION_TIMEOUT_MS) || 180000; // Default: 3 minutes
     }
 
     /**

@@ -164,16 +164,24 @@ Each player card shows:
 
 ### Heartbeat Interval
 
-Configured in `playerTracker.js`:
+**Environment variable:**
+```bash
+PLAYER_HEARTBEAT_INTERVAL_MS=60000  # Default: 60 seconds
+```
 
+**Default in code:**
 ```javascript
 this.heartbeatIntervalMs = 60000; // 60 seconds
 ```
 
 ### Session Timeout (Watchdog)
 
-Configured in `playerTracker.js`:
+**Environment variable:**
+```bash
+PLAYER_SESSION_TIMEOUT_MS=180000  # Default: 3 minutes (180 seconds)
+```
 
+**Default in code:**
 ```javascript
 this.sessionTimeoutMs = 180000; // 3 minutes (180 seconds)
 ```
