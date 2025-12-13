@@ -3,9 +3,11 @@ const path = require('path');
 const playerTracker = require('../../services/playerTracker');
 const database = require('../../services/database');
 const mojangService = require('../../services/mojang');
+const rconService = require('../../services/rcon');
 
-// Mock mojangService
+// Mock services
 jest.mock('../../services/mojang');
+jest.mock('../../services/rcon');
 
 describe('PlayerTrackerService', () => {
     const testDbPath = path.join(__dirname, '../../data/test-tracker-players.db');
@@ -34,11 +36,22 @@ describe('PlayerTrackerService', () => {
             return Promise.resolve(`uuid-${username.toLowerCase()}`);
         });
 
+        // Mock RCON service
+        rconService.isConnected.mockReturnValue(true);
+        rconService.getPlayers.mockResolvedValue({
+            online: 0,
+            max: 20,
+            players: []
+        });
+
         // Initialize player tracker
         await playerTracker.initialize();
         
         // Clear any active sessions
         playerTracker.activeSessions.clear();
+        
+        // Stop RCON polling for most tests (re-enable in specific tests)
+        playerTracker.stopRconPolling();
     });
 
     afterEach(async () => {
@@ -330,6 +343,247 @@ describe('PlayerTrackerService', () => {
             expect(playerTracker.activeSessions.size).toBe(0);
             
             // Reset timeout to default
+            playerTracker.setSessionTimeout(180000);
+        });
+    });
+
+    describe('RCON integration', () => {
+        it('should poll RCON for online players', async () => {
+            // Mock RCON to return a player
+            rconService.getPlayers.mockResolvedValue({
+                online: 2,
+                max: 20,
+                players: ['Player1', 'Player2']
+            });
+
+            // Poll RCON
+            await playerTracker.pollRconOnlinePlayers();
+
+            // Check that players are in cache
+            expect(playerTracker.rconOnlinePlayers.has('Player1')).toBe(true);
+            expect(playerTracker.rconOnlinePlayers.has('Player2')).toBe(true);
+            expect(playerTracker.rconOnlinePlayers.size).toBe(2);
+            expect(playerTracker.rconConsecutiveFailures).toBe(0);
+        });
+
+        it('should handle RCON connection failure', async () => {
+            // Mock RCON as disconnected
+            rconService.isConnected.mockReturnValue(false);
+
+            // Poll RCON
+            await playerTracker.pollRconOnlinePlayers();
+
+            // Should increment failure counter
+            expect(playerTracker.rconConsecutiveFailures).toBe(1);
+        });
+
+        it('should handle RCON response errors', async () => {
+            // Mock RCON to throw error
+            rconService.getPlayers.mockRejectedValue(new Error('RCON error'));
+
+            // Poll RCON
+            await playerTracker.pollRconOnlinePlayers();
+
+            // Should increment failure counter
+            expect(playerTracker.rconConsecutiveFailures).toBe(1);
+        });
+
+        it('should reset failure counter on successful poll', async () => {
+            // Set some failures
+            playerTracker.rconConsecutiveFailures = 2;
+
+            // Mock successful RCON response
+            rconService.getPlayers.mockResolvedValue({
+                online: 1,
+                max: 20,
+                players: ['Player1']
+            });
+
+            // Poll RCON
+            await playerTracker.pollRconOnlinePlayers();
+
+            // Failure counter should be reset
+            expect(playerTracker.rconConsecutiveFailures).toBe(0);
+        });
+
+        it('should consider RCON unreliable after max failures', () => {
+            expect(playerTracker.isRconReliable()).toBe(true);
+            
+            playerTracker.rconConsecutiveFailures = 3;
+            expect(playerTracker.isRconReliable()).toBe(false);
+            
+            playerTracker.rconConsecutiveFailures = 2;
+            expect(playerTracker.isRconReliable()).toBe(true);
+        });
+
+        it('should only update last_seen for RCON-confirmed players', async () => {
+            // Add two players
+            await playerTracker.playerJoined('OnlinePlayer');
+            await playerTracker.playerJoined('OfflinePlayer');
+
+            // Mock RCON to only show OnlinePlayer
+            rconService.getPlayers.mockResolvedValue({
+                online: 1,
+                max: 20,
+                players: ['OnlinePlayer']
+            });
+
+            // Poll RCON to update cache
+            await playerTracker.pollRconOnlinePlayers();
+
+            // Get initial last_seen timestamps
+            const onlinePlayer1 = database.getPlayerByUsername('OnlinePlayer');
+            const offlinePlayer1 = database.getPlayerByUsername('OfflinePlayer');
+            const onlineLastSeen1 = onlinePlayer1.last_seen;
+            const offlineLastSeen1 = offlinePlayer1.last_seen;
+
+            // Wait for at least one second to ensure timestamp changes
+            await new Promise(resolve => setTimeout(resolve, 1100));
+
+            // Run heartbeat update
+            playerTracker.updateActiveSessions();
+
+            // Get updated last_seen timestamps
+            const onlinePlayer2 = database.getPlayerByUsername('OnlinePlayer');
+            const offlinePlayer2 = database.getPlayerByUsername('OfflinePlayer');
+
+            // OnlinePlayer should have updated last_seen
+            expect(onlinePlayer2.last_seen).not.toBe(onlineLastSeen1);
+            
+            // OfflinePlayer should NOT have updated last_seen (not in RCON list)
+            expect(offlinePlayer2.last_seen).toBe(offlineLastSeen1);
+        });
+
+        it('should not update any sessions when RCON is unreliable', async () => {
+            // Add a player
+            await playerTracker.playerJoined('TestPlayer');
+
+            // Mock RCON as working initially
+            rconService.getPlayers.mockResolvedValue({
+                online: 1,
+                max: 20,
+                players: ['TestPlayer']
+            });
+            await playerTracker.pollRconOnlinePlayers();
+
+            // Get initial last_seen
+            const player1 = database.getPlayerByUsername('TestPlayer');
+            const lastSeen1 = player1.last_seen;
+
+            // Simulate RCON failures
+            playerTracker.rconConsecutiveFailures = 3; // Hit max failures
+
+            // Wait a moment
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Try to update sessions
+            playerTracker.updateActiveSessions();
+
+            // Get updated player
+            const player2 = database.getPlayerByUsername('TestPlayer');
+
+            // last_seen should NOT be updated (RCON unreliable)
+            expect(player2.last_seen).toBe(lastSeen1);
+        });
+
+        it('should include RCON info in watchdog config', () => {
+            playerTracker.rconConsecutiveFailures = 1;
+            playerTracker.rconOnlinePlayers.add('Player1');
+
+            const config = playerTracker.getWatchdogConfig();
+
+            expect(config.rconPollIntervalMs).toBeDefined();
+            expect(config.rconMaxFailures).toBe(3);
+            expect(config.rconConsecutiveFailures).toBe(1);
+            expect(config.rconReliable).toBe(true);
+            expect(config.rconOnlineCount).toBe(1);
+        });
+
+        it('should stop RCON polling on shutdown', async () => {
+            // Start RCON polling
+            playerTracker.startRconPolling();
+            expect(playerTracker.rconPollInterval).toBeDefined();
+
+            // Shutdown
+            await playerTracker.shutdown();
+
+            // RCON polling should be stopped
+            expect(playerTracker.rconPollInterval).toBeNull();
+
+            // Re-initialize for cleanup
+            database.initialize();
+        });
+    });
+
+    describe('RCON-based zombie session cleanup', () => {
+        it('should remove sessions not in RCON list after timeout', async () => {
+            // Set short timeout for testing
+            playerTracker.setSessionTimeout(2000); // 2 seconds
+
+            // Add a player
+            await playerTracker.playerJoined('ZombiePlayer');
+            expect(playerTracker.activeSessions.size).toBe(1);
+
+            // Mock RCON to return empty player list (player not on server)
+            rconService.getPlayers.mockResolvedValue({
+                online: 0,
+                max: 20,
+                players: []
+            });
+            await playerTracker.pollRconOnlinePlayers();
+
+            // Manually set last_seen to old timestamp
+            const player = database.getPlayerByUsername('ZombiePlayer');
+            const oldTimestamp = new Date(Date.now() - 5000).toISOString(); // 5 seconds ago
+            database.setLastSeen(player.uuid, oldTimestamp);
+
+            // Run heartbeat (won't update last_seen because player not in RCON list)
+            playerTracker.updateActiveSessions();
+
+            // Wait for watchdog async operation
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Session should be removed by watchdog
+            expect(playerTracker.activeSessions.size).toBe(0);
+
+            // Reset timeout
+            playerTracker.setSessionTimeout(180000);
+        });
+
+        it('should keep sessions that are in RCON list', async () => {
+            // Set short timeout
+            playerTracker.setSessionTimeout(2000);
+
+            // Add a player
+            await playerTracker.playerJoined('ActivePlayer');
+            expect(playerTracker.activeSessions.size).toBe(1);
+
+            // Mock RCON to return this player
+            rconService.getPlayers.mockResolvedValue({
+                online: 1,
+                max: 20,
+                players: ['ActivePlayer']
+            });
+            await playerTracker.pollRconOnlinePlayers();
+
+            // Manually set last_seen to old timestamp
+            const player = database.getPlayerByUsername('ActivePlayer');
+            const oldTimestamp = new Date(Date.now() - 5000).toISOString();
+            database.setLastSeen(player.uuid, oldTimestamp);
+
+            // Run heartbeat (will update last_seen because player IS in RCON list)
+            playerTracker.updateActiveSessions();
+
+            // Wait for watchdog
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Session should still be active (last_seen was updated)
+            const updatedPlayer = database.getPlayerByUsername('ActivePlayer');
+            expect(updatedPlayer.last_seen).not.toBe(oldTimestamp); // Should be updated
+            expect(playerTracker.activeSessions.size).toBe(1);
+
+            // Cleanup
+            await playerTracker.playerLeft('ActivePlayer');
             playerTracker.setSessionTimeout(180000);
         });
     });
