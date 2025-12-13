@@ -677,7 +677,7 @@ function updateTopPlayers(players) {
  * Get Minotar avatar URL
  */
 function getPlayerAvatar(playerName, size = 32) {
-    return `https://minotar.net/avatar/${encodeURIComponent(playerName)}/${size}.png`;
+    return `https://mc-heads.net/avatar/${encodeURIComponent(playerName)}/${size}`;
 }
 
 /**
