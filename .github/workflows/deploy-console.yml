@@ -316,7 +316,7 @@ jobs:
                 container_name: minecraft-console
                 restart: unless-stopped
                 ports:
-                  - "3001:3001"
+                  - "3002:3001"
                 extra_hosts:
                   - "host.docker.internal:host-gateway"
                 environment:
@@ -365,6 +365,7 @@ jobs:
             done
 
             echo "✓ Console deployed successfully!"
+            echo "Console accessible at: http://127.0.0.1:3002"
             echo "URL: https://mc.festas-builds.com/console"
 
       - name: Test plugin install functionality
@@ -382,7 +383,7 @@ jobs:
 
             # Wait for console to be fully ready
             for i in {1..15}; do
-              if curl -s http://localhost:3001/health > /dev/null 2>&1; then
+              if curl -s http://localhost:3002/health > /dev/null 2>&1; then
                 echo "✓ Console is ready"
                 break
               fi
@@ -391,7 +392,7 @@ jobs:
             done
 
             # Verify console is accessible
-            HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/health || echo "000")
+            HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/health || echo "000")
             if [ "$HEALTH_STATUS" != "200" ]; then
               echo "✗ Console health check failed with status: $HEALTH_STATUS"
               exit 1
@@ -429,7 +430,7 @@ jobs:
             # Use stdin to avoid exposing credentials in process lists
             LOGIN_RESPONSE=$(printf '{"username":"%s","password":"%s"}' "$ADMIN_USERNAME" "$ADMIN_PASSWORD" | \
               curl -s -c /tmp/cookies.txt -w "\n%{http_code}" \
-              -X POST http://localhost:3001/api/login \
+              -X POST http://localhost:3002/api/login \
               -H "Content-Type: application/json" \
               --data-binary @- 2>&1)
 
@@ -451,7 +452,7 @@ jobs:
             # Step 1.5: Fetch CSRF token
             echo "Step 1.5: Fetching CSRF token..."
             CSRF_RESPONSE=$(curl -s -b /tmp/cookies.txt -c /tmp/cookies.txt -w "\n%{http_code}" \
-              -X GET http://localhost:3001/api/csrf-token 2>&1)
+              -X GET http://localhost:3002/api/csrf-token 2>&1)
 
             CSRF_STATUS=$(echo "$CSRF_RESPONSE" | tail -1)
             CSRF_BODY=$(echo "$CSRF_RESPONSE" | sed '$d')
@@ -495,7 +496,7 @@ jobs:
             # Step 3: Call plugin install API
             echo "Step 3: Calling plugin install API..."
             INSTALL_RESPONSE=$(curl -s -b /tmp/cookies.txt -w "\n%{http_code}" \
-              -X POST http://localhost:3001/api/plugins/install \
+              -X POST http://localhost:3002/api/plugins/install \
               -H "Content-Type: application/json" \
               -H "CSRF-Token: $CSRF_TOKEN" \
               -d "{\"url\":\"$TEST_PLUGIN_URL\"}" 2>&1)

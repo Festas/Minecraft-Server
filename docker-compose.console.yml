@@ -24,7 +24,7 @@ services:
     container_name: minecraft-console
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "3002:3001"
     environment:
       # Console Configuration
       - CONSOLE_PORT=3001
@@ -117,10 +117,12 @@ networks:
 # 3. To start the console:
 #    docker compose -f docker-compose.console.yml up -d
 #
-# 4. Access the console at http://your-server-ip:3001/console
-#    API available at: http://your-server-ip:3001/api/plugins
+# 4. Access the console at http://your-server-ip:3002/console
+#    API available at: http://your-server-ip:3002/api/plugins
+#    nginx reverse proxy should connect to http://127.0.0.1:3002
 #
-# 5. For production, use Nginx reverse proxy with SSL (see nginx/console.conf)
+# 5. For production, use Nginx reverse proxy with SSL
+#    Configure nginx to proxy mc.festas-builds.com/console to http://127.0.0.1:3002
 #
 # 6. The server binds to 0.0.0.0:3001 inside the container to accept connections
 #    from all interfaces. Port 3001 is exposed and mapped for external access.
