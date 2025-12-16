@@ -57,7 +57,7 @@ jobs:
           echo "✓ All required secrets are configured"
 
       - name: Run diagnostics
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.4
         env:
           ACTION: ${{ github.event.inputs.action }}
           RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}

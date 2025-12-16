@@ -55,7 +55,7 @@ jobs:
           echo "✓ All required secrets are configured"
 
       - name: Create backup
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.4
         env:
           RCON_PASSWORD: ${{ secrets.RCON_PASSWORD }}
           CUSTOM_BACKUP_NAME: ${{ github.event.inputs.backup_name }}
@@ -196,7 +196,7 @@ jobs:
 
       - name: Handle backup failure
         if: failure()
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.4
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
