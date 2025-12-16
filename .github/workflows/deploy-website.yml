@@ -7,7 +7,7 @@ on:
     paths:
       - 'website/**'
       - '.github/workflows/deploy-website.yml'
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -28,8 +28,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: image=moby/buildkit:v0.12.5
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -44,10 +42,10 @@ jobs:
           context: ./website
           file: ./website/Dockerfile
           push: true
+          # Hier kannst du bei Bedarf Build-Args anpassen
           build-args: |
             MINECRAFT_VERSION=1.21.10
             SERVER_SOFTWARE=Paper
-            DISCORD_INVITE_CODE=YOUR_INVITE_CODE
           tags: |
             ghcr.io/festas/minecraft-server-web:${{ steps.image_sha.outputs.sha }}
             ghcr.io/festas/minecraft-server-web:latest
@@ -62,13 +60,7 @@ jobs:
       - name: Validate GHCR_PAT secret
         run: |
           if [ -z "${{ secrets.GHCR_PAT }}" ]; then
-            echo "::error::GHCR_PAT secret is not set. Please add a Personal Access Token with read:packages scope to repository secrets."
-            echo "To add the secret:"
-            echo "1. Go to repository Settings > Secrets and variables > Actions"
-            echo "2. Click 'New repository secret'"
-            echo "3. Name: GHCR_PAT"
-            echo "4. Value: A GitHub Personal Access Token with 'read:packages' scope"
-            echo "5. Click 'Add secret'"
+            echo "::error::GHCR_PAT secret is missing."
             exit 1
           fi
 
@@ -78,31 +70,28 @@ jobs:
           IMAGE_SHA: ${{ needs.build-and-push.outputs.image_sha }}
           REGISTRY: ghcr.io
           IMAGE_NAME: festas/minecraft-server-web
-          DOMAIN: ${{ secrets.DOMAIN }}
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GHCR_ACTOR: ${{ github.actor }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: IMAGE_SHA,REGISTRY,IMAGE_NAME,DOMAIN,GHCR_PAT,GHCR_ACTOR
+          envs: IMAGE_SHA,REGISTRY,IMAGE_NAME,GHCR_PAT,GHCR_ACTOR
           script: |
             set -e
             
             DEPLOY_DIR="/home/deploy/minecraft-website"
-            
-            # Create deployment directory
             mkdir -p "$DEPLOY_DIR"
             cd "$DEPLOY_DIR"
             
-            # Log in to GHCR
+            # Login
             echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
             
-            # Pull the specific SHA-tagged image
-            echo "Pulling image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_SHA}"
+            # Pull
             docker pull "${REGISTRY}/${IMAGE_NAME}:${IMAGE_SHA}"
             
-            # Generate docker-compose.yml
+            # Docker Compose erstellen
+            # WICHTIG: Kein Caddy-Network mehr, nur Port-Mapping auf 3001
             cat > docker-compose.yml <<EOF_COMPOSE
             services:
               minecraft-web:
@@ -110,93 +99,47 @@ jobs:
                 container_name: minecraft-web
                 restart: unless-stopped
                 ports:
-                  - "3001:80"
+                  - "127.0.0.1:3001:80"
                 healthcheck:
                   test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
                   interval: 30s
                   timeout: 10s
                   retries: 3
-                  start_period: 30s
-                networks:
-                  - caddy-network
+                  start_period: 10s
                 deploy:
                   resources:
                     limits:
                       cpus: '0.5'
-                      memory: 128M
+                      memory: 256M
                     reservations:
-                      cpus: '0.1'
                       memory: 64M
-
-            networks:
-              caddy-network:
-                external: true
             EOF_COMPOSE
             
-            # Create external network if it doesn't exist
-            if ! docker network inspect caddy-network >/dev/null 2>&1; then
-              echo "Creating caddy-network..."
-              docker network create caddy-network
-            fi
+            # Deployment starten (Docker Compose kümmert sich um den Recreate)
+            docker compose up -d --remove-orphans
             
-            # Deploy with docker compose
-            docker compose up -d
-            
-            # Wait for health check
-            echo "Waiting for container to be healthy..."
+            # Health Check
+            echo "Warte auf Health-Status..."
             for i in {1..30}; do
               HEALTH=$(docker inspect --format='{{.State.Health.Status}}' minecraft-web 2>/dev/null || echo "starting")
-              echo "Health status: $HEALTH (attempt $i/30)"
               if [ "$HEALTH" = "healthy" ]; then
-                echo "✓ Container is healthy"
+                echo "✓ Container ist gesund!"
                 break
               fi
               if [ $i -eq 30 ]; then
-                echo "✗ Container did not become healthy in time"
+                echo "✗ Timeout beim Health-Check."
                 docker logs minecraft-web --tail=50
                 exit 1
               fi
               sleep 2
             done
             
-            # Clean up old images
-            echo "Cleaning up old images..."
-            docker image prune -f --filter "until=72h"
-            # Alternative: remove images for the specific repository (unsafe if images are in use)
-            # docker images "ghcr.io/festas/minecraft-server-web" --format "{{.ID}} {{.CreatedAt}}" | \
-            #   awk '$2 < strftime("%Y-%m-%dT%H:%M:%S", systime() - 72*3600) {print $1}' | xargs -r docker rmi
-            
-            # Success message
-            echo "✓ Deployment successful!"
-            echo "Website URL: https://mc.festas-builds.com"
-
-      - name: Handle deployment failure
-        if: failure()
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            echo "=== Deployment Failed - Diagnostics ==="
-            echo ""
-            echo "=== Container Status ==="
-            docker ps -a | grep minecraft-web || echo "Container not found"
-            echo ""
-            echo "=== Container Logs ==="
-            docker logs minecraft-web --tail=100 2>&1 || echo "No logs available"
-            echo ""
-            echo "=== Recent Docker Events ==="
-            docker events --since 5m --until 1s 2>&1 | grep minecraft-web || echo "No recent events"
+            # Cleanup
+            docker image prune -f --filter "until=24h"
 
       - name: Deployment summary
         if: success()
         run: |
-          {
-            echo "## Deployment Successful! 🚀"
-            echo ""
-            echo "The website has been deployed and is now live!"
-            echo ""
-            echo "**Docker Image:** ghcr.io/festas/minecraft-server-web:${{ needs.build-and-push.outputs.image_sha }}"
-            echo "**Website URL:** https://mc.festas-builds.com"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "## Deployment Successful! 🚀" >> "$GITHUB_STEP_SUMMARY"
+          echo "Website URL: https://mc.festas-builds.com" >> "$GITHUB_STEP_SUMMARY"
+
