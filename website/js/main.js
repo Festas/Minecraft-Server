@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initAnimatedBackground();
     initCopyButton();
     initServerStatus();
+    initNavigationAndScroll();
     initSmoothScroll();
     initBlueMapButton();
     initDiscordLink();
@@ -57,23 +58,67 @@ function initVersionDisplay() {
 }
 
 /**
+ * Theme Management with System Detection
+ */
+class ThemeManager {
+    constructor() {
+        this.theme = this.getInitialTheme();
+        this.applyTheme(this.theme);
+        this.setupListeners();
+    }
+    
+    getInitialTheme() {
+        // Check localStorage first
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) return savedTheme;
+        
+        // Check system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            return 'light';
+        }
+        return 'dark';
+    }
+    
+    applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        this.updateToggleIcon(theme);
+    }
+    
+    toggleTheme() {
+        this.theme = this.theme === 'dark' ? 'light' : 'dark';
+        this.applyTheme(this.theme);
+        localStorage.setItem('theme', this.theme);
+    }
+    
+    updateToggleIcon(theme) {
+        const toggle = document.getElementById('themeToggle');
+        if (toggle) {
+            toggle.classList.toggle('light-mode', theme === 'light');
+        }
+    }
+    
+    setupListeners() {
+        // Listen for system theme changes
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: light)');
+        mediaQuery.addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                this.theme = e.matches ? 'light' : 'dark';
+                this.applyTheme(this.theme);
+            }
+        });
+    }
+}
+
+/**
  * Theme toggle functionality with localStorage persistence
  */
 function initThemeToggle() {
+    const themeManager = new ThemeManager();
     const themeToggle = document.getElementById('themeToggle');
-    const html = document.documentElement;
-    
-    // Check for saved theme preference or default to 'dark'
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    html.setAttribute('data-theme', savedTheme);
     
     if (themeToggle) {
         themeToggle.addEventListener('click', function() {
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+            themeManager.toggleTheme();
             
             // Add a little animation
             themeToggle.style.transform = 'rotate(360deg)';
@@ -271,13 +316,132 @@ function initSmoothScroll() {
             const target = document.querySelector(href);
             if (target) {
                 e.preventDefault();
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
+                const header = document.getElementById('siteHeader');
+                const headerOffset = header && header.classList.contains('visible') ? 70 : 0;
+                const elementPosition = target.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
                 });
             }
         });
     });
+}
+
+/**
+ * Navigation & Scroll Management
+ */
+function initNavigationAndScroll() {
+    const header = document.getElementById('siteHeader');
+    const mobileToggle = document.getElementById('mobileMenuToggle');
+    const mobileOverlay = document.getElementById('mobileNavOverlay');
+    const backToTop = document.getElementById('backToTop');
+    const heroSection = document.querySelector('.hero');
+    
+    if (!header) return;
+    
+    let lastScrollY = 0;
+    let heroHeight = heroSection ? heroSection.offsetHeight : 500;
+    
+    // Show/Hide header based on scroll position
+    function handleScroll() {
+        const currentScrollY = window.pageYOffset;
+        
+        // Show header after scrolling past hero
+        if (currentScrollY > heroHeight - 100) {
+            header.classList.add('visible');
+            document.body.classList.add('header-visible');
+        } else {
+            header.classList.remove('visible');
+            document.body.classList.remove('header-visible');
+        }
+        
+        // Add shadow when scrolled
+        if (currentScrollY > heroHeight) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+        
+        // Show/hide back to top button
+        if (backToTop) {
+            if (currentScrollY > 500) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        }
+        
+        lastScrollY = currentScrollY;
+    }
+    
+    // Mobile menu toggle
+    if (mobileToggle && mobileOverlay) {
+        mobileToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            mobileOverlay.classList.toggle('active');
+            document.body.style.overflow = mobileOverlay.classList.contains('active') ? 'hidden' : '';
+        });
+        
+        // Close mobile menu when clicking a link
+        mobileOverlay.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileToggle.classList.remove('active');
+                mobileOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+    }
+    
+    // Back to top functionality
+    if (backToTop) {
+        backToTop.addEventListener('click', function() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    }
+    
+    // Active section highlighting
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    function highlightActiveSection() {
+        let current = '';
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop - 150;
+            const sectionHeight = section.offsetHeight;
+            if (pageYOffset >= sectionTop && pageYOffset < sectionTop + sectionHeight) {
+                current = section.getAttribute('id');
+            }
+        });
+        
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${current}`) {
+                link.classList.add('active');
+            }
+        });
+    }
+    
+    // Throttled scroll handler
+    let ticking = false;
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            window.requestAnimationFrame(function() {
+                handleScroll();
+                highlightActiveSection();
+                ticking = false;
+            });
+            ticking = true;
+        }
+    });
+    
+    // Initial call
+    handleScroll();
 }
 
 /**
