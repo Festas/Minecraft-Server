@@ -269,6 +269,7 @@ code {
     font-size: 3.5rem;
     margin-bottom: var(--spacing-sm);
     animation: fadeInUp 1s ease 0.3s both;
+    color: var(--gold);
     background: linear-gradient(135deg, var(--gold) 0%, var(--sky-blue) 50%, var(--accent-purple) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -276,6 +277,15 @@ code {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     line-height: 1.2;
     font-weight: 900;
+}
+
+/* Fallback for browsers that don't support background-clip: text */
+@supports not (-webkit-background-clip: text) {
+    .hero-headline {
+        background: none;
+        -webkit-text-fill-color: inherit;
+        color: var(--gold);
+    }
 }
 
 .hero-subline {

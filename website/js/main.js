@@ -326,11 +326,18 @@ function initHeroDiscordButton() {
         // Update Discord URL from config if available
         if (typeof window.MC_CONFIG !== 'undefined' && window.MC_CONFIG.discordURL) {
             heroDiscordBtn.href = window.MC_CONFIG.discordURL;
+        } else {
+            // If no config is available, disable the link
+            heroDiscordBtn.href = '#';
+            heroDiscordBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('Discord-Link wird noch konfiguriert. Bitte versuche es später erneut.');
+            });
         }
         
         heroDiscordBtn.addEventListener('click', function(e) {
-            // Track click if analytics are enabled
-            if (typeof gtag !== 'undefined') {
+            // Only track if it's a valid link
+            if (heroDiscordBtn.href !== '#' && typeof gtag !== 'undefined') {
                 gtag('event', 'hero_discord_click', {
                     'event_category': 'cta',
                     'event_label': 'Hero Discord Button'
