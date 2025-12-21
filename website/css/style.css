@@ -280,7 +280,7 @@ code {
 }
 
 /* Fallback for browsers that don't support background-clip: text */
-@supports not (-webkit-background-clip: text) {
+@supports not (background-clip: text) {
     .hero-headline {
         background: none;
         -webkit-text-fill-color: inherit;

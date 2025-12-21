@@ -327,21 +327,24 @@ function initHeroDiscordButton() {
         if (typeof window.MC_CONFIG !== 'undefined' && window.MC_CONFIG.discordURL) {
             heroDiscordBtn.href = window.MC_CONFIG.discordURL;
         } else {
-            // If no config is available, disable the link
+            // If no config is available, prevent navigation and show message
             heroDiscordBtn.href = '#';
-            heroDiscordBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                alert('Discord-Link wird noch konfiguriert. Bitte versuche es später erneut.');
-            });
         }
         
+        // Single click handler for both analytics and fallback
         heroDiscordBtn.addEventListener('click', function(e) {
-            // Only track if it's a valid link
-            if (heroDiscordBtn.href !== '#' && typeof gtag !== 'undefined') {
-                gtag('event', 'hero_discord_click', {
-                    'event_category': 'cta',
-                    'event_label': 'Hero Discord Button'
-                });
+            // Check if it's a placeholder link
+            if (heroDiscordBtn.href.endsWith('#')) {
+                e.preventDefault();
+                alert('Discord-Link wird noch konfiguriert. Bitte versuche es später erneut.');
+            } else {
+                // Track click if analytics are enabled and link is valid
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'hero_discord_click', {
+                        'event_category': 'cta',
+                        'event_label': 'Hero Discord Button'
+                    });
+                }
             }
         });
     }
