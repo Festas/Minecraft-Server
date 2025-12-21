@@ -49,3 +49,6 @@ console/backend/data/player-stats.json
 dist/
 build/
 console/backend/config/.password_hash
+
+# Website configuration (generated from template)
+website/js/config.js

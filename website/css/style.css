@@ -1716,3 +1716,310 @@ code {
         transform: translateY(0);
     }
 }
+
+/* ========================================
+   Gamemodes Section
+   ======================================== */
+.gamemodes-section {
+    padding: var(--spacing-xl) 0;
+    background: linear-gradient(180deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+}
+
+.section-subtitle {
+    text-align: center;
+    font-size: 1.2rem;
+    color: var(--text-light);
+    opacity: 0.8;
+    margin-top: calc(var(--spacing-lg) * -1 + var(--spacing-sm));
+    margin-bottom: var(--spacing-lg);
+}
+
+.gamemodes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.gamemode-card {
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(42, 42, 42, 0.9) 100%);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--border-color);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.gamemode-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.gamemode-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+}
+
+.gamemode-card:hover::before {
+    opacity: 1;
+}
+
+/* Individual gamemode colors */
+.gamemode-survival { border-color: var(--grass-green); }
+.gamemode-survival::before { background: var(--grass-green); }
+.gamemode-survival:hover { border-color: var(--grass-green); box-shadow: 0 12px 35px rgba(125, 189, 84, 0.3); }
+.gamemode-survival .gamemode-icon { color: var(--grass-green); }
+.gamemode-survival .gamemode-badge { background: rgba(125, 189, 84, 0.2); color: var(--grass-green); }
+
+.gamemode-tycoon { border-color: var(--tycoon-orange); }
+.gamemode-tycoon::before { background: var(--tycoon-orange); }
+.gamemode-tycoon:hover { border-color: var(--tycoon-orange); box-shadow: 0 12px 35px rgba(230, 126, 34, 0.3); }
+.gamemode-tycoon .gamemode-icon { color: var(--tycoon-orange); }
+.gamemode-tycoon .gamemode-badge { background: rgba(230, 126, 34, 0.2); color: var(--tycoon-orange); }
+
+.gamemode-town { border-color: var(--sky-blue); }
+.gamemode-town::before { background: var(--sky-blue); }
+.gamemode-town:hover { border-color: var(--sky-blue); box-shadow: 0 12px 35px rgba(126, 192, 238, 0.3); }
+.gamemode-town .gamemode-icon { color: var(--sky-blue); }
+.gamemode-town .gamemode-badge { background: rgba(126, 192, 238, 0.2); color: var(--sky-blue); }
+
+.gamemode-creative { border-color: var(--accent-purple); }
+.gamemode-creative::before { background: var(--accent-purple); }
+.gamemode-creative:hover { border-color: var(--accent-purple); box-shadow: 0 12px 35px rgba(155, 89, 182, 0.3); }
+.gamemode-creative .gamemode-icon { color: var(--accent-purple); }
+.gamemode-creative .gamemode-badge { background: rgba(155, 89, 182, 0.2); color: var(--accent-purple); }
+
+.gamemode-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-xs);
+}
+
+.gamemode-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.gamemode-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-light);
+}
+
+.gamemode-tagline {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    opacity: 0.9;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.5;
+}
+
+.gamemode-features {
+    list-style: none;
+    margin-bottom: var(--spacing-sm);
+}
+
+.gamemode-features li {
+    padding: 0.35rem 0;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    opacity: 0.85;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.gamemode-features li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+}
+
+.gamemode-inventory-info {
+    font-size: 0.8rem;
+    color: var(--gold);
+    font-style: italic;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-color);
+}
+
+/* ========================================
+   Vision Section
+   ======================================== */
+.vision-section {
+    padding: var(--spacing-xl) 0;
+    background: linear-gradient(180deg, var(--bg-dark) 0%, #1a1a2e 50%, var(--bg-darker) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.vision-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-purple), var(--gold), var(--accent-purple), transparent);
+}
+
+.vision-content {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.vision-header {
+    margin-bottom: var(--spacing-lg);
+}
+
+.vision-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    filter: drop-shadow(0 0 20px rgba(255, 170, 0, 0.5));
+}
+
+.vision-title {
+    font-size: 3rem;
+    color: var(--gold);
+    margin-bottom: var(--spacing-xs);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.vision-subtitle {
+    font-size: 1.3rem;
+    color: var(--accent-purple);
+    font-weight: 600;
+}
+
+.vision-story {
+    margin-bottom: var(--spacing-lg);
+    text-align: left;
+    background: rgba(42, 42, 42, 0.5);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--accent-purple);
+}
+
+.vision-lead {
+    font-size: 1.2rem;
+    color: var(--text-light);
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+}
+
+.vision-story p {
+    color: var(--text-light);
+    opacity: 0.9;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.8;
+}
+
+.vision-building,
+.vision-community {
+    margin-bottom: var(--spacing-lg);
+    text-align: left;
+    background: rgba(42, 42, 42, 0.5);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+}
+
+.vision-building {
+    border-left: 4px solid var(--tycoon-orange);
+}
+
+.vision-community {
+    border-left: 4px solid var(--grass-green);
+}
+
+.building-header,
+.community-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.building-icon,
+.community-icon {
+    font-size: 2rem;
+}
+
+.building-header h3,
+.community-header h3 {
+    font-size: 1.5rem;
+    color: var(--text-light);
+}
+
+.vision-building p,
+.vision-community p {
+    color: var(--text-light);
+    opacity: 0.9;
+    line-height: 1.8;
+    margin-bottom: var(--spacing-sm);
+}
+
+.building-features {
+    list-style: none;
+    margin-top: var(--spacing-sm);
+}
+
+.building-features li {
+    padding: 0.5rem 0;
+    font-size: 1rem;
+    color: var(--text-light);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+}
+
+.building-features .check {
+    flex-shrink: 0;
+}
+
+.community-callout {
+    background: linear-gradient(135deg, rgba(125, 189, 84, 0.15) 0%, rgba(126, 192, 238, 0.15) 100%);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--grass-green);
+    font-style: italic;
+    text-align: center;
+}
+
+.vision-cta {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Responsive for Vision Section */
+@media (max-width: 768px) {
+    .vision-title {
+        font-size: 2.2rem;
+    }
+    
+    .vision-subtitle {
+        font-size: 1.1rem;
+    }
+    
+    .vision-icon {
+        font-size: 3rem;
+    }
+    
+    .gamemodes-grid {
+        grid-template-columns: 1fr;
+    }
+}

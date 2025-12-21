@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initBlueMapButton();
     initDiscordLink();
     initHeroDiscordButton();
+    initVisionDiscordButtons();
     initFAQAccordion();
     initScrollAnimations();
 });
@@ -361,6 +362,57 @@ function initHeroDiscordButton() {
 }
 
 /**
+ * Vision Discord buttons handler
+ */
+function initVisionDiscordButtons() {
+    const visionDiscordBtn = document.getElementById('visionDiscordBtn');
+    const visionDiscordBtn2 = document.getElementById('visionDiscordBtn2');
+    
+    // Helper function to setup Discord button
+    function setupDiscordButton(button) {
+        if (!button) return;
+        
+        // Update Discord URL from config if available and valid
+        if (typeof window.MC_CONFIG !== 'undefined' && 
+            window.MC_CONFIG.discordURL && 
+            typeof window.MC_CONFIG.discordURL === 'string' &&
+            window.MC_CONFIG.discordURL.trim() !== '') {
+            button.href = window.MC_CONFIG.discordURL;
+        } else {
+            // If no valid config is available, keep as placeholder
+            button.href = '#';
+        }
+        
+        // Click handler
+        button.addEventListener('click', function(e) {
+            // Check if it's a placeholder link
+            if (button.href.endsWith('#')) {
+                e.preventDefault();
+                // Use a simple status message instead of alert
+                const originalText = button.textContent;
+                button.textContent = '⚠️ Link noch nicht konfiguriert';
+                button.style.opacity = '0.7';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.opacity = '';
+                }, 3000);
+            } else {
+                // Track click if analytics are enabled and link is valid
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'vision_discord_click', {
+                        'event_category': 'cta',
+                        'event_label': 'Vision Discord Button'
+                    });
+                }
+            }
+        });
+    }
+    
+    setupDiscordButton(visionDiscordBtn);
+    setupDiscordButton(visionDiscordBtn2);
+}
+
+/**
  * FAQ Accordion functionality
  */
 function initFAQAccordion() {
@@ -405,7 +457,8 @@ function initScrollAnimations() {
     const elementsToAnimate = document.querySelectorAll(
         '.feature-card, .plugin-card, .rule-item, .join-option, ' +
         '.news-card, .showcase-card, .gallery-item, .cosmetic-card, ' +
-        '.plugin-highlight-card, .leaderboard-card, .faq-item'
+        '.plugin-highlight-card, .leaderboard-card, .faq-item, ' +
+        '.gamemode-card, .vision-story, .vision-building, .vision-community'
     );
     
     elementsToAnimate.forEach(el => {
