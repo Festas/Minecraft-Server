@@ -1,0 +1,102 @@
+/* Legal Pages Styling */
+.legal-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-lg) var(--spacing-md);
+    min-height: 100vh;
+    background: var(--bg-darker);
+    color: var(--text-light);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--grass-green);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    transition: var(--transition);
+}
+
+.back-link:hover {
+    color: var(--dark-green);
+    transform: translateX(-5px);
+}
+
+.legal-page h1 {
+    font-size: 2.5rem;
+    color: var(--grass-green);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.legal-section {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+.legal-section h2 {
+    color: var(--gold);
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.legal-section h3 {
+    color: var(--sky-blue);
+    font-size: 1.2rem;
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
+}
+
+.legal-section p {
+    line-height: 1.8;
+    margin-bottom: var(--spacing-sm);
+    opacity: 0.9;
+}
+
+.legal-section ul {
+    margin-left: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.legal-section ul li {
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.6;
+}
+
+.legal-section a {
+    color: var(--sky-blue);
+    text-decoration: underline;
+}
+
+.legal-section a:hover {
+    color: var(--grass-green);
+}
+
+/* Light mode support */
+[data-theme="light"] .legal-page {
+    background: var(--bg-darker);
+}
+
+[data-theme="light"] .legal-section {
+    background: var(--card-bg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .legal-page {
+        padding: var(--spacing-md) var(--spacing-sm);
+    }
+    
+    .legal-page h1 {
+        font-size: 2rem;
+    }
+    
+    .legal-section {
+        padding: var(--spacing-sm);
+    }
+}

@@ -526,6 +526,20 @@ code {
     font-size: 1.1rem;
 }
 
+/* Email Button */
+.btn-email {
+    background: linear-gradient(135deg, #ea4335 0%, #c5221f 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(234, 67, 53, 0.3);
+}
+
+.btn-email:hover {
+    background: linear-gradient(135deg, #c5221f 0%, #ea4335 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(234, 67, 53, 0.5);
+    color: white;
+}
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -2994,6 +3008,59 @@ body.header-visible {
     position: absolute;
     left: 0;
     color: var(--grass-green);
+}
+
+/* Contact Options Layout */
+.recruitment-contact {
+    margin-top: var(--spacing-lg);
+    text-align: center;
+}
+
+.recruitment-contact h3 {
+    color: var(--text-light);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.3rem;
+}
+
+.contact-options {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.contact-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.contact-icon {
+    font-size: 2rem;
+}
+
+.contact-label {
+    font-weight: 600;
+    color: var(--text-light);
+    opacity: 0.8;
+}
+
+.contact-divider {
+    color: var(--text-light);
+    opacity: 0.5;
+    font-style: italic;
+}
+
+@media (max-width: 600px) {
+    .contact-options {
+        flex-direction: column;
+    }
+    
+    .contact-divider {
+        margin: var(--spacing-sm) 0;
+    }
 }
 
 .recruitment-cta {
