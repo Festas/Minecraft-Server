@@ -12,6 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initDiscordLink();
     initHeroDiscordButton();
     initVisionDiscordButtons();
+    initRecruitmentDiscordButton();
+    initFooterDiscordLinks();
     initFAQAccordion();
     initScrollAnimations();
     initRankPillarTabs();
@@ -492,5 +494,100 @@ function initRankPillarTabs() {
             }
         });
     });
+}
+
+/**
+ * Recruitment Discord button handler
+ */
+function initRecruitmentDiscordButton() {
+    const recruitmentDiscordBtn = document.getElementById('recruitmentDiscordBtn');
+    
+    if (recruitmentDiscordBtn) {
+        // Update Discord URL from config if available and valid
+        if (typeof window.MC_CONFIG !== 'undefined' && 
+            window.MC_CONFIG.discordURL && 
+            typeof window.MC_CONFIG.discordURL === 'string' &&
+            window.MC_CONFIG.discordURL.trim() !== '') {
+            recruitmentDiscordBtn.href = window.MC_CONFIG.discordURL;
+        } else {
+            // If no valid config is available, keep as placeholder
+            recruitmentDiscordBtn.href = '#';
+        }
+        
+        // Click handler
+        recruitmentDiscordBtn.addEventListener('click', function(e) {
+            // Check if it's a placeholder link
+            if (recruitmentDiscordBtn.href.endsWith('#')) {
+                e.preventDefault();
+                // Use a simple status message instead of alert
+                const originalText = recruitmentDiscordBtn.textContent;
+                recruitmentDiscordBtn.textContent = '⚠️ Link noch nicht konfiguriert';
+                recruitmentDiscordBtn.style.opacity = '0.7';
+                setTimeout(() => {
+                    recruitmentDiscordBtn.textContent = originalText;
+                    recruitmentDiscordBtn.style.opacity = '';
+                }, 3000);
+            } else {
+                // Track click if analytics are enabled and link is valid
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'recruitment_discord_click', {
+                        'event_category': 'cta',
+                        'event_label': 'Recruitment Discord Button'
+                    });
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Footer Discord links handler
+ */
+function initFooterDiscordLinks() {
+    const footerDiscordLink = document.getElementById('footerDiscordLink');
+    const footerSocialDiscord = document.getElementById('footerSocialDiscord');
+    
+    // Helper function to setup Discord link
+    function setupFooterDiscordLink(link) {
+        if (!link) return;
+        
+        // Update Discord URL from config if available and valid
+        if (typeof window.MC_CONFIG !== 'undefined' && 
+            window.MC_CONFIG.discordURL && 
+            typeof window.MC_CONFIG.discordURL === 'string' &&
+            window.MC_CONFIG.discordURL.trim() !== '') {
+            link.href = window.MC_CONFIG.discordURL;
+        } else {
+            // If no valid config is available, keep as placeholder
+            link.href = '#';
+        }
+        
+        // Click handler
+        link.addEventListener('click', function(e) {
+            // Check if it's a placeholder link
+            if (link.href.endsWith('#')) {
+                e.preventDefault();
+                // Use a simple status message instead of alert
+                const originalContent = link.innerHTML;
+                link.innerHTML = '⚠️ Link noch nicht konfiguriert';
+                link.style.opacity = '0.7';
+                setTimeout(() => {
+                    link.innerHTML = originalContent;
+                    link.style.opacity = '';
+                }, 3000);
+            } else {
+                // Track click if analytics are enabled and link is valid
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'footer_discord_click', {
+                        'event_category': 'footer_link',
+                        'event_label': 'Footer Discord Link'
+                    });
+                }
+            }
+        });
+    }
+    
+    setupFooterDiscordLink(footerDiscordLink);
+    setupFooterDiscordLink(footerSocialDiscord);
 }
 

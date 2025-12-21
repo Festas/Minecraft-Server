@@ -2525,3 +2525,206 @@ code {
     }
 }
 
+/* ========================================
+   Recruitment Section
+   ======================================== */
+.recruitment-section {
+    padding: var(--spacing-xl) 0;
+    background: linear-gradient(180deg, var(--bg-dark) 0%, #1a2a1a 50%, var(--bg-darker) 100%);
+    position: relative;
+}
+
+.recruitment-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--grass-green), var(--gold), var(--grass-green), transparent);
+}
+
+.recruitment-content {
+    text-align: center;
+}
+
+.recruitment-header {
+    margin-bottom: var(--spacing-lg);
+}
+
+.recruitment-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+}
+
+.recruitment-title {
+    font-size: 2.5rem;
+    color: var(--gold);
+    margin-bottom: var(--spacing-xs);
+}
+
+.recruitment-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-light);
+    opacity: 0.9;
+}
+
+.recruitment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.recruitment-card {
+    background: linear-gradient(135deg, var(--card-bg) 0%, rgba(42, 42, 42, 0.9) 100%);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    border: 2px solid var(--border-color);
+    text-align: left;
+    transition: var(--transition);
+}
+
+.recruitment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.recruitment-builder { border-color: var(--tycoon-orange); }
+.recruitment-builder:hover { box-shadow: 0 10px 30px rgba(230, 126, 34, 0.2); }
+
+.recruitment-staff { border-color: var(--sky-blue); }
+.recruitment-staff:hover { box-shadow: 0 10px 30px rgba(126, 192, 238, 0.2); }
+
+.recruitment-ideas { border-color: var(--accent-purple); }
+.recruitment-ideas:hover { box-shadow: 0 10px 30px rgba(155, 89, 182, 0.2); }
+
+.recruitment-card-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.recruitment-card h3 {
+    font-size: 1.4rem;
+    color: var(--text-light);
+    margin-bottom: var(--spacing-sm);
+}
+
+.recruitment-card p {
+    color: var(--text-light);
+    opacity: 0.9;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.6;
+}
+
+.recruitment-requirements {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.recruitment-requirements li {
+    padding: 0.3rem 0;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    opacity: 0.8;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.recruitment-requirements li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--grass-green);
+}
+
+.recruitment-cta {
+    text-align: center;
+}
+
+.recruitment-cta-text {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    margin-bottom: var(--spacing-sm);
+}
+
+.btn-large {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 1.2rem;
+}
+
+/* ========================================
+   Enhanced Footer
+   ======================================== */
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.footer-badges {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+    margin-top: var(--spacing-sm);
+}
+
+.footer-badge {
+    display: inline-block;
+    background: rgba(125, 189, 84, 0.2);
+    color: var(--grass-green);
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.footer-social {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: var(--card-bg);
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.social-link:hover {
+    transform: scale(1.1);
+    border-color: var(--grass-green);
+}
+
+.social-icon {
+    font-size: 1.5rem;
+}
+
+/* Responsive Footer */
+@media (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .footer-about {
+        grid-column: 1 / -1;
+    }
+    
+    .recruitment-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
