@@ -19,7 +19,16 @@ window.MC_CONFIG = {
     statusAPI: 'https://api.mcsrvstat.us/3/',
     
     // External links
-    bluemapURL: 'https://map.festas-builds.com',
+    bluemapURL: 'https://mc-maps.festas-builds.com',
+    statsURL: 'https://mc-stats.festas-builds.com',
     discordURL: 'https://discord.gg/${DISCORD_INVITE_CODE}',
-    githubURL: 'https://github.com/Festas/Minecraft-Server'
+    githubURL: 'https://github.com/Festas/Minecraft-Server',
+    
+    // Social media links
+    social: {
+        tiktok: 'https://www.tiktok.com/@festas_builds',
+        instagram: 'https://www.instagram.com/festas_builds',
+        youtube: 'https://www.youtube.com/@festas',
+        twitch: 'https://www.twitch.tv/festas'
+    }
 };
