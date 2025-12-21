@@ -1,0 +1,566 @@
+/* Wiki Layout */
+.wiki-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.wiki-sidebar {
+    width: 280px;
+    background: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.sidebar-header {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.sidebar-nav {
+    padding: var(--spacing-md);
+}
+
+.nav-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.nav-section h3 {
+    color: var(--gold);
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nav-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-section li a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-light);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    opacity: 0.8;
+}
+
+.nav-section li a:hover,
+.nav-section li a.active {
+    background: rgba(125, 189, 84, 0.1);
+    color: var(--grass-green);
+    opacity: 1;
+}
+
+/* Main Content */
+.wiki-content {
+    flex: 1;
+    margin-left: 280px;
+    padding: var(--spacing-lg);
+    max-width: 900px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    margin-bottom: var(--spacing-md);
+    color: var(--text-light);
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+.breadcrumb a {
+    color: var(--sky-blue);
+}
+
+/* Wiki Intro */
+.wiki-intro {
+    font-size: 1.1rem;
+    color: var(--text-light);
+    opacity: 0.9;
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Wiki Cards */
+.wiki-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.wiki-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.wiki-card:hover {
+    border-color: var(--grass-green);
+    transform: translateY(-3px);
+}
+
+.wiki-card .card-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: var(--spacing-xs);
+}
+
+.wiki-card h3 {
+    color: var(--text-light);
+    margin-bottom: var(--spacing-xs);
+}
+
+.wiki-card p {
+    color: var(--text-light);
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+/* Quick Info Section */
+.quick-info {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.quick-info h2 {
+    margin-bottom: var(--spacing-md);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-item strong {
+    color: var(--gold);
+    font-size: 0.9rem;
+}
+
+.info-item code {
+    background: var(--bg-dark);
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    font-family: 'Courier New', monospace;
+    color: var(--grass-green);
+}
+
+.info-item a {
+    color: var(--sky-blue);
+}
+
+/* Rank Cards */
+.rank-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.rank-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.rank-prefix {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.rank-unlock {
+    background: rgba(125, 189, 84, 0.2);
+    color: var(--grass-green);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+}
+
+.rank-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-light);
+}
+
+.rank-perks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: var(--spacing-sm);
+}
+
+.perk-tag {
+    background: rgba(74, 159, 216, 0.2);
+    color: var(--sky-blue);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+}
+
+.perk-tag.new {
+    background: rgba(255, 170, 0, 0.2);
+    color: var(--gold);
+}
+
+.perk-tag.bonus {
+    background: rgba(125, 189, 84, 0.2);
+    color: var(--grass-green);
+}
+
+/* Pillars Grid */
+.pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.pillar-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.pillar-card:hover {
+    border-color: var(--grass-green);
+    transform: translateY(-3px);
+}
+
+.pillar-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.pillar-icon {
+    font-size: 2.5rem;
+}
+
+.pillar-title {
+    font-size: 1.3rem;
+    color: var(--text-light);
+}
+
+.pillar-subtitle {
+    color: var(--gold);
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.pillar-description {
+    color: var(--text-light);
+    opacity: 0.8;
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.pillar-count {
+    color: var(--grass-green);
+    font-size: 0.85rem;
+}
+
+/* Tycoon Table */
+.tycoon-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--spacing-md) 0;
+}
+
+.tycoon-table th,
+.tycoon-table td {
+    padding: var(--spacing-sm);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tycoon-table th {
+    background: var(--card-bg);
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.tycoon-table tr:hover {
+    background: rgba(125, 189, 84, 0.05);
+}
+
+.tycoon-table .rank-number {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.tycoon-table .rank-name-cell {
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.tycoon-table .cost-cell {
+    color: var(--grass-green);
+    font-weight: 500;
+}
+
+.tycoon-warning {
+    background: rgba(255, 170, 0, 0.1);
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+    color: var(--gold);
+}
+
+.tycoon-warning strong {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Team Ranks Table */
+.team-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--spacing-md) 0;
+}
+
+.team-table th,
+.team-table td {
+    padding: var(--spacing-sm);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.team-table th {
+    background: var(--card-bg);
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.team-table tr:hover {
+    background: rgba(125, 189, 84, 0.05);
+}
+
+.team-prefix {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Commands Section */
+.commands-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.commands-section h2 {
+    color: var(--gold);
+    margin-bottom: var(--spacing-md);
+}
+
+.command-list {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.command-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.command-name {
+    font-family: 'Courier New', monospace;
+    color: var(--grass-green);
+    font-weight: 600;
+}
+
+.command-description {
+    color: var(--text-light);
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+/* Rules Section */
+.rules-list {
+    counter-reset: rule-counter;
+    list-style: none;
+    padding: 0;
+}
+
+.rules-list li {
+    counter-increment: rule-counter;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    position: relative;
+    padding-left: 3.5rem;
+}
+
+.rules-list li::before {
+    content: counter(rule-counter);
+    position: absolute;
+    left: var(--spacing-md);
+    top: var(--spacing-md);
+    background: var(--gold);
+    color: var(--bg-dark);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.rule-title {
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: var(--spacing-xs);
+}
+
+.rule-description {
+    color: var(--text-light);
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+/* Game Mode Cards */
+.gamemode-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.gamemode-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.gamemode-icon {
+    font-size: 3rem;
+}
+
+.gamemode-title {
+    font-size: 2rem;
+    color: var(--text-light);
+}
+
+.gamemode-description {
+    color: var(--text-light);
+    opacity: 0.9;
+    margin-bottom: var(--spacing-md);
+    line-height: 1.6;
+}
+
+.gamemode-features {
+    margin-top: var(--spacing-md);
+}
+
+.gamemode-features h3 {
+    color: var(--gold);
+    margin-bottom: var(--spacing-sm);
+}
+
+.gamemode-features ul {
+    list-style: none;
+    padding: 0;
+}
+
+.gamemode-features li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--text-light);
+    opacity: 0.9;
+}
+
+.gamemode-features li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--grass-green);
+    font-weight: 700;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+    .wiki-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .wiki-sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .wiki-content {
+        margin-left: 0;
+        padding: var(--spacing-md);
+    }
+    
+    .wiki-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .pillars-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tycoon-table,
+    .team-table {
+        font-size: 0.85rem;
+    }
+    
+    .tycoon-table th,
+    .tycoon-table td,
+    .team-table th,
+    .team-table td {
+        padding: var(--spacing-xs);
+    }
+}
