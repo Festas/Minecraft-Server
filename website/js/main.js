@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initSmoothScroll();
     initBlueMapButton();
     initDiscordLink();
+    initHeroDiscordButton();
     initFAQAccordion();
     initScrollAnimations();
 });
@@ -310,6 +311,50 @@ function initDiscordLink() {
                     'event_category': 'external_link',
                     'event_label': 'Discord'
                 });
+            }
+        });
+    }
+}
+
+/**
+ * Hero Discord button handler
+ */
+function initHeroDiscordButton() {
+    const heroDiscordBtn = document.getElementById('heroDiscordBtn');
+    
+    if (heroDiscordBtn) {
+        // Update Discord URL from config if available and valid
+        if (typeof window.MC_CONFIG !== 'undefined' && 
+            window.MC_CONFIG.discordURL && 
+            typeof window.MC_CONFIG.discordURL === 'string' &&
+            window.MC_CONFIG.discordURL.trim() !== '') {
+            heroDiscordBtn.href = window.MC_CONFIG.discordURL;
+        } else {
+            // If no valid config is available, keep as placeholder
+            heroDiscordBtn.href = '#';
+        }
+        
+        // Single click handler for both analytics and fallback
+        heroDiscordBtn.addEventListener('click', function(e) {
+            // Check if it's a placeholder link
+            if (heroDiscordBtn.href.endsWith('#')) {
+                e.preventDefault();
+                // Use a simple status message instead of alert
+                const originalText = heroDiscordBtn.textContent;
+                heroDiscordBtn.textContent = '⚠️ Link noch nicht konfiguriert';
+                heroDiscordBtn.style.opacity = '0.7';
+                setTimeout(() => {
+                    heroDiscordBtn.textContent = originalText;
+                    heroDiscordBtn.style.opacity = '';
+                }, 3000);
+            } else {
+                // Track click if analytics are enabled and link is valid
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'hero_discord_click', {
+                        'event_category': 'cta',
+                        'event_label': 'Hero Discord Button'
+                    });
+                }
             }
         });
     }
