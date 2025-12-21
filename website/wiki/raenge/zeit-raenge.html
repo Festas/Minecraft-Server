@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Zeit-Ränge - Säule 1: Die Straße - Festas Builds Wiki">
+    <title>Zeit-Ränge - Festas Builds Wiki</title>
+    
+    <link rel="icon" type="image/svg+xml" href="../../images/favicon.svg">
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../css/wiki.css">
+</head>
+<body>
+    <header class="site-header visible" id="siteHeader">
+        <div class="header-container">
+            <a href="../../index.html" class="header-logo">
+                <span class="logo-icon">🏗️</span>
+                <span class="logo-text">Festas Builds</span>
+            </a>
+            
+            <nav class="main-nav" id="mainNav">
+                <ul class="nav-links">
+                    <li><a href="../../index.html#gamemodes" class="nav-link">Spielmodi</a></li>
+                    <li><a href="../../index.html#ranks" class="nav-link">Ränge</a></li>
+                    <li><a href="../index.html" class="nav-link active">Wiki</a></li>
+                </ul>
+            </nav>
+            
+            <div class="header-actions">
+                <a href="https://discord.gg/BTNgMT5uw" class="header-discord-btn" target="_blank" rel="noopener noreferrer">
+                    <span class="discord-icon">💬</span>
+                    <span class="discord-text">Discord</span>
+                </a>
+                <button class="theme-toggle header-theme-toggle" id="themeToggle" aria-label="Hell-/Dunkelmodus umschalten">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="wiki-container">
+        <div class="wiki-layout">
+            <aside class="wiki-sidebar">
+                <h2 class="wiki-sidebar-title">Wiki Navigation</h2>
+                
+                <div class="wiki-nav-group">
+                    <div class="wiki-nav-group-title">Ränge</div>
+                    <ul class="wiki-nav-list">
+                        <li><a href="index.html" class="wiki-nav-link">Übersicht</a></li>
+                        <li><a href="zeit-raenge.html" class="wiki-nav-link active">Zeit-Ränge</a></li>
+                        <li><a href="geld-raenge.html" class="wiki-nav-link">Geld-Ränge</a></li>
+                        <li><a href="tycoon-raenge.html" class="wiki-nav-link">Tycoon-Ränge</a></li>
+                        <li><a href="team-raenge.html" class="wiki-nav-link">Team-Ränge</a></li>
+                    </ul>
+                </div>
+
+                <div class="wiki-nav-group">
+                    <div class="wiki-nav-group-title">Spielmodi</div>
+                    <ul class="wiki-nav-list">
+                        <li><a href="../spielmodi/index.html" class="wiki-nav-link">Übersicht</a></li>
+                        <li><a href="../spielmodi/sky-survival.html" class="wiki-nav-link">Sky Survival</a></li>
+                        <li><a href="../spielmodi/tycoon.html" class="wiki-nav-link">Tycoon</a></li>
+                        <li><a href="../spielmodi/town.html" class="wiki-nav-link">Town</a></li>
+                        <li><a href="../spielmodi/freebuild.html" class="wiki-nav-link">Freebuild</a></li>
+                    </ul>
+                </div>
+
+                <div class="wiki-nav-group">
+                    <div class="wiki-nav-group-title">Sonstiges</div>
+                    <ul class="wiki-nav-list">
+                        <li><a href="../befehle/index.html" class="wiki-nav-link">Befehle</a></li>
+                        <li><a href="../regeln/index.html" class="wiki-nav-link">Regeln</a></li>
+                    </ul>
+                </div>
+
+                <div class="wiki-nav-group">
+                    <ul class="wiki-nav-list">
+                        <li><a href="../index.html" class="wiki-nav-link">← Zurück zur Startseite</a></li>
+                    </ul>
+                </div>
+            </aside>
+
+            <div class="wiki-content">
+                <div class="wiki-header">
+                    <h1 class="wiki-title">⏱️ Säule 1: Die Straße</h1>
+                    <div class="wiki-breadcrumb">
+                        <a href="../../index.html">Home</a>
+                        <span>/</span>
+                        <a href="../index.html">Wiki</a>
+                        <span>/</span>
+                        <a href="index.html">Ränge</a>
+                        <span>/</span>
+                        <span>Zeit-Ränge</span>
+                    </div>
+                </div>
+
+                <div class="wiki-welcome">
+                    <p>
+                        <strong>Diese Ränge erhältst du automatisch durch Spielzeit.</strong><br>
+                        Je länger du spielst, desto mehr Rechte, Homes und Shop-Boni schaltest du frei. 
+                        Die Progression ist linear – du behältst alle Rechte vorheriger Ränge!
+                    </p>
+                </div>
+
+                <div class="wiki-toc">
+                    <div class="wiki-toc-title">Schnellnavigation</div>
+                    <ul class="wiki-toc-list">
+                        <li><a href="#npc">1. NPC (Start - 0h)</a></li>
+                        <li><a href="#lauch">2. Lauch (2h)</a></li>
+                        <li><a href="#knecht">3. Knecht (10h)</a></li>
+                        <li><a href="#chiller">4. Chiller (1 Tag)</a></li>
+                        <li><a href="#ticker">5. Ticker (3 Tage)</a></li>
+                        <li><a href="#hustler">6. Hustler (5 Tage)</a></li>
+                        <li><a href="#macher">7. Macher (10 Tage)</a></li>
+                        <li><a href="#tuersteher">8. Türsteher (15 Tage)</a></li>
+                        <li><a href="#bratan">9. Bratan (20 Tage)</a></li>
+                        <li><a href="#bre">10. Bre (30 Tage)</a></li>
+                        <li><a href="#ehrenmann">11. Ehrenmann (45 Tage)</a></li>
+                        <li><a href="#loewe">12. Löwe (60 Tage)</a></li>
+                        <li><a href="#maschine">13. Maschine (80 Tage)</a></li>
+                        <li><a href="#baba">14. BABA (100 Tage)</a></li>
+                        <li><a href="#mainchar">15. Main Character (150 Tage)</a></li>
+                    </ul>
+                </div>
+
+                <!-- NPC -->
+                <div id="npc" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">😐</div>
+                        <div class="rank-wiki-info">
+                            <h3>NPC</h3>
+                            <div class="rank-wiki-prefix">[😐 NPC]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: Start (0h)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Homes</div>
+                            <div class="rank-stat-value">1</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Plots</div>
+                            <div class="rank-stat-value">1</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Jobs</div>
+                            <div class="rank-stat-value">1</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Markt-Slots</div>
+                            <div class="rank-stat-value">1</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">0%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/spawn</span>
+                            <span class="command-tag">/tpa</span>
+                            <span class="command-tag">/tpaccept</span>
+                            <span class="command-tag">/tpdeny</span>
+                            <span class="command-tag">/warp</span>
+                            <span class="command-tag">/warps</span>
+                            <span class="command-tag">/msg</span>
+                            <span class="command-tag">/reply</span>
+                            <span class="command-tag">/pay</span>
+                            <span class="command-tag">/balance</span>
+                            <span class="command-tag">/balancetop</span>
+                            <span class="command-tag">/afk</span>
+                            <span class="command-tag">/help</span>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-commands">
+                        <h4>Plot-Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/plot claim</span>
+                            <span class="command-tag">/plot home</span>
+                            <span class="command-tag">/plot visit</span>
+                            <span class="command-tag">/plot trust</span>
+                            <span class="command-tag">/plot add</span>
+                            <span class="command-tag">/plot remove</span>
+                            <span class="command-tag">/plot delete</span>
+                            <span class="command-tag">/plot clear</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.8; margin-top: var(--spacing-sm);">
+                        <strong>Besonderheiten:</strong> Nur Kaufen im Markt möglich (kein Verkaufen).
+                    </p>
+                </div>
+
+                <!-- Lauch -->
+                <div id="lauch" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">🌱</div>
+                        <div class="rank-wiki-info">
+                            <h3>Lauch</h3>
+                            <div class="rank-wiki-prefix">[🌱 Lauch]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 2 Stunden</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Homes</div>
+                            <div class="rank-stat-value">2</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Markt-Slots</div>
+                            <div class="rank-stat-value">3</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">0%</div>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Du kannst jetzt auch im Markt verkaufen! Chat-Farbe: Weiß.
+                    </p>
+                </div>
+
+                <!-- Knecht -->
+                <div id="knecht" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">⚒</div>
+                        <div class="rank-wiki-info">
+                            <h3>Knecht</h3>
+                            <div class="rank-wiki-prefix">[⚒ Knecht]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 10 Stunden</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+1%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/workbench</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Tragbare Werkbank & ChestShops erstellen möglich.
+                    </p>
+                </div>
+
+                <!-- Chiller -->
+                <div id="chiller" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">❄</div>
+                        <div class="rank-wiki-info">
+                            <h3>Chiller</h3>
+                            <div class="rank-wiki-prefix">[❄ Chiller]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 1 Tag</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Jobs</div>
+                            <div class="rank-stat-value">2</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Markt-Slots</div>
+                            <div class="rank-stat-value">5</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+2%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/ptime</span>
+                            <span class="command-tag">/pweather</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Persönliche Zeit/Wetter-Einstellungen möglich.
+                    </p>
+                </div>
+
+                <!-- Ticker -->
+                <div id="ticker" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">💊</div>
+                        <div class="rank-wiki-info">
+                            <h3>Ticker</h3>
+                            <div class="rank-wiki-prefix">[💊 Ticker]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 3 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Homes</div>
+                            <div class="rank-stat-value">3</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+3%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/enderchest</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Tragbare Enderchest überall verfügbar.
+                    </p>
+                </div>
+
+                <!-- Hustler -->
+                <div id="hustler" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">💼</div>
+                        <div class="rank-wiki-info">
+                            <h3>Hustler</h3>
+                            <div class="rank-wiki-prefix">[💼 Hustler]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 5 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Plots</div>
+                            <div class="rank-stat-value">2</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+4%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/hat</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Item als Hut tragen – zeig deinen Style!
+                    </p>
+                </div>
+
+                <!-- Macher -->
+                <div id="macher" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">🛠</div>
+                        <div class="rank-wiki-info">
+                            <h3>Macher</h3>
+                            <div class="rank-wiki-prefix">[🛠 Macher]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 10 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Markt-Slots</div>
+                            <div class="rank-stat-value">8</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+5%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/dispose</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Mülleimer-Befehl & Plot-Biome ändern möglich.
+                    </p>
+                </div>
+
+                <!-- Türsteher -->
+                <div id="tuersteher" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">🛡</div>
+                        <div class="rank-wiki-info">
+                            <h3>Türsteher</h3>
+                            <div class="rank-wiki-prefix">[�� Türsteher]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 15 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Homes</div>
+                            <div class="rank-stat-value">5</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Jobs</div>
+                            <div class="rank-stat-value">3</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+6%</div>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Spieler vom Plot kicken/bannen möglich.
+                    </p>
+                </div>
+
+                <!-- Bratan -->
+                <div id="bratan" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">🤜🤛</div>
+                        <div class="rank-wiki-info">
+                            <h3>Bratan</h3>
+                            <div class="rank-wiki-prefix">[🤜🤛 Bratan]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 20 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+7%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/anvil</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Tragbarer Amboss & Plot-Musik ändern möglich.
+                    </p>
+                </div>
+
+                <!-- Bre -->
+                <div id="bre" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">🧢</div>
+                        <div class="rank-wiki-info">
+                            <h3>Bre</h3>
+                            <div class="rank-wiki-prefix">[🧢 Bre]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 30 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Plots</div>
+                            <div class="rank-stat-value">3</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+8%</div>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Farbiger Chat möglich!
+                    </p>
+                </div>
+
+                <!-- Ehrenmann -->
+                <div id="ehrenmann" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">❤</div>
+                        <div class="rank-wiki-info">
+                            <h3>Ehrenmann</h3>
+                            <div class="rank-wiki-prefix">[❤ Ehrenmann]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 45 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Homes</div>
+                            <div class="rank-stat-value">8</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+9%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/feed</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Hunger stillen mit einem Befehl.
+                    </p>
+                </div>
+
+                <!-- Löwe -->
+                <div id="loewe" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">🦁</div>
+                        <div class="rank-wiki-info">
+                            <h3>Löwe</h3>
+                            <div class="rank-wiki-prefix">[🦁 Löwe]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 60 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Markt-Slots</div>
+                            <div class="rank-stat-value">15</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+10%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/repair</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Item reparieren (einzelnes Item).
+                    </p>
+                </div>
+
+                <!-- Maschine -->
+                <div id="maschine" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">🤖</div>
+                        <div class="rank-wiki-info">
+                            <h3>Maschine</h3>
+                            <div class="rank-wiki-prefix">[🤖 Maschine]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 80 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Plots</div>
+                            <div class="rank-stat-value">4</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+11%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/hdb</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Kopf-Datenbank – tausende dekorative Köpfe!
+                    </p>
+                </div>
+
+                <!-- BABA -->
+                <div id="baba" class="rank-wiki-card">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">🔥</div>
+                        <div class="rank-wiki-info">
+                            <h3>BABA</h3>
+                            <div class="rank-wiki-prefix">[🔥 BABA]</div>
+                            <div class="rank-wiki-unlock">Freischaltung: 100 Tage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Homes</div>
+                            <div class="rank-stat-value">12</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value">+12%</div>
+                        </div>
+                    </div>
+
+                    <div class="rank-wiki-commands">
+                        <h4>Neue Befehle</h4>
+                        <div class="command-list">
+                            <span class="command-tag">/back</span>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--text-light); opacity: 0.9; margin-top: var(--spacing-sm);">
+                        <strong>Neu:</strong> Zurück zum Todespunkt & Chat-Formatierung (Fett/Kursiv).
+                    </p>
+                </div>
+
+                <!-- Main Character -->
+                <div id="mainchar" class="rank-wiki-card" style="border: 2px solid var(--gold); box-shadow: 0 0 20px rgba(255, 170, 0, 0.3);">
+                    <div class="rank-wiki-header">
+                        <div class="rank-wiki-icon">⭐</div>
+                        <div class="rank-wiki-info">
+                            <h3>Main Character</h3>
+                            <div class="rank-wiki-prefix" style="background: linear-gradient(135deg, #9b59b6 0%, #4a9fd8 50%, #7cbd54 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">MAIN CHAR</div>
+                            <div class="rank-wiki-unlock" style="color: var(--gold);">Freischaltung: 150 Tage - MAXIMUM FREE</div>
+                        </div>
+                    </div>
+                    
+                    <div class="rank-wiki-stats">
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Plots</div>
+                            <div class="rank-stat-value">5</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Homes</div>
+                            <div class="rank-stat-value">15</div>
+                        </div>
+                        <div class="rank-stat">
+                            <div class="rank-stat-label">Shop-Bonus</div>
+                            <div class="rank-stat-value" style="color: var(--gold);">+15%</div>
+                        </div>
+                    </div>
+
+                    <p style="color: var(--gold); opacity: 1; margin-top: var(--spacing-sm); font-weight: 700;">
+                        <strong>🌟 Besonderheit:</strong> XP behalten bei Tod – die ultimative Freischaltung!
+                    </p>
+                </div>
+
+                <div class="wiki-success-box" style="margin-top: var(--spacing-lg);">
+                    <p>
+                        <strong>✅ Glückwunsch!</strong> Wenn du Main Character erreichst, hast du den höchsten kostenlos erhältlichen Rang erreicht. 
+                        Alle Premium-Ränge (Geld-Ränge) erben die Rechte von Main Character!
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2025 Festas Builds. Minecraft is a trademark of Mojang Studios.</p>
+            </div>
+        </div>
+    </footer>
+
+    <button class="back-to-top visible" id="backToTop" aria-label="Zurück nach oben">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+    <script src="../../js/config.js"></script>
+    <script src="../../js/main.js"></script>
+</body>
+</html>
