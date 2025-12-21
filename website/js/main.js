@@ -340,7 +340,6 @@ function initHeroDiscordButton() {
             if (heroDiscordBtn.href.endsWith('#')) {
                 e.preventDefault();
                 // Use a simple status message instead of alert
-                const statusText = heroDiscordBtn.querySelector('.btn-text') || heroDiscordBtn;
                 const originalText = heroDiscordBtn.textContent;
                 heroDiscordBtn.textContent = '⚠️ Link noch nicht konfiguriert';
                 heroDiscordBtn.style.opacity = '0.7';
