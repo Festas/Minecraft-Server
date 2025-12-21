@@ -11,9 +11,12 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy website files to nginx html directory
 COPY index.html /usr/share/nginx/html/
+COPY impressum.html /usr/share/nginx/html/
+COPY datenschutz.html /usr/share/nginx/html/
 COPY css/ /usr/share/nginx/html/css/
 COPY js/ /usr/share/nginx/html/js/
 COPY images/ /usr/share/nginx/html/images/
+COPY wiki/ /usr/share/nginx/html/wiki/
 
 # Copy config template and generate config.js with environment variables
 COPY js/config.template.js /tmp/config.template.js

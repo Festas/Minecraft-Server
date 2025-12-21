@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Befehle | Festas Builds Wiki</title>
+    <link rel="icon" type="image/svg+xml" href="../../images/favicon.svg">
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../css/wiki.css">
+</head>
+<body>
+    <div class="wiki-layout">
+        <!-- Sidebar -->
+        <aside class="wiki-sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="sidebar-logo">
+                    <span>🏗️</span> Festas Builds
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <h3>📖 Wiki</h3>
+                    <ul>
+                        <li><a href="../index.html">Startseite</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h3>🏆 Ränge</h3>
+                    <ul>
+                        <li><a href="../raenge/index.html">Übersicht</a></li>
+                        <li><a href="../raenge/zeit-raenge.html">⏳ Zeit-Ränge</a></li>
+                        <li><a href="../raenge/geld-raenge.html">💎 Geld-Ränge</a></li>
+                        <li><a href="../raenge/tycoon-raenge.html">🏭 Tycoon-Ränge</a></li>
+                        <li><a href="../raenge/team-raenge.html">👮 Team-Ränge</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h3>🎮 Spielmodi</h3>
+                    <ul>
+                        <li><a href="../spielmodi/index.html">Übersicht</a></li>
+                        <li><a href="../spielmodi/sky-survival.html">🦅 Sky Survival</a></li>
+                        <li><a href="../spielmodi/tycoon.html">🏭 Tycoon</a></li>
+                        <li><a href="../spielmodi/town.html">🏘️ Town</a></li>
+                        <li><a href="../spielmodi/freebuild.html">🎨 Freebuild</a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <h3>📜 Sonstiges</h3>
+                    <ul>
+                        <li><a href="index.html" class="active">⌨️ Befehle</a></li>
+                        <li><a href="../regeln/index.html">📋 Regeln</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="wiki-content">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a> / 
+                <a href="../index.html">Wiki</a> / 
+                <span>Befehle</span>
+            </div>
+            
+            <h1>⌨️ Befehls-Übersicht</h1>
+            <p class="wiki-intro">
+                Hier findest du alle wichtigen Befehle auf dem Festas Builds Server, 
+                sortiert nach Kategorien. Manche Befehle sind erst ab bestimmten Rängen verfügbar.
+            </p>
+            
+            <!-- Navigation -->
+            <section class="commands-section">
+                <h2>🏠 Basis & Navigation</h2>
+                <div class="command-list">
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/spawn</div>
+                            <div class="command-description">Teleportiere zum Server-Spawn</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/warp [Name]</div>
+                            <div class="command-description">Teleportiere zu einem Warp-Punkt (sky, tycoon, town, freebuild)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/sethome [Name]</div>
+                            <div class="command-description">Setze einen Home-Punkt (Anzahl abhängig vom Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/home [Name]</div>
+                            <div class="command-description">Teleportiere zu einem deiner Home-Punkte</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/delhome [Name]</div>
+                            <div class="command-description">Lösche einen Home-Punkt</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/back</div>
+                            <div class="command-description">Teleportiere zur letzten Position (ab BABA-Rang, auch nach Tod)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/tpa [Spieler]</div>
+                            <div class="command-description">Sende Teleport-Anfrage zu einem Spieler</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/tpahere [Spieler]</div>
+                            <div class="command-description">Lade einen Spieler zu dir ein</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/tpaccept</div>
+                            <div class="command-description">Akzeptiere Teleport-Anfrage</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/tpdeny</div>
+                            <div class="command-description">Lehne Teleport-Anfrage ab</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Economy -->
+            <section class="commands-section">
+                <h2>💰 Wirtschaft</h2>
+                <div class="command-list">
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/bal</div>
+                            <div class="command-description">Zeige dein Guthaben</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/shop</div>
+                            <div class="command-description">Öffne den Server-Shop</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/sell all</div>
+                            <div class="command-description">Verkaufe alle verkaufbaren Items im Inventar</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/sell hand</div>
+                            <div class="command-description">Verkaufe das Item in deiner Hand</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/pay [Spieler] [Betrag]</div>
+                            <div class="command-description">Überweise Geld an einen Spieler</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/ah</div>
+                            <div class="command-description">Öffne das Auktionshaus (Markt)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/ah sell [Preis]</div>
+                            <div class="command-description">Verkaufe Item in deiner Hand im Auktionshaus</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Jobs -->
+            <section class="commands-section">
+                <h2>💼 Jobs</h2>
+                <div class="command-list">
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/jobs browse</div>
+                            <div class="command-description">Zeige verfügbare Jobs</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/jobs join [Job]</div>
+                            <div class="command-description">Trete einem Job bei (Anzahl abhängig vom Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/jobs leave [Job]</div>
+                            <div class="command-description">Verlasse einen Job</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/jobs info [Job]</div>
+                            <div class="command-description">Zeige Informationen über einen Job</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/jobs stats</div>
+                            <div class="command-description">Zeige deine Job-Statistiken</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Utility -->
+            <section class="commands-section">
+                <h2>🛠️ Nützliches</h2>
+                <div class="command-list">
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/workbench</div>
+                            <div class="command-description">Öffne eine Werkbank (ab Knecht-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/enderchest</div>
+                            <div class="command-description">Öffne deine Enderchest (ab Ticker-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/hat</div>
+                            <div class="command-description">Trage das Item in deiner Hand als Hut (ab Hustler-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/dispose</div>
+                            <div class="command-description">Öffne einen Müll-Eimer (ab Macher-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/anvil</div>
+                            <div class="command-description">Öffne einen Amboss (ab Bratan-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/feed</div>
+                            <div class="command-description">Fülle deinen Hunger (ab Ehrenmann-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/repair</div>
+                            <div class="command-description">Repariere Item in der Hand (ab Löwe-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/repair all</div>
+                            <div class="command-description">Repariere alle Items (ab Rich Kid)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/hdb</div>
+                            <div class="command-description">Öffne die Head Database (ab Maschine-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/condense</div>
+                            <div class="command-description">Komprimiere Items (z.B. Nuggets zu Barren) (ab Rolex)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/heal</div>
+                            <div class="command-description">Heile dich vollständig (ab Gucci)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/fly</div>
+                            <div class="command-description">Toggle Flugmodus (ab Flexer im Tycoon, König überall)</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Plot Commands -->
+            <section class="commands-section">
+                <h2>🏗️ Plot-Befehle</h2>
+                <div class="command-list">
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/plot auto</div>
+                            <div class="command-description">Claime automatisch ein freies Plot</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/plot home</div>
+                            <div class="command-description">Teleportiere zu deinem Plot</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/plot add [Spieler]</div>
+                            <div class="command-description">Füge Spieler zu deinem Plot hinzu</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/plot trust [Spieler]</div>
+                            <div class="command-description">Gib Spieler permanente Build-Rechte</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/plot kick [Spieler]</div>
+                            <div class="command-description">Kicke Spieler von deinem Plot (ab Türsteher-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/plot biome [Biom]</div>
+                            <div class="command-description">Ändere das Biom deines Plots (ab Macher-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/plot music</div>
+                            <div class="command-description">Setze Hintergrundmusik (ab Bratan-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/plot clear</div>
+                            <div class="command-description">Lösche dein Plot komplett (Vorsicht!)</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Tycoon -->
+            <section class="commands-section">
+                <h2>🏭 Tycoon</h2>
+                <div class="command-list">
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/rankup</div>
+                            <div class="command-description">Steige zum nächsten Tycoon-Rang auf</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/nextgen</div>
+                            <div class="command-description">Öffne das Generator-Menü</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/voidchest</div>
+                            <div class="command-description">Verwalte VoidChests (ab Gold-Rang)</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/chunkloader</div>
+                            <div class="command-description">Verwalte Chunk Loader (ab Kupfer-Rang)</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Social -->
+            <section class="commands-section">
+                <h2>💬 Soziales</h2>
+                <div class="command-list">
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/msg [Spieler] [Nachricht]</div>
+                            <div class="command-description">Sende private Nachricht an Spieler</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/r [Nachricht]</div>
+                            <div class="command-description">Antworte auf letzte Privatnachricht</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/ignore [Spieler]</div>
+                            <div class="command-description">Ignoriere Nachrichten eines Spielers</div>
+                        </div>
+                    </div>
+                    <div class="command-item">
+                        <div>
+                            <div class="command-name">/list</div>
+                            <div class="command-description">Zeige alle Online-Spieler</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="quick-info" style="margin-top: var(--spacing-lg);">
+                <h2>💡 Hinweise</h2>
+                <div style="color: var(--text-light); opacity: 0.9;">
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                            <span style="position: absolute; left: 0; color: var(--gold);">ℹ️</span>
+                            Viele Befehle sind erst ab bestimmten Rängen verfügbar. 
+                            Siehe <a href="../raenge/zeit-raenge.html" style="color: var(--sky-blue);">Zeit-Ränge</a> 
+                            und <a href="../raenge/geld-raenge.html" style="color: var(--sky-blue);">Geld-Ränge</a>.
+                        </li>
+                        <li style="padding: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                            <span style="position: absolute; left: 0; color: var(--gold);">⌨️</span>
+                            Bei den meisten Befehlen kannst du <code>/help [Befehl]</code> nutzen für mehr Infos.
+                        </li>
+                        <li style="padding: 0.5rem 0; padding-left: 1.5rem; position: relative;">
+                            <span style="position: absolute; left: 0; color: var(--gold);">📝</span>
+                            Eckige Klammern <code>[Text]</code> bedeuten, dass du den Text durch 
+                            einen eigenen Wert ersetzen musst.
+                        </li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="../../js/config.js"></script>
+    <script src="../../js/main.js"></script>
+</body>
+</html>
