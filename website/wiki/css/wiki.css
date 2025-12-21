@@ -1,0 +1,503 @@
+/* ========================================
+   Wiki Styles
+   ======================================== */
+
+/* Wiki Container */
+.wiki-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-md);
+    min-height: 100vh;
+}
+
+/* Wiki Sidebar */
+.wiki-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: var(--spacing-lg);
+}
+
+.wiki-sidebar {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+    border: 1px solid var(--border-color);
+}
+
+.wiki-sidebar-title {
+    color: var(--grass-green);
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.wiki-nav-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.wiki-nav-group-title {
+    color: var(--gold);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-xs);
+}
+
+.wiki-nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.wiki-nav-link {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-light);
+    text-decoration: none;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    font-size: 0.95rem;
+}
+
+.wiki-nav-link:hover,
+.wiki-nav-link.active {
+    background: rgba(125, 189, 84, 0.15);
+    color: var(--grass-green);
+}
+
+/* Wiki Content */
+.wiki-content {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+}
+
+.wiki-header {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.wiki-title {
+    font-size: 2.5rem;
+    color: var(--grass-green);
+    margin-bottom: var(--spacing-xs);
+}
+
+.wiki-breadcrumb {
+    display: flex;
+    gap: 0.5rem;
+    color: var(--text-light);
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+.wiki-breadcrumb a {
+    color: var(--sky-blue);
+}
+
+/* Rank Cards */
+.rank-wiki-card {
+    background: var(--bg-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.rank-wiki-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.rank-wiki-icon {
+    font-size: 3rem;
+}
+
+.rank-wiki-info h3 {
+    font-size: 1.5rem;
+    color: var(--gold);
+}
+
+.rank-wiki-prefix {
+    font-family: 'Courier New', monospace;
+    background: var(--bg-darker);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+.rank-wiki-unlock {
+    color: var(--grass-green);
+    font-weight: 600;
+}
+
+.rank-wiki-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.rank-stat {
+    background: var(--bg-darker);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.rank-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    opacity: 0.7;
+}
+
+.rank-stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--sky-blue);
+}
+
+.rank-wiki-commands {
+    margin-top: var(--spacing-md);
+}
+
+.rank-wiki-commands h4 {
+    color: var(--grass-green);
+    margin-bottom: var(--spacing-xs);
+}
+
+.command-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.command-tag {
+    background: linear-gradient(135deg, rgba(125, 189, 84, 0.2) 0%, rgba(74, 159, 216, 0.2) 100%);
+    border: 1px solid var(--grass-green);
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: var(--grass-green);
+}
+
+/* Tycoon Table */
+.tycoon-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--spacing-md) 0;
+}
+
+.tycoon-table th,
+.tycoon-table td {
+    padding: var(--spacing-sm);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tycoon-table th {
+    background: var(--bg-dark);
+    color: var(--gold);
+    font-weight: 700;
+}
+
+.tycoon-table tr:hover {
+    background: rgba(125, 189, 84, 0.1);
+}
+
+.cost-cell {
+    font-family: 'Courier New', monospace;
+    color: var(--grass-green);
+}
+
+/* Mobile Responsive */
+@media (max-width: 900px) {
+    .wiki-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .wiki-sidebar {
+        position: relative;
+        top: 0;
+    }
+}
+
+/* Quick Links Grid */
+.wiki-quick-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.wiki-quick-link-card {
+    background: var(--bg-dark);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    text-decoration: none;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.wiki-quick-link-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--grass-green);
+    box-shadow: 0 8px 24px rgba(125, 189, 84, 0.3);
+}
+
+.wiki-quick-link-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.wiki-quick-link-title {
+    font-size: 1.3rem;
+    color: var(--gold);
+    margin-bottom: var(--spacing-xs);
+}
+
+.wiki-quick-link-desc {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    opacity: 0.8;
+}
+
+/* Wiki Welcome Section */
+.wiki-welcome {
+    background: linear-gradient(135deg, rgba(125, 189, 84, 0.1) 0%, rgba(74, 159, 216, 0.1) 100%);
+    border-left: 4px solid var(--grass-green);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.wiki-welcome p {
+    color: var(--text-light);
+    opacity: 0.9;
+    line-height: 1.7;
+}
+
+/* Gamemode Wiki Cards */
+.gamemode-wiki-card {
+    background: var(--bg-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border: 2px solid var(--border-color);
+}
+
+.gamemode-wiki-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.gamemode-wiki-icon {
+    font-size: 2.5rem;
+}
+
+.gamemode-wiki-title {
+    font-size: 1.8rem;
+    color: var(--gold);
+}
+
+.gamemode-wiki-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.gamemode-wiki-section h4 {
+    color: var(--grass-green);
+    margin-bottom: var(--spacing-sm);
+}
+
+.gamemode-wiki-section ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.gamemode-wiki-section li {
+    padding: 0.3rem 0;
+    color: var(--text-light);
+    opacity: 0.9;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.gamemode-wiki-section li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+}
+
+/* Rules Section */
+.wiki-rules-list {
+    list-style: none;
+    padding: 0;
+}
+
+.wiki-rule-item {
+    background: var(--bg-dark);
+    border-left: 4px solid var(--gold);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.wiki-rule-item h4 {
+    color: var(--gold);
+    margin-bottom: var(--spacing-xs);
+}
+
+.wiki-rule-item p {
+    color: var(--text-light);
+    opacity: 0.9;
+    line-height: 1.7;
+}
+
+/* Commands Section */
+.commands-category {
+    margin-bottom: var(--spacing-lg);
+}
+
+.commands-category h3 {
+    color: var(--grass-green);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.5rem;
+}
+
+.commands-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-sm);
+}
+
+.command-item {
+    background: var(--bg-dark);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.command-name {
+    font-family: 'Courier New', monospace;
+    color: var(--sky-blue);
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.command-desc {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    opacity: 0.8;
+}
+
+/* Table of Contents */
+.wiki-toc {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.wiki-toc-title {
+    color: var(--gold);
+    font-size: 1.2rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.wiki-toc-list {
+    list-style: none;
+    padding: 0;
+}
+
+.wiki-toc-list li {
+    padding: 0.3rem 0;
+}
+
+.wiki-toc-list a {
+    color: var(--sky-blue);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.wiki-toc-list a:hover {
+    color: var(--grass-green);
+    padding-left: 0.5rem;
+}
+
+/* Info Boxes */
+.wiki-info-box {
+    background: linear-gradient(135deg, rgba(126, 192, 238, 0.1) 0%, rgba(155, 89, 182, 0.1) 100%);
+    border-left: 4px solid var(--sky-blue);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin: var(--spacing-md) 0;
+}
+
+.wiki-warning-box {
+    background: linear-gradient(135deg, rgba(230, 126, 34, 0.1) 0%, rgba(231, 76, 60, 0.1) 100%);
+    border-left: 4px solid var(--tycoon-orange);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin: var(--spacing-md) 0;
+}
+
+.wiki-success-box {
+    background: linear-gradient(135deg, rgba(125, 189, 84, 0.1) 0%, rgba(90, 156, 58, 0.1) 100%);
+    border-left: 4px solid var(--grass-green);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin: var(--spacing-md) 0;
+}
+
+.wiki-info-box p,
+.wiki-warning-box p,
+.wiki-success-box p {
+    color: var(--text-light);
+    opacity: 0.9;
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* Responsive Tables */
+@media (max-width: 768px) {
+    .tycoon-table {
+        font-size: 0.9rem;
+    }
+    
+    .tycoon-table th,
+    .tycoon-table td {
+        padding: var(--spacing-xs);
+    }
+    
+    .wiki-title {
+        font-size: 2rem;
+    }
+    
+    .rank-wiki-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .commands-grid {
+        grid-template-columns: 1fr;
+    }
+}
