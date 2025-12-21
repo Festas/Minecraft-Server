@@ -1029,6 +1029,97 @@ code {
 }
 
 /* ========================================
+   Light Mode Enhancements
+   ======================================== */
+[data-theme="light"] .site-header {
+    background: rgba(255, 255, 255, 0.95);
+    border-bottom-color: #e0e0e0;
+}
+
+[data-theme="light"] .hero {
+    background: linear-gradient(180deg, 
+        #e8f4fc 0%, 
+        #d1e8f5 30%, 
+        #c5e0f0 60%, 
+        #f5f5f5 100%
+    );
+}
+
+[data-theme="light"] .hero::before {
+    background: 
+        repeating-linear-gradient(
+            0deg,
+            rgba(90, 156, 58, 0.05) 0px,
+            transparent 1px,
+            transparent 2px,
+            rgba(90, 156, 58, 0.05) 3px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            rgba(90, 156, 58, 0.05) 0px,
+            transparent 1px,
+            transparent 2px,
+            rgba(90, 156, 58, 0.05) 3px
+        );
+}
+
+[data-theme="light"] .feature-card,
+[data-theme="light"] .gamemode-card,
+[data-theme="light"] .rank-card,
+[data-theme="light"] .plugin-card,
+[data-theme="light"] .faq-item {
+    background: #ffffff;
+    border-color: #e0e0e0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .section-title {
+    color: var(--text-dark);
+}
+
+[data-theme="light"] .mobile-nav-overlay {
+    background: rgba(255, 255, 255, 0.98);
+}
+
+[data-theme="light"] .hamburger-line {
+    background: var(--text-dark);
+}
+
+[data-theme="light"] .back-to-top {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================
+   Responsive Navigation
+   ======================================== */
+@media (max-width: 900px) {
+    .main-nav {
+        display: none;
+    }
+    
+    .mobile-menu-toggle {
+        display: flex;
+    }
+    
+    .header-discord-btn .discord-text {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-discord-btn {
+        padding: 0.5rem;
+    }
+    
+    .back-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 45px;
+        height: 45px;
+    }
+}
+
+/* ========================================
    Theme Toggle Button
    ======================================== */
 .theme-toggle {
@@ -1075,6 +1166,270 @@ code {
 
 [data-theme="light"] .theme-toggle .moon-icon {
     display: none;
+}
+
+/* Header theme toggle variant */
+.header-theme-toggle {
+    position: static;
+    width: 40px;
+    height: 40px;
+    box-shadow: none;
+}
+
+/* ========================================
+   Sticky Header / Navigation
+   ======================================== */
+.site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(15, 15, 15, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition);
+    transform: translateY(-100%);
+}
+
+.site-header.visible {
+    transform: translateY(0);
+}
+
+.site-header.scrolled {
+    background: rgba(15, 15, 15, 0.98);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.header-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0.75rem var(--spacing-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--text-light);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.logo-icon {
+    font-size: 1.5rem;
+}
+
+.logo-text {
+    background: linear-gradient(135deg, var(--grass-green) 0%, var(--gold) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.main-nav {
+    display: flex;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: var(--spacing-md);
+    margin: 0;
+    padding: 0;
+}
+
+.nav-link {
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 0;
+    position: relative;
+    transition: var(--transition);
+    opacity: 0.8;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--grass-green);
+    transition: width 0.3s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    opacity: 1;
+    color: var(--grass-green);
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+    width: 100%;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.header-discord-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--discord-blurple);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.header-discord-btn:hover {
+    background: #4752C4;
+    transform: translateY(-2px);
+}
+
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.hamburger-line {
+    width: 100%;
+    height: 3px;
+    background: var(--text-light);
+    border-radius: 2px;
+    transition: var(--transition);
+}
+
+.mobile-menu-toggle.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.mobile-menu-toggle.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-toggle.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
+}
+
+/* Mobile Navigation Overlay */
+.mobile-nav-overlay {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 15, 15, 0.98);
+    backdrop-filter: blur(10px);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+}
+
+.mobile-nav-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-nav {
+    padding: var(--spacing-lg);
+}
+
+.mobile-nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mobile-nav-link {
+    display: block;
+    padding: var(--spacing-sm) 0;
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 1.2rem;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.mobile-nav-link:hover {
+    color: var(--grass-green);
+    padding-left: var(--spacing-sm);
+}
+
+.mobile-nav-link.discord {
+    color: var(--discord-blurple);
+    border-bottom: none;
+    margin-top: var(--spacing-md);
+}
+
+/* ========================================
+   Back to Top Button
+   ======================================== */
+.back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background: var(--grass-green);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: var(--transition);
+    z-index: 900;
+    box-shadow: 0 4px 15px rgba(125, 189, 84, 0.3);
+}
+
+.back-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.back-to-top:hover {
+    background: var(--dark-green);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(125, 189, 84, 0.5);
+}
+
+/* Add padding to body to account for fixed header */
+body {
+    padding-top: 0; /* Header is hidden initially */
+}
+
+body.header-visible {
+    padding-top: 60px;
 }
 
 /* ========================================
