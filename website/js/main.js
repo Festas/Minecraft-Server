@@ -323,11 +323,14 @@ function initHeroDiscordButton() {
     const heroDiscordBtn = document.getElementById('heroDiscordBtn');
     
     if (heroDiscordBtn) {
-        // Update Discord URL from config if available
-        if (typeof window.MC_CONFIG !== 'undefined' && window.MC_CONFIG.discordURL) {
+        // Update Discord URL from config if available and valid
+        if (typeof window.MC_CONFIG !== 'undefined' && 
+            window.MC_CONFIG.discordURL && 
+            typeof window.MC_CONFIG.discordURL === 'string' &&
+            window.MC_CONFIG.discordURL.trim() !== '') {
             heroDiscordBtn.href = window.MC_CONFIG.discordURL;
         } else {
-            // If no config is available, prevent navigation and show message
+            // If no valid config is available, keep as placeholder
             heroDiscordBtn.href = '#';
         }
         
@@ -336,7 +339,15 @@ function initHeroDiscordButton() {
             // Check if it's a placeholder link
             if (heroDiscordBtn.href.endsWith('#')) {
                 e.preventDefault();
-                alert('Discord-Link wird noch konfiguriert. Bitte versuche es später erneut.');
+                // Use a simple status message instead of alert
+                const statusText = heroDiscordBtn.querySelector('.btn-text') || heroDiscordBtn;
+                const originalText = heroDiscordBtn.textContent;
+                heroDiscordBtn.textContent = '⚠️ Link noch nicht konfiguriert';
+                heroDiscordBtn.style.opacity = '0.7';
+                setTimeout(() => {
+                    heroDiscordBtn.textContent = originalText;
+                    heroDiscordBtn.style.opacity = '';
+                }, 3000);
             } else {
                 // Track click if analytics are enabled and link is valid
                 if (typeof gtag !== 'undefined') {
