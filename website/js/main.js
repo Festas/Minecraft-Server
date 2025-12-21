@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initSmoothScroll();
     initBlueMapButton();
     initDiscordLink();
+    initHeroDiscordButton();
     initFAQAccordion();
     initScrollAnimations();
 });
@@ -309,6 +310,30 @@ function initDiscordLink() {
                 gtag('event', 'discord_click', {
                     'event_category': 'external_link',
                     'event_label': 'Discord'
+                });
+            }
+        });
+    }
+}
+
+/**
+ * Hero Discord button handler
+ */
+function initHeroDiscordButton() {
+    const heroDiscordBtn = document.getElementById('heroDiscordBtn');
+    
+    if (heroDiscordBtn) {
+        // Update Discord URL from config if available
+        if (typeof window.MC_CONFIG !== 'undefined' && window.MC_CONFIG.discordURL) {
+            heroDiscordBtn.href = window.MC_CONFIG.discordURL;
+        }
+        
+        heroDiscordBtn.addEventListener('click', function(e) {
+            // Track click if analytics are enabled
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'hero_discord_click', {
+                    'event_category': 'cta',
+                    'event_label': 'Hero Discord Button'
                 });
             }
         });
