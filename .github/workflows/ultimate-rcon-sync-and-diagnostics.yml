@@ -59,7 +59,7 @@ jobs:
 
       - name: Run RCON diagnostics and fixes
         id: diagnostics
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@v1.2.4
         env:
           ACTION: ${{ github.event.inputs.action }}
           RCON_PASSWORD: ${{ github.event.inputs.RCON_PASSWORD || secrets.RCON_PASSWORD }}
