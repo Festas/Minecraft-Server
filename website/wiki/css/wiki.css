@@ -7,14 +7,18 @@
 /* Sidebar */
 .wiki-sidebar {
     width: 280px;
-    background: var(--card-bg);
-    border-right: 1px solid var(--border-color);
+    background: linear-gradient(180deg, 
+        rgba(20, 20, 30, 0.95) 0%,
+        rgba(15, 15, 25, 0.98) 100%
+    );
+    border-right: 1px solid rgba(125, 189, 84, 0.2);
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
     overflow-y: auto;
     z-index: 100;
+    transition: transform 0.3s ease;
 }
 
 .sidebar-header {
@@ -41,7 +45,10 @@
 }
 
 .nav-section h3 {
-    color: var(--gold);
+    background: linear-gradient(90deg, var(--gold), var(--grass-green));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     font-size: 0.9rem;
     margin-bottom: var(--spacing-xs);
     text-transform: uppercase;
@@ -108,8 +115,10 @@
 }
 
 .wiki-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    background: rgba(30, 30, 40, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-lg);
     padding: var(--spacing-md);
     text-decoration: none;
@@ -118,7 +127,8 @@
 
 .wiki-card:hover {
     border-color: var(--grass-green);
-    transform: translateY(-3px);
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(125, 189, 84, 0.3);
 }
 
 .wiki-card .card-icon {
@@ -182,18 +192,81 @@
 
 /* Rank Cards */
 .rank-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    background: rgba(30, 30, 40, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-lg);
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.rank-card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--grass-green), var(--gold), var(--sky-blue), var(--grass-green));
+    background-size: 400%;
+    z-index: -1;
+    border-radius: inherit;
+    animation: gradientBorder 8s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.rank-card:hover::before {
+    opacity: 1;
+}
+
+.rank-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(125, 189, 84, 0.3);
+}
+
+@keyframes gradientBorder {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .rank-header {
+    background: linear-gradient(135deg, 
+        rgba(125, 189, 84, 0.1) 0%,
+        rgba(255, 170, 0, 0.1) 100%
+    );
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: var(--spacing-sm);
+}
+
+.rank-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.rank-number {
+    background: rgba(255, 170, 0, 0.2);
+    color: var(--gold);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.rank-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .rank-prefix {
@@ -207,6 +280,26 @@
     padding: 0.25rem 0.75rem;
     border-radius: var(--radius-sm);
     font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.unlock-icon {
+    font-size: 1rem;
+}
+
+.unlock-time {
+    font-weight: 500;
+}
+
+.rank-bonus {
+    background: rgba(255, 170, 0, 0.2);
+    color: var(--gold);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
 .rank-name {
@@ -216,6 +309,13 @@
     color: var(--text-light);
 }
 
+.rank-body h4 {
+    color: var(--gold);
+    font-size: 0.95rem;
+    margin-top: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
 .rank-perks {
     display: flex;
     flex-wrap: wrap;
@@ -223,22 +323,181 @@
     margin-top: var(--spacing-sm);
 }
 
+.rank-perks.inherited {
+    opacity: 0.7;
+}
+
 .perk-tag {
-    background: rgba(74, 159, 216, 0.2);
-    color: var(--sky-blue);
     padding: 0.25rem 0.5rem;
     border-radius: var(--radius-sm);
     font-size: 0.8rem;
+    transition: var(--transition);
+    position: relative;
+    cursor: help;
 }
 
+.perk-tag:hover {
+    transform: scale(1.05);
+}
+
+/* Base Perks (blau) */
+.perk-tag.base {
+    background: rgba(74, 159, 216, 0.2);
+    color: var(--sky-blue);
+    border: 1px solid rgba(74, 159, 216, 0.3);
+}
+
+.perk-tag.base:hover {
+    box-shadow: 0 4px 15px rgba(74, 159, 216, 0.4);
+}
+
+/* Neue Perks (gold mit Stern) */
 .perk-tag.new {
     background: rgba(255, 170, 0, 0.2);
     color: var(--gold);
+    border: 1px solid rgba(255, 170, 0, 0.3);
 }
 
+.perk-tag.new::before {
+    content: '✨ ';
+}
+
+.perk-tag.new:hover {
+    box-shadow: 0 4px 15px rgba(255, 170, 0, 0.4);
+}
+
+/* CMI Extras (lila) */
+.perk-tag.cmi-extra {
+    background: rgba(155, 89, 182, 0.2);
+    color: #9b59b6;
+    border: 1px solid rgba(155, 89, 182, 0.3);
+}
+
+.perk-tag.cmi-extra::before {
+    content: '⚡ ';
+}
+
+.perk-tag.cmi-extra:hover {
+    box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+}
+
+/* Shop Bonus (grün) */
 .perk-tag.bonus {
     background: rgba(125, 189, 84, 0.2);
     color: var(--grass-green);
+    border: 1px solid rgba(125, 189, 84, 0.3);
+}
+
+.perk-tag.bonus:hover {
+    box-shadow: 0 4px 15px rgba(125, 189, 84, 0.4);
+}
+
+/* Command Tags */
+.perk-tag.command {
+    font-family: 'Courier New', monospace;
+    background: rgba(45, 45, 45, 0.8);
+    color: #f8f8f2;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.perk-tag.command:hover {
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+
+/* Tooltips für Perks */
+.perk-tag[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-darker);
+    color: var(--text-light);
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    z-index: 10;
+    pointer-events: none;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.perk-tag[data-tooltip]:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* CMI Info Box */
+.cmi-info-box {
+    background: linear-gradient(135deg, 
+        rgba(155, 89, 182, 0.1) 0%,
+        rgba(74, 159, 216, 0.1) 100%
+    );
+    border: 1px solid rgba(155, 89, 182, 0.3);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.cmi-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: var(--spacing-sm);
+}
+
+.cmi-icon {
+    font-size: 1.5rem;
+}
+
+.cmi-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #9b59b6;
+}
+
+.cmi-description {
+    color: var(--text-light);
+    opacity: 0.9;
+    margin-bottom: var(--spacing-sm);
+    line-height: 1.6;
+}
+
+.cmi-features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.cmi-feature {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cmi-feature:last-child {
+    border-bottom: none;
+}
+
+.cmi-feature code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: #9b59b6;
+    min-width: 120px;
+    font-family: 'Courier New', monospace;
+}
+
+.cmi-feature span {
+    color: var(--text-light);
+    opacity: 0.9;
+    font-size: 0.9rem;
 }
 
 /* Pillars Grid */
@@ -334,6 +593,112 @@
 .tycoon-table .cost-cell {
     color: var(--grass-green);
     font-weight: 500;
+}
+
+/* Tycoon Grid */
+.tycoon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.tycoon-card {
+    background: rgba(30, 30, 40, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.tycoon-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(125, 189, 84, 0.3);
+}
+
+.tycoon-card[data-tier="early"] {
+    border-color: rgba(139, 69, 19, 0.3);
+}
+
+.tycoon-card[data-tier="mid"] {
+    border-color: rgba(192, 192, 192, 0.3);
+}
+
+.tycoon-card[data-tier="late"] {
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.tycoon-card[data-tier="endgame"] {
+    border-color: rgba(138, 43, 226, 0.3);
+}
+
+.tycoon-rank-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.tycoon-icon {
+    font-size: 2rem;
+}
+
+.tycoon-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-light);
+    flex: 1;
+    text-align: center;
+}
+
+.tycoon-number {
+    background: rgba(255, 170, 0, 0.2);
+    color: var(--gold);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.tycoon-cost {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--grass-green);
+    text-align: center;
+    margin: var(--spacing-xs) 0;
+}
+
+.tycoon-progress {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: var(--spacing-xs);
+}
+
+.tycoon-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--grass-green), var(--gold));
+    border-radius: 4px;
+    animation: progressPulse 2s ease-in-out infinite;
+    transition: width 0.3s ease;
+}
+
+@keyframes progressPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.tycoon-perks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: var(--spacing-sm);
+    justify-content: center;
 }
 
 .tycoon-warning {
@@ -524,8 +889,58 @@
     font-weight: 700;
 }
 
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 200;
+    background: rgba(30, 30, 40, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.sidebar-toggle:hover {
+    background: rgba(40, 40, 50, 0.95);
+    border-color: var(--grass-green);
+}
+
+.sidebar-toggle:active {
+    transform: scale(0.95);
+}
+
+.hamburger-line {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--text-light);
+    margin: 5px 0;
+    transition: var(--transition);
+}
+
+.sidebar-toggle.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(7px, 7px);
+}
+
+.sidebar-toggle.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.sidebar-toggle.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
 /* Mobile */
 @media (max-width: 900px) {
+    .sidebar-toggle {
+        display: block;
+    }
+    
     .wiki-sidebar {
         transform: translateX(-100%);
         transition: transform 0.3s ease;
@@ -538,6 +953,7 @@
     .wiki-content {
         margin-left: 0;
         padding: var(--spacing-md);
+        padding-top: 4rem;
     }
     
     .wiki-cards {
@@ -562,5 +978,9 @@
     .team-table th,
     .team-table td {
         padding: var(--spacing-xs);
+    }
+    
+    .tycoon-grid {
+        grid-template-columns: 1fr;
     }
 }

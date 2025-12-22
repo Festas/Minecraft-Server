@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initFAQAccordion();
     initScrollAnimations();
     initRankPillarTabs();
+    initWikiSidebarToggle();
 });
 
 /**
@@ -753,5 +754,31 @@ function initFooterDiscordLinks() {
     
     setupFooterDiscordLink(footerDiscordLink);
     setupFooterDiscordLink(footerSocialDiscord);
+}
+
+/**
+ * Wiki Sidebar Toggle for Mobile
+ */
+function initWikiSidebarToggle() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.wiki-sidebar');
+    
+    if (!sidebarToggle || !sidebar) return;
+    
+    sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('open');
+        sidebarToggle.classList.toggle('active');
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 900 && 
+            sidebar.classList.contains('open') && 
+            !sidebar.contains(e.target) && 
+            !sidebarToggle.contains(e.target)) {
+            sidebar.classList.remove('open');
+            sidebarToggle.classList.remove('active');
+        }
+    });
 }
 
