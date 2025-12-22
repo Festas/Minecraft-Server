@@ -54,6 +54,13 @@
             </nav>
         </aside>
         
+        <!-- Sidebar Toggle for Mobile -->
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Menü öffnen">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
         <!-- Main Content -->
         <main class="wiki-content">
             <div class="breadcrumb">
@@ -75,194 +82,333 @@
                 Deine globalen Ränge (Zeit & Geld) und Tokens bleiben jedoch erhalten.
             </div>
             
-            <table class="tycoon-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Rang</th>
-                        <th>Kosten</th>
-                        <th>Generator</th>
-                        <th>Besonderheit</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="rank-number">1</td>
-                        <td class="rank-name-cell">Erde</td>
-                        <td class="cost-cell">Start</td>
-                        <td>Erde</td>
-                        <td>Start-Rang</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">2</td>
-                        <td class="rank-name-cell">Stein</td>
-                        <td class="cost-cell">$5.000</td>
-                        <td>Stein</td>
-                        <td>Erster Reset</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">3</td>
-                        <td class="rank-name-cell">Kohle</td>
-                        <td class="cost-cell">$25.000</td>
-                        <td>Kohle</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">4</td>
-                        <td class="rank-name-cell">Eisen</td>
-                        <td class="cost-cell">$75.000</td>
-                        <td>Eisen</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">5</td>
-                        <td class="rank-name-cell">Kupfer</td>
-                        <td class="cost-cell">$200.000</td>
-                        <td>Kupfer</td>
-                        <td>Chunk Loader Zugang</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">6</td>
-                        <td class="rank-name-cell">Gold</td>
-                        <td class="cost-cell">$500.000</td>
-                        <td>Gold</td>
-                        <td>VoidChest Zugang</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">7</td>
-                        <td class="rank-name-cell">Redstone</td>
-                        <td class="cost-cell">$1,2 Mio</td>
-                        <td>Redstone</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">8</td>
-                        <td class="rank-name-cell">Lapis</td>
-                        <td class="cost-cell">$3 Mio</td>
-                        <td>Lapis</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">9</td>
-                        <td class="rank-name-cell">Smaragd</td>
-                        <td class="cost-cell">$7,5 Mio</td>
-                        <td>Smaragd</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">10</td>
-                        <td class="rank-name-cell">Diamant</td>
-                        <td class="cost-cell">$15 Mio</td>
-                        <td>Diamant</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">11</td>
-                        <td class="rank-name-cell">Obsidian</td>
-                        <td class="cost-cell">$35 Mio</td>
-                        <td>Obsidian</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">12</td>
-                        <td class="rank-name-cell">Netherite</td>
-                        <td class="cost-cell">$75 Mio</td>
-                        <td>Netherite</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">13</td>
-                        <td class="rank-name-cell">Tuff</td>
-                        <td class="cost-cell">$150 Mio</td>
-                        <td>Tuff</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">14</td>
-                        <td class="rank-name-cell">Calcit</td>
-                        <td class="cost-cell">$300 Mio</td>
-                        <td>Calcit</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">15</td>
-                        <td class="rank-name-cell">Diorit</td>
-                        <td class="cost-cell">$600 Mio</td>
-                        <td>Diorit</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">16</td>
-                        <td class="rank-name-cell">Andesit</td>
-                        <td class="cost-cell">$1 Mrd</td>
-                        <td>Andesit</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">17</td>
-                        <td class="rank-name-cell">Granit</td>
-                        <td class="cost-cell">$2 Mrd</td>
-                        <td>Granit</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">18</td>
-                        <td class="rank-name-cell">Basalt</td>
-                        <td class="cost-cell">$4 Mrd</td>
-                        <td>Basalt</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">19</td>
-                        <td class="rank-name-cell">Schwarzstein</td>
-                        <td class="cost-cell">$8 Mrd</td>
-                        <td>Schwarzstein</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">20</td>
-                        <td class="rank-name-cell">Purpur</td>
-                        <td class="cost-cell">$15 Mrd</td>
-                        <td>Purpur</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">21</td>
-                        <td class="rank-name-cell">Endstein</td>
-                        <td class="cost-cell">$25 Mrd</td>
-                        <td>Endstein</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">22</td>
-                        <td class="rank-name-cell">Prismarin</td>
-                        <td class="cost-cell">$40 Mrd</td>
-                        <td>Prismarin</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">23</td>
-                        <td class="rank-name-cell">Seelenerde</td>
-                        <td class="cost-cell">$65 Mrd</td>
-                        <td>Seelenerde</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td class="rank-number">24</td>
-                        <td class="rank-name-cell">Magma</td>
-                        <td class="cost-cell">$100 Mrd</td>
-                        <td>Magma</td>
-                        <td>-</td>
-                    </tr>
-                    <tr style="background: rgba(255, 170, 0, 0.1);">
-                        <td class="rank-number">25</td>
-                        <td class="rank-name-cell" style="color: var(--gold); font-weight: 700;">Bedrock</td>
-                        <td class="cost-cell" style="color: var(--gold);">$250 Mrd</td>
-                        <td style="font-weight: 600;">Bedrock</td>
-                        <td style="color: var(--gold); font-weight: 600;">DAS ULTIMATIVE ZIEL 🏆</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="tycoon-grid">
+                <!-- Rang 1-4: Early Game -->
+                <div class="tycoon-card" data-tier="early">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🌍</span>
+                        <span class="tycoon-name">Erde</span>
+                        <span class="tycoon-number">#1</span>
+                    </div>
+                    <div class="tycoon-cost">Start</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 0%;"></div>
+                    </div>
+                    <div class="tycoon-perks">
+                        <span class="perk-tag base">Start-Rang</span>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="early">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🪨</span>
+                        <span class="tycoon-name">Stein</span>
+                        <span class="tycoon-number">#2</span>
+                    </div>
+                    <div class="tycoon-cost">$5.000</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 4%;"></div>
+                    </div>
+                    <div class="tycoon-perks">
+                        <span class="perk-tag new">+2% Shop Bonus</span>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="early">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">⚫</span>
+                        <span class="tycoon-name">Kohle</span>
+                        <span class="tycoon-number">#3</span>
+                    </div>
+                    <div class="tycoon-cost">$25.000</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 8%;"></div>
+                    </div>
+                    <div class="tycoon-perks">
+                        <span class="perk-tag new">+4% Shop Bonus</span>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="early">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">⚙️</span>
+                        <span class="tycoon-name">Eisen</span>
+                        <span class="tycoon-number">#4</span>
+                    </div>
+                    <div class="tycoon-cost">$75.000</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 12%;"></div>
+                    </div>
+                    <div class="tycoon-perks">
+                        <span class="perk-tag new">+6% Shop Bonus</span>
+                    </div>
+                </div>
+                
+                <!-- Rang 5-8: Mid Game -->
+                <div class="tycoon-card" data-tier="mid">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🟤</span>
+                        <span class="tycoon-name">Kupfer</span>
+                        <span class="tycoon-number">#5</span>
+                    </div>
+                    <div class="tycoon-cost">$200.000</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 16%;"></div>
+                    </div>
+                    <div class="tycoon-perks">
+                        <span class="perk-tag cmi-extra">Chunk Loader</span>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="mid">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🟡</span>
+                        <span class="tycoon-name">Gold</span>
+                        <span class="tycoon-number">#6</span>
+                    </div>
+                    <div class="tycoon-cost">$500.000</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 20%;"></div>
+                    </div>
+                    <div class="tycoon-perks">
+                        <span class="perk-tag cmi-extra">VoidChest</span>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="mid">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🔴</span>
+                        <span class="tycoon-name">Redstone</span>
+                        <span class="tycoon-number">#7</span>
+                    </div>
+                    <div class="tycoon-cost">$1,2 Mio</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 24%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="mid">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🔵</span>
+                        <span class="tycoon-name">Lapis</span>
+                        <span class="tycoon-number">#8</span>
+                    </div>
+                    <div class="tycoon-cost">$3 Mio</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 28%;"></div>
+                    </div>
+                </div>
+                
+                <!-- Rang 9-12: Late Game -->
+                <div class="tycoon-card" data-tier="late">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🟢</span>
+                        <span class="tycoon-name">Smaragd</span>
+                        <span class="tycoon-number">#9</span>
+                    </div>
+                    <div class="tycoon-cost">$7,5 Mio</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 32%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="late">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">💎</span>
+                        <span class="tycoon-name">Diamant</span>
+                        <span class="tycoon-number">#10</span>
+                    </div>
+                    <div class="tycoon-cost">$15 Mio</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 36%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="late">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🟣</span>
+                        <span class="tycoon-name">Obsidian</span>
+                        <span class="tycoon-number">#11</span>
+                    </div>
+                    <div class="tycoon-cost">$35 Mio</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 40%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="late">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">⬛</span>
+                        <span class="tycoon-name">Netherite</span>
+                        <span class="tycoon-number">#12</span>
+                    </div>
+                    <div class="tycoon-cost">$75 Mio</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 44%;"></div>
+                    </div>
+                </div>
+                
+                <!-- Rang 13-20: Endgame -->
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🟫</span>
+                        <span class="tycoon-name">Tuff</span>
+                        <span class="tycoon-number">#13</span>
+                    </div>
+                    <div class="tycoon-cost">$150 Mio</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 48%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🤍</span>
+                        <span class="tycoon-name">Calcit</span>
+                        <span class="tycoon-number">#14</span>
+                    </div>
+                    <div class="tycoon-cost">$300 Mio</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 52%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">⬜</span>
+                        <span class="tycoon-name">Diorit</span>
+                        <span class="tycoon-number">#15</span>
+                    </div>
+                    <div class="tycoon-cost">$600 Mio</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 56%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🩶</span>
+                        <span class="tycoon-name">Andesit</span>
+                        <span class="tycoon-number">#16</span>
+                    </div>
+                    <div class="tycoon-cost">$1 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 60%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🟧</span>
+                        <span class="tycoon-name">Granit</span>
+                        <span class="tycoon-number">#17</span>
+                    </div>
+                    <div class="tycoon-cost">$2 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 64%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">⬛</span>
+                        <span class="tycoon-name">Basalt</span>
+                        <span class="tycoon-number">#18</span>
+                    </div>
+                    <div class="tycoon-cost">$4 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 68%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🖤</span>
+                        <span class="tycoon-name">Schwarzstein</span>
+                        <span class="tycoon-number">#19</span>
+                    </div>
+                    <div class="tycoon-cost">$8 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 72%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">💜</span>
+                        <span class="tycoon-name">Purpur</span>
+                        <span class="tycoon-number">#20</span>
+                    </div>
+                    <div class="tycoon-cost">$15 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 76%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🟡</span>
+                        <span class="tycoon-name">Endstein</span>
+                        <span class="tycoon-number">#21</span>
+                    </div>
+                    <div class="tycoon-cost">$25 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 80%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">💠</span>
+                        <span class="tycoon-name">Prismarin</span>
+                        <span class="tycoon-number">#22</span>
+                    </div>
+                    <div class="tycoon-cost">$40 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 84%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🟤</span>
+                        <span class="tycoon-name">Seelenerde</span>
+                        <span class="tycoon-number">#23</span>
+                    </div>
+                    <div class="tycoon-cost">$65 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 88%;"></div>
+                    </div>
+                </div>
+                
+                <div class="tycoon-card" data-tier="endgame">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🔥</span>
+                        <span class="tycoon-name">Magma</span>
+                        <span class="tycoon-number">#24</span>
+                    </div>
+                    <div class="tycoon-cost">$100 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 92%;"></div>
+                    </div>
+                </div>
+                
+                <!-- Rang 25: Ultimate -->
+                <div class="tycoon-card" data-tier="endgame" style="grid-column: 1 / -1; max-width: 400px; margin: 0 auto; border-color: rgba(255, 170, 0, 0.5); box-shadow: 0 8px 32px rgba(255, 170, 0, 0.3);">
+                    <div class="tycoon-rank-header">
+                        <span class="tycoon-icon">🏆</span>
+                        <span class="tycoon-name" style="color: var(--gold); text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);">Bedrock</span>
+                        <span class="tycoon-number" style="background: rgba(255, 170, 0, 0.3);">#25</span>
+                    </div>
+                    <div class="tycoon-cost" style="color: var(--gold); font-size: 1.3rem;">$250 Mrd</div>
+                    <div class="tycoon-progress">
+                        <div class="tycoon-progress-bar" style="width: 100%; background: linear-gradient(90deg, var(--gold), #ff6b6b);"></div>
+                    </div>
+                    <div class="tycoon-perks">
+                        <span class="perk-tag new" style="background: rgba(255, 170, 0, 0.3); border-color: var(--gold);">ULTIMATIVES ZIEL 🏆</span>
+                    </div>
+                </div>
+            </div>
             
             <section class="quick-info" style="margin-top: var(--spacing-lg);">
                 <h2>💡 Wichtige Hinweise</h2>
