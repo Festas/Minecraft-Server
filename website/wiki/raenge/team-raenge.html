@@ -54,6 +54,13 @@
             </nav>
         </aside>
         
+        <!-- Sidebar Toggle for Mobile -->
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Menü öffnen">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
         <!-- Main Content -->
         <main class="wiki-content">
             <div class="breadcrumb">
@@ -83,8 +90,8 @@
                         <td><span class="team-prefix">👮 SECURITY</span></td>
                         <td>
                             <ul style="margin: 0; padding-left: 1.2rem;">
-                                <li>/kick - Spieler temporär kicken</li>
-                                <li>/mute - Spieler stummschalten</li>
+                                <li>/cmi kick - Spieler temporär kicken</li>
+                                <li>/cmi mute - Spieler stummschalten</li>
                                 <li>StaffChat - Zugang zum Team-Chat</li>
                                 <li>CoreProtect Inspect - Blöcke überprüfen</li>
                                 <li><em>Aufgabe: Erste Moderation, Regelbrecher melden</em></li>
@@ -96,10 +103,10 @@
                         <td><span class="team-prefix">📈 MANAGER</span></td>
                         <td>
                             <ul style="margin: 0; padding-left: 1.2rem;">
-                                <li>/ban - Spieler permanent bannen</li>
-                                <li>/tempban - Temporäre Bans vergeben</li>
-                                <li>Inventare ansehen - Spieler-Inventare prüfen</li>
-                                <li>Enderchests ansehen - Enderchests anderer Spieler prüfen</li>
+                                <li>/cmi ban - Spieler permanent bannen</li>
+                                <li>/cmi tempban - Temporäre Bans vergeben</li>
+                                <li>/cmi invsee - Spieler-Inventare prüfen</li>
+                                <li>/cmi ender - Enderchests anderer Spieler prüfen</li>
                                 <li>CoreProtect Rollback - Griefing rückgängig machen</li>
                                 <li><em>Aufgabe: Erweiterte Moderation, Bans verwalten</em></li>
                             </ul>
@@ -110,7 +117,8 @@
                         <td><span class="team-prefix">⚖ VORSTAND</span></td>
                         <td>
                             <ul style="margin: 0; padding-left: 1.2rem;">
-                                <li>/gamemode - Spielmodus ändern</li>
+                                <li>/cmi gamemode - Spielmodus ändern</li>
+                                <li>/cmi god - Unverwundbarkeit aktivieren</li>
                                 <li>WorldGuard - Regionen verwalten</li>
                                 <li>PlotAdmin - Alle Plot-Verwaltungsrechte</li>
                                 <li>NextGens Admin - Generator-System verwalten</li>
