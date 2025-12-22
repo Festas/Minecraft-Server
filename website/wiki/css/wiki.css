@@ -117,6 +117,7 @@
 .wiki-card {
     background: rgba(30, 30, 40, 0.6);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* Safari support */
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-lg);
@@ -125,10 +126,27 @@
     transition: var(--transition);
 }
 
+/* Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(10px)) {
+    .wiki-card {
+        background: rgba(30, 30, 40, 0.95);
+    }
+}
+
 .wiki-card:hover {
     border-color: var(--grass-green);
     transform: translateY(-5px) scale(1.02);
     box-shadow: 0 15px 40px rgba(125, 189, 84, 0.3);
+}
+
+/* Disable transform animations for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .wiki-card:hover,
+    .pillar-card:hover,
+    .tycoon-card:hover,
+    .perk-tag:hover {
+        transform: none;
+    }
 }
 
 .wiki-card .card-icon {
@@ -194,6 +212,7 @@
 .rank-card {
     background: rgba(30, 30, 40, 0.6);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* Safari support */
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-lg);
@@ -202,6 +221,13 @@
     position: relative;
     overflow: hidden;
     transition: var(--transition);
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(10px)) {
+    .rank-card {
+        background: rgba(30, 30, 40, 0.95);
+    }
 }
 
 .rank-card::before {
@@ -215,9 +241,15 @@
     background-size: 400%;
     z-index: -1;
     border-radius: inherit;
-    animation: gradientBorder 8s linear infinite;
     opacity: 0;
     transition: opacity 0.3s ease;
+}
+
+/* Only animate for users who haven't requested reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+    .rank-card::before {
+        animation: gradientBorder 8s linear infinite;
+    }
 }
 
 .rank-card:hover::before {
@@ -233,6 +265,13 @@
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
+}
+
+/* Disable transform animations for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .rank-card:hover {
+        transform: none;
+    }
 }
 
 .rank-header {
