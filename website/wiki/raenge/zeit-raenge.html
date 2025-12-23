@@ -54,6 +54,13 @@
             </nav>
         </aside>
         
+        <!-- Sidebar Toggle for Mobile -->
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Menü öffnen">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
         <!-- Main Content -->
         <main class="wiki-content">
             <div class="breadcrumb">
@@ -69,210 +76,545 @@
                 Je mehr Zeit du auf dem Server verbringst, desto mehr Vorteile erhältst du!
             </p>
             
-            <!-- Rang 1: NPC -->
-            <div class="rank-card">
-                <div class="rank-header">
-                    <div class="rank-prefix">😐 NPC</div>
-                    <div class="rank-unlock">Start</div>
+            <!-- CMI Info Box -->
+            <div class="cmi-info-box">
+                <div class="cmi-header">
+                    <span class="cmi-icon">⚡</span>
+                    <span class="cmi-title">CMI Extra Features</span>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">1 Home</span>
-                    <span class="perk-tag new">1 Plot</span>
-                    <span class="perk-tag new">1 Job</span>
-                    <span class="perk-tag new">TPA</span>
-                    <span class="perk-tag new">Warp</span>
-                    <span class="perk-tag new">Shops (kaufen/verkaufen)</span>
-                    <span class="perk-tag new">1 Markt-Slot</span>
+                <p class="cmi-description">
+                    Wir nutzen jetzt CMI (Custom Minecraft Inventory)! Diese Features sind exklusiv durch CMI verfügbar und bieten zusätzlichen Spielspaß!
+                </p>
+                <div class="cmi-features">
+                    <div class="cmi-feature">
+                        <code>/sit</code>
+                        <span>Setze dich auf Treppen, Stufen und andere Blöcke</span>
+                    </div>
+                    <div class="cmi-feature">
+                        <code>/playtime</code>
+                        <span>Zeige deine Spielzeit auf dem Server an</span>
+                    </div>
+                    <div class="cmi-feature">
+                        <code>/stats</code>
+                        <span>Deine persönlichen Statistiken anzeigen</span>
+                    </div>
+                    <div class="cmi-feature">
+                        <code>/armorstand</code>
+                        <span>Pose Rüstungsständer mit einem visuellen Editor (ab Macher)</span>
+                    </div>
+                    <div class="cmi-feature">
+                        <code>/signedit</code>
+                        <span>Bearbeite Schilder per Rechtsklick (ab Bratan)</span>
+                    </div>
+                    <div class="cmi-feature">
+                        <code>/colors</code>
+                        <span>Zeige alle verfügbaren Farbcodes an (ab Chiller)</span>
+                    </div>
+                    <div class="cmi-feature">
+                        <code>/recipe</code>
+                        <span>Zeige Crafting-Rezepte für Items an (ab Lauch)</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rang 1: NPC -->
+            <div class="rank-card" data-rank="npc">
+                <div class="rank-header">
+                    <div class="rank-info">
+                        <span class="rank-number">#1</span>
+                        <span class="rank-prefix" style="color: #7f7f7f;">😐 NPC</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">🎯</span>
+                            <span class="unlock-time">Start</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="rank-body">
+                    <h4>Basis-Features:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag base" data-tooltip="Ein Home-Punkt setzen">1 Home</span>
+                        <span class="perk-tag base" data-tooltip="Ein Plot claimen">1 Plot</span>
+                        <span class="perk-tag base" data-tooltip="Einen Job ausüben">1 Job</span>
+                        <span class="perk-tag command" data-tooltip="Teleport-Anfragen senden">/cmi tpa</span>
+                        <span class="perk-tag command" data-tooltip="Zu Warp-Punkten teleportieren">/cmi warp</span>
+                        <span class="perk-tag command" data-tooltip="Server-Spawn besuchen">/cmi spawn</span>
+                        <span class="perk-tag base" data-tooltip="Im Shop kaufen & verkaufen">Shops</span>
+                        <span class="perk-tag base" data-tooltip="Ein Item im Markt verkaufen">1 Markt-Slot</span>
+                        <span class="perk-tag cmi-extra" data-tooltip="Auf Blöcke & Treppen setzen">/sit</span>
+                        <span class="perk-tag cmi-extra" data-tooltip="Deine Spielzeit anzeigen">/playtime</span>
+                        <span class="perk-tag cmi-extra" data-tooltip="Deine Stats anzeigen">/stats</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 2: Lauch -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="lauch">
                 <div class="rank-header">
-                    <div class="rank-prefix">🌱 Lauch</div>
-                    <div class="rank-unlock">1 Stunde</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#2</span>
+                        <span class="rank-prefix" style="color: #55ff55;">🌱 Lauch</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">2 Stunden</span>
+                        </span>
+                        <span class="rank-bonus">+1% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">2 Homes</span>
-                    <span class="perk-tag new">Markt verkaufen</span>
-                    <span class="perk-tag new">3 Markt-Slots</span>
-                    <span class="perk-tag new">Chat: Weiß</span>
-                    <span class="perk-tag bonus">+1% Shop-Bonus</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Zwei Home-Punkte setzen">2 Homes</span>
+                        <span class="perk-tag new" data-tooltip="Im Markt verkaufen">Markt verkaufen</span>
+                        <span class="perk-tag new" data-tooltip="3 gleichzeitige Angebote">3 Markt-Slots</span>
+                        <span class="perk-tag new" data-tooltip="Weiße Chat-Farbe">Chat: Weiß</span>
+                        <span class="perk-tag cmi-extra" data-tooltip="Item-Rezepte anzeigen">/recipe</span>
+                        <span class="perk-tag bonus" data-tooltip="1% Rabatt im Shop">+1% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">1 Plot</span>
+                        <span class="perk-tag base">1 Job</span>
+                        <span class="perk-tag command">/cmi tpa</span>
+                        <span class="perk-tag command">/cmi warp</span>
+                        <span class="perk-tag cmi-extra">/sit</span>
+                        <span class="perk-tag cmi-extra">/playtime</span>
+                        <span class="perk-tag cmi-extra">/stats</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 3: Knecht -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="knecht">
                 <div class="rank-header">
-                    <div class="rank-prefix">⚒ Knecht</div>
-                    <div class="rank-unlock">5 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#3</span>
+                        <span class="rank-prefix" style="color: #8b4513;">⚒ Knecht</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">5 Stunden</span>
+                        </span>
+                        <span class="rank-bonus">+2% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">ChestShops erstellen</span>
-                    <span class="perk-tag new">/workbench</span>
-                    <span class="perk-tag bonus">+1% Shop-Bonus (gesamt 2%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Eigene Shops erstellen">ChestShops erstellen</span>
+                        <span class="perk-tag command" data-tooltip="Virtueller Crafting-Table">/cmi workbench</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 2%">+1% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">2 Homes</span>
+                        <span class="perk-tag base">3 Markt-Slots</span>
+                        <span class="perk-tag cmi-extra">/recipe</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 4: Chiller -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="chiller">
                 <div class="rank-header">
-                    <div class="rank-prefix">❄ Chiller</div>
-                    <div class="rank-unlock">12 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#4</span>
+                        <span class="rank-prefix" style="color: #00ffff;">❄ Chiller</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">1 Tag</span>
+                        </span>
+                        <span class="rank-bonus">+4% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">2 Jobs</span>
-                    <span class="perk-tag new">5 Markt-Slots</span>
-                    <span class="perk-tag new">/ptime</span>
-                    <span class="perk-tag new">/pweather</span>
-                    <span class="perk-tag bonus">+2% Shop-Bonus (gesamt 4%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Zwei Jobs gleichzeitig">2 Jobs</span>
+                        <span class="perk-tag new" data-tooltip="5 gleichzeitige Angebote">5 Markt-Slots</span>
+                        <span class="perk-tag command" data-tooltip="Persönliche Tageszeit einstellen">/ptime</span>
+                        <span class="perk-tag command" data-tooltip="Persönliches Wetter einstellen">/pweather</span>
+                        <span class="perk-tag cmi-extra" data-tooltip="Vorbereitung auf farbigen Chat">/colors</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 4%">+2% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">2 Homes</span>
+                        <span class="perk-tag base">1 Plot</span>
+                        <span class="perk-tag command">/cmi workbench</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 5: Ticker -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="ticker">
                 <div class="rank-header">
-                    <div class="rank-prefix">💊 Ticker</div>
-                    <div class="rank-unlock">1 Tag</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#5</span>
+                        <span class="rank-prefix" style="color: #ff1493;">💊 Ticker</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">1 Tag</span>
+                        </span>
+                        <span class="rank-bonus">+7% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">3 Homes</span>
-                    <span class="perk-tag new">/enderchest</span>
-                    <span class="perk-tag bonus">+3% Shop-Bonus (gesamt 7%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Drei Home-Punkte setzen">3 Homes</span>
+                        <span class="perk-tag command" data-tooltip="Zugriff auf Enderchest überall">/cmi enderchest</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 7%">+3% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">2 Jobs</span>
+                        <span class="perk-tag base">5 Markt-Slots</span>
+                        <span class="perk-tag command">/ptime</span>
+                        <span class="perk-tag command">/pweather</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 6: Hustler -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="hustler">
                 <div class="rank-header">
-                    <div class="rank-prefix">💼 Hustler</div>
-                    <div class="rank-unlock">2 Tage</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#6</span>
+                        <span class="rank-prefix" style="color: #4169e1;">💼 Hustler</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">2 Tage</span>
+                        </span>
+                        <span class="rank-bonus">+11% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">2 Plots</span>
-                    <span class="perk-tag new">/hat</span>
-                    <span class="perk-tag bonus">+4% Shop-Bonus (gesamt 11%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Zwei Plots claimen">2 Plots</span>
+                        <span class="perk-tag command" data-tooltip="Items als Hut tragen">/cmi hat</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 11%">+4% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">3 Homes</span>
+                        <span class="perk-tag command">/cmi enderchest</span>
+                        <span class="perk-tag command">/cmi workbench</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 7: Macher -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="macher">
                 <div class="rank-header">
-                    <div class="rank-prefix">🛠 Macher</div>
-                    <div class="rank-unlock">100 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#7</span>
+                        <span class="rank-prefix" style="color: #2f22b3;">🛠 Macher</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">10 Tage</span>
+                        </span>
+                        <span class="rank-bonus">+16% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">8 Markt-Slots</span>
-                    <span class="perk-tag new">/dispose</span>
-                    <span class="perk-tag new">Plot Biome ändern</span>
-                    <span class="perk-tag bonus">+5% Shop-Bonus (gesamt 16%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="8 gleichzeitige Angebote">8 Markt-Slots</span>
+                        <span class="perk-tag command" data-tooltip="Virtueller Mülleimer">/cmi dispose</span>
+                        <span class="perk-tag base" data-tooltip="Biom deines Plots ändern">Plot Biome</span>
+                        <span class="perk-tag cmi-extra" data-tooltip="Rüstungsständer via GUI posen!">/armorstand</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 16%">+5% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">3 Homes</span>
+                        <span class="perk-tag base">2 Plots</span>
+                        <span class="perk-tag base">2 Jobs</span>
+                        <span class="perk-tag command">/cmi hat</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 8: Türsteher -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="türsteher">
                 <div class="rank-header">
-                    <div class="rank-prefix">🛡 Türsteher</div>
-                    <div class="rank-unlock">150 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#8</span>
+                        <span class="rank-prefix" style="color: #696969;">🛡 Türsteher</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">20 Tage</span>
+                        </span>
+                        <span class="rank-bonus">+22% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">5 Homes</span>
-                    <span class="perk-tag new">3 Jobs</span>
-                    <span class="perk-tag new">Spieler kicken/bannen auf Plot</span>
-                    <span class="perk-tag bonus">+6% Shop-Bonus (gesamt 22%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Fünf Home-Punkte setzen">5 Homes</span>
+                        <span class="perk-tag new" data-tooltip="Drei Jobs gleichzeitig">3 Jobs</span>
+                        <span class="perk-tag base" data-tooltip="Spieler von Plot kicken/bannen">Plot Kick/Ban</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 22%">+6% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">2 Plots</span>
+                        <span class="perk-tag base">8 Markt-Slots</span>
+                        <span class="perk-tag command">/cmi dispose</span>
+                        <span class="perk-tag cmi-extra">/armorstand</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 9: Bratan -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="bratan">
                 <div class="rank-header">
-                    <div class="rank-prefix">🤜🤛 Bratan</div>
-                    <div class="rank-unlock">250 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#9</span>
+                        <span class="rank-prefix" style="color: #ffd700;">🤜🤛 Bratan</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">30 Tage</span>
+                        </span>
+                        <span class="rank-bonus">+29% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">/anvil</span>
-                    <span class="perk-tag new">Plot Musik ändern</span>
-                    <span class="perk-tag bonus">+7% Shop-Bonus (gesamt 29%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag command" data-tooltip="Virtueller Amboss">/cmi anvil</span>
+                        <span class="perk-tag base" data-tooltip="Plot-Musik ändern">Plot Musik</span>
+                        <span class="perk-tag cmi-extra" data-tooltip="Schilder mit Rechtsklick bearbeiten">/signedit</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 29%">+7% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">5 Homes</span>
+                        <span class="perk-tag base">3 Jobs</span>
+                        <span class="perk-tag base">2 Plots</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 10: Bre -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="bre">
                 <div class="rank-header">
-                    <div class="rank-prefix">🧢 Bre</div>
-                    <div class="rank-unlock">400 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#10</span>
+                        <span class="rank-prefix" style="color: #ff6347;">🧢 Bre</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">50 Tage</span>
+                        </span>
+                        <span class="rank-bonus">+37% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">3 Plots</span>
-                    <span class="perk-tag new">Farbiger Chat</span>
-                    <span class="perk-tag bonus">+8% Shop-Bonus (gesamt 37%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Drei Plots claimen">3 Plots</span>
+                        <span class="perk-tag new" data-tooltip="Farbcodes im Chat nutzen">Farbiger Chat</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 37%">+8% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">5 Homes</span>
+                        <span class="perk-tag command">/cmi anvil</span>
+                        <span class="perk-tag cmi-extra">/signedit</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 11: Ehrenmann -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="ehrenmann">
                 <div class="rank-header">
-                    <div class="rank-prefix">❤ Ehrenmann</div>
-                    <div class="rank-unlock">600 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#11</span>
+                        <span class="rank-prefix" style="color: #ff1493;">❤ Ehrenmann</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">75 Tage</span>
+                        </span>
+                        <span class="rank-bonus">+46% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">8 Homes</span>
-                    <span class="perk-tag new">/feed</span>
-                    <span class="perk-tag bonus">+9% Shop-Bonus (gesamt 46%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Acht Home-Punkte setzen">8 Homes</span>
+                        <span class="perk-tag command" data-tooltip="Hunger & Sättigung auffüllen">/cmi feed</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 46%">+9% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">3 Plots</span>
+                        <span class="perk-tag base">3 Jobs</span>
+                        <span class="perk-tag new">Farbiger Chat</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 12: Löwe -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="löwe">
                 <div class="rank-header">
-                    <div class="rank-prefix">🦁 Löwe</div>
-                    <div class="rank-unlock">800 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#12</span>
+                        <span class="rank-prefix" style="color: #ffa500;">🦁 Löwe</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">100 Tage</span>
+                        </span>
+                        <span class="rank-bonus">+56% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">15 Markt-Slots</span>
-                    <span class="perk-tag new">/repair</span>
-                    <span class="perk-tag bonus">+10% Shop-Bonus (gesamt 56%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="15 gleichzeitige Angebote">15 Markt-Slots</span>
+                        <span class="perk-tag command" data-tooltip="Items reparieren">/cmi repair</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 56%">+10% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">8 Homes</span>
+                        <span class="perk-tag command">/cmi feed</span>
+                        <span class="perk-tag command">/cmi anvil</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 13: Maschine -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="maschine">
                 <div class="rank-header">
-                    <div class="rank-prefix">🤖 Maschine</div>
-                    <div class="rank-unlock">1000 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#13</span>
+                        <span class="rank-prefix" style="color: #808080;">🤖 Maschine</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">150 Tage</span>
+                        </span>
+                        <span class="rank-bonus">+67% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">4 Plots</span>
-                    <span class="perk-tag new">/hdb (Head Database)</span>
-                    <span class="perk-tag bonus">+11% Shop-Bonus (gesamt 67%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Vier Plots claimen">4 Plots</span>
+                        <span class="perk-tag command" data-tooltip="Head Database Zugang">/hdb</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 67%">+11% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">15 Markt-Slots</span>
+                        <span class="perk-tag command">/cmi repair</span>
+                        <span class="perk-tag base">3 Jobs</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 14: BABA -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="baba">
                 <div class="rank-header">
-                    <div class="rank-prefix">🔥 BABA</div>
-                    <div class="rank-unlock">1250 Stunden</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#14</span>
+                        <span class="rank-prefix" style="color: #ff4500;">🔥 BABA</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">⏳</span>
+                            <span class="unlock-time">200 Tage</span>
+                        </span>
+                        <span class="rank-bonus">+79% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">12 Homes</span>
-                    <span class="perk-tag new">/back (auch bei Tod)</span>
-                    <span class="perk-tag new">Chat Formatierung</span>
-                    <span class="perk-tag bonus">+12% Shop-Bonus (gesamt 79%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Zwölf Home-Punkte setzen">12 Homes</span>
+                        <span class="perk-tag command" data-tooltip="Zurück zur letzten Position, auch bei Tod">/cmi back</span>
+                        <span class="perk-tag new" data-tooltip="Fett, Kursiv, Unterstrichen">Chat Formatierung</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 79%">+12% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">4 Plots</span>
+                        <span class="perk-tag command">/hdb</span>
+                        <span class="perk-tag command">/cmi repair</span>
+                    </div>
                 </div>
             </div>
             
             <!-- Rang 15: Main Character -->
-            <div class="rank-card">
+            <div class="rank-card" data-rank="main-character">
                 <div class="rank-header">
-                    <div class="rank-prefix">⭐ MAIN CHARACTER</div>
-                    <div class="rank-unlock">1500 Stunden - Maximum</div>
+                    <div class="rank-info">
+                        <span class="rank-number">#15</span>
+                        <span class="rank-prefix" style="color: #ffd700; text-shadow: 0 0 10px #ffd700;">⭐ MAIN CHARACTER</span>
+                    </div>
+                    <div class="rank-meta">
+                        <span class="rank-unlock">
+                            <span class="unlock-icon">🏆</span>
+                            <span class="unlock-time">300 Tage - Max</span>
+                        </span>
+                        <span class="rank-bonus">+94% Shop</span>
+                    </div>
                 </div>
-                <div class="rank-perks">
-                    <span class="perk-tag new">5 Plots</span>
-                    <span class="perk-tag new">15 Homes</span>
-                    <span class="perk-tag new">XP behalten bei Tod</span>
-                    <span class="perk-tag bonus">+15% Shop-Bonus (gesamt 94%)</span>
+                <div class="rank-body">
+                    <h4>Neue Vorteile:</h4>
+                    <div class="rank-perks">
+                        <span class="perk-tag new" data-tooltip="Fünf Plots claimen">5 Plots</span>
+                        <span class="perk-tag new" data-tooltip="Fünfzehn Home-Punkte setzen">15 Homes</span>
+                        <span class="perk-tag new" data-tooltip="XP bleibt bei Tod erhalten">XP Keep on Death</span>
+                        <span class="perk-tag bonus" data-tooltip="Gesamt 94%">+15% Shop-Bonus</span>
+                    </div>
+                    
+                    <h4>Kumulativ von vorherigen Rängen:</h4>
+                    <div class="rank-perks inherited">
+                        <span class="perk-tag base">3 Jobs</span>
+                        <span class="perk-tag base">15 Markt-Slots</span>
+                        <span class="perk-tag command">/cmi back</span>
+                        <span class="perk-tag new">Chat Formatierung</span>
+                        <span class="perk-tag new">Farbiger Chat</span>
+                    </div>
                 </div>
             </div>
             
